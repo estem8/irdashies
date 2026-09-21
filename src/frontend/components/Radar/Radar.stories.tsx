@@ -14,6 +14,12 @@ import { Radar } from './Radar';
 const INTERLAGOS = '/test-data/1752616787256';
 /** Virginia: four cars around the player, three of them on pit road. */
 const VIRGINIA = '/test-data/1735296198162';
+/**
+ * Interlagos with the sim reporting a car to the player's left. The car sits
+ * 4.6 m back on the same centreline, so without the overlap verdict it draws
+ * straight through the player.
+ */
+const ALONGSIDE = '/test-data/1747384033336';
 
 /** The disc sizes itself to its overlay window, so stories supply one. */
 const frame = (children: React.ReactNode) => (
@@ -59,4 +65,10 @@ export const CarsInPitShown: Story = {
 export const CarsInPitHidden: Story = {
   ...story(VIRGINIA, { hideInPit: true }),
   name: 'Cars in pit hidden',
+};
+
+/** A car the sim puts on the player's left, drawn beside rather than on top. */
+export const CarAbreast: Story = {
+  ...story(ALONGSIDE, { radarRange: 15 }),
+  name: 'Car abreast',
 };

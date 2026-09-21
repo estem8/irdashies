@@ -3,6 +3,13 @@ import {
   tangentAngleAt,
   type TrackDrawing,
 } from '@irdashies/domain/trackGeometry';
+import {
+  alongsideWindowM,
+  assignOverlapSides,
+  retainSideWindowM,
+  type OverlapSide,
+  type RadarOverlap,
+} from './overlapSides';
 
 export type RadarBlipColor = 'sameLap' | 'lapsAhead' | 'lapsBehind' | 'inPit';
 
@@ -31,6 +38,8 @@ export interface RadarBlipResult {
   /** The focus car has a usable position; false blanks the disc. */
   playerOnRoad: boolean;
   blips: RadarBlip[];
+  /** Sides assigned this frame, to hand back in as `previousSides`. */
+  sides: ReadonlyMap<number, OverlapSide>;
 }
 
 export interface RadarBlipInput {
@@ -43,13 +52,26 @@ export interface RadarBlipInput {
   trackLengthM: number;
   radarRange: number;
   hideInPit: boolean;
+  /** The sim's own side-overlap verdict, for placing cars running abreast. */
+  overlap: RadarOverlap;
+  vehicleWidth: number;
+  vehicleLength: number;
+  /** Sides held from the previous frame; the caller owns this across frames. */
+  previousSides: ReadonlyMap<number, OverlapSide>;
 }
 
 const NO_GEOMETRY: RadarBlipResult = {
   hasGeometry: false,
   playerOnRoad: false,
   blips: [],
+  sides: new Map(),
 };
+
+/**
+ * How far to the side an abreast car is drawn, in car widths. Just over one
+ * width keeps it clear of the player's own rectangle.
+ */
+const ABREAST_LATERAL_FACTOR = 1.1;
 
 const onRoad = (pct: number | undefined): pct is number =>
   typeof pct === 'number' && Number.isFinite(pct) && pct >= 0;
@@ -74,6 +96,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     trackLengthM,
     radarRange,
     hideInPit,
+    overlap,
+    vehicleWidth,
+    vehicleLength,
+    previousSides,
   } = input;
 
   const trackPathPoints = trackDrawing?.active?.trackPathPoints;
@@ -94,7 +120,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
   const playerPct = playerCarIdx === null ? undefined : positions[playerCarIdx];
   if (playerCarIdx === null || !onRoad(playerPct)) {
-    return { hasGeometry: true, playerOnRoad: false, blips: [] };
+    return {
+      hasGeometry: true,
+      playerOnRoad: false,
+      blips: [],
+      sides: new Map(),
+    };
   }
 
   const playerTangent = tangentAngleAt(
@@ -105,7 +136,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     direction
   );
   if (playerTangent === null) {
-    return { hasGeometry: true, playerOnRoad: false, blips: [] };
+    return {
+      hasGeometry: true,
+      playerOnRoad: false,
+      blips: [],
+      sides: new Map(),
+    };
   }
 
   const metresPerUnit = trackLengthM / totalLength;
@@ -192,5 +228,31 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     });
   }
 
-  return { hasGeometry: true, playerOnRoad: true, blips };
+  // A car running abreast projects onto the player's own point of the
+  // centreline — the SDK publishes no lateral offset — so without this it would
+  // be drawn on top of the player's rectangle and appear to pass through. The
+  // sim's own side verdict puts it to one side instead.
+  //
+  // The offset is full while the verdict covers the car, so a genuine overlap
+  // reads at its real width; it fades out only in the retained tail, where the
+  // verdict has gone but the car keeps its side for a few frames longer.
+  const sides = assignOverlapSides({
+    blips,
+    overlap,
+    vehicleLength,
+    previous: previousSides,
+  });
+  const abeam = alongsideWindowM(vehicleLength);
+  const retain = retainSideWindowM(vehicleLength);
+  const fadeSpan = Math.max(1e-6, retain - abeam);
+  for (const blip of blips) {
+    const side = sides.get(blip.carIdx);
+    if (side === undefined) continue;
+    const distance = Math.abs(blip.alongM);
+    const closeness =
+      distance <= abeam ? 1 : Math.max(0, 1 - (distance - abeam) / fadeSpan);
+    blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
+  }
+
+  return { hasGeometry: true, playerOnRoad: true, blips, sides };
 };

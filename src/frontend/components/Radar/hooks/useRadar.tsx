@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { shallow } from 'zustand/shallow';
 import type { RadarSnapshot } from '@irdashies/types';
 import {
@@ -15,6 +15,7 @@ import { computeRadarBlips, type RadarBlip } from '../radarBlips';
 import {
   NO_OVERLAP,
   overlapFromCarLeftRight,
+  type OverlapSide,
   type RadarOverlap,
 } from '../overlapSides';
 
@@ -28,6 +29,9 @@ export interface RadarState {
 
 export interface UseRadarOptions {
   radarRange: number;
+  /** Car size in metres; the SDK reports none, so the config supplies it. */
+  vehicleWidth: number;
+  vehicleLength: number;
   hideInPit: boolean;
 }
 
@@ -66,7 +70,7 @@ const trackDrawings = tracks as unknown as Record<
  * (radar.snapshot) and the sim's own overlap verdict (blind-spot.snapshot).
  */
 export const useRadar = (options: UseRadarOptions): RadarState => {
-  const { radarRange, hideInPit } = options;
+  const { radarRange, hideInPit, vehicleWidth, vehicleLength } = options;
   const [focusCarIdx, positions, laps, onPitRoad, isOnTrack] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
@@ -88,34 +92,54 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     trackDrawing !== undefined &&
     shouldShowTrack(trackId, trackDrawing);
 
-  const computed = useMemo(
-    () =>
-      computeRadarBlips({
-        carIdxLapDistPct: positions,
-        carIdxLap: laps,
-        carIdxOnPitRoad: onPitRoad,
-        playerCarIdx,
-        trackDrawing,
-        trackLengthM,
-        radarRange,
-        hideInPit,
-      }),
-    [
-      positions,
-      laps,
-      onPitRoad,
+  const overlap =
+    carLeftRight === undefined
+      ? NO_OVERLAP
+      : overlapFromCarLeftRight(carLeftRight);
+
+  // Sides live across frames so a car keeps the side the sim gave it for the
+  // whole pass, rather than following a verdict that flickers frame to frame.
+  // Car indices are re-used between sessions, so the map is dropped whenever
+  // the track or the field size changes rather than carrying a stale side into
+  // the next session.
+  const sidesRef = useRef<ReadonlyMap<number, OverlapSide>>(new Map());
+  const sidesKeyRef = useRef<string>('');
+  const computed = useMemo(() => {
+    const sidesKey = `${trackId}:${positions.length}`;
+    if (sidesKey !== sidesKeyRef.current) {
+      sidesKeyRef.current = sidesKey;
+      sidesRef.current = new Map();
+    }
+    const result = computeRadarBlips({
+      carIdxLapDistPct: positions,
+      carIdxLap: laps,
+      carIdxOnPitRoad: onPitRoad,
       playerCarIdx,
       trackDrawing,
       trackLengthM,
       radarRange,
       hideInPit,
-    ]
-  );
-
-  const overlap =
-    carLeftRight === undefined
-      ? NO_OVERLAP
-      : overlapFromCarLeftRight(carLeftRight);
+      overlap,
+      vehicleWidth,
+      vehicleLength,
+      previousSides: sidesRef.current,
+    });
+    sidesRef.current = result.sides;
+    return result;
+  }, [
+    positions,
+    laps,
+    onPitRoad,
+    playerCarIdx,
+    trackId,
+    trackDrawing,
+    trackLengthM,
+    radarRange,
+    hideInPit,
+    overlap,
+    vehicleWidth,
+    vehicleLength,
+  ]);
 
   return {
     hasGeometry: usable && computed.hasGeometry && computed.playerOnRoad,

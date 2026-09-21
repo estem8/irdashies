@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import { computeRadarBlips, type RadarBlipInput } from './radarBlips';
+import {
+  NO_OVERLAP,
+  type OverlapSide,
+  type RadarOverlap,
+} from './overlapSides';
 
 const EDGE_STEP = 20;
 const RECT_WIDTH = 400;
@@ -60,6 +65,10 @@ const baseInput: Omit<
   trackLengthM: TRACK_LENGTH_M,
   radarRange: 15,
   hideInPit: false,
+  overlap: NO_OVERLAP,
+  vehicleWidth: 2,
+  vehicleLength: 4.5,
+  previousSides: new Map<number, OverlapSide>(),
 };
 
 describe('computeRadarBlips', () => {
@@ -195,5 +204,82 @@ describe('computeRadarBlips', () => {
 
     expect(result).toMatchObject({ hasGeometry: true, playerOnRoad: false });
     expect(result.blips).toHaveLength(0);
+  });
+
+  it('draws a car the sim reports abreast to the side, not on the player', () => {
+    // Without the side verdict this car projects onto the player's own point of
+    // the centreline and is drawn on top of them — the "cars pass through me"
+    // case. The sim's verdict is the only thing that knows which side it is on.
+    const result = computeRadarBlips({
+      ...baseInput,
+      overlap: { left: 1, right: 0 },
+      ...positionsOf([pctOfArc(300), pctOfArc(300)]),
+    });
+
+    expect(result.blips).toHaveLength(1);
+    expect(result.blips[0].alongM).toBeCloseTo(0, 6);
+    // Level with the player, so the side offset is at full reach.
+    expect(result.blips[0].lateralM).toBeCloseTo(-2 * 1.1, 6);
+    expect(result.sides.get(1)).toBe(-1);
+  });
+
+  it('holds the offset across the overlap window and fades it in the tail', () => {
+    const run = (
+      alongM: number,
+      previousSides?: ReadonlyMap<number, OverlapSide>,
+      overlap: RadarOverlap = { left: 1, right: 0 }
+    ) =>
+      computeRadarBlips({
+        ...baseInput,
+        overlap,
+        previousSides: previousSides ?? new Map<number, OverlapSide>(),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + alongM)]),
+      });
+
+    // 4.5 m car: full reach anywhere inside the 9 m window.
+    const full = 2 * 1.1;
+    expect(run(0.1).blips[0].lateralM).toBeCloseTo(-full, 6);
+    expect(run(4).blips[0].lateralM).toBeCloseTo(-full, 6);
+
+    // A car 11 m back that was never alongside gets no side at all.
+    expect(run(11).blips[0].lateralM).toBeCloseTo(0, 6);
+
+    // But one that *was* alongside keeps a fading side on the way out.
+    const held = run(4).sides;
+    const tail = run(11, held, NO_OVERLAP).blips[0].lateralM;
+    expect(tail).toBeLessThan(0);
+    expect(Math.abs(tail)).toBeLessThan(full);
+  });
+
+  it('leaves a car outside the abreast window on the road projection', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      overlap: { left: 1, right: 0 },
+      ...positionsOf([pctOfArc(300), pctOfArc(310)]),
+    });
+
+    expect(result.blips[0].lateralM).toBeCloseTo(0, 6);
+    expect(result.sides.size).toBe(0);
+  });
+
+  it('hands the sides back so the next frame can hold them', () => {
+    const first = computeRadarBlips({
+      ...baseInput,
+      overlap: { left: 1, right: 0 },
+      ...positionsOf([pctOfArc(300), pctOfArc(300.2)]),
+    });
+    expect(first.sides.get(1)).toBe(-1);
+
+    // The verdict drops to clear, but the car is still alongside: it keeps the
+    // side it was given rather than snapping back onto the player.
+    const second = computeRadarBlips({
+      ...baseInput,
+      overlap: NO_OVERLAP,
+      previousSides: first.sides,
+      ...positionsOf([pctOfArc(300), pctOfArc(300.3)]),
+    });
+
+    expect(second.blips[0].lateralM).toBeLessThan(0);
+    expect(second.sides.get(1)).toBe(-1);
   });
 });

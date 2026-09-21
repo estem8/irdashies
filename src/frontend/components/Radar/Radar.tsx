@@ -19,6 +19,8 @@ export const Radar = () => {
   const state = useRadar({
     radarRange: settings.radarRange,
     hideInPit: settings.hideInPit,
+    vehicleWidth: settings.vehicleWidth,
+    vehicleLength: settings.vehicleLength,
   });
   const { isDemoMode } = useDashboard();
   const sessionVisible = useSessionVisibility(settings.sessionVisibility);
