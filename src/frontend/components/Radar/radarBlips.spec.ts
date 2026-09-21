@@ -440,6 +440,44 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].sideUnknown).toBe(false);
   });
 
+  it('does not flicker a car that keeps a side after it has driven away', () => {
+    // A car the sim reported alongside keeps its side for three car lengths
+    // after the verdict stops, so it is drawn beside the player rather than
+    // snapping onto their rectangle. Between the release range and the end of
+    // that retention the side must not count as an abutment: if it does, the
+    // car re-engages on the tick after the hysteresis released it and the
+    // colour alternates every frame while the car does nothing but drive away.
+    // Measured on a recorded race, this alternation was 942 of that race's
+    // 1134 colour changes.
+    let targets: ReadonlyMap<number, RadarTargetState> = withTargets([
+      [1, held(-1)],
+    ]);
+    const levels: string[] = [];
+    let gap = 8;
+    for (let tick = 0; tick < 60; tick += 1) {
+      // Pulling away at about 1.5 m/s, sampled at 25 Hz.
+      gap += 0.06;
+      const result = computeRadarBlips({
+        ...baseInput,
+        overlap: NO_OVERLAP,
+        carNumbers: new Map([[1, '24']]),
+        thresholds: THRESHOLDS,
+        previousTargets: targets,
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
+      });
+      targets = result.targets;
+      levels.push(result.blips[0].level);
+    }
+
+    const changes = levels.filter(
+      (level, index) => index > 0 && level !== levels[index - 1]
+    ).length;
+    // One crossing of the release range, and nothing after it.
+    expect(changes).toBeLessThanOrEqual(1);
+    expect(levels.some((level) => level === 'nearby')).toBe(true);
+    expect(levels[levels.length - 1]).toBe('far');
+  });
+
   it('fades a car in over the outer band of the range', () => {
     const fadeAt = (gap: number) =>
       computeRadarBlips({

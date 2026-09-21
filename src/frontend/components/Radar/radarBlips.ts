@@ -417,9 +417,16 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     blip.sideUnknown = side === null && blip.gapM <= abreastUnknownM;
 
     const wasEngaged = previousTargets.get(blip.carIdx)?.engaged ?? false;
+    // A *held* side is not an abutment. The side is kept for several car
+    // lengths beyond the abreast window so a car mid-pass does not snap back
+    // onto the player's own rectangle while the sim's verdict flickers — but
+    // between the release range and the end of that retention a held side
+    // otherwise kept re-engaging the car on the tick after the hysteresis
+    // released it, and the blip alternated amber and neutral every frame.
+    const abutment = side !== null && blip.gapM <= abeam;
     const verdict = evaluateProximity(
       blip.gapM,
-      side !== null,
+      abutment,
       wasEngaged,
       thresholds
     );
