@@ -480,30 +480,49 @@ export interface BlindSpotMonitorConfig {
   thresholdColor2?: number;
 }
 
+/** The three ways the radar can be drawn, as the overlay offers them. */
+export type RadarDisplayMode = 'disc' | 'portrait' | 'bars';
+
 /**
  * Proximity radar. Distances are real metres, derived from lap distance
  * fractions; bearing comes from the track centreline, so blips are placed
  * relative to the road ahead of the player rather than to world axes.
+ *
+ * Colour is a proximity scale — far, nearby, critical — with the engagement
+ * thresholds separated from the release ones so a warning cannot flicker while
+ * a car hovers on a threshold.
  */
 export interface RadarConfig {
+  displayMode: RadarDisplayMode;
   /** Metres from the player that still get a blip. */
   radarRange: number;
+  /** Gap at which a car engages: turns amber. */
+  nearbyRange: number;
+  /**
+   * Gap at which an engaged car is released. Higher than `nearbyRange` on
+   * purpose — the gap between the two is the hysteresis that stops the warning
+   * flickering as a car edges in and out of range.
+   */
+  clearRange: number;
+  /** Gap at which a car turns red; a car directly alongside always does. */
+  criticalRange: number;
   /** Opponent car body dimensions in metres — the SDK reports none per car. */
   vehicleWidth: number;
   vehicleLength: number;
   /** Stop drawing cars on pit road; they sit on the same centreline as the track. */
   hideInPit: boolean;
+  /** Pulse the blip and rim while a car is critical. */
+  pulseWhenCritical: boolean;
+  /** Draw the car number on each blip. */
+  showCarNumbers: boolean;
+  /** Draw the side strips that light up when a car pulls alongside. */
   showOverlapIndicator: boolean;
-  /** TinyPedal's range multipliers: how far past the car's own width an overlap is "nearby" or "critical". */
-  overlapNearbyRangeMultiplier: number;
-  overlapCriticalRangeMultiplier: number;
-  colorPlayer: string;
-  colorSameLap: string;
-  colorLapsAhead: string;
-  colorLapsBehind: string;
-  colorInPit: string;
+  colorFar: string;
   colorNearby: string;
   colorCritical: string;
+  colorPlayer: string;
+  /** Cars on pit road when `hideInPit` is off; theirs is a presence, not a threat. */
+  colorInPit: string;
   background: { opacity: number };
   showOnlyWhenOnTrack: boolean;
   sessionVisibility: SessionVisibilitySettings;

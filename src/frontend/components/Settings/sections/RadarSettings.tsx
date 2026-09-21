@@ -4,12 +4,14 @@ import { useDashboard } from '@irdashies/context';
 import {
   SettingsTabType,
   getWidgetDefaultConfig,
+  type RadarConfig,
   type RadarWidgetSettings,
 } from '@irdashies/types';
 import { SessionVisibility } from '../components/SessionVisibility';
 import { TabButton } from '../components/TabButton';
 import { SettingSliderRow } from '../components/SettingSliderRow';
 import { SettingNumberRow } from '../components/SettingNumberRow';
+import { SettingSelectRow } from '../components/SettingSelectRow';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingDivider } from '../components/SettingDivider';
 import { SettingToggleRow } from '../components/SettingToggleRow';
@@ -121,6 +123,21 @@ export const RadarSettings = () => {
           <div>
             {activeTab === 'display' && (
               <SettingsSection title="Display">
+                <SettingSelectRow
+                  title="View"
+                  description="Disc puts every car on a bearing around you; portrait lays them out fore and aft by gap; bars show only the sides a car is on."
+                  value={settings.config.displayMode}
+                  options={[
+                    { label: 'Disc', value: 'disc' },
+                    { label: 'Portrait radar', value: 'portrait' },
+                    { label: 'Side bars', value: 'bars' },
+                  ]}
+                  onChange={(v) =>
+                    handleConfigChange({
+                      displayMode: v as RadarConfig['displayMode'],
+                    })
+                  }
+                />
                 <SettingSliderRow
                   title="Background Opacity"
                   value={settings.config.background?.opacity ?? 30}
@@ -140,36 +157,39 @@ export const RadarSettings = () => {
                     onChange={(v) => handleConfigChange({ colorPlayer: v })}
                   />
                   <ColorField
-                    label="Same lap"
-                    value={settings.config.colorSameLap}
-                    onChange={(v) => handleConfigChange({ colorSameLap: v })}
+                    label="Beyond engage range"
+                    value={settings.config.colorFar}
+                    onChange={(v) => handleConfigChange({ colorFar: v })}
                   />
                   <ColorField
-                    label="A lap ahead"
-                    value={settings.config.colorLapsAhead}
-                    onChange={(v) => handleConfigChange({ colorLapsAhead: v })}
+                    label="Nearby"
+                    value={settings.config.colorNearby}
+                    onChange={(v) => handleConfigChange({ colorNearby: v })}
                   />
                   <ColorField
-                    label="A lap behind"
-                    value={settings.config.colorLapsBehind}
-                    onChange={(v) => handleConfigChange({ colorLapsBehind: v })}
+                    label="Critical"
+                    value={settings.config.colorCritical}
+                    onChange={(v) => handleConfigChange({ colorCritical: v })}
                   />
                   <ColorField
                     label="In pit"
                     value={settings.config.colorInPit}
                     onChange={(v) => handleConfigChange({ colorInPit: v })}
                   />
-                  <ColorField
-                    label="Overlap nearby"
-                    value={settings.config.colorNearby}
-                    onChange={(v) => handleConfigChange({ colorNearby: v })}
-                  />
-                  <ColorField
-                    label="Overlap critical"
-                    value={settings.config.colorCritical}
-                    onChange={(v) => handleConfigChange({ colorCritical: v })}
-                  />
                 </div>
+                <SettingDivider />
+                <SettingToggleRow
+                  title="Car numbers on blips"
+                  description="Label each car with its number, so you know who is alongside."
+                  enabled={settings.config.showCarNumbers}
+                  onToggle={(v) => handleConfigChange({ showCarNumbers: v })}
+                />
+                <SettingToggleRow
+                  title="Pulse when critical"
+                  description="Breathe the blip and the rim arch while a car is alongside."
+                  enabled={settings.config.pulseWhenCritical}
+                  onToggle={(v) => handleConfigChange({ pulseWhenCritical: v })}
+                />
               </SettingsSection>
             )}
 
@@ -185,6 +205,37 @@ export const RadarSettings = () => {
                   step={1}
                   onChange={(v) => handleConfigChange({ radarRange: v })}
                 />
+                <SettingSliderRow
+                  title="Engage Range"
+                  description="Gap at which a car starts being tracked, in metres. This is where a blip turns amber."
+                  value={settings.config.nearbyRange}
+                  units="m"
+                  min={2}
+                  max={15}
+                  step={0.5}
+                  onChange={(v) => handleConfigChange({ nearbyRange: v })}
+                />
+                <SettingSliderRow
+                  title="Clear Range"
+                  description="Gap at which a tracked car is released, in metres. Kept above the engage range so the warning cannot flicker on the threshold."
+                  value={settings.config.clearRange}
+                  units="m"
+                  min={3}
+                  max={20}
+                  step={0.5}
+                  onChange={(v) => handleConfigChange({ clearRange: v })}
+                />
+                <SettingSliderRow
+                  title="Critical Range"
+                  description="Gap at which a tracked car turns red, in metres. A car directly alongside is always critical."
+                  value={settings.config.criticalRange}
+                  units="m"
+                  min={0.5}
+                  max={5}
+                  step={0.5}
+                  onChange={(v) => handleConfigChange({ criticalRange: v })}
+                />
+                <SettingDivider />
                 <SettingNumberRow
                   title="Car Width"
                   description="Opponent car width in metres. The sim reports no per-car size, so blips use this."

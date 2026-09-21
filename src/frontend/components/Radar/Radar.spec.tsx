@@ -92,21 +92,31 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('colours blips by the lapped state in the recording', () => {
+  it('grades blips by proximity to the player', () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
 
-    const laps = finalFrame().CarIdxLap as number[];
-    const playerLap = laps[harness.focusCarIdx];
-
+    // The one car inside 15 m in this capture is recorded 2.6 m back, so it is
+    // inside the engage range and must come through as at least nearby.
+    expect(latest().blips.length).toBeGreaterThan(0);
     for (const blip of latest().blips) {
-      const lapDiff = laps[blip.carIdx] - playerLap;
-      expect(blip.color).toBe(
-        lapDiff > 0 ? 'lapsAhead' : lapDiff < 0 ? 'lapsBehind' : 'sameLap'
-      );
+      const expected =
+        blip.gapM <= 1.5 ? 'critical' : blip.gapM <= 7 ? 'nearby' : 'far';
+      expect(blip.level).toBe(expected);
     }
+  });
+
+  it('labels blips with the car number from the session', () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({ radarRange: 25 }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+
+    const numbered = latest().blips.filter((blip) => blip.carNumber !== null);
+    expect(numbered.length).toBeGreaterThan(0);
+    expect(numbered[0].carNumber).toMatch(/\d/);
   });
 
   it('renders nothing when the session type is switched off', () => {
@@ -130,14 +140,27 @@ describe('Radar widget over a recorded multiclass session', () => {
 
   it('passes the configured range and colours through to the disc', () => {
     const harness = mountFixture(fixture, {
-      dashboard: radarDashboard({ radarRange: 12, colorSameLap: '#ff00ff' }),
+      dashboard: radarDashboard({ radarRange: 12, colorNearby: '#ff00ff' }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
 
-    expect(latest()).toMatchObject({ radarRange: 12, colorSameLap: '#ff00ff' });
+    expect(latest()).toMatchObject({
+      radarRange: 12,
+      colorNearby: '#ff00ff',
+      mode: 'disc',
+    });
     for (const blip of latest().blips) {
       expect(Math.abs(blip.alongM)).toBeLessThanOrEqual(12);
     }
+  });
+
+  it('draws the view the settings ask for', () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({ radarRange: 25, displayMode: 'portrait' }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+
+    expect(latest().mode).toBe('portrait');
   });
 
   it('hides the disc while the session reports the car off track', () => {

@@ -1,54 +1,50 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RadarDisplay } from './RadarDisplay';
 import type { RadarBlip } from '../radarBlips';
-import type { RadarOverlap } from '../overlapSides';
 
 /**
- * The disc drawn from hand-built blips. The widget story drives the same
- * component from a recording, but no capture has a car alongside or a car a
- * lap down, so the overlap bars and the lapped-state colours are only
- * reachable here.
+ * The views drawn from hand-built blips. The widget stories drive the same
+ * component from a recording, but no capture has a car on each side or a car a
+ * lap down, so the proximity grades and the overlap bars are only reachable
+ * here.
  */
 
-const AHEAD: RadarBlip = {
-  carIdx: 1,
-  alongM: 11,
-  lateralM: 0.2,
+const blip = (
+  carIdx: number,
+  alongM: number,
+  lateralM: number,
+  carNumber: string,
+  extra: Partial<RadarBlip> = {}
+): RadarBlip => ({
+  carIdx,
+  alongM,
+  lateralM,
   relYaw: 0,
-  color: 'sameLap',
-};
-const LAPPING: RadarBlip = {
-  carIdx: 2,
-  alongM: -8,
-  lateralM: 3,
-  relYaw: -0.12,
-  color: 'lapsAhead',
-};
-const LAPPED: RadarBlip = {
-  carIdx: 3,
-  alongM: -13,
-  lateralM: -2.4,
-  relYaw: 0.1,
-  color: 'lapsBehind',
-};
-const IN_PIT: RadarBlip = {
-  carIdx: 5,
-  alongM: 6,
-  lateralM: 4.5,
-  relYaw: 0.4,
-  color: 'inPit',
-};
-const ALONGSIDE: RadarBlip = {
-  carIdx: 4,
-  alongM: -0.8,
-  lateralM: -2.1,
-  relYaw: 0,
-  color: 'sameLap',
-};
+  gapM: Math.abs(alongM),
+  level:
+    Math.abs(alongM) <= 1.5
+      ? 'critical'
+      : Math.abs(alongM) <= 7
+        ? 'nearby'
+        : 'far',
+  side: null,
+  carNumber,
+  inPit: false,
+  ...extra,
+});
+
+const AHEAD = blip(1, 11, 0.2, '24');
+const CLOSING = blip(2, -4, 2.4, '7');
+const ALONGSIDE = blip(4, -0.6, -2.1, '51', {
+  level: 'critical',
+  side: -1,
+});
+const LAPPED = blip(3, -13, -2.4, '88');
+const IN_PIT = blip(5, 6, 4.5, '9', { inPit: true });
 
 const meta = {
   component: RadarDisplay,
-  title: 'widgets/Radar/Disc',
+  title: 'widgets/Radar/Views',
   decorators: [
     (Story: React.ComponentType) => (
       <div className="bg-slate-800 p-5">
@@ -59,31 +55,39 @@ const meta = {
     ),
   ],
   args: {
-    blips: [AHEAD, LAPPING, LAPPED, IN_PIT],
-    overlap: { left: 0, right: 0 } satisfies RadarOverlap,
+    mode: 'disc' as const,
+    blips: [AHEAD, CLOSING, LAPPED, IN_PIT],
+    overlap: { left: 0, right: 0 },
     radarRange: 15,
+    nearbyRange: 7,
     vehicleWidth: 1.9,
     vehicleLength: 4.5,
+    showCarNumbers: true,
+    pulseWhenCritical: false,
     showOverlapIndicator: true,
-    colorPlayer: '#2fd16a',
-    colorSameLap: '#3b82f6',
-    colorLapsAhead: '#a855f7',
-    colorLapsBehind: '#6b7280',
-    colorInPit: '#eab308',
+    colorFar: '#3b82f6',
     colorNearby: '#f59e0b',
     colorCritical: '#ef4444',
+    colorPlayer: '#2fd16a',
+    colorInPit: '#6b7280',
     bgOpacity: 30,
   },
   argTypes: {
+    mode: {
+      control: { type: 'select' },
+      options: ['disc', 'portrait', 'bars'],
+    },
     radarRange: { control: { type: 'range', min: 10, max: 25, step: 1 } },
+    nearbyRange: { control: { type: 'range', min: 2, max: 15, step: 0.5 } },
     bgOpacity: { control: { type: 'range', min: 0, max: 100, step: 5 } },
-    colorPlayer: { control: 'color' },
-    colorSameLap: { control: 'color' },
-    colorLapsAhead: { control: 'color' },
-    colorLapsBehind: { control: 'color' },
-    colorInPit: { control: 'color' },
+    showCarNumbers: { control: 'boolean' },
+    pulseWhenCritical: { control: 'boolean' },
+    showOverlapIndicator: { control: 'boolean' },
+    colorFar: { control: 'color' },
     colorNearby: { control: 'color' },
     colorCritical: { control: 'color' },
+    colorPlayer: { control: 'color' },
+    colorInPit: { control: 'color' },
   },
 } satisfies Meta<typeof RadarDisplay>;
 
@@ -91,31 +95,41 @@ export default meta;
 
 type Story = StoryObj<typeof RadarDisplay>;
 
-export const CarsAround: Story = {};
+export const Disc: Story = {};
+
+export const PortraitRadar: Story = {
+  name: 'Portrait radar',
+  args: { mode: 'portrait' },
+};
+
+export const SideBars: Story = {
+  name: 'Side bars',
+  args: { mode: 'bars', blips: [ALONGSIDE] },
+};
 
 export const CarAlongside: Story = {
-  name: 'Car alongside',
+  name: 'Car alongside (critical)',
   args: {
     blips: [...meta.args.blips, ALONGSIDE],
     overlap: { left: 1, right: 0 },
   },
 };
 
-export const TwoCarsLeft: Story = {
+export const TwoCarsOnTheLeft: Story = {
   name: 'Two cars on the left',
   args: {
-    blips: [...meta.args.blips, ALONGSIDE],
+    blips: [
+      ...meta.args.blips,
+      ALONGSIDE,
+      blip(6, -1.2, -2, '77', { side: -1 }),
+    ],
     overlap: { left: 2, right: 0 },
   },
 };
 
-export const OverlapIndicatorOff: Story = {
-  name: 'Overlap indicator off',
-  args: {
-    blips: [...meta.args.blips, ALONGSIDE],
-    overlap: { left: 1, right: 1 },
-    showOverlapIndicator: false,
-  },
+export const WithoutCarNumbers: Story = {
+  name: 'Without car numbers',
+  args: { showCarNumbers: false },
 };
 
 export const NoCarsInRange: Story = {

@@ -50,10 +50,16 @@ const dashboardWith = (config: RadarConfig) =>
   }) as unknown as DashboardLayout;
 
 /**
- * The Options tab renders one slider — radar range; the width and length rows
- * are number inputs and would otherwise be picked up by a positional query.
+ * The Options tab renders several sliders, so the right one is picked by the
+ * label it belongs to rather than by position.
  */
-const rangeValue = () => (screen.getByRole('slider') as HTMLInputElement).value;
+const sliderValue = (label: string) => {
+  const row = screen.getByText(label).closest('label');
+  const input = row?.parentElement?.querySelector('input[type="range"]');
+  if (!input) throw new Error(`no slider for ${label}`);
+  return (input as HTMLInputElement).value;
+};
+const rangeValue = () => sliderValue('Radar Range');
 
 const openOptionsTab = () => {
   // "Options" also titles the panel it opens, so select the tab button itself.
@@ -96,5 +102,6 @@ describe('RadarSettings', () => {
     openOptionsTab();
 
     expect(screen.getByText('Radar Range')).toBeInTheDocument();
+    expect(screen.getByText('Engage Range')).toBeInTheDocument();
   });
 });

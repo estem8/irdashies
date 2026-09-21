@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
-import { computeRadarBlips, type RadarBlipInput } from './radarBlips';
+import {
+  computeRadarBlips,
+  type RadarBlipInput,
+  type RadarTargetState,
+} from './radarBlips';
 import {
   NO_OVERLAP,
   type OverlapSide,
@@ -11,6 +15,9 @@ const EDGE_STEP = 20;
 const RECT_WIDTH = 400;
 const RECT_HEIGHT = 200;
 const TRACK_LENGTH_M = 1200;
+
+/** The overlay's own numbers: engage at 7 m, clear at 10 m, red at 1.5 m. */
+const THRESHOLDS = { nearbyRange: 7, clearRange: 10, criticalRange: 1.5 };
 
 /**
  * A closed 400x200 rectangle walked every 20 units, so path arc length equals
@@ -48,28 +55,36 @@ const pctOfArc = (arcMetres: number) => arcMetres / TRACK_LENGTH_M;
 
 const positionsOf = (
   positions: number[],
-  laps: number[] = [5, 5],
   onPitRoad: boolean[] = positions.map(() => false)
 ) => ({
   carIdxLapDistPct: positions,
-  carIdxLap: laps,
   carIdxOnPitRoad: onPitRoad,
 });
 
-const baseInput: Omit<
-  RadarBlipInput,
-  'carIdxLapDistPct' | 'carIdxLap' | 'carIdxOnPitRoad'
-> = {
-  playerCarIdx: 0,
-  trackDrawing: trackDrawing(),
-  trackLengthM: TRACK_LENGTH_M,
-  radarRange: 15,
-  hideInPit: false,
-  overlap: NO_OVERLAP,
-  vehicleWidth: 2,
-  vehicleLength: 4.5,
-  previousSides: new Map<number, OverlapSide>(),
-};
+const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
+  {
+    playerCarIdx: 0,
+    trackDrawing: trackDrawing(),
+    trackLengthM: TRACK_LENGTH_M,
+    radarRange: 15,
+    hideInPit: false,
+    overlap: NO_OVERLAP,
+    vehicleWidth: 2,
+    vehicleLength: 4.5,
+    thresholds: THRESHOLDS,
+    carNumbers: new Map([
+      [1, '24'],
+      [2, '7'],
+    ]),
+    previousTargets: new Map<number, RadarTargetState>(),
+  };
+
+const withTargets = (targets: [number, RadarTargetState][]) =>
+  new Map<number, RadarTargetState>(targets);
+const held = (side: OverlapSide | null, engaged = true): RadarTargetState => ({
+  side,
+  engaged,
+});
 
 describe('computeRadarBlips', () => {
   it('measures a car ahead on the same straight as along-track metres', () => {
@@ -84,8 +99,10 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].carIdx).toBe(1);
     expect(result.blips[0].alongM).toBeCloseTo(12, 6);
     expect(result.blips[0].lateralM).toBeCloseTo(0, 6);
-    expect(result.blips[0].color).toBe('sameLap');
+    expect(result.blips[0].gapM).toBeCloseTo(12, 6);
     expect(result.blips[0].relYaw).toBeCloseTo(0, 6);
+    // Beyond the engage range, so tracked as far.
+    expect(result.blips[0].level).toBe('far');
   });
 
   it('signs cars behind the player as negative along-track metres', () => {
@@ -95,6 +112,7 @@ describe('computeRadarBlips', () => {
     });
 
     expect(result.blips[0].alongM).toBeCloseTo(-12, 6);
+    expect(result.blips[0].gapM).toBeCloseTo(12, 6);
   });
 
   it('wraps a car across the start/finish line to a small gap', () => {
@@ -145,27 +163,54 @@ describe('computeRadarBlips', () => {
     expect(result.blips).toHaveLength(0);
   });
 
-  it('colours by lapped state and by pit road', () => {
+  it('colours by proximity: far, nearby, then critical inside the range', () => {
+    const levels = (gap: number) =>
+      computeRadarBlips({
+        ...baseInput,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
+      }).blips[0].level;
+
+    expect(levels(12)).toBe('far');
+    expect(levels(6.9)).toBe('nearby');
+    expect(levels(3)).toBe('nearby');
+    expect(levels(1.4)).toBe('critical');
+
+    // The gap is rebuilt from lap fractions, so a threshold lands within a few
+    // centimetres of where the ring is drawn; it must still engage at 7 m.
+    const atRing = computeRadarBlips({
+      ...baseInput,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(307)]),
+    }).blips[0].gapM;
+    expect(atRing).toBeGreaterThan(7);
+    expect(atRing).toBeLessThan(7.1);
+  });
+
+  it('carries the car number and the pit-road flag for the label', () => {
     const result = computeRadarBlips({
       ...baseInput,
-      ...positionsOf(
-        [pctOfArc(300), pctOfArc(302), pctOfArc(304), pctOfArc(306)],
-        [5, 6, 4, 5],
-        [false, false, false, true]
-      ),
+      ...positionsOf([pctOfArc(300), pctOfArc(304)], [false, true]),
     });
 
-    expect(result.blips.map((blip) => blip.color)).toEqual([
-      'lapsAhead',
-      'lapsBehind',
-      'inPit',
-    ]);
+    expect(result.blips[0].carNumber).toBe('24');
+    expect(result.blips[0].inPit).toBe(true);
+    expect(result.blips[0].side).toBeNull();
+  });
+
+  it('reports no number for a car the session has none for', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      carNumbers: new Map(),
+      ...positionsOf([pctOfArc(300), pctOfArc(304)]),
+    });
+
+    expect(result.blips[0].carNumber).toBeNull();
   });
 
   it('hides cars on pit road only when asked to', () => {
     const withPitCar = positionsOf(
       [pctOfArc(300), pctOfArc(304)],
-      [5, 5],
       [false, true]
     );
 
@@ -213,27 +258,31 @@ describe('computeRadarBlips', () => {
     const result = computeRadarBlips({
       ...baseInput,
       overlap: { left: 1, right: 0 },
+      carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300)]),
     });
 
     expect(result.blips).toHaveLength(1);
-    expect(result.blips[0].alongM).toBeCloseTo(0, 6);
+    expect(result.blips[0].gapM).toBeCloseTo(0, 6);
     // Level with the player, so the side offset is at full reach.
     expect(result.blips[0].lateralM).toBeCloseTo(-2 * 1.1, 6);
-    expect(result.sides.get(1)).toBe(-1);
+    expect(result.blips[0].side).toBe(-1);
+    // Alongside is critical on its own, whatever the gap says.
+    expect(result.blips[0].level).toBe('critical');
   });
 
   it('holds the offset across the overlap window and fades it in the tail', () => {
     const run = (
-      alongM: number,
-      previousSides?: ReadonlyMap<number, OverlapSide>,
+      gap: number,
+      previousTargets = new Map<number, RadarTargetState>(),
       overlap: RadarOverlap = { left: 1, right: 0 }
     ) =>
       computeRadarBlips({
         ...baseInput,
         overlap,
-        previousSides: previousSides ?? new Map<number, OverlapSide>(),
-        ...positionsOf([pctOfArc(300), pctOfArc(300 + alongM)]),
+        previousTargets,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
       });
 
     // 4.5 m car: full reach anywhere inside the 9 m window.
@@ -245,8 +294,8 @@ describe('computeRadarBlips', () => {
     expect(run(11).blips[0].lateralM).toBeCloseTo(0, 6);
 
     // But one that *was* alongside keeps a fading side on the way out.
-    const held = run(4).sides;
-    const tail = run(11, held, NO_OVERLAP).blips[0].lateralM;
+    const heldTargets = withTargets([[1, held(-1)]]);
+    const tail = run(11, heldTargets, NO_OVERLAP).blips[0].lateralM;
     expect(tail).toBeLessThan(0);
     expect(Math.abs(tail)).toBeLessThan(full);
   });
@@ -255,31 +304,67 @@ describe('computeRadarBlips', () => {
     const result = computeRadarBlips({
       ...baseInput,
       overlap: { left: 1, right: 0 },
+      carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(310)]),
     });
 
     expect(result.blips[0].lateralM).toBeCloseTo(0, 6);
-    expect(result.sides.size).toBe(0);
+    expect(result.blips[0].side).toBeNull();
   });
 
-  it('hands the sides back so the next frame can hold them', () => {
+  it('hands the per-car state back so the next frame can hold it', () => {
     const first = computeRadarBlips({
       ...baseInput,
       overlap: { left: 1, right: 0 },
+      carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300.2)]),
     });
-    expect(first.sides.get(1)).toBe(-1);
+    expect(first.targets.get(1)).toEqual({ side: -1, engaged: true });
 
     // The verdict drops to clear, but the car is still alongside: it keeps the
     // side it was given rather than snapping back onto the player.
     const second = computeRadarBlips({
       ...baseInput,
       overlap: NO_OVERLAP,
-      previousSides: first.sides,
+      previousTargets: first.targets,
+      carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300.3)]),
     });
 
     expect(second.blips[0].lateralM).toBeLessThan(0);
-    expect(second.sides.get(1)).toBe(-1);
+    expect(second.targets.get(1)?.side).toBe(-1);
+  });
+
+  it('keeps an engaged car engaged past the engage range', () => {
+    // Between the two thresholds, a tracked car stays amber and a fresh one is
+    // ignored — that gap is the whole reason the thresholds differ.
+    const between = 8;
+    const fresh = computeRadarBlips({
+      ...baseInput,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300 + between)]),
+    });
+    expect(fresh.blips[0].level).toBe('far');
+
+    const tracked = computeRadarBlips({
+      ...baseInput,
+      carNumbers: new Map([[1, '24']]),
+      previousTargets: withTargets([[1, held(null)]]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300 + between)]),
+    });
+    expect(tracked.blips[0].level).toBe('nearby');
+    expect(tracked.targets.get(1)?.engaged).toBe(true);
+  });
+
+  it('does not track a car that has left the release range', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      previousTargets: withTargets([[1, held(null)]]),
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(311)]),
+    });
+
+    expect(result.blips[0].level).toBe('far');
+    expect(result.targets.get(1)?.engaged).toBe(false);
   });
 });

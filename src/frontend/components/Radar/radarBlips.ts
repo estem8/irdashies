@@ -10,8 +10,11 @@ import {
   type OverlapSide,
   type RadarOverlap,
 } from './overlapSides';
-
-export type RadarBlipColor = 'sameLap' | 'lapsAhead' | 'lapsBehind' | 'inPit';
+import {
+  evaluateProximity,
+  type ProximityLevel,
+  type ProximityThresholds,
+} from './radarProximity';
 
 export interface RadarBlip {
   carIdx: number;
@@ -25,7 +28,20 @@ export interface RadarBlip {
    * direction cancels out.
    */
   relYaw: number;
-  color: RadarBlipColor;
+  /** Fore/aft gap in metres — the distance the radar colours by. */
+  gapM: number;
+  level: ProximityLevel;
+  /** Set when the sim reports this car directly alongside. */
+  side: OverlapSide | null;
+  /** Car number for the blip label; null when the session has none. */
+  carNumber: string | null;
+  inPit: boolean;
+}
+
+/** What the widget must carry from one frame to the next, per car. */
+export interface RadarTargetState {
+  side: OverlapSide | null;
+  engaged: boolean;
 }
 
 export interface RadarBlipResult {
@@ -35,16 +51,15 @@ export interface RadarBlipResult {
    * track map draws nothing for a track without path points.
    */
   hasGeometry: boolean;
-  /** The focus car has a usable position; false blanks the disc. */
+  /** The focus car has a usable position; false blanks the radar. */
   playerOnRoad: boolean;
   blips: RadarBlip[];
-  /** Sides assigned this frame, to hand back in as `previousSides`. */
-  sides: ReadonlyMap<number, OverlapSide>;
+  /** State to hand back in as `previousTargets` next frame. */
+  targets: ReadonlyMap<number, RadarTargetState>;
 }
 
 export interface RadarBlipInput {
   carIdxLapDistPct: readonly number[];
-  carIdxLap: readonly number[];
   carIdxOnPitRoad: readonly boolean[];
   playerCarIdx: number | null;
   trackDrawing: TrackDrawing | undefined;
@@ -56,15 +71,20 @@ export interface RadarBlipInput {
   overlap: RadarOverlap;
   vehicleWidth: number;
   vehicleLength: number;
-  /** Sides held from the previous frame; the caller owns this across frames. */
-  previousSides: ReadonlyMap<number, OverlapSide>;
+  thresholds: ProximityThresholds;
+  /** Car number by CarIdx, for blip labels. */
+  carNumbers: ReadonlyMap<number, string>;
+  /** State carried over from the previous frame; the caller owns it. */
+  previousTargets: ReadonlyMap<number, RadarTargetState>;
 }
+
+const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 
 const NO_GEOMETRY: RadarBlipResult = {
   hasGeometry: false,
   playerOnRoad: false,
   blips: [],
-  sides: new Map(),
+  targets: EMPTY_TARGETS,
 };
 
 /**
@@ -84,12 +104,12 @@ const onRoad = (pct: number | undefined): pct is number =>
  * the centreline offset between its point and the player's — two cars side by
  * side on the same part of the road project onto each other. What the lateral
  * term does carry is how much the road bends between the two cars, which is
- * what curves a blip off the vertical axis in a corner.
+ * what curves a blip off the vertical axis in a corner. A car the sim reports
+ * directly alongside is the exception: it is pinned to its side instead.
  */
 export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const {
     carIdxLapDistPct: positions,
-    carIdxLap,
     carIdxOnPitRoad,
     playerCarIdx,
     trackDrawing,
@@ -99,7 +119,9 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     overlap,
     vehicleWidth,
     vehicleLength,
-    previousSides,
+    thresholds,
+    carNumbers,
+    previousTargets,
   } = input;
 
   const trackPathPoints = trackDrawing?.active?.trackPathPoints;
@@ -124,7 +146,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       hasGeometry: true,
       playerOnRoad: false,
       blips: [],
-      sides: new Map(),
+      targets: EMPTY_TARGETS,
     };
   }
 
@@ -140,7 +162,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       hasGeometry: true,
       playerOnRoad: false,
       blips: [],
-      sides: new Map(),
+      targets: EMPTY_TARGETS,
     };
   }
 
@@ -162,7 +184,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     playerPoint
   );
 
-  const playerLap = carIdxLap[playerCarIdx];
   const blips: RadarBlip[] = [];
   const carPoint = { x: 0, y: 0 };
 
@@ -208,51 +229,64 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
             Math.cos(carTangent - playerTangent)
           );
 
-    const lapDiff =
-      playerLap === undefined
-        ? 0
-        : (carIdxLap[carIdx] ?? playerLap) - playerLap;
-
     blips.push({
       carIdx,
       alongM,
       lateralM,
       relYaw,
-      color: inPit
-        ? 'inPit'
-        : lapDiff > 0
-          ? 'lapsAhead'
-          : lapDiff < 0
-            ? 'lapsBehind'
-            : 'sameLap',
+      gapM: Math.abs(alongM),
+      level: 'far',
+      side: null,
+      carNumber: carNumbers.get(carIdx) ?? null,
+      inPit,
     });
   }
 
   // A car running abreast projects onto the player's own point of the
   // centreline — the SDK publishes no lateral offset — so without this it would
-  // be drawn on top of the player's rectangle and appear to pass through. The
-  // sim's own side verdict puts it to one side instead.
-  //
-  // The offset is full while the verdict covers the car, so a genuine overlap
-  // reads at its real width; it fades out only in the retained tail, where the
-  // verdict has gone but the car keeps its side for a few frames longer.
+  // be drawn on top of the player's rectangle. The sim's own side verdict puts
+  // it to one side instead.
+  const previousSides = new Map<number, OverlapSide>();
+  for (const blip of blips) {
+    const held = previousTargets.get(blip.carIdx)?.side;
+    if (held != null) previousSides.set(blip.carIdx, held);
+  }
   const sides = assignOverlapSides({
     blips,
     overlap,
     vehicleLength,
     previous: previousSides,
   });
+
+  // The offset is full while the verdict covers the car, so a genuine overlap
+  // reads at its real width; it fades out only in the retained tail, where the
+  // verdict has gone but the car keeps its side for a few frames longer.
   const abeam = alongsideWindowM(vehicleLength);
   const retain = retainSideWindowM(vehicleLength);
   const fadeSpan = Math.max(1e-6, retain - abeam);
+
+  const targets = new Map<number, RadarTargetState>();
   for (const blip of blips) {
-    const side = sides.get(blip.carIdx);
-    if (side === undefined) continue;
-    const distance = Math.abs(blip.alongM);
-    const closeness =
-      distance <= abeam ? 1 : Math.max(0, 1 - (distance - abeam) / fadeSpan);
-    blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
+    const side = sides.get(blip.carIdx) ?? null;
+    blip.side = side;
+    if (side !== null) {
+      const closeness =
+        blip.gapM <= abeam
+          ? 1
+          : Math.max(0, 1 - (blip.gapM - abeam) / fadeSpan);
+      blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
+    }
+
+    const wasEngaged = previousTargets.get(blip.carIdx)?.engaged ?? false;
+    const verdict = evaluateProximity(
+      blip.gapM,
+      side !== null,
+      wasEngaged,
+      thresholds
+    );
+    blip.level = verdict.level;
+    targets.set(blip.carIdx, { side, engaged: verdict.engaged });
   }
 
-  return { hasGeometry: true, playerOnRoad: true, blips, sides };
+  return { hasGeometry: true, playerOnRoad: true, blips, targets };
 };
