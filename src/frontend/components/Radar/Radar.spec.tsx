@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import {
   defaultDashboard,
   type DashboardLayout,
@@ -255,5 +255,23 @@ describe('Radar widget over a recorded multiclass session', () => {
     await waitForDisplay();
 
     expect(latest().blips[0].fade).toBe(1);
+  });
+
+  it('does not re-render the display when a snapshot repeats the same input', async () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({ radarRange: 25 }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    const renders = rendered.length;
+    act(() => {
+      harness.seekTo(fixture.frames.length - 1);
+      harness.seekTo(fixture.frames.length - 1);
+    });
+
+    // The delivery carries the same selected input as the settled frame, so
+    // radarInputEqual must keep the display from rendering again.
+    expect(rendered.length).toBe(renders);
   });
 });

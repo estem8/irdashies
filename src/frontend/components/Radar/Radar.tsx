@@ -62,6 +62,8 @@ const DEMO_BLIPS: RadarBlip[] = [
   },
 ];
 const DEMO_OVERLAP: RadarOverlap = { left: 1, right: 0 };
+/** Metres; the demo blips are laid out against a 5.8 km lap. */
+const DEMO_TRACK_LENGTH_M = 5800;
 
 export const Radar = () => {
   const settings = useRadarSettings();
@@ -112,7 +114,7 @@ export const Radar = () => {
         colorPlayer={settings.colorPlayer}
         colorInPit={settings.colorInPit}
         bgOpacity={settings.background.opacity}
-        trackLengthM={isDemoMode ? 5800 : state.trackLengthM}
+        trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
       />
     </div>
   );
