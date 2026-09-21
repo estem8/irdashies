@@ -7,8 +7,9 @@ import type { RadarBlip } from './radarBlips';
 
 /**
  * A car metres ahead, one alongside on the left, one a lap up closing from
- * behind, and the pace car in the pits: between them the four colours and the
- * lettered label the display can produce.
+ * behind, a car level with us whose side the sim has not reported, and the pace
+ * car in the pits: between them every colour, the lettered label and the
+ * symmetric rim marks the display can produce.
  */
 const DEMO_BLIPS: RadarBlip[] = [
   {
@@ -19,6 +20,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 12,
     level: 'far',
     side: null,
+    sideUnknown: false,
     carNumber: '24',
     isPaceCar: false,
     lapping: false,
@@ -33,6 +35,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 3.2,
     level: 'nearby',
     side: null,
+    sideUnknown: false,
     carNumber: '7',
     isPaceCar: false,
     lapping: true,
@@ -47,6 +50,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 0.8,
     level: 'critical',
     side: -1,
+    sideUnknown: false,
     carNumber: '51',
     isPaceCar: false,
     lapping: false,
@@ -61,11 +65,27 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 6,
     level: 'nearby',
     side: null,
+    sideUnknown: false,
     carNumber: '9',
     isPaceCar: true,
     lapping: false,
     inPit: true,
     fade: 0.4,
+  },
+  {
+    carIdx: 5,
+    alongM: 0.4,
+    lateralM: 0,
+    relYaw: 0,
+    gapM: 0.4,
+    level: 'critical',
+    side: null,
+    sideUnknown: true,
+    carNumber: '31',
+    isPaceCar: false,
+    lapping: false,
+    inPit: false,
+    fade: 1,
   },
 ];
 /** Metres; the demo blips are laid out against a 5.8 km lap. */

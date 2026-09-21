@@ -157,6 +157,32 @@ describe('radar placement over recorded telemetry', () => {
     });
   }
 
+  it('marks a level car the sim stayed silent about, on a recorded frame', () => {
+    // Watkins Glen, recorded: car 17 is two millimetres from the player's own
+    // lap distance with both on track, and CarLeftRight reads Clear — the sim
+    // never calls it. A car cannot share that point of the road, so it is
+    // beside the player, and only the side is unknown. This is the recorded
+    // shape of "cars pass through me".
+    const placed = place(CAPTURES[3]);
+    const level = placed.blips.filter((blip) => blip.gapM <= 1);
+    expect(level).toHaveLength(1);
+    const [beside] = level;
+    expect(beside.carIdx).toBe(17);
+    expect(beside.side).toBeNull();
+    expect(beside.sideUnknown).toBe(true);
+    // The car behind it, ten metres back in its own lane, is not beside us.
+    const behind = placed.blips.find((blip) => blip.carIdx === 19);
+    expect(behind?.sideUnknown).toBe(false);
+  });
+
+  it('does not mark cars the sim did call, nor cars in their own lane', () => {
+    // Interlagos with CarLeftRight = CarLeft: the sim named the side, so the
+    // car is placed, not flagged as unknown.
+    const placed = place(CAPTURES[0]);
+    expect(placed.blips[0].side).toBe(-1);
+    expect(placed.blips[0].sideUnknown).toBe(false);
+  });
+
   it('draws a car the sim reports alongside on that side, clear of the player', () => {
     // Interlagos with CarLeftRight = CarLeft: the car sits 4.6 m back on the
     // same centreline, so without the verdict it would be painted through the

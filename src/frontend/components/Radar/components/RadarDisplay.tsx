@@ -170,8 +170,7 @@ const drawDisc = (
 
   // Warning arch on the rim, at a critical car's bearing.
   const critical = props.blips.filter((blip) => blip.level === 'critical');
-  for (const blip of critical) {
-    const bearing = Math.atan2(blip.lateralM, blip.alongM);
+  const rimArch = (bearing: number, color: string, alpha: number) => {
     ctx.save();
     ctx.beginPath();
     ctx.arc(
@@ -182,12 +181,38 @@ const drawDisc = (
       -Math.PI / 2 + bearing + 0.32
     );
     ctx.lineWidth = Math.max(2, radius * 0.06);
-    ctx.strokeStyle = props.colorCritical;
-    ctx.globalAlpha = props.pulseWhenCritical
-      ? 0.45 + 0.55 * Math.abs(Math.sin(props.nowSeconds * Math.PI))
-      : 0.9;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
     ctx.stroke();
     ctx.restore();
+  };
+  const criticalAlpha = props.pulseWhenCritical
+    ? 0.45 + 0.55 * Math.abs(Math.sin(props.nowSeconds * Math.PI))
+    : 0.9;
+  for (const blip of critical) {
+    // A car level with us and no verdict has no bearing to point at; the
+    // symmetric marks below speak for it instead of this one picking a side.
+    if (blip.sideUnknown) continue;
+    rimArch(
+      Math.atan2(blip.lateralM, blip.alongM),
+      props.colorCritical,
+      criticalAlpha
+    );
+  }
+
+  // A car level with us whose side the sim has not reported is somewhere
+  // across the road and we cannot say where. Both rims light rather than one:
+  // a single arch would be a side nobody measured, and the car would otherwise
+  // read as one driving through the player's own rectangle.
+  for (const blip of props.blips) {
+    if (!blip.sideUnknown) continue;
+    for (const side of [-1, 1] as const) {
+      rimArch(
+        (side * Math.PI) / 2,
+        colorFor(blip, props),
+        alphaFor(blip, props)
+      );
+    }
   }
 };
 
@@ -259,6 +284,23 @@ const drawPortrait = (
       alphaFor(blip, props),
       blipLabel(blip, props.showCarNumbers)
     );
+
+    // A car level with us whose side the sim never reported: the lane has no
+    // left or right to put it in, so both edges are marked at its row rather
+    // than one being invented for it.
+    if (!blip.sideUnknown) continue;
+    const y = centreY - alongM[i] * scale;
+    ctx.save();
+    ctx.strokeStyle = colorFor(blip, props);
+    ctx.globalAlpha = alphaFor(blip, props);
+    ctx.lineWidth = Math.max(3, size.width * 0.03);
+    for (const edge of [0, size.width]) {
+      ctx.beginPath();
+      ctx.moveTo(edge, y - lengthPx * 0.6);
+      ctx.lineTo(edge, y + lengthPx * 0.6);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   drawVehicle(
@@ -296,7 +338,12 @@ const drawBars = (
   };
 
   const strip = (side: -1 | 1) => {
-    const blip = nearest(side);
+    // A car level with the player whose side the sim never reported belongs to
+    // neither strip alone, so both light rather than one being guessed.
+    const unknown = props.blips
+      .filter((blip) => blip.sideUnknown)
+      .sort((a, b) => a.gapM - b.gapM)[0];
+    const blip = nearest(side) ?? unknown;
     if (!blip) return;
     const fill = colorFor(blip, props);
     const presence = Math.max(

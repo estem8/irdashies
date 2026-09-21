@@ -28,6 +28,7 @@ const blip = (
         ? 'nearby'
         : 'far',
   side: null,
+  sideUnknown: false,
   carNumber,
   isPaceCar: false,
   lapping: false,
@@ -41,6 +42,7 @@ const CLOSING = blip(2, -4, 2.4, '7');
 const ALONGSIDE = blip(4, -0.6, -2.1, '51', {
   level: 'critical',
   side: -1,
+  sideUnknown: false,
 });
 /** A lap up and a long way back, so the blue shows at the range edge. */
 const LAPPING = blip(3, -13, -2.4, '88', { lapping: true });
@@ -112,6 +114,20 @@ export const PortraitRadar: Story = {
 export const SideBars: Story = {
   name: 'Side bars',
   args: { mode: 'bars', blips: [ALONGSIDE] },
+};
+
+export const AlongsideSideUnknown: Story = {
+  name: 'Alongside, side unknown',
+  args: {
+    // The sim reports no verdict for about half of recorded overtakes, and for
+    // every overtake of a player standing off the racing surface, so the disc
+    // has to speak without one: both rims light rather than a side being
+    // invented for a car that is level with us.
+    blips: [
+      AHEAD,
+      blip(7, 0.3, 0, '31', { level: 'critical', sideUnknown: true }),
+    ],
+  },
 };
 
 export const CarAlongside: Story = {

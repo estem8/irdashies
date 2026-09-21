@@ -13,6 +13,7 @@ const blip = (carIdx: number, alongM: number, lateralM = 0): RadarBlip => ({
   gapM: Math.abs(alongM),
   level: Math.abs(alongM) <= 1.5 ? 'critical' : 'far',
   side: null,
+  sideUnknown: false,
   carNumber: null,
   isPaceCar: false,
   lapping: false,

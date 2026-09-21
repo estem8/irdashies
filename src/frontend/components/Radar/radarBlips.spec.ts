@@ -323,6 +323,45 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].side).toBeNull();
   });
 
+  it('marks a level car the sim did not call as beside us with an unknown side', () => {
+    // Two cars cannot share a point of the road, so a rival level with the
+    // player is beside them whether or not the sim's verdict arrived. Measured
+    // on a recorded race, the verdict is silent for about half the overtakes
+    // and for every overtake of a player off the racing surface.
+    const level = (gap: number) =>
+      computeRadarBlips({
+        ...baseInput,
+        overlap: NO_OVERLAP,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
+      }).blips[0];
+
+    // Half a car length either way: beside us, side unknown.
+    const abreast = level(0.2);
+    expect(abreast.side).toBeNull();
+    expect(abreast.sideUnknown).toBe(true);
+    expect(abreast.lateralM).toBeCloseTo(0, 6);
+
+    const justInside = level(2.2);
+    expect(justInside.sideUnknown).toBe(true);
+
+    // A car with room to be in its own lane ahead is not beside us.
+    expect(level(2.5).sideUnknown).toBe(false);
+    expect(level(6).sideUnknown).toBe(false);
+  });
+
+  it('does not mark a level car whose side the sim reported', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      overlap: { left: 1, right: 0 },
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300)]),
+    });
+
+    expect(result.blips[0].side).toBe(-1);
+    expect(result.blips[0].sideUnknown).toBe(false);
+  });
+
   it('fades a car in over the outer band of the range', () => {
     const fadeAt = (gap: number) =>
       computeRadarBlips({

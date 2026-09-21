@@ -34,6 +34,13 @@ export interface RadarBlip {
   level: ProximityLevel;
   /** Set when the sim reports this car directly alongside. */
   side: OverlapSide | null;
+  /**
+   * Set when the car is level with the player and the sim has reported no side
+   * for it. It is beside us — two cars cannot share a point of the road — but
+   * which side it is on is not known, so nothing may be drawn as if it were in
+   * one lane rather than the other.
+   */
+  sideUnknown: boolean;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
@@ -133,6 +140,18 @@ const ABREAST_LATERAL_FACTOR = 1.1;
  * ahead/behind sign; a real pass still sweeps through the latch.
  */
 export const LONGITUDINAL_LATCH_M = 1;
+
+/**
+ * How level a car counts as beside the player, in car lengths.
+ *
+ * Two cars cannot share a point of the road, so a rival whose centre is within
+ * half a car length of the player's is necessarily across the road from them —
+ * whether or not the sim's own verdict said so. Measured on a ten-minute race,
+ * the verdict stays silent for about half the overtakes and for every overtake
+ * of a player standing off the racing surface, so this is what lets the display
+ * say a car is beside you when the sim says nothing.
+ */
+const ABREAST_UNKNOWN_LENGTHS = 0.5;
 
 /**
  * Holds a car on the side it was last drawn on while its measured offset sits
@@ -343,6 +362,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       gapM: Math.abs(alongM),
       level: 'far',
       side: null,
+      sideUnknown: false,
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
       lapping:
@@ -380,6 +400,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const fadeSpan = Math.max(1e-6, retain - abeam);
 
   const targets = new Map<number, RadarTargetState>();
+  const abreastUnknownM = Math.max(1, vehicleLength * ABREAST_UNKNOWN_LENGTHS);
   for (const blip of blips) {
     const side = sides.get(blip.carIdx) ?? null;
     blip.side = side;
@@ -390,6 +411,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
           : Math.max(0, 1 - (blip.gapM - abeam) / fadeSpan);
       blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
     }
+    // Level with the player and no verdict: the car is beside us, but the only
+    // thing that could say which side is silent. It is marked so nothing draws
+    // it as though it were in a lane we know it to be in.
+    blip.sideUnknown = side === null && blip.gapM <= abreastUnknownM;
 
     const wasEngaged = previousTargets.get(blip.carIdx)?.engaged ?? false;
     const verdict = evaluateProximity(
