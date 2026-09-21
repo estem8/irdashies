@@ -56,31 +56,38 @@ const pctOfArc = (arcMetres: number) => arcMetres / TRACK_LENGTH_M;
 
 const positionsOf = (
   positions: number[],
-  onPitRoad: boolean[] = positions.map(() => false)
+  onPitRoad: boolean[] = positions.map(() => false),
+  laps: number[] = positions.map(() => 1)
 ) => ({
   carIdxLapDistPct: positions,
+  carIdxLap: laps,
   carIdxOnPitRoad: onPitRoad,
 });
 
-const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
-  {
-    playerCarIdx: 0,
-    trackDrawing: trackDrawing(),
-    trackLengthM: TRACK_LENGTH_M,
-    radarRange: 15,
-    hideInPit: false,
-    overlap: NO_OVERLAP,
-    vehicleWidth: 2,
-    vehicleLength: 4.5,
-    thresholds: THRESHOLDS,
-    fadeBandM: 3,
-    carNumbers: new Map([
-      [1, '24'],
-      [2, '7'],
-    ]),
-    paceCarIdx: null,
-    previousTargets: new Map<number, RadarTargetState>(),
-  };
+const baseInput: Omit<
+  RadarBlipInput,
+  'carIdxLapDistPct' | 'carIdxOnPitRoad' | 'carIdxLap'
+> = {
+  playerCarIdx: 0,
+  // Every fixture below runs as a race, so a lap counter difference means a
+  // lapping car. The practice case is covered on its own.
+  isRace: true,
+  trackDrawing: trackDrawing(),
+  trackLengthM: TRACK_LENGTH_M,
+  radarRange: 15,
+  hideInPit: false,
+  overlap: NO_OVERLAP,
+  vehicleWidth: 2,
+  vehicleLength: 4.5,
+  thresholds: THRESHOLDS,
+  fadeBandM: 3,
+  carNumbers: new Map([
+    [1, '24'],
+    [2, '7'],
+  ]),
+  paceCarIdx: null,
+  previousTargets: new Map<number, RadarTargetState>(),
+};
 
 const withTargets = (targets: [number, RadarTargetState][]) =>
   new Map<number, RadarTargetState>(targets);

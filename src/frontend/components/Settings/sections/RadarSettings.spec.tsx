@@ -104,4 +104,31 @@ describe('RadarSettings', () => {
     expect(screen.getByText('Radar Range')).toBeInTheDocument();
     expect(screen.getByText('Engage Range')).toBeInTheDocument();
   });
+
+  it('offers a colour for every blip the display can paint', () => {
+    // The lapping colour has no default in a profile saved before it existed,
+    // so it has to come from the widget defaults rather than render undefined.
+    mocks.setDashboard(
+      dashboardWith({ ...getWidgetDefaultConfig('radar') } as RadarConfig)
+    );
+    render(<RadarSettings />);
+    // The chosen tab is remembered in localStorage, which another test in this
+    // file has already moved to Options.
+    act(() => screen.getByRole('button', { name: 'Display' }).click());
+
+    const swatch = (label: string) => {
+      const input = screen
+        .getByText(label)
+        .parentElement?.querySelector('input[type="color"]');
+      if (!input) throw new Error(`no colour field for ${label}`);
+      return (input as HTMLInputElement).value;
+    };
+
+    expect(swatch('Rivals')).toBe('#cbd5e1');
+    expect(swatch('Nearby')).toBe('#f59e0b');
+    expect(swatch('Critical')).toBe('#ef4444');
+    expect(swatch('Lapping you')).toBe('#3b82f6');
+    expect(swatch('In pit')).toBe('#6b7280');
+    expect(swatch('Your car')).toBe('#2fd16a');
+  });
 });

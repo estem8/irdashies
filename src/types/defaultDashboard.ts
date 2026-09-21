@@ -1096,11 +1096,13 @@ export const defaultDashboard: {
         fadeInCars: true,
         fadeBandM: 3,
         showCarNumbers: true,
-        showOverlapIndicator: true,
-        colorFar: '#3b82f6',
+        // Rivals are neutral by default: the disc is a proximity warning, and a
+        // blue rival read as a blue flag. Blue is reserved for lapping cars.
+        colorFar: '#cbd5e1',
         colorNearby: '#f59e0b',
         colorCritical: '#ef4444',
         colorPlayer: '#2fd16a',
+        colorLapping: '#3b82f6',
         colorInPit: '#6b7280',
         background: {
           opacity: 30,

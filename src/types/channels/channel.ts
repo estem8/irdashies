@@ -134,6 +134,8 @@ export interface RadarSnapshot {
   focusCarIdx: number | null;
   /** Lap distance fraction (0–1) by CarIdx, full precision; -1 when invalid. */
   carIdxLapDistPct: readonly number[];
+  /** Current lap number by CarIdx — drives the lapping colour. -1 when none. */
+  carIdxLap: readonly number[];
   /** Pit road state by CarIdx — drives pit colouring and blip filtering. */
   carIdxOnPitRoad: readonly boolean[];
   isOnTrack: boolean;

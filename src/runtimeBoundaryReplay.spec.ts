@@ -514,6 +514,7 @@ const summarize = (snapshots: SnapshotRecord) => ({
   'radar.snapshot': {
     focusCarIdx: snapshots['radar.snapshot'].focusCarIdx,
     carIdxLapDistPct: snapshots['radar.snapshot'].carIdxLapDistPct,
+    carIdxLap: snapshots['radar.snapshot'].carIdxLap,
     carIdxOnPitRoad: snapshots['radar.snapshot'].carIdxOnPitRoad,
     version: snapshots['radar.snapshot'].version,
   },
@@ -751,6 +752,7 @@ const FIXED_GOLDEN = {
     focusCarIdx: 0,
     // Player 0.18 with the rival the harness places 0.05 ahead.
     carIdxLapDistPct: [0.18, 0.22999999999999998],
+    carIdxLap: [1, 1],
     carIdxOnPitRoad: [false, false],
     version: 5,
   },

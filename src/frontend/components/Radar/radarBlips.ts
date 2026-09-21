@@ -38,6 +38,11 @@ export interface RadarBlip {
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
   isPaceCar: boolean;
+  /**
+   * Set when this car is lapping the player — a lap or more ahead of them. It
+   * is drawn in the blue-flag colour: hold your line and let it by.
+   */
+  lapping: boolean;
   inPit: boolean;
   /**
    * Opacity 0..1 for this car, so it fades in over the outer band of the range
@@ -75,8 +80,15 @@ export interface RadarBlipResult {
 
 export interface RadarBlipInput {
   carIdxLapDistPct: readonly number[];
+  /** Current lap number by CarIdx; -1 where the sim has none. */
+  carIdxLap: readonly number[];
   carIdxOnPitRoad: readonly boolean[];
   playerCarIdx: number | null;
+  /**
+   * True while the current session is a race. Laps only separate lapping cars
+   * there: in practice the car a lap up on you has simply been out longer.
+   */
+  isRace: boolean;
   trackDrawing: TrackDrawing | undefined;
   /** Track length in metres; from the session's WeekendInfo.TrackLength. */
   trackLengthM: number;
@@ -141,6 +153,24 @@ export const latchAlongSide = (
 const onRoad = (pct: number | undefined): pct is number =>
   typeof pct === 'number' && Number.isFinite(pct) && pct >= 0;
 
+/**
+ * Whether a rival is lapping the player: more than half a lap of total distance
+ * ahead of them, which is what the standings widget calls `lappedState:
+ * 'ahead'` and paints its rows by. Lap counts alone will not do — a leader
+ * crossing the line puts every car on the previous count a "lap" behind while
+ * it is still seconds up the road — so each counter is taken together with that
+ * driver's position on the lap, exactly as `useDriverPositions` computes it.
+ */
+export const isLappingPlayer = (
+  rivalLap: number,
+  rivalPct: number,
+  playerLap: number,
+  playerPct: number
+): boolean =>
+  rivalLap >= 0 &&
+  playerLap >= 0 &&
+  Math.round(rivalLap + rivalPct - (playerLap + playerPct)) > 0;
+
 /** The fixed blip tag for the pace car; its number (0) is meaningless. */
 export const PACE_CAR_LABEL = 'PACE';
 
@@ -171,8 +201,10 @@ export const blipLabel = (
 export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const {
     carIdxLapDistPct: positions,
+    carIdxLap,
     carIdxOnPitRoad,
     playerCarIdx,
+    isRace,
     trackDrawing,
     trackLengthM,
     radarRange,
@@ -249,6 +281,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
   const blips: RadarBlip[] = [];
   const carPoint = { x: 0, y: 0 };
+  const playerLap = carIdxLap[playerCarIdx] ?? -1;
 
   for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
     if (carIdx === playerCarIdx) continue;
@@ -312,6 +345,9 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       side: null,
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
+      lapping:
+        isRace &&
+        isLappingPlayer(carIdxLap[carIdx] ?? -1, pct, playerLap, playerPct),
       inPit,
       // Faded by how far the car is from the player in the plane the radar
       // draws in, so one closing head-on fades in on approach while one

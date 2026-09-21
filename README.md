@@ -352,10 +352,11 @@ Shows the cars around you on a circular disc, like a spotter's proximity radar: 
 **Features:**
 
 - Real-metre proximity: cars appear at their true distance ahead or behind, and curve off the vertical axis where the road bends between you and them
-- Colour-coded by lapped state: same lap, a lap ahead, a lap behind, and cars on pit road
-- Side overlap indicator: bars at the disc edges when the sim reports a car alongside you, amber for one car and red for two
+- Colour-coded: rivals are neutral grey, cars you are about to engage turn amber, cars right alongside turn red, and a car lapping you is drawn in the blue-flag blue
+- Cars the sim reports alongside are pinned to that side rather than onto the point of the centreline you share with them; the side bars view shows a strip per side instead
 - Configurable range (10-25 m) and car dimensions, since the sim reports no per-car size
 - Optional hiding of cars on pit road, which otherwise sit on the racing line's centreline
+- Show the disc only while a car is near, or keep it on screen at all times, with an optional fade as it appears and disappears
 - Adjustable background opacity and on-track/session visibility controls
 
 ### Slow Car Ahead Warning

@@ -490,7 +490,9 @@ export type RadarDisplayMode = 'disc' | 'portrait' | 'bars';
  *
  * Colour is a proximity scale — far, nearby, critical — with the engagement
  * thresholds separated from the release ones so a warning cannot flicker while
- * a car hovers on a threshold.
+ * a car hovers on a threshold. A car a lap or more ahead of the player is
+ * drawn in the motorsport blue-flag colour instead of the proximity scale,
+ * because the one thing to do about it is hold your line and let it by.
  */
 export interface RadarConfig {
   displayMode: RadarDisplayMode;
@@ -532,12 +534,13 @@ export interface RadarConfig {
   fadeBandM: number;
   /** Draw the car number on each blip. */
   showCarNumbers: boolean;
-  /** Draw the side strips that light up when a car pulls alongside. */
-  showOverlapIndicator: boolean;
+  /** Ordinary rivals, whatever their gap: the baseline blip. */
   colorFar: string;
   colorNearby: string;
   colorCritical: string;
   colorPlayer: string;
+  /** A car a lap or more ahead of the player — the blue flag, in its colour. */
+  colorLapping: string;
   /** Cars on pit road when `hideInPit` is off; theirs is a presence, not a threat. */
   colorInPit: string;
   background: { opacity: number };

@@ -4,9 +4,12 @@ import { useRadar } from './hooks/useRadar';
 import { useRadarFade } from './hooks/useRadarFade';
 import { useRadarSettings } from './hooks/useRadarSettings';
 import type { RadarBlip } from './radarBlips';
-import type { RadarOverlap } from './overlapSides';
 
-/** A car metres ahead, one alongside on the left, one a lap down behind. */
+/**
+ * A car metres ahead, one alongside on the left, one a lap up closing from
+ * behind, and the pace car in the pits: between them the four colours and the
+ * lettered label the display can produce.
+ */
 const DEMO_BLIPS: RadarBlip[] = [
   {
     carIdx: 1,
@@ -18,6 +21,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '24',
     isPaceCar: false,
+    lapping: false,
     inPit: false,
     fade: 1,
   },
@@ -31,6 +35,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '7',
     isPaceCar: false,
+    lapping: true,
     inPit: false,
     fade: 1,
   },
@@ -44,6 +49,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: -1,
     carNumber: '51',
     isPaceCar: false,
+    lapping: false,
     inPit: false,
     fade: 1,
   },
@@ -57,11 +63,11 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '9',
     isPaceCar: true,
+    lapping: false,
     inPit: true,
     fade: 0.4,
   },
 ];
-const DEMO_OVERLAP: RadarOverlap = { left: 1, right: 0 };
 /** Metres; the demo blips are laid out against a 5.8 km lap. */
 const DEMO_TRACK_LENGTH_M = 5800;
 
@@ -100,18 +106,17 @@ export const Radar = () => {
       <RadarDisplay
         mode={settings.displayMode}
         blips={isDemoMode ? DEMO_BLIPS : state.blips}
-        overlap={isDemoMode ? DEMO_OVERLAP : state.overlap}
         radarRange={settings.radarRange}
         nearbyRange={settings.nearbyRange}
         vehicleWidth={settings.vehicleWidth}
         vehicleLength={settings.vehicleLength}
         showCarNumbers={settings.showCarNumbers}
         pulseWhenCritical={settings.pulseWhenCritical}
-        showOverlapIndicator={settings.showOverlapIndicator}
         colorFar={settings.colorFar}
         colorNearby={settings.colorNearby}
         colorCritical={settings.colorCritical}
         colorPlayer={settings.colorPlayer}
+        colorLapping={settings.colorLapping}
         colorInPit={settings.colorInPit}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}

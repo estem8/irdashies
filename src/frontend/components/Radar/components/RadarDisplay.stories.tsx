@@ -5,8 +5,8 @@ import type { RadarBlip } from '../radarBlips';
 /**
  * The views drawn from hand-built blips. The widget stories drive the same
  * component from a recording, but no capture has a car on each side or a car a
- * lap down, so the proximity grades and the overlap bars are only reachable
- * here.
+ * lap up, so the proximity grades, the blue lapping colour and the overlap
+ * bars are only reachable here.
  */
 
 const blip = (
@@ -30,6 +30,7 @@ const blip = (
   side: null,
   carNumber,
   isPaceCar: false,
+  lapping: false,
   inPit: false,
   fade: 1,
   ...extra,
@@ -41,7 +42,8 @@ const ALONGSIDE = blip(4, -0.6, -2.1, '51', {
   level: 'critical',
   side: -1,
 });
-const LAPPED = blip(3, -13, -2.4, '88');
+/** A lap up and a long way back, so the blue shows at the range edge. */
+const LAPPING = blip(3, -13, -2.4, '88', { lapping: true });
 const IN_PIT = blip(5, 6, 4.5, '9', { inPit: true });
 const PACE = blip(6, 5.5, 0.4, '0', { isPaceCar: true });
 
@@ -59,19 +61,18 @@ const meta = {
   ],
   args: {
     mode: 'disc' as const,
-    blips: [AHEAD, CLOSING, LAPPED, IN_PIT],
-    overlap: { left: 0, right: 0 },
+    blips: [AHEAD, CLOSING, LAPPING, IN_PIT],
     radarRange: 15,
     nearbyRange: 7,
     vehicleWidth: 1.9,
     vehicleLength: 4.5,
     showCarNumbers: true,
     pulseWhenCritical: false,
-    showOverlapIndicator: true,
-    colorFar: '#3b82f6',
+    colorFar: '#cbd5e1',
     colorNearby: '#f59e0b',
     colorCritical: '#ef4444',
     colorPlayer: '#2fd16a',
+    colorLapping: '#3b82f6',
     colorInPit: '#6b7280',
     bgOpacity: 30,
     // Any positive length works: the views place blips by metre offset, and
@@ -88,11 +89,11 @@ const meta = {
     bgOpacity: { control: { type: 'range', min: 0, max: 100, step: 5 } },
     showCarNumbers: { control: 'boolean' },
     pulseWhenCritical: { control: 'boolean' },
-    showOverlapIndicator: { control: 'boolean' },
     colorFar: { control: 'color' },
     colorNearby: { control: 'color' },
     colorCritical: { control: 'color' },
     colorPlayer: { control: 'color' },
+    colorLapping: { control: 'color' },
     colorInPit: { control: 'color' },
   },
 } satisfies Meta<typeof RadarDisplay>;
@@ -117,7 +118,6 @@ export const CarAlongside: Story = {
   name: 'Car alongside (critical)',
   args: {
     blips: [...meta.args.blips, ALONGSIDE],
-    overlap: { left: 1, right: 0 },
   },
 };
 
@@ -129,7 +129,6 @@ export const TwoCarsOnTheLeft: Story = {
       ALONGSIDE,
       blip(6, -1.2, -2, '77', { side: -1 }),
     ],
-    overlap: { left: 2, right: 0 },
   },
 };
 

@@ -94,15 +94,24 @@ describe('widget runtime metadata', () => {
     });
   });
 
-  it('requests per-car positions and the overlap verdict for the radar', () => {
+  it('requests per-car positions, the overlap verdict and the session for the radar', () => {
     expect(getWidgetRuntimeDefinition('radar')).toMatchObject({
       sessionData: true,
-      channels: ['radar.snapshot', 'blind-spot.snapshot'],
+      // track-state carries the session number, which tells the radar whether
+      // the lap counters it reads mean a lapping car or just a longer stint.
+      channels: [
+        'radar.snapshot',
+        'blind-spot.snapshot',
+        'track-state.snapshot',
+      ],
       channelRates: { 'radar.snapshot': 25, 'blind-spot.snapshot': 25 },
     });
     expect(rendererNeedsChannel([widget('radar')], 'radar.snapshot')).toBe(
       true
     );
+    expect(
+      rendererNeedsChannel([widget('radar')], 'track-state.snapshot')
+    ).toBe(true);
   });
 
   it('declares standings and relative as channel-only consumers', () => {

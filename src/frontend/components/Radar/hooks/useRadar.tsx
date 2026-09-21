@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 import type { RadarSnapshot } from '@irdashies/types';
 import {
   useBlindSpotSelector,
+  useCurrentSessionType,
   useDriverCarIdx,
   useRadarSelector,
   useSessionDrivers,
@@ -55,26 +56,29 @@ export interface UseRadarOptions {
 type RadarInput = readonly [
   number | null,
   readonly number[],
+  readonly number[],
   readonly boolean[],
   boolean,
 ];
 
-const EMPTY_INPUT: RadarInput = [null, [], [], false];
+const EMPTY_INPUT: RadarInput = [null, [], [], [], false];
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 
 const selectRadarInput = (snapshot: RadarSnapshot): RadarInput => [
   snapshot.focusCarIdx,
   snapshot.carIdxLapDistPct,
+  snapshot.carIdxLap,
   snapshot.carIdxOnPitRoad,
   snapshot.isOnTrack,
 ];
 
 const radarInputEqual = (previous: RadarInput, next: RadarInput): boolean =>
   previous[0] === next[0] &&
-  previous[3] === next[3] &&
+  previous[4] === next[4] &&
   shallow(previous[1], next[1]) &&
-  shallow(previous[2], next[2]);
+  shallow(previous[2], next[2]) &&
+  shallow(previous[3], next[3]);
 
 const trackDrawings = tracks as unknown as Record<
   number,
@@ -97,9 +101,10 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     criticalRange,
     fadeBandM,
   } = options;
-  const [focusCarIdx, positions, onPitRoad, isOnTrack] =
+  const [focusCarIdx, positions, laps, onPitRoad, isOnTrack] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
+  const isRace = useCurrentSessionType() === 'Race';
   const carLeftRight = useBlindSpotSelector(
     (snapshot) => snapshot.carLeftRight
   );
@@ -161,8 +166,10 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     }
     const result = computeRadarBlips({
       carIdxLapDistPct: positions,
+      carIdxLap: laps,
       carIdxOnPitRoad: onPitRoad,
       playerCarIdx,
+      isRace,
       trackDrawing,
       trackLengthM,
       radarRange,
@@ -180,8 +187,10 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     return result;
   }, [
     positions,
+    laps,
     onPitRoad,
     playerCarIdx,
+    isRace,
     trackId,
     trackDrawing,
     trackLengthM,

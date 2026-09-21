@@ -1,12 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { blipLabel, type RadarBlip } from '../radarBlips';
 import { useRadarMotion, type RadarMotionDraw } from '../hooks/useRadarMotion';
-import type { RadarOverlap } from '../overlapSides';
 
 export interface RadarDisplayProps {
   mode: 'disc' | 'portrait' | 'bars';
   blips: readonly RadarBlip[];
-  overlap: RadarOverlap;
   /** Metres from the player to the edge of the view. */
   radarRange: number;
   /** Gap at which a car turns amber; drawn as a range ring or bar marker. */
@@ -16,11 +14,12 @@ export interface RadarDisplayProps {
   showCarNumbers: boolean;
   /** Pulse a critical blip and the rim arch. */
   pulseWhenCritical: boolean;
-  showOverlapIndicator: boolean;
   colorFar: string;
   colorNearby: string;
   colorCritical: string;
   colorPlayer: string;
+  /** A car lapping the player: the blue flag, worn as a colour. */
+  colorLapping: string;
   colorInPit: string;
   bgOpacity: number;
   /** Seconds, for the pulse. Passed in so the draw stays pure and testable. */
@@ -34,10 +33,16 @@ interface Size {
   height: number;
 }
 
-/** Blip colour by proximity. Pit-road cars keep their own colour instead. */
+/**
+ * Blip colour by state. Pit-road cars and lapping cars keep their own colour
+ * instead of the proximity scale, but critical outranks lapping: when a car a
+ * lap up is actually alongside, that is the thing to act on. Blue rides with
+ * the rivals on the way in, red takes over at the moment of the pass.
+ */
 const colorFor = (blip: RadarBlip, props: RadarDisplayProps): string => {
   if (blip.inPit) return props.colorInPit;
   if (blip.level === 'critical') return props.colorCritical;
+  if (blip.lapping) return props.colorLapping;
   if (blip.level === 'nearby') return props.colorNearby;
   return props.colorFar;
 };

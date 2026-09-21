@@ -157,7 +157,7 @@ export const RadarSettings = () => {
                     onChange={(v) => handleConfigChange({ colorPlayer: v })}
                   />
                   <ColorField
-                    label="Beyond engage range"
+                    label="Rivals"
                     value={settings.config.colorFar}
                     onChange={(v) => handleConfigChange({ colorFar: v })}
                   />
@@ -170,6 +170,11 @@ export const RadarSettings = () => {
                     label="Critical"
                     value={settings.config.colorCritical}
                     onChange={(v) => handleConfigChange({ colorCritical: v })}
+                  />
+                  <ColorField
+                    label="Lapping you"
+                    value={settings.config.colorLapping}
+                    onChange={(v) => handleConfigChange({ colorLapping: v })}
                   />
                   <ColorField
                     label="In pit"
@@ -310,14 +315,6 @@ export const RadarSettings = () => {
                   description="Cars on pit road sit on the same centreline as the track, so they would show as cars on the racing line."
                   enabled={settings.config.hideInPit}
                   onToggle={(v) => handleConfigChange({ hideInPit: v })}
-                />
-                <SettingToggleRow
-                  title="Side overlap indicator"
-                  description="Bars at the left and right edge when the sim reports a car alongside you."
-                  enabled={settings.config.showOverlapIndicator}
-                  onToggle={(v) =>
-                    handleConfigChange({ showOverlapIndicator: v })
-                  }
                 />
               </SettingsSection>
             )}
