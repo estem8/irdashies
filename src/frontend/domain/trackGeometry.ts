@@ -80,12 +80,79 @@ export const progressToTrackPoint = (
 };
 
 /**
+ * How much of the road a heading is measured over, in canvas units.
+ *
+ * The drawings are polylines on a one-unit grid, so a heading taken across a
+ * neighbouring pair of points measures the grid rather than the road: on a
+ * straight that is a zigzag of about ±18 degrees, and it is what made blips
+ * rotate in steps and twitch from side to side. A chord of about this length
+ * averages the grid away — and because the chord is centred on the point asked
+ * about, it still reports the heading of the road there, even through a
+ * corner, where a chord over an arc gives the tangent at the arc's midpoint.
+ */
+const HEADING_BASELINE_UNITS = 50;
+
+/**
+ * A half-chord in path points for each drawing, and the headings themselves.
+ * Keyed by the points array, which comes from the bundled track data and so
+ * outlives any number of frames but never changes.
+ */
+const headingCache = new WeakMap<readonly TrackPathPoint[], Float64Array>();
+
+const smoothedHeadings = (
+  trackPathPoints: readonly TrackPathPoint[],
+  totalLength: number
+): Float64Array => {
+  const cached = headingCache.get(trackPathPoints);
+  if (cached) return cached;
+
+  const last = trackPathPoints.length - 1;
+  const closed =
+    trackPathPoints[0].x === trackPathPoints[last].x &&
+    trackPathPoints[0].y === trackPathPoints[last].y;
+  const distinct = closed ? last : trackPathPoints.length;
+  // One point per this many units, so the same stretch of road is measured on
+  // a coarse drawing and a dense one.
+  const unitsPerPoint =
+    totalLength > 0 ? totalLength / Math.max(1, distinct - 1) : 0;
+  const half =
+    unitsPerPoint > 0
+      ? Math.max(1, Math.round(HEADING_BASELINE_UNITS / (2 * unitsPerPoint)))
+      : 1;
+
+  const clamp = (index: number) =>
+    closed
+      ? ((index % distinct) + distinct) % distinct
+      : Math.min(last, Math.max(0, index));
+
+  const headings = new Float64Array(trackPathPoints.length).fill(NaN);
+  for (let index = 0; index < trackPathPoints.length; index += 1) {
+    const before = trackPathPoints[clamp(index - half)];
+    const after = trackPathPoints[clamp(index + half)];
+    const dx = after.x - before.x;
+    const dy = after.y - before.y;
+    if (dx !== 0 || dy !== 0) headings[index] = Math.atan2(dy, dx);
+  }
+
+  headingCache.set(trackPathPoints, headings);
+  return headings;
+};
+
+/**
  * Direction of the road at a lap distance fraction, in canvas-space radians.
  *
  * Uses neighbouring path points rather than the segment the point sits on, so
  * consecutive cars get a stable heading instead of flipping between segments
  * at the vertex they straddle. Null when the fraction is off the path or the
  * two neighbours coincide.
+ *
+ * The heading is interpolated between the two vertices the fraction sits
+ * between, exactly as `progressToTrackPoint` interpolates the position. Taking
+ * the nearest vertex instead quantises the heading to the path's own spacing
+ * (a few metres), and a heading that steps while the position glides is what
+ * reads as a car steering itself twenty times a second — the blip's rotation,
+ * and, through the right vector its lateral offset is projected onto, its
+ * side-to-side position as well.
  */
 export const tangentAngleAt = (
   progress: number,
@@ -103,12 +170,18 @@ export const tangentAngleAt = (
     direction
   );
   if (!Number.isFinite(floatIndex) || floatIndex < 0) return null;
-  const index = Math.round(floatIndex);
-  const before = trackPathPoints[Math.max(0, index - 1)];
-  const after =
-    trackPathPoints[Math.min(trackPathPoints.length - 1, index + 1)];
-  const dx = after.x - before.x;
-  const dy = after.y - before.y;
-  if (dx === 0 && dy === 0) return null;
-  return Math.atan2(dy, dx);
+
+  const headings = smoothedHeadings(trackPathPoints, totalLength);
+  const last = trackPathPoints.length - 1;
+  const index = Math.floor(floatIndex);
+  const amount = floatIndex - index;
+  const here = headings[index];
+  if (Number.isNaN(here)) return null;
+  const next = headings[Math.min(last, index + 1)];
+  if (Number.isNaN(next) || amount === 0) return here;
+
+  // Shortest way round, so a heading either side of ±pi does not swing the
+  // long way through the opposite direction.
+  const delta = Math.atan2(Math.sin(next - here), Math.cos(next - here));
+  return here + delta * amount;
 };

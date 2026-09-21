@@ -149,6 +149,84 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].relYaw).toBeCloseTo(Math.PI / 2, 6);
   });
 
+  it('glides a blip round a curve instead of stepping its heading and offset', () => {
+    // A circle, so the only thing that can make a step is the geometry lookup.
+    // Both cars move — the player is what the offset is projected against, and
+    // its heading is quantised by the path spacing just as the rival's is.
+    // Written as the drawings are, a closed walk whose last point repeats the
+    // first, with about three metres between points like a real track.
+    const points = 200;
+    const radius = 100;
+    const circumference = 2 * Math.PI * radius;
+    const ring = Array.from({ length: points }, (_, i) => {
+      const angle = (2 * Math.PI * i) / points;
+      return { x: Math.sin(angle) * radius, y: -Math.cos(angle) * radius };
+    });
+    const circle = [...ring, ring[0]];
+    const drawing: TrackDrawing = {
+      active: {
+        inside: '',
+        outside: '',
+        trackPathPoints: circle,
+        totalLength: circumference,
+      },
+      startFinish: { point: { length: 0 }, direction: 'anticlockwise' },
+    };
+    const gapM = 12;
+    const stepM = 0.9; // what a 25 Hz snapshot covers at about 80 km/h
+
+    let targets: ReadonlyMap<number, RadarTargetState> = new Map();
+    let previousRelYaw: number | null = null;
+    let previousLateral: number | null = null;
+    let worstYaw = 0;
+    let worstLateral = 0;
+    for (let step = 0; step < 2000; step += 1) {
+      const playerArc = 900 + step * stepM;
+      const result = computeRadarBlips({
+        ...baseInput,
+        trackDrawing: drawing,
+        trackLengthM: circumference,
+        radarRange: 40,
+        previousTargets: targets,
+        carIdxLapDistPct: [
+          playerArc / circumference,
+          (playerArc + gapM) / circumference,
+        ],
+        carIdxLap: [1, 1],
+        carIdxOnPitRoad: [false, false],
+      });
+      targets = result.targets;
+      const blip = result.blips[0];
+      if (!blip) throw new Error('the rival left the radar');
+      if (previousRelYaw !== null) {
+        worstYaw = Math.max(
+          worstYaw,
+          Math.abs(
+            Math.atan2(
+              Math.sin(blip.relYaw - previousRelYaw),
+              Math.cos(blip.relYaw - previousRelYaw)
+            )
+          )
+        );
+      }
+      if (previousLateral !== null) {
+        worstLateral = Math.max(
+          worstLateral,
+          Math.abs(blip.lateralM - previousLateral)
+        );
+      }
+      previousRelYaw = blip.relYaw;
+      previousLateral = blip.lateralM;
+    }
+
+    // A path point here is a 1.8-degree step of the road. Following the road
+    // moves the heading by about half a degree per snapshot; snapping to the
+    // nearest point moves it by the whole 1.8 degrees, and swings the offset
+    // the same way, which is what a driver sees as a car twitching sideways.
+    expect(worstYaw).toBeLessThan(0.006);
+    expect(worstLateral).toBeLessThan(0.05);
+  });
+
   it('mirrors the lateral sign on a clockwise track', () => {
     // A clockwise track runs the path index order backwards, so lap fraction
     // 0.25 is the point 300 m *before* the finish, and the rival 340 m ahead
