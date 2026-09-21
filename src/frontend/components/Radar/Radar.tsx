@@ -17,6 +17,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     level: 'far',
     side: null,
     carNumber: '24',
+    isPaceCar: false,
     inPit: false,
     fade: 1,
   },
@@ -29,6 +30,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     level: 'nearby',
     side: null,
     carNumber: '7',
+    isPaceCar: false,
     inPit: false,
     fade: 1,
   },
@@ -41,6 +43,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     level: 'critical',
     side: -1,
     carNumber: '51',
+    isPaceCar: false,
     inPit: false,
     fade: 1,
   },
@@ -53,6 +56,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     level: 'nearby',
     side: null,
     carNumber: '9',
+    isPaceCar: true,
     inPit: true,
     fade: 0.4,
   },
@@ -108,6 +112,7 @@ export const Radar = () => {
         colorPlayer={settings.colorPlayer}
         colorInPit={settings.colorInPit}
         bgOpacity={settings.background.opacity}
+        trackLengthM={isDemoMode ? 5800 : state.trackLengthM}
       />
     </div>
   );

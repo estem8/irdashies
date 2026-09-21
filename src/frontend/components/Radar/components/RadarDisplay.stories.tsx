@@ -29,6 +29,7 @@ const blip = (
         : 'far',
   side: null,
   carNumber,
+  isPaceCar: false,
   inPit: false,
   fade: 1,
   ...extra,
@@ -42,6 +43,7 @@ const ALONGSIDE = blip(4, -0.6, -2.1, '51', {
 });
 const LAPPED = blip(3, -13, -2.4, '88');
 const IN_PIT = blip(5, 6, 4.5, '9', { inPit: true });
+const PACE = blip(6, 5.5, 0.4, '0', { isPaceCar: true });
 
 const meta = {
   component: RadarDisplay,
@@ -136,4 +138,9 @@ export const WithoutCarNumbers: Story = {
 export const NoCarsInRange: Story = {
   name: 'No cars in range',
   args: { blips: [] },
+};
+
+export const PaceCar: Story = {
+  name: 'Pace car',
+  args: { blips: [AHEAD, PACE] },
 };

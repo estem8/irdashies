@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import {
+  blipLabel,
   computeRadarBlips,
   type RadarBlipInput,
   type RadarTargetState,
@@ -77,6 +78,7 @@ const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
       [1, '24'],
       [2, '7'],
     ]),
+    paceCarIdx: null,
     previousTargets: new Map<number, RadarTargetState>(),
   };
 
@@ -85,6 +87,7 @@ const withTargets = (targets: [number, RadarTargetState][]) =>
 const held = (side: OverlapSide | null, engaged = true): RadarTargetState => ({
   side,
   engaged,
+  alongSign: 0,
 });
 
 describe('computeRadarBlips', () => {
@@ -360,7 +363,11 @@ describe('computeRadarBlips', () => {
       carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300.2)]),
     });
-    expect(first.targets.get(1)).toEqual({ side: -1, engaged: true });
+    expect(first.targets.get(1)).toEqual({
+      side: -1,
+      engaged: true,
+      alongSign: 1,
+    });
 
     // The verdict drops to clear, but the car is still alongside: it keeps the
     // side it was given rather than snapping back onto the player.
@@ -407,5 +414,86 @@ describe('computeRadarBlips', () => {
 
     expect(result.blips[0].level).toBe('far');
     expect(result.targets.get(1)?.engaged).toBe(false);
+  });
+
+  it('holds an alongside car on its drawn side through measured jitter', () => {
+    // Real recorded gaps in metres for a car abreast of the player: the two
+    // independently-updated lap fractions oscillate about the player's and
+    // flip the sign frame to frame without the latch.
+    const jitter = [0.232, -0.116, 0.174, -0.348, 0.29, -0.406];
+    let targets: ReadonlyMap<number, RadarTargetState> = new Map();
+    const signs: number[] = [];
+    for (const gapM of jitter) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        overlap: { left: 1, right: 0 },
+        previousTargets: targets,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gapM * Math.sign(gapM))]),
+      });
+      expect(result.blips).toHaveLength(1);
+      signs.push(Math.sign(result.blips[0].alongM));
+      targets = result.targets;
+    }
+    expect(new Set(signs).size).toBe(1);
+  });
+
+  it('lets a real pass cross between behind and ahead', () => {
+    const pass = [-3, -2.2, -1.4, -0.6, 0.6, 1.4, 2.2, 3];
+    const targets = new Map<number, RadarTargetState>();
+    const signs: number[] = [];
+    let crossings = 0;
+    for (let i = 0; i < pass.length; i++) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        previousTargets: targets,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + pass[i])]),
+      });
+      signs.push(Math.sign(result.blips[0].alongM));
+      if (i > 0 && signs[i] !== signs[i - 1]) crossings++;
+    }
+    expect(crossings).toBe(1);
+    expect(signs[3]).toBe(-1);
+    expect(signs[7]).toBe(1);
+    expect(signs).toEqual([-1, -1, -1, -1, 1, 1, 1, 1]);
+  });
+
+  it('keeps the geometric sign for a car entering with no history', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      previousTargets: new Map<number, RadarTargetState>(),
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300 + 0.4)]),
+    });
+
+    expect(result.blips[0].alongM).toBeCloseTo(0.4, 6);
+    expect(result.targets.get(1)?.alongSign).toBe(1);
+  });
+
+  it('flags only the pace car with the pace tag', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      paceCarIdx: 1,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(304)]),
+    });
+
+    expect(result.blips).toHaveLength(1);
+    expect(result.blips[0].isPaceCar).toBe(true);
+    expect(
+      computeRadarBlips({
+        ...baseInput,
+        paceCarIdx: 7,
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(304)]),
+      }).blips[0].isPaceCar
+    ).toBe(false);
+  });
+  it('labels the pace car with the fixed tag, not its number', () => {
+    expect(blipLabel({ carNumber: '0', isPaceCar: true }, true)).toBe('PACE');
+    expect(blipLabel({ carNumber: '24', isPaceCar: false }, true)).toBe('24');
+    expect(blipLabel({ carNumber: '0', isPaceCar: true }, false)).toBeNull();
+    expect(blipLabel({ carNumber: '24', isPaceCar: false }, false)).toBeNull();
   });
 });

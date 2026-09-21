@@ -36,6 +36,8 @@ export interface RadarBlip {
   side: OverlapSide | null;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
+  /** Set when this is the session's pace car, which carries a fixed label. */
+  isPaceCar: boolean;
   inPit: boolean;
   /**
    * Opacity 0..1 for this car, so it fades in over the outer band of the range
@@ -48,6 +50,13 @@ export interface RadarBlip {
 export interface RadarTargetState {
   side: OverlapSide | null;
   engaged: boolean;
+  /**
+   * The direction this car was last drawn in (-1 behind, 1 ahead, 0 none yet).
+   * A car running abreast oscillates around the player's lap fraction, so the
+   * sign of its measured offset hops between frames; the radar holds the side
+   * it first drew the car on instead of letting it flicker.
+   */
+  alongSign: -1 | 0 | 1;
 }
 
 export interface RadarBlipResult {
@@ -82,6 +91,12 @@ export interface RadarBlipInput {
   fadeBandM: number;
   /** Car number by CarIdx, for blip labels. */
   carNumbers: ReadonlyMap<number, string>;
+  /**
+   * The sim's pace car CarIdx, cross-checked against the driver roster; null
+   * when the session has no pace car on track. Both PaceCarIdx and CarIsPaceCar
+   * must agree, because some sessions report PaceCarIdx 0 — the player's index.
+   */
+  paceCarIdx: number | null;
   /** State carried over from the previous frame; the caller owns it. */
   previousTargets: ReadonlyMap<number, RadarTargetState>;
 }
@@ -101,8 +116,47 @@ const NO_GEOMETRY: RadarBlipResult = {
  */
 const ABREAST_LATERAL_FACTOR = 1.1;
 
+/**
+ * A sub-car-length latch. Measured on a replayed race, cars within a couple of
+ * metres of the player oscillate ±0.5 m frame to frame, which flips the
+ * ahead/behind sign; a real pass still sweeps through the latch.
+ */
+export const LONGITUDINAL_LATCH_M = 1;
+
+/**
+ * Holds a car on the side it was last drawn on while its measured offset sits
+ * inside the latch: an oscillation about the player must not flip ahead/behind
+ * frame to frame. Beyond the latch the measured along-track offset is passed
+ * through untouched, so a genuine pass still crosses the axis.
+ */
+export const latchAlongSide = (
+  alongM: number,
+  previousSign: -1 | 0 | 1,
+  latchM: number
+): number =>
+  previousSign !== 0 &&
+  Math.abs(alongM) <= latchM &&
+  Math.sign(alongM) !== previousSign
+    ? previousSign * Math.abs(alongM)
+    : alongM;
 const onRoad = (pct: number | undefined): pct is number =>
   typeof pct === 'number' && Number.isFinite(pct) && pct >= 0;
+
+/** The fixed blip tag for the pace car; its number (0) is meaningless. */
+export const PACE_CAR_LABEL = 'PACE';
+
+/**
+ * Blip text, or null when labels are off. The pace car is labelled with the
+ * fixed tag rather than its number: the number is '0' and there is no
+ * AbbrevName for it.
+ */
+export const blipLabel = (
+  blip: { carNumber: string | null; isPaceCar: boolean },
+  showLabels: boolean
+): string | null => {
+  if (!showLabels) return null;
+  return blip.isPaceCar ? PACE_CAR_LABEL : blip.carNumber;
+};
 
 /**
  * Places nearby cars on the road as the player sees it: metres ahead/behind
@@ -129,6 +183,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     vehicleLength,
     thresholds,
     carNumbers,
+    paceCarIdx,
     fadeBandM,
     previousTargets,
   } = input;
@@ -207,8 +262,18 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     let delta = pct - playerPct;
     if (delta > 0.5) delta -= 1;
     else if (delta < -0.5) delta += 1;
-    const alongM = delta * trackLengthM;
-    if (Math.abs(alongM) > radarRange) continue;
+    const rawAlongM = delta * trackLengthM;
+    if (Math.abs(rawAlongM) > radarRange) continue;
+    // A car abreast oscillates about the player's lap fraction; hold it on the
+    // side it was drawn on while the offset is inside the latch. The range
+    // test deliberately ran on the raw value, so a latched car near the edge
+    // is not dropped.
+    const previousSign = previousTargets.get(carIdx)?.alongSign ?? 0;
+    const alongM = latchAlongSide(
+      rawAlongM,
+      previousSign,
+      LONGITUDINAL_LATCH_M
+    );
 
     progressToTrackPoint(
       pct,
@@ -247,6 +312,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       level: 'far',
       side: null,
       carNumber: carNumbers.get(carIdx) ?? null,
+      isPaceCar: carIdx === paceCarIdx,
       inPit,
       // Faded by how far the car is from the player in the plane the radar
       // draws in, so one closing head-on fades in on approach while one
@@ -298,7 +364,14 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       thresholds
     );
     blip.level = verdict.level;
-    targets.set(blip.carIdx, { side, engaged: verdict.engaged });
+    // A car with no history adopts its geometric sign, so a car entering the
+    // range is unaffected by the latch until it has been drawn once.
+    targets.set(blip.carIdx, {
+      side,
+      engaged: verdict.engaged,
+      alongSign: (Math.sign(blip.alongM) ||
+        (previousTargets.get(blip.carIdx)?.alongSign ?? 0)) as -1 | 0 | 1,
+    });
   }
 
   return { hasGeometry: true, playerOnRoad: true, blips, targets };

@@ -35,6 +35,8 @@ export interface RadarState {
    * in the pits cannot bring the radar on screen.
    */
   nearestGapM: number | null;
+  /** Track length in metres; forwarded for motion interpolation. */
+  trackLengthM: number;
 }
 
 export interface UseRadarOptions {
@@ -119,6 +121,18 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     );
   }, [drivers]);
 
+  /**
+   * The pace car index: the sim's PaceCarIdx, but only when the driver at
+   * that index is flagged CarIsPaceCar — some sessions report PaceCarIdx 0,
+   * which is the player's index too. Falling back to the first flagged driver
+   * covers rosters where the session index is stale.
+   */
+  const paceCarIdx = useMemo<number | null>(() => {
+    if (!drivers) return null;
+    const flagged = drivers.find((driver) => driver.CarIsPaceCar);
+    if (flagged) return flagged.CarIdx;
+    return null;
+  }, [drivers]);
   const trackDrawing =
     trackId === undefined ? undefined : trackDrawings[trackId];
   const usable =
@@ -159,6 +173,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       thresholds: { nearbyRange, clearRange, criticalRange },
       fadeBandM,
       carNumbers,
+      paceCarIdx,
       previousTargets: targetsRef.current,
     });
     targetsRef.current = result.targets;
@@ -180,6 +195,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     criticalRange,
     fadeBandM,
     carNumbers,
+    paceCarIdx,
   ]);
 
   let nearestGapM: number | null = null;
@@ -194,5 +210,6 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     overlap,
     isOnTrack,
     nearestGapM,
+    trackLengthM,
   };
 };

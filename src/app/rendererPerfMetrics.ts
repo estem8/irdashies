@@ -11,6 +11,7 @@ export const PERF_RENDERER_LOG_PREFIX = '[PerfRenderer:JSON] ';
 let telemetryCallbackTimes: FixedSampleBuffer | undefined;
 let channelCallbackTimes: FixedSampleBuffer | undefined;
 let trackMapAnimationFrameTimes: FixedSampleBuffer | undefined;
+let radarAnimationFrameTimes: FixedSampleBuffer | undefined;
 
 export function isRendererPerfMetricsEnabled(): boolean {
   return telemetryCallbackTimes !== undefined;
@@ -30,6 +31,8 @@ export function recordRendererMeasure(
 ): void {
   if (name === 'trackMapAnimationFrame') {
     trackMapAnimationFrameTimes?.add(durationMs);
+  } else if (name === 'radarAnimationFrame') {
+    radarAnimationFrameTimes?.add(durationMs);
   }
 }
 
@@ -49,6 +52,8 @@ export function startRendererPerfMetrics(): void {
   channelCallbackTimes = channelTimes;
   const trackMapFrameTimes = new FixedSampleBuffer(4096);
   trackMapAnimationFrameTimes = trackMapFrameTimes;
+  const radarFrameTimes = new FixedSampleBuffer(4096);
+  radarAnimationFrameTimes = radarFrameTimes;
   let intervalStart = performance.now();
   let previousFrameTime = 0;
   let framesOver25Ms = 0;
@@ -94,6 +99,7 @@ export function startRendererPerfMetrics(): void {
       telemetryCallbackMs: callbackTimes.summarize(),
       channelCallbackMs: channelTimes.summarize(),
       trackMapAnimationFrameMs: trackMapFrameTimes.summarize(),
+      radarAnimationFrameMs: radarFrameTimes.summarize(),
       telemetryWakeups: callbackTimes.summarize().count,
       channelWakeups: channelTimes.summarize().count,
       framesOver25Ms,
@@ -111,6 +117,7 @@ export function startRendererPerfMetrics(): void {
     callbackTimes.reset();
     channelTimes.reset();
     trackMapFrameTimes.reset();
+    radarFrameTimes.reset();
     framesOver25Ms = 0;
     framesOver50Ms = 0;
   }, reportIntervalMs);

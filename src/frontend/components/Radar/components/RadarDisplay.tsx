@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { RadarBlip } from '../radarBlips';
+import { blipLabel, type RadarBlip } from '../radarBlips';
+import { useRadarMotion, type RadarMotionDraw } from '../hooks/useRadarMotion';
 import type { RadarOverlap } from '../overlapSides';
 
 export interface RadarDisplayProps {
@@ -24,6 +25,8 @@ export interface RadarDisplayProps {
   bgOpacity: number;
   /** Seconds, for the pulse. Passed in so the draw stays pure and testable. */
   nowSeconds: number;
+  /** Track length in metres; drives blip motion between snapshots. */
+  trackLengthM: number;
 }
 
 interface Size {
@@ -82,7 +85,12 @@ const drawVehicle = (
 
   if (label && widthPx >= 10) {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.font = `600 ${Math.round(Math.max(7, Math.min(widthPx * 0.7, 11)))}px sans-serif`;
+    // Four-character PACE needs a smaller face than a two-digit number.
+    const pulseFont = label.length > 3;
+    const fontPx = pulseFont
+      ? Math.max(6, Math.min(widthPx * 0.45, 10))
+      : Math.max(7, Math.min(widthPx * 0.7, 11));
+    ctx.font = `600 ${Math.round(fontPx)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, 0, 0);
@@ -93,7 +101,9 @@ const drawVehicle = (
 const drawDisc = (
   ctx: CanvasRenderingContext2D,
   props: RadarDisplayProps,
-  size: Size
+  size: Size,
+  alongM: Float64Array,
+  lateralM: Float64Array
 ) => {
   const centreX = size.width / 2;
   const centreY = size.height / 2;
@@ -125,17 +135,18 @@ const drawDisc = (
     ctx.setLineDash([]);
   }
 
-  for (const blip of props.blips) {
+  for (let i = 0; i < props.blips.length; i++) {
+    const blip = props.blips[i];
     drawVehicle(
       ctx,
-      centreX + blip.lateralM * scale,
-      centreY - blip.alongM * scale,
+      centreX + lateralM[i] * scale,
+      centreY - alongM[i] * scale,
       widthPx,
       lengthPx,
       blip.relYaw,
       colorFor(blip, props),
       alphaFor(blip, props),
-      props.showCarNumbers ? blip.carNumber : null
+      blipLabel(blip, props.showCarNumbers)
     );
   }
   ctx.restore();
@@ -184,7 +195,9 @@ const drawDisc = (
 const drawPortrait = (
   ctx: CanvasRenderingContext2D,
   props: RadarDisplayProps,
-  size: Size
+  size: Size,
+  alongM: Float64Array,
+  lateralM: Float64Array
 ) => {
   const centreX = size.width / 2;
   const centreY = size.height / 2;
@@ -228,17 +241,18 @@ const drawPortrait = (
     }
   }
 
-  for (const blip of props.blips) {
+  for (let i = 0; i < props.blips.length; i++) {
+    const blip = props.blips[i];
     drawVehicle(
       ctx,
-      centreX + blip.lateralM * lateralScale,
-      centreY - blip.alongM * scale,
+      centreX + lateralM[i] * lateralScale,
+      centreY - alongM[i] * scale,
       widthPx,
       lengthPx,
       0,
       colorFor(blip, props),
       alphaFor(blip, props),
-      props.showCarNumbers ? blip.carNumber : null
+      blipLabel(blip, props.showCarNumbers)
     );
   }
 
@@ -306,18 +320,15 @@ const drawBars = (
     ctx.fill();
     ctx.restore();
 
-    if (props.showCarNumbers && blip.carNumber) {
+    const label = blipLabel(blip, props.showCarNumbers);
+    if (label) {
       ctx.save();
       ctx.globalAlpha = alphaFor(blip, props);
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.font = '600 10px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = side === -1 ? 'left' : 'right';
-      ctx.fillText(
-        blip.carNumber,
-        side === -1 ? 4 : size.width - 4,
-        size.height / 2
-      );
+      ctx.fillText(label, side === -1 ? 4 : size.width - 4, size.height / 2);
       ctx.restore();
     }
   };
@@ -330,7 +341,9 @@ const drawRadar = (
   canvas: HTMLCanvasElement,
   props: RadarDisplayProps,
   size: Size,
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark',
+  alongM: Float64Array,
+  lateralM: Float64Array
 ) => {
   const ctx = canvas.getContext('2d');
   if (!ctx || size.width <= 0 || size.height <= 0) return;
@@ -345,15 +358,20 @@ const drawRadar = (
   ctx.clearRect(0, 0, size.width, size.height);
   void theme;
 
-  if (props.mode === 'portrait') drawPortrait(ctx, props, size);
+  if (props.mode === 'portrait')
+    drawPortrait(ctx, props, size, alongM, lateralM);
   else if (props.mode === 'bars') drawBars(ctx, props, size);
-  else drawDisc(ctx, props, size);
+  else drawDisc(ctx, props, size, alongM, lateralM);
 };
 
 export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
-  const [nowSeconds, setNowSeconds] = useState(0);
+
+  const propsRef = useRef(props);
+  propsRef.current = props;
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -378,24 +396,51 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     return () => observer.disconnect();
   }, []);
 
-  // Only the pulse needs a clock; with it off the disc redraws on data alone.
+  // The draw callback reads the latest props and size through refs, so the
+  // RAF loop useRadarMotion starts is never restarted by a re-render. The
+  // clock lives inside the frame path: only the pulse needs a time value.
+  // The last drawn metre buffers are kept: a commit that itself repaints —
+  // a resize, a theme change — must not clear the geometry, it just needs to
+  // redraw what the interpolator last produced.
+  const alongRef = useRef(new Float64Array(0));
+  const lateralRef = useRef(new Float64Array(0));
+  const drawRef = useRef<RadarMotionDraw>(() => undefined);
+  drawRef.current = (alongM, lateralM, count) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    alongRef.current.set(alongM.subarray(0, count));
+    lateralRef.current.set(lateralM.subarray(0, count));
+    drawRadar(
+      canvas,
+      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      sizeRef.current,
+      'dark',
+      alongRef.current,
+      lateralRef.current
+    );
+  };
+
   const pulses =
     props.pulseWhenCritical &&
     props.blips.some((blip) => blip.level === 'critical');
-  useEffect(() => {
-    if (!pulses) return;
-    let frame = 0;
-    const tick = () => {
-      setNowSeconds(performance.now() / 1000);
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [pulses]);
+  useRadarMotion(props.blips, props.trackLengthM, pulses, (a, l, c) => {
+    drawRef.current(a, l, c);
+  });
 
+  // Resize repaints: the motion loop only repaints on new snapshots, so a
+  // size change must redraw the last committed frame from the cached buffers.
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) drawRadar(canvas, { ...props, nowSeconds }, size, 'dark');
+    if (canvas) {
+      drawRadar(
+        canvas,
+        { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+        sizeRef.current,
+        'dark',
+        alongRef.current,
+        lateralRef.current
+      );
+    }
   });
 
   return <canvas ref={canvasRef} className="h-full w-full" />;
