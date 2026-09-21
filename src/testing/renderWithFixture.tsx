@@ -46,6 +46,11 @@ const dashboardBridgeStub = (dashboard: DashboardLayout): DashboardBridge => {
     resetDashboard: async () => dashboard,
     getAppVersion: async () => '0.0.0-test',
     listProfiles: async () => [],
+    // Answered explicitly rather than left to the fallback below: the fallback
+    // hands back a function, and the dashboard context treats a non-null answer
+    // as a profile to load, so a function there deep-clones to `undefined` and
+    // throws on the next tick. A harness has no active profile, so: null.
+    getCurrentProfile: async () => null,
   };
 
   return new Proxy(implemented, {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import {
   defaultDashboard,
   type DashboardLayout,
@@ -57,6 +57,16 @@ const latest = () => {
   return props;
 };
 
+/**
+ * The radar fades in, so a display does not exist on the first render: the
+ * appearance has to be waited for rather than read straight after `render`.
+ */
+const waitForDisplay = async () =>
+  waitFor(() => expect(rendered.length).toBeGreaterThan(0));
+
+const waitForHidden = async () =>
+  waitFor(() => expect(screen.queryByTestId('radar-canvas')).toBeNull());
+
 const finalFrame = () => {
   const frame = fixture.frames.at(-1);
   if (!frame) throw new Error('fixture has no frames');
@@ -68,11 +78,12 @@ describe('Radar widget over a recorded multiclass session', () => {
     rendered.length = 0;
   });
 
-  it('places blips at the distances the recorded positions describe', () => {
+  it('places blips at the distances the recorded positions describe', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
 
     const props = latest();
     expect(props.blips.length).toBeGreaterThan(0);
@@ -92,11 +103,12 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('grades blips by proximity to the player', () => {
+  it('grades blips by proximity to the player', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
 
     // The one car inside 15 m in this capture is recorded 2.6 m back, so it is
     // inside the engage range and must come through as at least nearby.
@@ -108,18 +120,19 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('labels blips with the car number from the session', () => {
+  it('labels blips with the car number from the session', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
 
     const numbered = latest().blips.filter((blip) => blip.carNumber !== null);
     expect(numbered.length).toBeGreaterThan(0);
     expect(numbered[0].carNumber).toMatch(/\d/);
   });
 
-  it('renders nothing when the session type is switched off', () => {
+  it('renders nothing when the session type is switched off', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({
         radarRange: 25,
@@ -133,16 +146,17 @@ describe('Radar widget over a recorded multiclass session', () => {
       }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForHidden();
 
-    expect(screen.queryByTestId('radar-canvas')).toBeNull();
     expect(rendered).toHaveLength(0);
   });
 
-  it('passes the configured range and colours through to the disc', () => {
+  it('passes the configured range and colours through to the disc', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 12, colorNearby: '#ff00ff' }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
 
     expect(latest()).toMatchObject({
       radarRange: 12,
@@ -154,16 +168,17 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('draws the view the settings ask for', () => {
+  it('draws the view the settings ask for', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25, displayMode: 'portrait' }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
 
     expect(latest().mode).toBe('portrait');
   });
 
-  it('hides the disc while the session reports the car off track', () => {
+  it('hides the disc while the session reports the car off track', async () => {
     // The capture has no IsOnTrack, so the sim state reads as off track and the
     // on-track gate — left at its default of on — must suppress the disc.
     const harness = mountFixture(fixture, {
@@ -173,8 +188,72 @@ describe('Radar widget over a recorded multiclass session', () => {
       }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
+    await waitForHidden();
 
     expect(rendered).toHaveLength(0);
-    expect(screen.queryByTestId('radar-canvas')).toBeNull();
+  });
+
+  it('keeps the radar off screen while every car is beyond the near range', async () => {
+    // The capture's only car in range sits 2.6 m back, so a 1 m near range
+    // must leave the radar hidden.
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({
+        radarRange: 25,
+        showWhenNearby: true,
+        showRange: 1,
+        fadeSeconds: 0,
+      }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForHidden();
+
+    expect(rendered).toHaveLength(0);
+  });
+
+  it('brings the radar on screen once a car is inside the near range', async () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({
+        radarRange: 25,
+        showWhenNearby: true,
+        showRange: 5,
+        fadeSeconds: 0,
+      }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    expect(latest().blips.length).toBeGreaterThan(0);
+  });
+
+  it('fades a car out towards the range edge, unless the band is off', async () => {
+    // Range 3 with a 3 m band puts the 2.6 m car inside the fade, so it must
+    // come through part-faded rather than at full strength.
+    const faded = mountFixture(fixture, {
+      dashboard: radarDashboard({
+        radarRange: 3,
+        fadeInCars: true,
+        fadeBandM: 3,
+        fadeSeconds: 0,
+      }),
+    });
+    render(<Radar />, { wrapper: faded.wrapper });
+    await waitForDisplay();
+    const fadedBlip = latest().blips[0].fade;
+    expect(fadedBlip).toBeGreaterThan(0);
+    expect(fadedBlip).toBeLessThan(1);
+
+    rendered.length = 0;
+    const solid = mountFixture(fixture, {
+      dashboard: radarDashboard({
+        radarRange: 3,
+        fadeInCars: false,
+        fadeBandM: 3,
+        fadeSeconds: 0,
+      }),
+    });
+    render(<Radar />, { wrapper: solid.wrapper });
+    await waitForDisplay();
+
+    expect(latest().blips[0].fade).toBe(1);
   });
 });

@@ -30,6 +30,7 @@ const blip = (
   side: null,
   carNumber,
   inPit: false,
+  fade: 1,
   ...extra,
 });
 

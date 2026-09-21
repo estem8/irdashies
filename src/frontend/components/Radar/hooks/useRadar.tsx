@@ -29,6 +29,12 @@ export interface RadarState {
   blips: readonly RadarBlip[];
   overlap: RadarOverlap;
   isOnTrack: boolean;
+  /**
+   * Shortest fore/aft gap to any car being drawn, in metres; null when the
+   * radar is drawing none. Cars hidden by `hideInPit` do not count, so a car
+   * in the pits cannot bring the radar on screen.
+   */
+  nearestGapM: number | null;
 }
 
 export interface UseRadarOptions {
@@ -40,6 +46,8 @@ export interface UseRadarOptions {
   nearbyRange: number;
   clearRange: number;
   criticalRange: number;
+  /** Metres of fade at the outer edge of the range; 0 for none. */
+  fadeBandM: number;
 }
 
 type RadarInput = readonly [
@@ -85,6 +93,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     nearbyRange,
     clearRange,
     criticalRange,
+    fadeBandM,
   } = options;
   const [focusCarIdx, positions, onPitRoad, isOnTrack] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
@@ -148,6 +157,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       vehicleWidth,
       vehicleLength,
       thresholds: { nearbyRange, clearRange, criticalRange },
+      fadeBandM,
       carNumbers,
       previousTargets: targetsRef.current,
     });
@@ -168,13 +178,21 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     nearbyRange,
     clearRange,
     criticalRange,
+    fadeBandM,
     carNumbers,
   ]);
+
+  let nearestGapM: number | null = null;
+  for (const blip of computed.blips) {
+    if (nearestGapM === null || blip.gapM < nearestGapM)
+      nearestGapM = blip.gapM;
+  }
 
   return {
     hasGeometry: usable && computed.hasGeometry && computed.playerOnRoad,
     blips: computed.blips,
     overlap,
     isOnTrack,
+    nearestGapM,
   };
 };

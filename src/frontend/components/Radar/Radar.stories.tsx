@@ -72,3 +72,37 @@ export const CarAbreast: Story = {
   ...story(ALONGSIDE, { radarRange: 15 }),
   name: 'Car abreast',
 };
+
+/**
+ * Range pulled in to 9 m and a 4 m band, so the capture's 8 m cars land near
+ * the edge of the view and come through clearly faded. At the default 15 m
+ * range those same cars sit well inside the band and are solid, which is why
+ * the fade is invisible there.
+ */
+export const FadingInCars: Story = {
+  ...story(INTERLAGOS, {
+    radarRange: 9,
+    fadeInCars: true,
+    fadeBandM: 4,
+    fadeSeconds: 0,
+  }),
+  name: 'Fading in at the range edge',
+};
+
+export const WithoutFadingIn: Story = {
+  ...story(INTERLAGOS, {
+    radarRange: 9,
+    fadeInCars: false,
+    fadeSeconds: 0,
+  }),
+  name: 'Without fading in',
+};
+
+export const ShownOnlyWhenNear: Story = {
+  ...story(INTERLAGOS, {
+    showWhenNearby: true,
+    showRange: 5,
+    fadeSeconds: 0,
+  }),
+  name: 'Shown only when a car is near',
+};

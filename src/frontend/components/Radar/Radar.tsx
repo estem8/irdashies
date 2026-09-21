@@ -1,6 +1,7 @@
 import { useDashboard, useSessionVisibility } from '@irdashies/context';
 import { RadarDisplay } from './components/RadarDisplay';
 import { useRadar } from './hooks/useRadar';
+import { useRadarFade } from './hooks/useRadarFade';
 import { useRadarSettings } from './hooks/useRadarSettings';
 import type { RadarBlip } from './radarBlips';
 import type { RadarOverlap } from './overlapSides';
@@ -17,6 +18,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '24',
     inPit: false,
+    fade: 1,
   },
   {
     carIdx: 2,
@@ -28,6 +30,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '7',
     inPit: false,
+    fade: 1,
   },
   {
     carIdx: 3,
@@ -39,6 +42,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: -1,
     carNumber: '51',
     inPit: false,
+    fade: 1,
   },
   {
     carIdx: 4,
@@ -50,6 +54,7 @@ const DEMO_BLIPS: RadarBlip[] = [
     side: null,
     carNumber: '9',
     inPit: true,
+    fade: 0.4,
   },
 ];
 const DEMO_OVERLAP: RadarOverlap = { left: 1, right: 0 };
@@ -64,33 +69,46 @@ export const Radar = () => {
     nearbyRange: settings.nearbyRange,
     clearRange: settings.clearRange,
     criticalRange: settings.criticalRange,
+    fadeBandM: settings.fadeInCars ? settings.fadeBandM : 0,
   });
   const { isDemoMode } = useDashboard();
   const sessionVisible = useSessionVisibility(settings.sessionVisibility);
 
-  if (!isDemoMode && !sessionVisible) return <></>;
-  if (!isDemoMode && settings.showOnlyWhenOnTrack && !state.isOnTrack)
-    return <></>;
-  if (!isDemoMode && !state.hasGeometry) return <></>;
+  // The show range cannot reach further than the radar draws, or nothing would
+  // ever be near enough to bring it on screen.
+  const showRange = Math.min(settings.showRange, settings.radarRange);
+  const trafficNear =
+    state.nearestGapM !== null && state.nearestGapM <= showRange;
+  const wanted =
+    sessionVisible &&
+    (!settings.showOnlyWhenOnTrack || state.isOnTrack) &&
+    state.hasGeometry &&
+    (!settings.showWhenNearby || trafficNear);
+  // Demo mode ignores visibility rules so the widget can be seen while editing.
+  const fade = useRadarFade(isDemoMode || wanted, settings.fadeSeconds);
+
+  if (fade <= 0) return <></>;
 
   return (
-    <RadarDisplay
-      mode={settings.displayMode}
-      blips={isDemoMode ? DEMO_BLIPS : state.blips}
-      overlap={isDemoMode ? DEMO_OVERLAP : state.overlap}
-      radarRange={settings.radarRange}
-      nearbyRange={settings.nearbyRange}
-      vehicleWidth={settings.vehicleWidth}
-      vehicleLength={settings.vehicleLength}
-      showCarNumbers={settings.showCarNumbers}
-      pulseWhenCritical={settings.pulseWhenCritical}
-      showOverlapIndicator={settings.showOverlapIndicator}
-      colorFar={settings.colorFar}
-      colorNearby={settings.colorNearby}
-      colorCritical={settings.colorCritical}
-      colorPlayer={settings.colorPlayer}
-      colorInPit={settings.colorInPit}
-      bgOpacity={settings.background.opacity}
-    />
+    <div className="h-full w-full" style={{ opacity: fade }}>
+      <RadarDisplay
+        mode={settings.displayMode}
+        blips={isDemoMode ? DEMO_BLIPS : state.blips}
+        overlap={isDemoMode ? DEMO_OVERLAP : state.overlap}
+        radarRange={settings.radarRange}
+        nearbyRange={settings.nearbyRange}
+        vehicleWidth={settings.vehicleWidth}
+        vehicleLength={settings.vehicleLength}
+        showCarNumbers={settings.showCarNumbers}
+        pulseWhenCritical={settings.pulseWhenCritical}
+        showOverlapIndicator={settings.showOverlapIndicator}
+        colorFar={settings.colorFar}
+        colorNearby={settings.colorNearby}
+        colorCritical={settings.colorCritical}
+        colorPlayer={settings.colorPlayer}
+        colorInPit={settings.colorInPit}
+        bgOpacity={settings.background.opacity}
+      />
+    </div>
   );
 };

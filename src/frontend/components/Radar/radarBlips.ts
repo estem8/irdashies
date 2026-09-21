@@ -15,6 +15,7 @@ import {
   type ProximityLevel,
   type ProximityThresholds,
 } from './radarProximity';
+import { carFadeAt } from './radarFade';
 
 export interface RadarBlip {
   carIdx: number;
@@ -36,6 +37,11 @@ export interface RadarBlip {
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   inPit: boolean;
+  /**
+   * Opacity 0..1 for this car, so it fades in over the outer band of the range
+   * rather than appearing on a ring. 1 when the band is switched off.
+   */
+  fade: number;
 }
 
 /** What the widget must carry from one frame to the next, per car. */
@@ -72,6 +78,8 @@ export interface RadarBlipInput {
   vehicleWidth: number;
   vehicleLength: number;
   thresholds: ProximityThresholds;
+  /** Metres of fade at the outer edge of the range; 0 for none. */
+  fadeBandM: number;
   /** Car number by CarIdx, for blip labels. */
   carNumbers: ReadonlyMap<number, string>;
   /** State carried over from the previous frame; the caller owns it. */
@@ -121,6 +129,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     vehicleLength,
     thresholds,
     carNumbers,
+    fadeBandM,
     previousTargets,
   } = input;
 
@@ -239,6 +248,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       side: null,
       carNumber: carNumbers.get(carIdx) ?? null,
       inPit,
+      // Faded by how far the car is from the player in the plane the radar
+      // draws in, so one closing head-on fades in on approach while one
+      // alongside (already near in that plane) never dims.
+      fade: carFadeAt(Math.hypot(alongM, lateralM), radarRange, fadeBandM),
     });
   }
 

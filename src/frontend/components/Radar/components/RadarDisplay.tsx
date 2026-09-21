@@ -39,10 +39,16 @@ const colorFor = (blip: RadarBlip, props: RadarDisplayProps): string => {
   return props.colorFar;
 };
 
-/** Critical blips breathe; everything else is steady. */
+/**
+ * Critical blips breathe and every car respects its own fade-in, so a blip
+ * never appears at full strength on the edge of the range.
+ */
 const alphaFor = (blip: RadarBlip, props: RadarDisplayProps): number => {
-  if (!props.pulseWhenCritical || blip.level !== 'critical') return 1;
-  return 0.55 + 0.45 * Math.abs(Math.sin(props.nowSeconds * Math.PI));
+  const pulse =
+    props.pulseWhenCritical && blip.level === 'critical'
+      ? 0.55 + 0.45 * Math.abs(Math.sin(props.nowSeconds * Math.PI))
+      : 1;
+  return pulse * blip.fade;
 };
 
 const drawVehicle = (

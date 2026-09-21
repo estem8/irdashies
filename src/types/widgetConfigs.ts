@@ -513,6 +513,23 @@ export interface RadarConfig {
   hideInPit: boolean;
   /** Pulse the blip and rim while a car is critical. */
   pulseWhenCritical: boolean;
+  /**
+   * Keep the radar off screen until a car comes within `showRange`, so an
+   * empty radar does not take up sightline while the track is clear.
+   */
+  showWhenNearby: boolean;
+  /** Metres; a car this close brings the radar on screen. */
+  showRange: number;
+  /**
+   * Seconds the radar takes to fade in and out. 0 shows and hides it
+   * instantly. The fade is what keeps the panel from blinking in and out as
+   * traffic crosses the show range.
+   */
+  fadeSeconds: number;
+  /** Fade each car in over the outer band of the range instead of popping it in. */
+  fadeInCars: boolean;
+  /** Width of that band, in metres. */
+  fadeBandM: number;
   /** Draw the car number on each blip. */
   showCarNumbers: boolean;
   /** Draw the side strips that light up when a car pulls alongside. */
