@@ -26,9 +26,9 @@ export interface ProximityVerdict {
 
 /**
  * @param gapM Fore/aft gap in metres; the distance the radar is about.
- * @param alongside True when the sim reports this car directly beside us. A car
- * level with the player has a near-zero gap, but it is the sim's own verdict
- * that makes it certain, so it is honoured on its own.
+ * @param alongside True when the sim reports this car directly beside us. It
+ * engages a car on its own — the sim only reports overlap for a car it can see
+ * beside us — but it does not by itself make the car critical.
  * @param wasEngaged Whether the previous frame had this car engaged.
  */
 export const evaluateProximity = (
@@ -45,6 +45,11 @@ export const evaluateProximity = (
 
   if (!engaged) return { engaged: false, level: 'far' };
 
-  const critical = alongside || gapM <= thresholds.criticalRange;
+  // Critical is the gap alone, not the overlap verdict: recorded passes show
+  // the sim reporting a car beside us across the whole overtake, out to five
+  // metres of stagger, so treating every overlap as critical would turn the
+  // radar red for most of a pass. A car actually level has a near-zero gap and
+  // is critical by this rule anyway.
+  const critical = gapM <= thresholds.criticalRange;
   return { engaged: true, level: critical ? 'critical' : 'nearby' };
 };

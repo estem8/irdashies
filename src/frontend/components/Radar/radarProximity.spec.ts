@@ -37,9 +37,13 @@ describe('evaluateProximity', () => {
     expect(at(10.1, false, true)).toEqual({ engaged: false, level: 'far' });
   });
 
-  it('treats a car directly alongside as critical regardless of gap', () => {
-    expect(at(6, true)).toEqual({ engaged: true, level: 'critical' });
+  it('engages a car alongside, but grades it by its real gap', () => {
+    // The sim reports overlap across the whole pass, out to about five metres
+    // of stagger, so an alongside car is only critical once it is level.
     expect(at(0, true)).toEqual({ engaged: true, level: 'critical' });
+    expect(at(1, true)).toEqual({ engaged: true, level: 'critical' });
+    expect(at(4, true)).toEqual({ engaged: true, level: 'nearby' });
+    expect(at(6, true)).toEqual({ engaged: true, level: 'nearby' });
   });
 
   it('engages an alongside car even when it sat outside the engage range', () => {
