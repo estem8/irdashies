@@ -92,9 +92,8 @@ export interface RadarBlipInput {
   /** Car number by CarIdx, for blip labels. */
   carNumbers: ReadonlyMap<number, string>;
   /**
-   * The sim's pace car CarIdx, cross-checked against the driver roster; null
-   * when the session has no pace car on track. Both PaceCarIdx and CarIsPaceCar
-   * must agree, because some sessions report PaceCarIdx 0 — the player's index.
+   * The pace car's CarIdx as the driver roster flags it, or null when no
+   * driver is flagged CarIsPaceCar.
    */
   paceCarIdx: number | null;
   /** State carried over from the previous frame; the caller owns it. */

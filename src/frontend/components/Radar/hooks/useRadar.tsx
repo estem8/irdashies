@@ -122,10 +122,10 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   }, [drivers]);
 
   /**
-   * The pace car index: the sim's PaceCarIdx, but only when the driver at
-   * that index is flagged CarIsPaceCar — some sessions report PaceCarIdx 0,
-   * which is the player's index too. Falling back to the first flagged driver
-   * covers rosters where the session index is stale.
+   * The pace car index: the first driver the roster flags CarIsPaceCar. The
+   * session's PaceCarIdx is deliberately not consulted — some sessions report
+   * it as 0, which is the player's index too — and the roster flag is what the
+   * sim keeps correct.
    */
   const paceCarIdx = useMemo<number | null>(() => {
     if (!drivers) return null;
