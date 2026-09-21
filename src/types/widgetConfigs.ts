@@ -480,6 +480,35 @@ export interface BlindSpotMonitorConfig {
   thresholdColor2?: number;
 }
 
+/**
+ * Proximity radar. Distances are real metres, derived from lap distance
+ * fractions; bearing comes from the track centreline, so blips are placed
+ * relative to the road ahead of the player rather than to world axes.
+ */
+export interface RadarConfig {
+  /** Metres from the player that still get a blip. */
+  radarRange: number;
+  /** Opponent car body dimensions in metres — the SDK reports none per car. */
+  vehicleWidth: number;
+  vehicleLength: number;
+  /** Stop drawing cars on pit road; they sit on the same centreline as the track. */
+  hideInPit: boolean;
+  showOverlapIndicator: boolean;
+  /** TinyPedal's range multipliers: how far past the car's own width an overlap is "nearby" or "critical". */
+  overlapNearbyRangeMultiplier: number;
+  overlapCriticalRangeMultiplier: number;
+  colorPlayer: string;
+  colorSameLap: string;
+  colorLapsAhead: string;
+  colorLapsBehind: string;
+  colorInPit: string;
+  colorNearby: string;
+  colorCritical: string;
+  background: { opacity: number };
+  showOnlyWhenOnTrack: boolean;
+  sessionVisibility: SessionVisibilitySettings;
+}
+
 export interface RejoinIndicatorConfig {
   showAtSpeed: number;
   careGap: number;
@@ -947,6 +976,7 @@ export interface WidgetConfigMap {
   tachometer: TachometerConfig;
   fuel: FuelConfig;
   blindspotmonitor: BlindSpotMonitorConfig;
+  radar: RadarConfig;
   garagecover: GarageCoverConfig;
   rejoin: RejoinIndicatorConfig;
   flag: FlagConfig;
@@ -1050,6 +1080,7 @@ export type TachometerWidgetSettings = BaseWidgetSettings<TachometerConfig>;
 export type FuelWidgetSettings = BaseWidgetSettings<FuelConfig>;
 export type BlindSpotMonitorWidgetSettings =
   BaseWidgetSettings<BlindSpotMonitorConfig>;
+export type RadarWidgetSettings = BaseWidgetSettings<RadarConfig>;
 export type RejoinIndicatorWidgetSettings =
   BaseWidgetSettings<RejoinIndicatorConfig>;
 export type FlagWidgetSettings = BaseWidgetSettings<FlagConfig> & {

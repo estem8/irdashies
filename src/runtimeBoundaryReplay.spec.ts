@@ -40,6 +40,7 @@ const SNAPSHOT_CHANNELS = [
   'lap-times.snapshot',
   'lap-log.snapshot',
   'reference-laps.snapshot',
+  'radar.snapshot',
   'radio.snapshot',
   'relative-gaps.snapshot',
   'sector-timing.snapshot',
@@ -510,6 +511,13 @@ const summarize = (snapshots: SnapshotRecord) => ({
     sessionNum: snapshots['reference-laps.snapshot'].sessionNum,
     version: snapshots['reference-laps.snapshot'].version,
   },
+  'radar.snapshot': {
+    focusCarIdx: snapshots['radar.snapshot'].focusCarIdx,
+    carIdxLapDistPct: snapshots['radar.snapshot'].carIdxLapDistPct,
+    carIdxLap: snapshots['radar.snapshot'].carIdxLap,
+    carIdxOnPitRoad: snapshots['radar.snapshot'].carIdxOnPitRoad,
+    version: snapshots['radar.snapshot'].version,
+  },
   'radio.snapshot': {
     transmittingCarIdxs: snapshots['radio.snapshot'].transmittingCarIdxs,
     version: snapshots['radio.snapshot'].version,
@@ -564,7 +572,7 @@ const summarize = (snapshots: SnapshotRecord) => ({
 });
 
 describe('runtime boundary replay', () => {
-  it('matches a fixed golden across all 14 live-tape and mock snapshots', () => {
+  it('matches a fixed golden across all 15 live-tape and mock snapshots', () => {
     const run = (kind: SourceKind, rendererId: number) => {
       const harness = createHarness(kind, rendererId);
       const stores = attachStores(harness.bridge);
@@ -739,6 +747,14 @@ const FIXED_GOLDEN = {
     persistedLapCount: 0,
     sessionNum: null,
     version: 2,
+  },
+  'radar.snapshot': {
+    focusCarIdx: 0,
+    // Player 0.18 with the rival the harness places 0.05 ahead.
+    carIdxLapDistPct: [0.18, 0.22999999999999998],
+    carIdxLap: [1, 1],
+    carIdxOnPitRoad: [false, false],
+    version: 5,
   },
   'radio.snapshot': {
     transmittingCarIdxs: [0],

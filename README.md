@@ -345,6 +345,19 @@ Displays a compact three-row view of the cars immediately ahead of and behind yo
 - Last-lap highlights for personal-best and session-fastest laps
 - Adjustable background opacity and on-track/session visibility controls
 
+### Radar
+
+Shows the cars around you on a circular disc, like a spotter's proximity radar: your car sits at the centre pointing up, and nearby cars are drawn where they are on the road. Cars are placed by their real distance along the track — the sim reports no per-car world position for iRacing, so the disc is built from lap distance and the track centreline.
+
+**Features:**
+
+- Real-metre proximity: cars appear at their true distance ahead or behind, and curve off the vertical axis where the road bends between you and them
+- Colour-coded by lapped state: same lap, a lap ahead, a lap behind, and cars on pit road
+- Side overlap indicator: bars at the disc edges when the sim reports a car alongside you, amber for one car and red for two
+- Configurable range (10-25 m) and car dimensions, since the sim reports no per-car size
+- Optional hiding of cars on pit road, which otherwise sit on the racing line's centreline
+- Adjustable background opacity and on-track/session visibility controls
+
 ### Slow Car Ahead Warning
 
 Displays a warning indicator when a slower car is detected ahead on the track. The distance in meters to the car is displayed, as well as bars that grow as the car gets closer. The color of the bars change based on the track position and speed of the slow car:

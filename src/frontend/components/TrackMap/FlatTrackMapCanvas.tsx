@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TrackDriver, TrackDrawing } from './TrackCanvas';
+import { TrackDriver } from './TrackCanvas';
+import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import { getColor, getTailwindStyle } from '@irdashies/utils/colors';
 import { useCarIdxOffTrack } from '@irdashies/context';
 import { progressToFlatX, useProgressAnimation } from './useProgressAnimation';

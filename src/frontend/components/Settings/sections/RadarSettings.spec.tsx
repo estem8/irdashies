@@ -1,0 +1,100 @@
+import { act, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { DashboardLayout, RadarConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types';
+import { RadarSettings } from './RadarSettings';
+
+// The dashboard reaches this component through context, so back the mock with a
+// real external store rather than a module variable — a plain rerender would not
+// re-run the hook with a new value.
+const mocks = vi.hoisted(() => {
+  let dashboard: DashboardLayout | undefined;
+  const listeners = new Set<() => void>();
+  return {
+    listeners,
+    getDashboard: () => dashboard,
+    setDashboard: (next: DashboardLayout | undefined) => {
+      dashboard = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
+});
+
+vi.mock('@irdashies/context', async () => {
+  const { useSyncExternalStore } = await import('react');
+  return {
+    useDashboard: () => ({
+      currentDashboard: useSyncExternalStore((onChange) => {
+        mocks.listeners.add(onChange);
+        return () => mocks.listeners.delete(onChange);
+      }, mocks.getDashboard),
+    }),
+  };
+});
+
+const radarConfig = (overrides: Partial<RadarConfig> = {}): RadarConfig => ({
+  ...getWidgetDefaultConfig('radar'),
+  ...overrides,
+});
+
+const dashboardWith = (config: RadarConfig) =>
+  ({
+    widgets: [
+      {
+        id: 'radar',
+        enabled: true,
+        layout: { x: 0, y: 0, width: 300, height: 300 },
+        config,
+      },
+    ],
+  }) as unknown as DashboardLayout;
+
+/**
+ * The Options tab renders one slider — radar range; the width and length rows
+ * are number inputs and would otherwise be picked up by a positional query.
+ */
+const rangeValue = () => (screen.getByRole('slider') as HTMLInputElement).value;
+
+const openOptionsTab = () => {
+  // "Options" also titles the panel it opens, so select the tab button itself.
+  act(() => screen.getByRole('button', { name: 'Options' }).click());
+};
+
+describe('RadarSettings', () => {
+  it('shows the saved config that arrives after the first render', () => {
+    mocks.setDashboard(undefined);
+    render(<RadarSettings />);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+    act(() =>
+      mocks.setDashboard(dashboardWith(radarConfig({ radarRange: 22 })))
+    );
+    openOptionsTab();
+
+    // Would fall back to the default range if the local state kept the value it
+    // captured on the first render, and the next edit would persist that over
+    // the saved config.
+    expect(rangeValue()).toBe('22');
+  });
+
+  it('re-seeds when the dashboard is swapped for another profile', () => {
+    mocks.setDashboard(dashboardWith(radarConfig({ radarRange: 22 })));
+    render(<RadarSettings />);
+    openOptionsTab();
+    expect(rangeValue()).toBe('22');
+
+    act(() =>
+      mocks.setDashboard(dashboardWith(radarConfig({ radarRange: 11 })))
+    );
+
+    expect(rangeValue()).toBe('11');
+  });
+
+  it('falls back to the column defaults for a config the profile never had', () => {
+    mocks.setDashboard({ widgets: [] } as unknown as DashboardLayout);
+    render(<RadarSettings />);
+    openOptionsTab();
+
+    expect(screen.getByText('Radar Range')).toBeInTheDocument();
+  });
+});

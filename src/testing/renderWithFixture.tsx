@@ -13,6 +13,8 @@ import {
   type ReferenceLapSource,
 } from '../app/processors/RelativeGapProcessor';
 import { TrackStateProcessor } from '../app/processors/TrackStateProcessor';
+import { RadarProcessor } from '../app/processors/RadarProcessor';
+import { BlindSpotProcessor } from '../app/processors/BlindSpotProcessor';
 import { DashboardProvider } from '../frontend/context/DashboardContext/DashboardContext';
 import { useSessionStore } from '../frontend/context/SessionStore/SessionStore';
 import { toSession, toTelemetry, type ReplayFixture } from './replayFixture';
@@ -84,9 +86,13 @@ export const mountFixture = (
   // Track state carries the session number, which is what resolves the session
   // type. Without it every "is this a race?" branch reads as undefined.
   const trackState = new TrackStateProcessor();
+  const radar = new RadarProcessor();
+  const blindSpot = new BlindSpotProcessor();
   standings.init(session);
   relativeGaps.init?.(session);
   trackState.init(session);
+  radar.init(session);
+  blindSpot.init(session);
 
   const published: Partial<ChannelPayloads> = {};
   const listeners = new Map<string, ((payload: unknown) => void)[]>();
@@ -106,9 +112,13 @@ export const mountFixture = (
     standings.onFrame(telemetry);
     relativeGaps.onFrame(telemetry);
     trackState.onFrame(telemetry);
+    radar.onFrame(telemetry);
+    blindSpot.onFrame(telemetry);
     publish('standings.snapshot', standings.snapshot());
     publish('relative-gaps.snapshot', relativeGaps.snapshot());
     publish('track-state.snapshot', trackState.snapshot());
+    publish('radar.snapshot', radar.snapshot());
+    publish('blind-spot.snapshot', blindSpot.snapshot());
   };
 
   // Wind through every frame so the hooks see a settled session rather than a

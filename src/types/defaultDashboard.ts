@@ -1072,6 +1072,43 @@ export const defaultDashboard: {
       },
     },
     {
+      id: 'radar',
+      enabled: false,
+      layout: {
+        x: 810,
+        y: 530,
+        width: 300,
+        height: 300,
+      },
+      config: {
+        radarRange: 15,
+        vehicleWidth: 1.9,
+        vehicleLength: 4.5,
+        hideInPit: true,
+        showOverlapIndicator: true,
+        overlapNearbyRangeMultiplier: 1,
+        overlapCriticalRangeMultiplier: 0.15,
+        colorPlayer: '#2fd16a',
+        colorSameLap: '#3b82f6',
+        colorLapsAhead: '#a855f7',
+        colorLapsBehind: '#6b7280',
+        colorInPit: '#eab308',
+        colorNearby: '#f59e0b',
+        colorCritical: '#ef4444',
+        background: {
+          opacity: 30,
+        },
+        showOnlyWhenOnTrack: true,
+        sessionVisibility: {
+          race: true,
+          loneQualify: true,
+          openQualify: true,
+          practice: true,
+          offlineTesting: true,
+        },
+      },
+    },
+    {
       id: 'garagecover',
       enabled: false,
       layout: {

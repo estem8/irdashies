@@ -17,29 +17,6 @@ export const progressToFlatX = (
   usableWidth: number
 ) => startX + progress * usableWidth;
 
-export const progressToTrackPoint = (
-  progress: number,
-  trackPathPoints: readonly { x: number; y: number }[],
-  totalLength: number,
-  intersectionLength: number,
-  direction: 'clockwise' | 'anticlockwise' | null | undefined,
-  output: { x: number; y: number }
-) => {
-  const adjustedLength = (totalLength * progress) % totalLength;
-  const length =
-    direction === 'anticlockwise'
-      ? (intersectionLength + adjustedLength) % totalLength
-      : (intersectionLength - adjustedLength + totalLength) % totalLength;
-  const floatIndex = (length / totalLength) * (trackPathPoints.length - 1);
-  const index1 = Math.floor(floatIndex);
-  const index2 = Math.min(index1 + 1, trackPathPoints.length - 1);
-  const amount = floatIndex - index1;
-  const point1 = trackPathPoints[index1];
-  const point2 = trackPathPoints[index2];
-  output.x = point1.x + (point2.x - point1.x) * amount;
-  output.y = point1.y + (point2.y - point1.y) * amount;
-};
-
 const wrapProgress = (progress: number) => {
   const wrapped = progress % 1;
   return wrapped < 0 ? wrapped + 1 : wrapped;

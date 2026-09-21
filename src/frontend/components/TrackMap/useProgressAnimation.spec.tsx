@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ProgressInterpolator,
   progressToFlatX,
-  progressToTrackPoint,
   useProgressAnimation,
 } from './useProgressAnimation';
+import { progressToTrackPoint } from '@irdashies/domain/trackGeometry';
 
 describe('ProgressInterpolator', () => {
   it('interpolates normal movement', () => {
