@@ -74,6 +74,9 @@ const meta = {
     colorPlayer: '#2fd16a',
     colorInPit: '#6b7280',
     bgOpacity: 30,
+    // Any positive length works: the views place blips by metre offset, and
+    // without it the motion targets are NaN and no car is drawn at all.
+    trackLengthM: 5000,
   },
   argTypes: {
     mode: {
