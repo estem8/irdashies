@@ -7,7 +7,6 @@ import {
 
 export const radarSelectors = {
   carIdxLapDistPct: (snapshot: RadarSnapshot) => snapshot.carIdxLapDistPct,
-  carIdxLap: (snapshot: RadarSnapshot) => snapshot.carIdxLap,
   carIdxOnPitRoad: (snapshot: RadarSnapshot) => snapshot.carIdxOnPitRoad,
   focusCarIdx: (snapshot: RadarSnapshot) => snapshot.focusCarIdx,
   isOnTrack: (snapshot: RadarSnapshot) => snapshot.isOnTrack,

@@ -20,8 +20,8 @@ const scalar = (frame: Telemetry, key: string): unknown =>
 
 /**
  * Copies one per-car number array at full precision. The radar places blips in
- * metres, so it cannot use the 3dp rounding the track-state channel applies —
- * on a 25 km lap that would quantise blips into 7 m steps.
+ * metres, so it cannot use the 3dp rounding the track-state channel applies:
+ * 0.001 of a 25 km lap is 25 m of quantisation.
  *
  * Mutates the target in place: this runs on every frame and must not allocate.
  */
@@ -58,7 +58,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   private readonly latest: RadarSnapshot = {
     focusCarIdx: null,
     carIdxLapDistPct: [],
-    carIdxLap: [],
     carIdxOnPitRoad: [],
     isOnTrack: false,
     version: 0,
@@ -96,11 +95,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
         valuesOf(frame, 'CarIdxLapDistPct')
       ) || changed;
     changed =
-      copyNumbers(
-        this.latest.carIdxLap as number[],
-        valuesOf(frame, 'CarIdxLap')
-      ) || changed;
-    changed =
       copyBooleans(
         this.latest.carIdxOnPitRoad as boolean[],
         valuesOf(frame, 'CarIdxOnPitRoad')
@@ -112,7 +106,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   onLifecycle(event: SessionLifecycleEvent): void {
     if (event.type === 'enter') return;
     (this.latest.carIdxLapDistPct as number[]).length = 0;
-    (this.latest.carIdxLap as number[]).length = 0;
     (this.latest.carIdxOnPitRoad as boolean[]).length = 0;
     this.latest.focusCarIdx = null;
     this.latest.isOnTrack = false;
