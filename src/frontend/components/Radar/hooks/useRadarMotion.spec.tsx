@@ -111,6 +111,28 @@ describe('useRadarMotion', () => {
     expect(previous).toBeCloseTo(2, 1);
   });
 
+  it('draws a car behind the player behind it, not a lap ahead', () => {
+    const observed: Observed = { along: [] };
+    const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
+      useRadarMotion(blips, TRACK_LENGTH_M, false, recordDraw(observed));
+      return null;
+    };
+
+    const view = render(<Harness blips={[blip(1, 0)]} />);
+    observed.along = [];
+    view.rerender(<Harness blips={[blip(1, -4)]} />);
+    while (callbacks.length) {
+      act(() => callbacks.shift()?.(clock + 8));
+      clock += 8;
+    }
+
+    // The interpolator stores lap fractions in [0, 1), so -4 m comes back as
+    // 496 m unless the shortest delta is recovered.
+    const drawn = observed.along[observed.along.length - 1];
+    expect(drawn).toBeLessThan(0);
+    expect(drawn).toBeCloseTo(-4, 6);
+  });
+
   it('keeps the loop alive while the pulse is active', () => {
     const observed: Observed = { along: [] };
     const Harness = ({

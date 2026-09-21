@@ -399,15 +399,19 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   // The draw callback reads the latest props and size through refs, so the
   // RAF loop useRadarMotion starts is never restarted by a re-render. The
   // clock lives inside the frame path: only the pulse needs a time value.
-  // The last drawn metre buffers are kept: a commit that itself repaints —
-  // a resize, a theme change — must not clear the geometry, it just needs to
-  // redraw what the interpolator last produced.
+  // The last drawn metre buffers are kept: they grow with the field and are
+  // never freed, so a commit that itself repaints — a resize, a theme change —
+  // can redraw what the interpolator last produced.
   const alongRef = useRef(new Float64Array(0));
   const lateralRef = useRef(new Float64Array(0));
   const drawRef = useRef<RadarMotionDraw>(() => undefined);
   drawRef.current = (alongM, lateralM, count) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (alongRef.current.length < count) {
+      alongRef.current = new Float64Array(count);
+      lateralRef.current = new Float64Array(count);
+    }
     alongRef.current.set(alongM.subarray(0, count));
     lateralRef.current.set(lateralM.subarray(0, count));
     drawRadar(
@@ -431,16 +435,17 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   // size change must redraw the last committed frame from the cached buffers.
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      drawRadar(
-        canvas,
-        { ...propsRef.current, nowSeconds: performance.now() / 1000 },
-        sizeRef.current,
-        'dark',
-        alongRef.current,
-        lateralRef.current
-      );
-    }
+    // Before the first commit there is no frame in the buffers to redraw.
+    if (!canvas || alongRef.current.length < propsRef.current.blips.length)
+      return;
+    drawRadar(
+      canvas,
+      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      sizeRef.current,
+      'dark',
+      alongRef.current,
+      lateralRef.current
+    );
   });
 
   return <canvas ref={canvasRef} className="h-full w-full" />;
