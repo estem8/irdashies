@@ -122,6 +122,14 @@ describe('RadarSettings', () => {
     expect(sliderFor('Fade Width').max).toBe('15');
   });
 
+  it('shows the saved track map setting state', () => {
+    mocks.setDashboard(dashboardWith(radarConfig({ showTrackMap: true })));
+    render(<RadarSettings />);
+    act(() => screen.getByRole('button', { name: 'Display' }).click());
+
+    expect(screen.getByRole('switch', { name: 'Track map' })).toBeChecked();
+  });
+
   it('offers a colour for every blip and state signal', () => {
     // Older profiles may not have the current rival and state-signal colours,
     // so every swatch has to come from the widget defaults rather than render

@@ -56,6 +56,14 @@ const meta = {
     // Any positive length works: the disc places blips by metre offset, and
     // without it the motion targets are NaN and no car is drawn at all.
     trackLengthM: 5000,
+    showMap: false,
+    // The road passes through (0, 0): the player's own path point is the
+    // origin of this frame, and the player is drawn at the centre.
+    mapPath: new Float64Array([
+      -45, -5, -30, -3, -15, -1, 0, 0, 15, 1.5, 30, 4, 45, 8,
+    ]),
+    mapPointCount: 7,
+    mapWindowM: 90,
   },
   argTypes: {
     radarRange: { control: { type: 'range', min: 10, max: 25, step: 1 } },
@@ -105,4 +113,19 @@ export const NoCarsInRange: Story = {
 export const PaceCar: Story = {
   name: 'Pace car',
   args: { blips: [AHEAD, PACE] },
+};
+
+export const FollowingMap: Story = {
+  name: 'Following track map',
+  args: {
+    showMap: true,
+    // Cars on the road rather than beside it. The player's frame puts the
+    // player at lateral 0 on the centreline, so the road passes through
+    // (0, 0) and the cars sit on the curve that leaves it.
+    blips: [
+      blip(1, 12, 1.1, '24'),
+      blip(2, -5, -0.4, '7'),
+      blip(3, 0.3, 0, '51'),
+    ],
+  },
 };

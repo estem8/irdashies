@@ -16,6 +16,12 @@ export interface RadarDisplayProps {
   bgOpacity: number;
   /** Track length in metres; drives blip motion between snapshots. */
   trackLengthM: number;
+  showMap: boolean;
+  /** Interleaved along-track and rightward lateral offsets, in metres. */
+  mapPath: Float64Array;
+  mapPointCount: number;
+  /** Total metres of road shown in the following map. */
+  mapWindowM: number;
   nowSeconds: number;
 }
 
@@ -83,40 +89,29 @@ const drawVehicle = (
   ctx.restore();
 };
 
-const drawDisc = (
+const drawBlipVehicles = (
   ctx: CanvasRenderingContext2D,
   props: RadarDisplayProps,
-  size: Size,
+  centreX: number,
+  centreY: number,
+  scale: number,
+  widthPx: number,
+  lengthPx: number,
   alongM: Float64Array,
   lateralM: Float64Array
 ) => {
-  const centreX = size.width / 2;
-  const centreY = size.height / 2;
-  const radius = Math.max(1, Math.min(size.width, size.height) / 2 - 2);
-  const scale = radius / Math.max(1, props.radarRange);
-  const widthPx = Math.max(4, props.vehicleWidth * scale);
-  const lengthPx = Math.max(6, props.vehicleLength * scale);
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
-  ctx.fill();
-
-  // Clip to the disc: a car further across the road than the range would
-  // otherwise paint over the widget's edges.
-  ctx.beginPath();
-  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
-  ctx.clip();
-
   // A car the sim has not placed on a side is painted on the centreline, which
   // is only right while it is ahead of or behind us. Level with the player it
-  // would land on the player's own rectangle — the car drives through you — so
-  // there the two rim arcs are the whole signal and no vehicle is drawn.
+  // would land on the player's own rectangle — the car drives through you. The
+  // disc answers that with the two rim arcs and draws no vehicle; the map has no
+  // rim, so there the overlap itself is the signal and the car is drawn on top
+  // of the player.
   const abreastM = Math.max(1, props.vehicleLength * 0.5);
+  const hideLevelCar = !props.showMap;
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
-    const levelAndUnknown = blip.rimSignal === 'both' && blip.gapM <= abreastM;
+    const levelAndUnknown =
+      hideLevelCar && blip.rimSignal === 'both' && blip.gapM <= abreastM;
     if (!levelAndUnknown) {
       drawVehicle(
         ctx,
@@ -131,8 +126,16 @@ const drawDisc = (
       );
     }
   }
-  ctx.restore();
+};
 
+const drawPlayer = (
+  ctx: CanvasRenderingContext2D,
+  props: RadarDisplayProps,
+  centreX: number,
+  centreY: number,
+  widthPx: number,
+  lengthPx: number
+) => {
   drawVehicle(
     ctx,
     centreX,
@@ -144,32 +147,69 @@ const drawDisc = (
     1,
     null
   );
+};
 
-  const rimArch = (bearing: number, color: string, alpha: number) => {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(
-      centreX,
-      centreY,
-      radius - 2,
-      -Math.PI / 2 + bearing - 0.32,
-      -Math.PI / 2 + bearing + 0.32
-    );
-    ctx.lineWidth = Math.max(2, radius * 0.06);
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = alpha;
-    ctx.stroke();
-    ctx.restore();
-  };
-  const pulse = pulseAlpha(props.nowSeconds);
-  for (const blip of props.blips) {
-    if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
-      rimArch(-Math.PI / 2, props.colorAlongside, pulse * alphaFor(blip));
-    }
-    if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
-      rimArch(Math.PI / 2, props.colorAlongside, pulse * alphaFor(blip));
-    }
+const drawRoad = (
+  ctx: CanvasRenderingContext2D,
+  props: RadarDisplayProps,
+  centreX: number,
+  centreY: number,
+  scale: number,
+  widthPx: number
+) => {
+  const pointCount = Math.min(
+    props.mapPointCount,
+    Math.floor(props.mapPath.length / 2)
+  );
+  if (pointCount < 2) return;
+
+  ctx.beginPath();
+  for (let point = 0; point < pointCount; point++) {
+    const index = point * 2;
+    const x = centreX + props.mapPath[index + 1] * scale;
+    const y = centreY - props.mapPath[index] * scale;
+    if (point === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
   }
+
+  // The road has to be wider than the cars driving on it, or a blip reads as
+  // an obstacle standing beside a line rather than traffic using the road.
+  // The dark pass underneath is the outline every map in the app draws first,
+  // so the road keeps its shape against a car of any colour.
+  const roadPx = Math.max(8, widthPx * 1.9);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.lineWidth = roadPx + 4;
+  ctx.strokeStyle = 'rgba(2, 6, 23, 0.9)';
+  ctx.stroke();
+  ctx.lineWidth = roadPx;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+  ctx.stroke();
+};
+
+const drawRimArch = (
+  ctx: CanvasRenderingContext2D,
+  centreX: number,
+  centreY: number,
+  radius: number,
+  bearing: number,
+  color: string,
+  alpha: number
+) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(
+    centreX,
+    centreY,
+    radius - 2,
+    -Math.PI / 2 + bearing - 0.32,
+    -Math.PI / 2 + bearing + 0.32
+  );
+  ctx.lineWidth = Math.max(2, radius * 0.06);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.stroke();
+  ctx.restore();
 };
 
 const drawRadar = (
@@ -193,15 +233,98 @@ const drawRadar = (
   ctx.clearRect(0, 0, size.width, size.height);
   void theme;
 
-  drawDisc(ctx, props, size, alongM, lateralM);
+  const centreX = size.width / 2;
+  const centreY = size.height / 2;
+  const radius = Math.max(1, Math.min(size.width, size.height) / 2 - 2);
+  // A map covers three radar ranges, while a disc covers one. In both views
+  // this single conversion preserves the physical metres-per-pixel scale.
+  const viewHalfWidthM = props.showMap
+    ? Math.max(1, props.mapWindowM / 2)
+    : Math.max(1, props.radarRange);
+  const scale = radius / viewHalfWidthM;
+  const widthPx = Math.max(4, props.vehicleWidth * scale);
+  const lengthPx = Math.max(6, props.vehicleLength * scale);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
+  ctx.fill();
+
+  // Both views share the same circular boundary, including the following road
+  // and every vehicle, so none of their geometry can escape the widget.
+  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
+  ctx.clip();
+
+  if (props.showMap) {
+    drawRoad(ctx, props, centreX, centreY, scale, widthPx);
+    drawBlipVehicles(
+      ctx,
+      props,
+      centreX,
+      centreY,
+      scale,
+      widthPx,
+      lengthPx,
+      alongM,
+      lateralM
+    );
+    ctx.restore();
+    drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
+    // Rim arcs belong to the disc's edge. A rim around a scrolling map adds no
+    // positional information, so map view deliberately paints no arcs.
+  } else {
+    drawBlipVehicles(
+      ctx,
+      props,
+      centreX,
+      centreY,
+      scale,
+      widthPx,
+      lengthPx,
+      alongM,
+      lateralM
+    );
+    ctx.restore();
+    drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
+
+    const pulse = pulseAlpha(props.nowSeconds);
+    for (const blip of props.blips) {
+      if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
+        drawRimArch(
+          ctx,
+          centreX,
+          centreY,
+          radius,
+          -Math.PI / 2,
+          props.colorAlongside,
+          pulse * alphaFor(blip)
+        );
+      }
+      if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
+        drawRimArch(
+          ctx,
+          centreX,
+          centreY,
+          radius,
+          Math.PI / 2,
+          props.colorAlongside,
+          pulse * alphaFor(blip)
+        );
+      }
+    }
+  }
 };
 
 export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
 
-  const propsRef = useRef(props);
-  propsRef.current = props;
+  const propsRef = useRef<RadarDisplayProps>({ ...props, nowSeconds: 0 });
+  propsRef.current = {
+    ...props,
+    nowSeconds: propsRef.current.nowSeconds,
+  };
   const sizeRef = useRef(size);
   sizeRef.current = size;
 
@@ -245,9 +368,10 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     }
     alongRef.current.set(alongM.subarray(0, count));
     lateralRef.current.set(lateralM.subarray(0, count));
+    propsRef.current.nowSeconds = performance.now() / 1000;
     drawRadar(
       canvas,
-      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      propsRef.current,
       sizeRef.current,
       'dark',
       alongRef.current,
@@ -255,7 +379,8 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     );
   };
 
-  const pulseActive = props.blips.some((blip) => blip.rimSignal !== null);
+  const pulseActive =
+    !props.showMap && props.blips.some((blip) => blip.rimSignal !== null);
   useRadarMotion(
     props.blips,
     props.trackLengthM,
@@ -272,9 +397,10 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     // Before the first commit there is no frame in the buffers to redraw.
     if (!canvas || alongRef.current.length < propsRef.current.blips.length)
       return;
+    propsRef.current.nowSeconds = performance.now() / 1000;
     drawRadar(
       canvas,
-      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      propsRef.current,
       sizeRef.current,
       'dark',
       alongRef.current,

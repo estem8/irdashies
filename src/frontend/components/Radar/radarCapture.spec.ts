@@ -76,6 +76,7 @@ const place = (capture: Capture) => {
     carNumbers: new Map(),
     paceCarIdx: null,
     previousTargets: new Map(),
+    mapBuffer: new Float64Array(128),
   });
 
   const scalar = (key: string) => telemetry[key]?.value?.[0] as number;

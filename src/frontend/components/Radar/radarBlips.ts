@@ -67,6 +67,8 @@ export interface RadarBlipResult {
   blips: RadarBlip[];
   /** State to hand back in as `previousTargets` next frame. */
   targets: ReadonlyMap<number, RadarTargetState>;
+  /** Number of valid `(alongM, lateralM)` pairs written to the map buffer. */
+  mapPointCount: number;
 }
 
 export interface RadarBlipInput {
@@ -93,6 +95,8 @@ export interface RadarBlipInput {
   paceCarIdx: number | null;
   /** State carried over from the previous frame; the caller owns it. */
   previousTargets: ReadonlyMap<number, RadarTargetState>;
+  /** Caller-owned storage for the road path's `(alongM, lateralM)` pairs. */
+  mapBuffer: Float64Array;
 }
 
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
@@ -102,7 +106,13 @@ const NO_GEOMETRY: RadarBlipResult = {
   playerOnRoad: false,
   blips: [],
   targets: EMPTY_TARGETS,
+  mapPointCount: 0,
 };
+
+/** Metres between centreline samples in the following-car map. */
+export const MAP_SAMPLE_M = 2;
+
+const wrap01 = (value: number): number => ((value % 1) + 1) % 1;
 
 /**
  * How far to the side an abreast car is drawn, in car widths. Just over one
@@ -179,6 +189,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     paceCarIdx,
     fadeBandM,
     previousTargets,
+    mapBuffer,
   } = input;
 
   const trackPathPoints = trackDrawing?.active?.trackPathPoints;
@@ -204,6 +215,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       playerOnRoad: false,
       blips: [],
       targets: EMPTY_TARGETS,
+      mapPointCount: 0,
     };
   }
 
@@ -220,6 +232,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       playerOnRoad: false,
       blips: [],
       targets: EMPTY_TARGETS,
+      mapPointCount: 0,
     };
   }
 
@@ -241,8 +254,36 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     playerPoint
   );
 
-  const blips: RadarBlip[] = [];
+  const mapWindowM = radarRange * 3;
+  const halfMapWindowM = mapWindowM / 2;
+  // The map and blips are projected sequentially, so one scratch point is
+  // enough for both and the road path itself adds no per-frame allocation.
   const carPoint = { x: 0, y: 0 };
+  let mapPointCount = 0;
+  for (
+    let alongM = -halfMapWindowM;
+    alongM <= halfMapWindowM;
+    alongM += MAP_SAMPLE_M
+  ) {
+    const progress = wrap01(playerPct + alongM / trackLengthM);
+    progressToTrackPoint(
+      progress,
+      trackPathPoints,
+      totalLength,
+      intersectionLength,
+      direction,
+      carPoint
+    );
+    const offset = mapPointCount * 2;
+    mapBuffer[offset] = alongM;
+    mapBuffer[offset + 1] =
+      ((carPoint.x - playerPoint.x) * rightX +
+        (carPoint.y - playerPoint.y) * rightY) *
+      metresPerUnit;
+    mapPointCount += 1;
+  }
+
+  const blips: RadarBlip[] = [];
 
   for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
     if (carIdx === playerCarIdx) continue;
@@ -361,5 +402,11 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     });
   }
 
-  return { hasGeometry: true, playerOnRoad: true, blips, targets };
+  return {
+    hasGeometry: true,
+    playerOnRoad: true,
+    blips,
+    targets,
+    mapPointCount,
+  };
 };

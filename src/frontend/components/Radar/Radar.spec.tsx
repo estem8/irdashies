@@ -236,6 +236,27 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
+  it('passes the track-map setting and radar state to the display', async () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({
+        radarRange: 25,
+        showTrackMap: true,
+        fadeSeconds: 0,
+      }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    const display = latest();
+    expect(display.showMap).toBe(true);
+    expect(display.mapWindowM).toBe(75);
+    expect(display.mapPath).toBeInstanceOf(Float64Array);
+    expect(display.mapPointCount).toBeGreaterThanOrEqual(0);
+    expect(display.mapPointCount * 2).toBeLessThanOrEqual(
+      display.mapPath.length
+    );
+  });
+
   it('hides the disc while the session reports the car off track', async () => {
     // The capture has no IsOnTrack, so the sim state reads as off track and the
     // on-track gate — left at its default of on — must suppress the disc.

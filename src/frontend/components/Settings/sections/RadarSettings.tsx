@@ -203,6 +203,12 @@ export const RadarSettings = () => {
                 )}
                 <SettingDivider />
                 <SettingToggleRow
+                  title="Track map"
+                  description="Replaces the disc with a map that follows the car."
+                  enabled={settings.config.showTrackMap}
+                  onToggle={(v) => handleConfigChange({ showTrackMap: v })}
+                />
+                <SettingToggleRow
                   title="Car numbers on blips"
                   description="Label each car with its number, so you know who is alongside."
                   enabled={settings.config.showCarNumbers}

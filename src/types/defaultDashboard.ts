@@ -1090,6 +1090,7 @@ export const defaultDashboard: {
         fadeSeconds: 0.4,
         fadeInCars: true,
         fadeBandM: 3,
+        showTrackMap: false,
         showCarNumbers: true,
         colorRival: '#cbd5e1',
         colorPlayer: '#2fd16a',

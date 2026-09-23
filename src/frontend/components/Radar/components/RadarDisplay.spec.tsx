@@ -88,6 +88,8 @@ interface PaintRecord {
   strokesPerPaint: string[][];
   /** One entry per paint: every `fillText` drawn, as text and x position. */
   textsPerPaint: [string, number][][];
+  /** One entry per paint: every `lineTo` on the road polyline. */
+  lineTosPerPaint: number[][];
 }
 
 const observers: ((entries: unknown) => void)[] = [];
@@ -113,6 +115,7 @@ const createFakeContext = (record: PaintRecord) => {
         record.arcsPerPaint.push([]);
         record.strokesPerPaint.push([]);
         record.textsPerPaint.push([]);
+        record.lineTosPerPaint.push([]);
       }
       if (name === 'fillText') {
         const last = paint();
@@ -133,6 +136,9 @@ const createFakeContext = (record: PaintRecord) => {
       if (name === 'arc') {
         const last = paint();
         record.arcsPerPaint[last].push([args[3] as number, args[4] as number]);
+      }
+      if (name === 'lineTo') {
+        record.lineTosPerPaint[paint()].push(args[0] as number);
       }
     });
   return new Proxy(methods, {
@@ -168,6 +174,12 @@ const props: RadarDisplayProps = {
   colorPlayer: COLORS.player,
   bgOpacity: 30,
   trackLengthM: 5000,
+  showMap: false,
+  mapPath: new Float64Array([
+    -45, 0, -30, 1, -15, 3, 0, 4, 15, 3, 30, 1, 45, 0,
+  ]),
+  mapPointCount: 7,
+  mapWindowM: 90,
   nowSeconds: 0,
 };
 
@@ -190,6 +202,7 @@ describe('RadarDisplay', () => {
       arcsPerPaint: [],
       strokesPerPaint: [],
       textsPerPaint: [],
+      lineTosPerPaint: [],
     };
     observers.length = 0;
     const context = createFakeContext(record);
@@ -229,6 +242,7 @@ describe('RadarDisplay', () => {
     expect(record.vehiclesPerPaint.every((count) => count === VEHICLES)).toBe(
       true
     );
+    expect(record.lineTosPerPaint.at(-1)).toHaveLength(0);
 
     // Draw order is the blips, then the player. The 11 m car sits ahead of the
     // centre and the cars behind it below, in the same pixels per metre: a car
@@ -247,6 +261,62 @@ describe('RadarDisplay', () => {
     expect(ahead[0] - centreX).toBeCloseTo(0.2 * metresToPixels, 6);
     expect(behind[0] - centreX).toBeCloseTo(2.4 * metresToPixels, 6);
     expect(alongside[0] - centreX).toBeCloseTo(-2.1 * metresToPixels, 6);
+  });
+
+  it('paints the following road, a car at metre offsets, and no rim arcs in map view', () => {
+    render(
+      <RadarDisplay
+        {...props}
+        showMap
+        blips={[blip({ carIdx: 1, alongM: 4, gapM: 4, rimSignal: 'both' })]}
+      />
+    );
+    deliverSize(300, 300);
+
+    const paint = record.vehiclesPerPaint.length - 1;
+    expect(record.lineTosPerPaint[paint]).toHaveLength(props.mapPointCount - 1);
+    // The road is one polyline stroked twice: the dark outline first, then the
+    // surface over it, which is the order every map in the app uses.
+    expect(
+      record.strokesPerPaint[paint].filter(
+        (stroke) => stroke === 'rgba(2, 6, 23, 0.9)'
+      )
+    ).toHaveLength(1);
+    expect(
+      record.strokesPerPaint[paint].filter(
+        (stroke) => stroke === 'rgba(148, 163, 184, 0.45)'
+      )
+    ).toHaveLength(1);
+    expect(record.vehiclesPerPaint[paint]).toBe(2);
+
+    const centre = 150;
+    const scale = 148 / (props.mapWindowM / 2);
+    const [car] = record.originsPerPaint[paint];
+    expect(car[0]).toBeCloseTo(centre + 0.2 * scale, 6);
+    expect(car[1]).toBeCloseTo(centre - 4 * scale, 6);
+
+    // The two full-circle arcs are the shared background and clip. A rim
+    // signal in map view must not add the short disc arcs.
+    expect(
+      record.arcsPerPaint[paint].filter(
+        ([start, end]) => Math.abs(end - start) < 1
+      )
+    ).toHaveLength(0);
+  });
+
+  it('draws a level unknown-side car in map view, where the overlap is the signal', () => {
+    // The disc hides it and lights both rims instead. The map has no rim, so
+    // the car has to be painted on top of the player or the overlap is lost.
+    const level = [
+      blip({ carIdx: 1, alongM: 0.3, gapM: 0.3, rimSignal: 'both' }),
+    ];
+
+    const view = render(<RadarDisplay {...props} showMap blips={level} />);
+    deliverSize(300, 300);
+    expect(record.vehiclesPerPaint.at(-1)).toBe(2);
+
+    view.rerender(<RadarDisplay {...props} blips={level} />);
+    expect(record.vehiclesPerPaint.at(-1)).toBe(1);
   });
 
   it('paints every rival in the rival colour and the player in their own', () => {

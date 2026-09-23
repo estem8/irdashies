@@ -14,6 +14,7 @@ import { shouldShowTrack } from '../../../assets/data/brokenTracks';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import {
   computeRadarBlips,
+  MAP_SAMPLE_M,
   type RadarBlip,
   type RadarTargetState,
 } from '../radarBlips';
@@ -37,6 +38,12 @@ export interface RadarState {
   nearestGapM: number | null;
   /** Track length in metres; forwarded for motion interpolation. */
   trackLengthM: number;
+  /** Reusable `(alongM, lateralM)` storage for the following-car road. */
+  mapPath: Float64Array;
+  /** Number of valid road pairs in `mapPath`. */
+  mapPointCount: number;
+  /** Road shown, in metres, from half this window behind to half ahead. */
+  mapWindowM: number;
 }
 
 export interface UseRadarOptions {
@@ -142,6 +149,20 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   const targetsRef =
     useRef<ReadonlyMap<number, RadarTargetState>>(EMPTY_TARGETS);
   const targetsKeyRef = useRef<string>('');
+  const mapWindowM = radarRange * 3;
+  const mapPointCapacity =
+    Number.isFinite(mapWindowM) && mapWindowM >= 0
+      ? Math.floor(mapWindowM / MAP_SAMPLE_M) + 1
+      : 0;
+  const mapBufferRef = useRef<Float64Array | null>(null);
+  if (
+    mapBufferRef.current === null ||
+    mapBufferRef.current.length < mapPointCapacity * 2
+  ) {
+    mapBufferRef.current = new Float64Array(mapPointCapacity * 2);
+  }
+  const mapBuffer = mapBufferRef.current;
+
   const computed = useMemo(() => {
     const targetsKey = `${trackId}:${positions.length}`;
     if (targetsKey !== targetsKeyRef.current) {
@@ -163,6 +184,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       carNumbers,
       paceCarIdx,
       previousTargets: targetsRef.current,
+      mapBuffer,
     });
     targetsRef.current = result.targets;
     return result;
@@ -181,6 +203,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     fadeBandM,
     carNumbers,
     paceCarIdx,
+    mapBuffer,
   ]);
 
   let nearestGapM: number | null = null;
@@ -196,5 +219,8 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     isOnTrack,
     nearestGapM,
     trackLengthM,
+    mapPath: mapBuffer,
+    mapPointCount: computed.mapPointCount,
+    mapWindowM,
   };
 };

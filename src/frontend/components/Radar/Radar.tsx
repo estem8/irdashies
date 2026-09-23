@@ -148,6 +148,10 @@ export const Radar = () => {
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
+        showMap={settings.showTrackMap}
+        mapPath={state.mapPath}
+        mapPointCount={state.mapPointCount}
+        mapWindowM={state.mapWindowM}
       />
     </div>
   );

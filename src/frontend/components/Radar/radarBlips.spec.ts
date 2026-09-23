@@ -76,6 +76,7 @@ const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
     ]),
     paceCarIdx: null,
     previousTargets: new Map<number, RadarTargetState>(),
+    mapBuffer: new Float64Array(2048),
   };
 
 const withTargets = (targets: [number, RadarTargetState][]) =>
@@ -288,6 +289,84 @@ describe('computeRadarBlips', () => {
     });
 
     expect(result).toMatchObject({ hasGeometry: false, blips: [] });
+  });
+
+  it('samples the road at the contract spacing across the full map window', () => {
+    const radarRange = 16;
+    const mapBuffer = new Float64Array(128);
+    const result = computeRadarBlips({
+      ...baseInput,
+      radarRange,
+      mapBuffer,
+      ...positionsOf([pctOfArc(300)]),
+    });
+
+    expect(result.mapPointCount).toBe(25);
+    expect(mapBuffer[0]).toBe(-24);
+    expect(mapBuffer[(result.mapPointCount - 1) * 2]).toBe(24);
+    for (let i = 1; i < result.mapPointCount; i += 1) {
+      expect(mapBuffer[i * 2] - mapBuffer[(i - 1) * 2]).toBe(2);
+    }
+  });
+
+  it('curves the road lateral offset and keeps it constant on a straight', () => {
+    const curvedBuffer = new Float64Array(512);
+    const curved = computeRadarBlips({
+      ...baseInput,
+      radarRange: 100,
+      mapBuffer: curvedBuffer,
+      ...positionsOf([pctOfArc(300)]),
+    });
+
+    expect(curved.mapPointCount).toBe(151);
+    expect(curvedBuffer[1]).toBeCloseTo(0, 6);
+    expect(curvedBuffer[(curved.mapPointCount - 1) * 2 + 1]).toBeCloseTo(50, 6);
+
+    const straightBuffer = new Float64Array(128);
+    const straight = computeRadarBlips({
+      ...baseInput,
+      radarRange: 8,
+      mapBuffer: straightBuffer,
+      ...positionsOf([pctOfArc(200)]),
+    });
+    for (let i = 0; i < straight.mapPointCount; i += 1) {
+      expect(straightBuffer[i * 2 + 1]).toBeCloseTo(0, 6);
+    }
+  });
+
+  it('leaves the map buffer untouched when there is no geometry', () => {
+    const mapBuffer = Float64Array.from([7, 11, 13]);
+    const result = computeRadarBlips({
+      ...baseInput,
+      trackDrawing: undefined,
+      mapBuffer,
+      ...positionsOf([pctOfArc(300)]),
+    });
+
+    expect(result.mapPointCount).toBe(0);
+    expect(Array.from(mapBuffer)).toEqual([7, 11, 13]);
+  });
+
+  it('writes deterministic road pairs in place for repeated calls', () => {
+    const mapBuffer = new Float64Array(512);
+    const first = computeRadarBlips({
+      ...baseInput,
+      mapBuffer,
+      ...positionsOf([pctOfArc(300)]),
+    });
+    const firstValues = Array.from(
+      mapBuffer.subarray(0, first.mapPointCount * 2)
+    );
+    const second = computeRadarBlips({
+      ...baseInput,
+      mapBuffer,
+      ...positionsOf([pctOfArc(300)]),
+    });
+
+    expect(second.mapPointCount).toBe(first.mapPointCount);
+    expect(Array.from(mapBuffer.subarray(0, second.mapPointCount * 2))).toEqual(
+      firstValues
+    );
   });
 
   it('reports an unusable player position without emitting blips', () => {

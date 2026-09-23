@@ -352,6 +352,8 @@ Shows the cars around you on a circular disc, like a spotter's proximity radar: 
 **Features:**
 
 - Real-metre proximity: cars appear at their true distance ahead or behind, and curve off the vertical axis where the road bends between you and them
+- Optional track map replaces the disc with a map that follows the car: the player stays centred and pointing up while the road scrolls underneath, and cars sit at their real offsets
+- The map is drawn from the same track centreline as the disc because the sim publishes no world position
 - Two blip colours: your car and everyone else's, so how close a car is read off its position on the disc rather than a colour scale
 - Cars the sim reports alongside are pinned to that side rather than onto the point of the centreline you share with them
 - A pulsing red arc marks a car reported alongside within one car length
