@@ -124,19 +124,17 @@ export interface BlindSpotSnapshot {
 }
 
 /**
- * Per-frame radar input: raw per-car track position plus the lap/pit state
- * needed to colour and filter blips. Geometry (bearing and lateral projection)
- * is renderer-side, from the track centreline — the processor has no track
- * geometry and publishes none, keeping this channel small and always valid.
+ * Per-frame radar input: raw per-car track position plus the pit state used
+ * to filter blips. Geometry (bearing and lateral projection) is renderer-side,
+ * from the track centreline — the processor has no track geometry and
+ * publishes none, keeping this channel small and always valid.
  */
 export interface RadarSnapshot {
   /** Car the camera follows (CamCarIdx); null until the first valid frame. */
   focusCarIdx: number | null;
   /** Lap distance fraction (0–1) by CarIdx, full precision; -1 when invalid. */
   carIdxLapDistPct: readonly number[];
-  /** Current lap number by CarIdx — drives the lapping colour. -1 when none. */
-  carIdxLap: readonly number[];
-  /** Pit road state by CarIdx — drives pit colouring and blip filtering. */
+  /** Pit road state by CarIdx — used to filter blips (hideInPit). */
   carIdxOnPitRoad: readonly boolean[];
   isOnTrack: boolean;
   version: number;

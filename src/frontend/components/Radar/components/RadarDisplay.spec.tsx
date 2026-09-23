@@ -8,22 +8,18 @@ const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
   lateralM: 0.2,
   relYaw: 0,
   gapM: 11,
-  level: 'far',
   side: null,
   sideUnknown: false,
   carNumber: '24',
   isPaceCar: false,
-  lapping: false,
-  inPit: false,
   fade: 1,
   ...over,
 });
 
 /**
- * Four rivals plus the player: a plain car well ahead, a car lapping the player
- * closing from behind, a critical car the sim named a side for, and a car level
- * with the player that the sim never called. None pulse, so every paint is at
- * full strength and colours can be read back exactly.
+ * Four rivals plus the player: a plain car well ahead, a car closing from
+ * behind, a car the sim named a side for, and a car level with the player that
+ * the sim never called.
  */
 const BLIPS: RadarBlip[] = [
   blip({ carIdx: 1 }),
@@ -32,18 +28,14 @@ const BLIPS: RadarBlip[] = [
     alongM: -4,
     lateralM: 2.4,
     gapM: 4,
-    level: 'nearby',
     carNumber: '7',
-    lapping: true,
   }),
   blip({
     carIdx: 3,
     alongM: -1,
     lateralM: -2.1,
     gapM: 1,
-    level: 'critical',
     carNumber: '51',
-    lapping: true,
     side: -1,
   }),
   blip({
@@ -51,7 +43,6 @@ const BLIPS: RadarBlip[] = [
     alongM: 0.3,
     lateralM: 0,
     gapM: 0.3,
-    level: 'critical',
     carNumber: '31',
     sideUnknown: true,
   }),
@@ -61,12 +52,8 @@ const BLIPS: RadarBlip[] = [
 const VEHICLES = BLIPS.length + 1;
 
 const COLORS = {
-  far: '#cbd5e1',
-  nearby: '#f59e0b',
-  critical: '#ef4444',
+  rival: '#cbd5e1',
   player: '#2fd16a',
-  lapping: '#3b82f6',
-  inPit: '#6b7280',
 };
 
 interface PaintRecord {
@@ -171,21 +158,14 @@ const createFakeContext = (record: PaintRecord) => {
   }) as unknown as CanvasRenderingContext2D;
 };
 
-const props: Omit<RadarDisplayProps, 'nowSeconds'> = {
-  mode: 'disc',
+const props: RadarDisplayProps = {
   blips: BLIPS,
   radarRange: 15,
-  nearbyRange: 7,
   vehicleWidth: 1.9,
   vehicleLength: 4.5,
   showCarNumbers: true,
-  pulseWhenCritical: false,
-  colorFar: COLORS.far,
-  colorNearby: COLORS.nearby,
-  colorCritical: COLORS.critical,
+  colorRival: COLORS.rival,
   colorPlayer: COLORS.player,
-  colorLapping: COLORS.lapping,
-  colorInPit: COLORS.inPit,
   bgOpacity: 30,
   trackLengthM: 5000,
 };
@@ -255,22 +235,22 @@ describe('RadarDisplay', () => {
     // drawn a lap ahead would put the ratio off by orders of magnitude.
     const origins = record.originsPerPaint.at(-1) ?? [];
     expect(origins).toHaveLength(VEHICLES);
-    const [ahead, lapping, critical, level, player] = origins;
+    const [ahead, behind, alongside, level, player] = origins;
     const centreX = 320 / 2;
     const centreY = 300 / 2;
     const metresToPixels = (centreY - ahead[1]) / 11;
     expect(metresToPixels).toBeGreaterThan(0);
-    expect(lapping[1] - centreY).toBeCloseTo(4 * metresToPixels, 6);
-    expect(critical[1] - centreY).toBeCloseTo(1 * metresToPixels, 6);
+    expect(behind[1] - centreY).toBeCloseTo(4 * metresToPixels, 6);
+    expect(alongside[1] - centreY).toBeCloseTo(1 * metresToPixels, 6);
     expect(level[1] - centreY).toBeCloseTo(-0.3 * metresToPixels, 6);
     expect(player).toEqual([centreX, centreY]);
     // Lateral offsets are metres to the driver's right of the centreline.
     expect(ahead[0] - centreX).toBeCloseTo(0.2 * metresToPixels, 6);
-    expect(lapping[0] - centreX).toBeCloseTo(2.4 * metresToPixels, 6);
-    expect(critical[0] - centreX).toBeCloseTo(-2.1 * metresToPixels, 6);
+    expect(behind[0] - centreX).toBeCloseTo(2.4 * metresToPixels, 6);
+    expect(alongside[0] - centreX).toBeCloseTo(-2.1 * metresToPixels, 6);
   });
 
-  it('paints rivals neutral, lapping cars blue, and critical over blue', () => {
+  it('paints every rival in the rival colour and the player in their own', () => {
     render(<RadarDisplay {...props} />);
     deliverSize(300, 300);
 
@@ -278,13 +258,11 @@ describe('RadarDisplay', () => {
       Object.values(COLORS).includes(fill)
     );
 
-    // A car a lap up reads blue for the whole approach, and the moment it is
-    // actually alongside red takes over: the pass is what to act on.
     expect(vehicles).toEqual([
-      COLORS.far,
-      COLORS.lapping,
-      COLORS.critical,
-      COLORS.critical,
+      COLORS.rival,
+      COLORS.rival,
+      COLORS.rival,
+      COLORS.rival,
       COLORS.player,
     ]);
   });
@@ -299,13 +277,9 @@ describe('RadarDisplay', () => {
     );
     const centres = marks.map(([start, end]) => (start + end) / 2);
 
-    // A car the sim named a side for points at that side, and only that one.
-    const namedBearing = -Math.PI / 2 + Math.atan2(-2.1, -1);
-    expect(centres.some((c) => Math.abs(c - namedBearing) < 1e-9)).toBe(true);
-    expect(centres).toHaveLength(3);
-
     // A car level with us that the sim stayed silent about lights the right
     // rim and the left one: a single arch would be a side nobody measured.
+    expect(centres).toHaveLength(2);
     expect(centres.some((c) => Math.abs(c - 0) < 1e-9)).toBe(true);
     expect(centres.some((c) => Math.abs(Math.abs(c) - Math.PI) < 1e-9)).toBe(
       true
@@ -315,9 +289,7 @@ describe('RadarDisplay', () => {
   it('leaves the rim dark when a level car has a side the sim reported', () => {
     const withKnownSide = {
       ...props,
-      blips: [
-        blip({ carIdx: 1, alongM: 0.2, gapM: 0.2, level: 'critical', side: 1 }),
-      ],
+      blips: [blip({ carIdx: 1, alongM: 0.2, gapM: 0.2, side: 1 })],
     };
     render(<RadarDisplay {...withKnownSide} />);
     deliverSize(300, 300);
@@ -325,81 +297,59 @@ describe('RadarDisplay', () => {
     const marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
-    // One arch, at the side the sim gave — not a symmetric pair.
-    expect(marks).toHaveLength(1);
-    expect((marks[0][0] + marks[0][1]) / 2).toBeCloseTo(
-      -Math.PI / 2 + Math.atan2(0.2, 0.2),
-      9
-    );
+    // The car has a side, so no rim speaks for it: nothing but the disc and
+    // its clip is drawn as an arc.
+    expect(marks).toHaveLength(0);
   });
 
-  it('marks both edges of the lane for an unknown side in the portrait view', () => {
-    // The same view, with the one flag flipped: the only difference in what is
-    // stroked is the two edge marks, so the count is the mark count.
-    const marked = props.blips.map((blip) =>
-      blip.sideUnknown ? blip : { ...blip, sideUnknown: blip.gapM <= 0.5 }
-    );
-    const withMarks = { ...props, mode: 'portrait' as const, blips: marked };
-    render(<RadarDisplay {...withMarks} />);
-    deliverSize(300, 300);
-    const strokesWithMarks = record.strokeCountPerPaint.at(-1) ?? 0;
-    // The marks took the car's own colour, and nothing else in this view
-    // strokes in a palette colour.
-    expect(record.strokesPerPaint.at(-1)).toContain(COLORS.critical);
+  it('never changes the colour a jittering rival is painted in', () => {
+    // A rival standing still with ±0.3 m of measured jitter, swept across the
+    // whole range: the colour the display paints for it must never change.
+    // Grading the blip by proximity made exactly this case flicker — a car
+    // holding 7 m crossed the engage threshold twice a second — and the disc
+    // now has one rival colour by construction, so any distance-based colour
+    // reintroduced into the draw path fails here. Asserted on the fillStyle
+    // handed to the canvas context, not on an internal field, so the real
+    // draw path is what is covered.
+    const rivalAt = (gapM: number): RadarBlip[] => [
+      blip({
+        carIdx: 1,
+        alongM: gapM,
+        lateralM: 0.4,
+        gapM: Math.abs(gapM),
+        carNumber: '24',
+      }),
+    ];
+    // The sweep reaches 19 m, so the view is widened to keep every sample
+    // on the disc rather than clipped off it.
+    const swept = { ...props, radarRange: 20 };
 
-    const withoutMarks = {
-      ...props,
-      mode: 'portrait' as const,
-      blips: marked.map((blip) => ({ ...blip, sideUnknown: false })),
-    };
-    record = {
-      vehiclesPerPaint: [],
-      originsPerPaint: [],
-      fillsPerPaint: [],
-      arcsPerPaint: [],
-      strokesPerPaint: [],
-      textsPerPaint: [],
-      strokeCountPerPaint: [],
-    };
-    observers.length = 0;
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
-      function (this: HTMLCanvasElement) {
-        void this;
-        return createFakeContext(record);
-      } as never
-    );
-    render(<RadarDisplay {...withoutMarks} />);
-    deliverSize(300, 300);
-    const strokesWithout = record.strokeCountPerPaint.at(-1) ?? 0;
-
-    // Both edges, and only the marks, are the difference.
-    expect(strokesWithMarks - strokesWithout).toBe(2);
-  });
-
-  it('lights both side strips for an unknown side in the bars view', () => {
-    const unknown = {
-      ...props,
-      mode: 'bars' as const,
-      blips: [
-        blip({
-          carIdx: 1,
-          alongM: 0.3,
-          gapM: 0.3,
-          level: 'critical',
-          carNumber: '31',
-          sideUnknown: true,
-        }),
-      ],
-    };
-    render(<RadarDisplay {...unknown} />);
+    const view = render(<RadarDisplay {...swept} blips={rivalAt(5)} />);
     deliverSize(300, 300);
 
-    // The label lands at both edges: a strip is lit on each side, rather than
-    // the car being placed in one lane the sim never named.
-    const labels = (record.textsPerPaint.at(-1) ?? []).filter(
-      ([text]) => text === '31'
-    );
-    expect(labels).toHaveLength(2);
-    expect(labels.map(([, x]) => x).sort((a, b) => a - b)).toEqual([4, 296]);
+    const rivalFillOfLastPaint = () => {
+      // The rival and nothing else was painted this frame, so the colour read
+      // back is the colour the rival itself was handed.
+      expect(record.vehiclesPerPaint.at(-1)).toBe(2);
+      const palette = (record.fillsPerPaint.at(-1) ?? []).filter((fill) =>
+        Object.values(COLORS).includes(fill)
+      );
+      // The rival is drawn before the player, so the first palette entry of
+      // each paint is the colour the rival was handed.
+      expect(palette).toHaveLength(2);
+      return palette[0];
+    };
+
+    const seen = new Set<string>();
+    for (let distance = 5; distance <= 19; distance += 0.5) {
+      for (const jitter of [0.3, -0.3, 0.3]) {
+        view.rerender(
+          <RadarDisplay {...swept} blips={rivalAt(distance + jitter)} />
+        );
+        seen.add(rivalFillOfLastPaint());
+      }
+    }
+
+    expect(seen).toEqual(new Set([COLORS.rival]));
   });
 });

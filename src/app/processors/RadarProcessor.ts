@@ -58,7 +58,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   private readonly latest: RadarSnapshot = {
     focusCarIdx: null,
     carIdxLapDistPct: [],
-    carIdxLap: [],
     carIdxOnPitRoad: [],
     isOnTrack: false,
     version: 0,
@@ -95,13 +94,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
         this.latest.carIdxLapDistPct as number[],
         valuesOf(frame, 'CarIdxLapDistPct')
       ) || changed;
-    // Copied alongside the positions it is read with: a lap counter on its own
-    // cannot tell a lapping car from a car on the same lap a corner ahead.
-    changed =
-      copyNumbers(
-        this.latest.carIdxLap as number[],
-        valuesOf(frame, 'CarIdxLap')
-      ) || changed;
     changed =
       copyBooleans(
         this.latest.carIdxOnPitRoad as boolean[],
@@ -114,7 +106,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   onLifecycle(event: SessionLifecycleEvent): void {
     if (event.type === 'enter') return;
     (this.latest.carIdxLapDistPct as number[]).length = 0;
-    (this.latest.carIdxLap as number[]).length = 0;
     (this.latest.carIdxOnPitRoad as boolean[]).length = 0;
     this.latest.focusCarIdx = null;
     this.latest.isOnTrack = false;

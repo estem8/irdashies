@@ -3,27 +3,16 @@ import { blipLabel, type RadarBlip } from '../radarBlips';
 import { useRadarMotion, type RadarMotionDraw } from '../hooks/useRadarMotion';
 
 export interface RadarDisplayProps {
-  mode: 'disc' | 'portrait' | 'bars';
   blips: readonly RadarBlip[];
   /** Metres from the player to the edge of the view. */
   radarRange: number;
-  /** Gap at which a car turns amber; drawn as a range ring or bar marker. */
-  nearbyRange: number;
   vehicleWidth: number;
   vehicleLength: number;
   showCarNumbers: boolean;
-  /** Pulse a critical blip and the rim arch. */
-  pulseWhenCritical: boolean;
-  colorFar: string;
-  colorNearby: string;
-  colorCritical: string;
+  /** Every rival blip is filled with this; the player is `colorPlayer`. */
+  colorRival: string;
   colorPlayer: string;
-  /** A car lapping the player: the blue flag, worn as a colour. */
-  colorLapping: string;
-  colorInPit: string;
   bgOpacity: number;
-  /** Seconds, for the pulse. Passed in so the draw stays pure and testable. */
-  nowSeconds: number;
   /** Track length in metres; drives blip motion between snapshots. */
   trackLengthM: number;
 }
@@ -34,30 +23,10 @@ interface Size {
 }
 
 /**
- * Blip colour by state. Pit-road cars and lapping cars keep their own colour
- * instead of the proximity scale, but critical outranks lapping: when a car a
- * lap up is actually alongside, that is the thing to act on. Blue rides with
- * the rivals on the way in, red takes over at the moment of the pass.
+ * Every car respects its own fade-in, so a blip never appears at full
+ * strength on the edge of the range.
  */
-const colorFor = (blip: RadarBlip, props: RadarDisplayProps): string => {
-  if (blip.inPit) return props.colorInPit;
-  if (blip.level === 'critical') return props.colorCritical;
-  if (blip.lapping) return props.colorLapping;
-  if (blip.level === 'nearby') return props.colorNearby;
-  return props.colorFar;
-};
-
-/**
- * Critical blips breathe and every car respects its own fade-in, so a blip
- * never appears at full strength on the edge of the range.
- */
-const alphaFor = (blip: RadarBlip, props: RadarDisplayProps): number => {
-  const pulse =
-    props.pulseWhenCritical && blip.level === 'critical'
-      ? 0.55 + 0.45 * Math.abs(Math.sin(props.nowSeconds * Math.PI))
-      : 1;
-  return pulse * blip.fade;
-};
+const alphaFor = (blip: RadarBlip): number => blip.fade;
 
 const drawVehicle = (
   ctx: CanvasRenderingContext2D,
@@ -91,8 +60,8 @@ const drawVehicle = (
   if (label && widthPx >= 10) {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     // Four-character PACE needs a smaller face than a two-digit number.
-    const pulseFont = label.length > 3;
-    const fontPx = pulseFont
+    const wideLabel = label.length > 3;
+    const fontPx = wideLabel
       ? Math.max(6, Math.min(widthPx * 0.45, 10))
       : Math.max(7, Math.min(widthPx * 0.7, 11));
     ctx.font = `600 ${Math.round(fontPx)}px sans-serif`;
@@ -129,17 +98,6 @@ const drawDisc = (
   ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
   ctx.clip();
 
-  // Engage ring, so the driver can see where amber starts.
-  if (props.nearbyRange < props.radarRange) {
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-    ctx.beginPath();
-    ctx.arc(centreX, centreY, props.nearbyRange * scale, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
     drawVehicle(
@@ -149,8 +107,8 @@ const drawDisc = (
       widthPx,
       lengthPx,
       blip.relYaw,
-      colorFor(blip, props),
-      alphaFor(blip, props),
+      props.colorRival,
+      alphaFor(blip),
       blipLabel(blip, props.showCarNumbers)
     );
   }
@@ -168,8 +126,10 @@ const drawDisc = (
     null
   );
 
-  // Warning arch on the rim, at a critical car's bearing.
-  const critical = props.blips.filter((blip) => blip.level === 'critical');
+  // A car level with us whose side the sim has not reported is somewhere
+  // across the road and we cannot say where. Both rims light rather than one:
+  // a single arch would be a side nobody measured, and the car would otherwise
+  // read as one driving through the player's own rectangle.
   const rimArch = (bearing: number, color: string, alpha: number) => {
     ctx.save();
     ctx.beginPath();
@@ -186,207 +146,12 @@ const drawDisc = (
     ctx.stroke();
     ctx.restore();
   };
-  const criticalAlpha = props.pulseWhenCritical
-    ? 0.45 + 0.55 * Math.abs(Math.sin(props.nowSeconds * Math.PI))
-    : 0.9;
-  for (const blip of critical) {
-    // A car level with us and no verdict has no bearing to point at; the
-    // symmetric marks below speak for it instead of this one picking a side.
-    if (blip.sideUnknown) continue;
-    rimArch(
-      Math.atan2(blip.lateralM, blip.alongM),
-      props.colorCritical,
-      criticalAlpha
-    );
-  }
-
-  // A car level with us whose side the sim has not reported is somewhere
-  // across the road and we cannot say where. Both rims light rather than one:
-  // a single arch would be a side nobody measured, and the car would otherwise
-  // read as one driving through the player's own rectangle.
   for (const blip of props.blips) {
     if (!blip.sideUnknown) continue;
     for (const side of [-1, 1] as const) {
-      rimArch(
-        (side * Math.PI) / 2,
-        colorFor(blip, props),
-        alphaFor(blip, props)
-      );
+      rimArch((side * Math.PI) / 2, props.colorRival, alphaFor(blip));
     }
   }
-};
-
-/**
- * A vertical lane: the player fixed at the centre, cars placed fore and aft by
- * their real gap, over metre-labelled rings. Lateral spread is the centreline's
- * and is compressed, because the interesting question on a long run is closing
- * speed, not which side of the road a car is on.
- */
-const drawPortrait = (
-  ctx: CanvasRenderingContext2D,
-  props: RadarDisplayProps,
-  size: Size,
-  alongM: Float64Array,
-  lateralM: Float64Array
-) => {
-  const centreX = size.width / 2;
-  const centreY = size.height / 2;
-  const half = Math.max(1, size.height / 2 - 2);
-  const scale = half / Math.max(1, props.radarRange);
-  const widthPx = Math.max(4, props.vehicleWidth * (scale * 0.55));
-  const lengthPx = Math.max(6, props.vehicleLength * scale);
-  const lateralScale = scale * 0.55;
-
-  ctx.save();
-  ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
-  ctx.fillRect(0, 0, size.width, size.height);
-  ctx.beginPath();
-  ctx.rect(0, 0, size.width, size.height);
-  ctx.clip();
-
-  // Metre rings at the engage distance, at half range, and at full range.
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  for (const metres of [props.nearbyRange, props.radarRange]) {
-    if (metres > props.radarRange) continue;
-    const y = centreY - metres * scale;
-    for (const [target, sign] of [
-      [y, 1],
-      [centreY + metres * scale, -1],
-    ] as const) {
-      ctx.setLineDash([3, 4]);
-      ctx.lineWidth = 1;
-      ctx.strokeStyle =
-        metres === props.nearbyRange
-          ? 'rgba(245,158,11,0.28)'
-          : 'rgba(255,255,255,0.16)';
-      ctx.beginPath();
-      ctx.moveTo(0, target);
-      ctx.lineTo(size.width, target);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.fillText(`${metres} m`, 3, target + sign * -6);
-    }
-  }
-
-  for (let i = 0; i < props.blips.length; i++) {
-    const blip = props.blips[i];
-    drawVehicle(
-      ctx,
-      centreX + lateralM[i] * lateralScale,
-      centreY - alongM[i] * scale,
-      widthPx,
-      lengthPx,
-      0,
-      colorFor(blip, props),
-      alphaFor(blip, props),
-      blipLabel(blip, props.showCarNumbers)
-    );
-
-    // A car level with us whose side the sim never reported: the lane has no
-    // left or right to put it in, so both edges are marked at its row rather
-    // than one being invented for it.
-    if (!blip.sideUnknown) continue;
-    const y = centreY - alongM[i] * scale;
-    ctx.save();
-    ctx.strokeStyle = colorFor(blip, props);
-    ctx.globalAlpha = alphaFor(blip, props);
-    ctx.lineWidth = Math.max(3, size.width * 0.03);
-    for (const edge of [0, size.width]) {
-      ctx.beginPath();
-      ctx.moveTo(edge, y - lengthPx * 0.6);
-      ctx.lineTo(edge, y + lengthPx * 0.6);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  drawVehicle(
-    ctx,
-    centreX,
-    centreY,
-    widthPx,
-    lengthPx,
-    0,
-    props.colorPlayer,
-    1,
-    null
-  );
-  ctx.restore();
-};
-
-/**
- * Two thin strips beside the sightline. Each fills from the centre out and
- * shifts colour as a car comes alongside, so the widget is empty until it has
- * something to say.
- */
-const drawBars = (
-  ctx: CanvasRenderingContext2D,
-  props: RadarDisplayProps,
-  size: Size
-) => {
-  const nearest = (side: -1 | 1) => {
-    let best: RadarBlip | null = null;
-    for (const blip of props.blips) {
-      if (blip.inPit) continue;
-      if (side === -1 ? blip.side !== -1 : blip.side !== 1) continue;
-      if (!best || blip.gapM < best.gapM) best = blip;
-    }
-    return best;
-  };
-
-  const strip = (side: -1 | 1) => {
-    // A car level with the player whose side the sim never reported belongs to
-    // neither strip alone, so both light rather than one being guessed.
-    const unknown = props.blips
-      .filter((blip) => blip.sideUnknown)
-      .sort((a, b) => a.gapM - b.gapM)[0];
-    const blip = nearest(side) ?? unknown;
-    if (!blip) return;
-    const fill = colorFor(blip, props);
-    const presence = Math.max(
-      0.15,
-      Math.min(1, 1 - blip.gapM / Math.max(1, props.radarRange))
-    );
-    const height = Math.max(6, size.height * presence);
-    const y = (size.height - height) / 2;
-    // A car alongside fills further than one three metres back.
-    const nearness =
-      1 - Math.min(1, blip.gapM / Math.max(1, props.vehicleLength * 2));
-    const width = size.width * (0.4 + 0.6 * nearness);
-    const x = side === -1 ? 0 : size.width - width;
-
-    ctx.save();
-    ctx.globalAlpha = alphaFor(blip, props);
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, Math.min(6, height / 2));
-    const gradient =
-      side === -1
-        ? ctx.createLinearGradient(0, 0, width, 0)
-        : ctx.createLinearGradient(size.width, 0, size.width - width, 0);
-    gradient.addColorStop(0, fill);
-    gradient.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    ctx.restore();
-
-    const label = blipLabel(blip, props.showCarNumbers);
-    if (label) {
-      ctx.save();
-      ctx.globalAlpha = alphaFor(blip, props);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = '600 10px sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = side === -1 ? 'left' : 'right';
-      ctx.fillText(label, side === -1 ? 4 : size.width - 4, size.height / 2);
-      ctx.restore();
-    }
-  };
-
-  strip(-1);
-  strip(1);
 };
 
 const drawRadar = (
@@ -410,13 +175,10 @@ const drawRadar = (
   ctx.clearRect(0, 0, size.width, size.height);
   void theme;
 
-  if (props.mode === 'portrait')
-    drawPortrait(ctx, props, size, alongM, lateralM);
-  else if (props.mode === 'bars') drawBars(ctx, props, size);
-  else drawDisc(ctx, props, size, alongM, lateralM);
+  drawDisc(ctx, props, size, alongM, lateralM);
 };
 
-export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
+export const RadarDisplay = (props: RadarDisplayProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
 
@@ -450,8 +212,7 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
 
   // The draw callback reads the latest props and size through refs, so the
   // RAF loop useRadarMotion starts is never restarted by a re-render. The
-  // clock lives inside the frame path: only the pulse needs a time value.
-  // The last drawn metre buffers are kept: they grow with the field and are
+  // last drawn metre buffers are kept: they grow with the field and are
   // never freed, so a commit that itself repaints — a resize, a theme change —
   // can redraw what the interpolator last produced.
   const alongRef = useRef(new Float64Array(0));
@@ -468,7 +229,7 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     lateralRef.current.set(lateralM.subarray(0, count));
     drawRadar(
       canvas,
-      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      propsRef.current,
       sizeRef.current,
       'dark',
       alongRef.current,
@@ -476,10 +237,7 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     );
   };
 
-  const pulses =
-    props.pulseWhenCritical &&
-    props.blips.some((blip) => blip.level === 'critical');
-  useRadarMotion(props.blips, props.trackLengthM, pulses, (a, l, c) => {
+  useRadarMotion(props.blips, props.trackLengthM, (a, l, c) => {
     drawRef.current(a, l, c);
   });
 
@@ -492,7 +250,7 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
       return;
     drawRadar(
       canvas,
-      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
+      propsRef.current,
       sizeRef.current,
       'dark',
       alongRef.current,

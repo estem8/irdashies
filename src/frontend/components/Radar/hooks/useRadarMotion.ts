@@ -47,16 +47,14 @@ const unwrapFraction = (value: number): number =>
 /**
  * Glides the blips between 25 Hz snapshots at display refresh rate, reusing
  * the track map's interpolator so its duration adapts to the observed
- * snapshot cadence. Only geometry is smoothed: colour, proximity grading and
- * labels stay instant from the snapshot. The interpolator works in lap
- * fractions (it wraps at ±0.5 of its unit), so targets are divided by the
- * track length and the interpolated values are unwrapped and scaled back to
- * metres before drawing.
+ * snapshot cadence. Only geometry is smoothed: colour and labels stay instant
+ * from the snapshot. The interpolator works in lap fractions (it wraps at
+ * ±0.5 of its unit), so targets are divided by the track length and the
+ * interpolated values are unwrapped and scaled back to metres before drawing.
  */
 export const useRadarMotion = (
   blips: readonly RadarBlip[],
   trackLengthM: number,
-  pulseActive: boolean,
   draw: RadarMotionDraw
 ): void => {
   const alongRef = useRef<ProgressInterpolator | null>(null);
@@ -65,7 +63,6 @@ export const useRadarMotion = (
   const lateralMRef = useRef(new Float64Array(0));
   const drawRef = useRef(draw);
   const trackLengthRef = useRef(trackLengthM);
-  const pulseRef = useRef(pulseActive);
   const frameRef = useRef(0);
 
   if (!alongRef.current) {
@@ -79,7 +76,6 @@ export const useRadarMotion = (
   useLayoutEffect(() => {
     drawRef.current = draw;
     trackLengthRef.current = trackLengthM;
-    pulseRef.current = pulseActive;
   });
 
   useLayoutEffect(() => {
@@ -115,14 +111,15 @@ export const useRadarMotion = (
       drawRef.current(alongM, lateralM, count);
     };
 
-    // A snapshot that only changed a colour still has to repaint.
+    // A snapshot that changed nothing geometric (a label, a fade) still has
+    // to repaint.
     perfMetrics.measure('radarAnimationFrame', paint);
 
     let frameTime = 0;
     const measuredFrame = () => {
       const moving = along.advance(frameTime) || lateral.advance(frameTime);
       paint();
-      return moving || pulseRef.current;
+      return moving;
     };
     const frame = (now: number) => {
       frameTime = now;
@@ -130,7 +127,7 @@ export const useRadarMotion = (
       frameRef.current = active ? requestAnimationFrame(frame) : 0;
     };
 
-    if ((travel || drift || pulseActive) && frameRef.current === 0) {
+    if ((travel || drift) && frameRef.current === 0) {
       frameRef.current = requestAnimationFrame(frame);
     }
 
@@ -140,5 +137,5 @@ export const useRadarMotion = (
         frameRef.current = 0;
       }
     };
-  }, [blips, trackLengthM, pulseActive]);
+  }, [blips, trackLengthM]);
 };

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useDashboard, useSessionVisibility } from '@irdashies/context';
 import { RadarDisplay } from './components/RadarDisplay';
 import { useRadar } from './hooks/useRadar';
@@ -6,10 +7,10 @@ import { useRadarSettings } from './hooks/useRadarSettings';
 import type { RadarBlip } from './radarBlips';
 
 /**
- * A car metres ahead, one alongside on the left, one a lap up closing from
- * behind, a car level with us whose side the sim has not reported, and the pace
- * car in the pits: between them every colour, the lettered label and the
- * symmetric rim marks the display can produce.
+ * A car metres ahead, one alongside on the left, a car level with us whose
+ * side the sim has not reported, and the pace car in the pits: between them
+ * the lettered label, the fade band and the symmetric rim marks the display
+ * can produce.
  */
 const DEMO_BLIPS: RadarBlip[] = [
   {
@@ -18,13 +19,10 @@ const DEMO_BLIPS: RadarBlip[] = [
     lateralM: 0.3,
     relYaw: 0,
     gapM: 12,
-    level: 'far',
     side: null,
     sideUnknown: false,
     carNumber: '24',
     isPaceCar: false,
-    lapping: false,
-    inPit: false,
     fade: 1,
   },
   {
@@ -33,13 +31,10 @@ const DEMO_BLIPS: RadarBlip[] = [
     lateralM: -1.9,
     relYaw: 0.05,
     gapM: 3.2,
-    level: 'nearby',
     side: null,
     sideUnknown: false,
     carNumber: '7',
     isPaceCar: false,
-    lapping: true,
-    inPit: false,
     fade: 1,
   },
   {
@@ -48,13 +43,10 @@ const DEMO_BLIPS: RadarBlip[] = [
     lateralM: -2.1,
     relYaw: 0,
     gapM: 0.8,
-    level: 'critical',
     side: -1,
     sideUnknown: false,
     carNumber: '51',
     isPaceCar: false,
-    lapping: false,
-    inPit: false,
     fade: 1,
   },
   {
@@ -63,13 +55,10 @@ const DEMO_BLIPS: RadarBlip[] = [
     lateralM: 3.4,
     relYaw: 0.2,
     gapM: 6,
-    level: 'nearby',
     side: null,
     sideUnknown: false,
     carNumber: '9',
     isPaceCar: true,
-    lapping: false,
-    inPit: true,
     fade: 0.4,
   },
   {
@@ -78,13 +67,10 @@ const DEMO_BLIPS: RadarBlip[] = [
     lateralM: 0,
     relYaw: 0,
     gapM: 0.4,
-    level: 'critical',
     side: null,
     sideUnknown: true,
     carNumber: '31',
     isPaceCar: false,
-    lapping: false,
-    inPit: false,
     fade: 1,
   },
 ];
@@ -98,9 +84,6 @@ export const Radar = () => {
     hideInPit: settings.hideInPit,
     vehicleWidth: settings.vehicleWidth,
     vehicleLength: settings.vehicleLength,
-    nearbyRange: settings.nearbyRange,
-    clearRange: settings.clearRange,
-    criticalRange: settings.criticalRange,
     fadeBandM: settings.fadeInCars ? settings.fadeBandM : 0,
   });
   const { isDemoMode } = useDashboard();
@@ -109,13 +92,41 @@ export const Radar = () => {
   // The show range cannot reach further than the radar draws, or nothing would
   // ever be near enough to bring it on screen.
   const showRange = Math.min(settings.showRange, settings.radarRange);
-  const trafficNear =
-    state.nearestGapM !== null && state.nearestGapM <= showRange;
+
+  // The gate is hysteretic: `nearestGapM` jitters by fractions of a metre
+  // around whatever boundary it sits on, so a plain `<= showRange` test would
+  // flip the panel on and off every few frames. A car brings the panel on
+  // screen inside the range and only loses it once it is past the range plus a
+  // margin, so the boundary itself has a dead band no jitter can span.
+  // The hold lives in a ref rather than the memoised state: it is a latch on
+  // an observed gap, not a value the render derives.
+  const gateShownRef = useRef(false);
+  // The gate only applies while everything else already wants the panel; when
+  // it does not, the latch resets so a later session starts clean.
+  const gateApplies =
+    !isDemoMode &&
+    sessionVisible &&
+    state.hasGeometry &&
+    (!settings.showOnlyWhenOnTrack || state.isOnTrack) &&
+    settings.showWhenNearby;
+  if (gateApplies) {
+    const gap = state.nearestGapM;
+    if (gateShownRef.current) {
+      if (gap === null || gap > showRange + Math.max(1, showRange * 0.1)) {
+        gateShownRef.current = false;
+      }
+    } else if (gap !== null && gap <= showRange) {
+      gateShownRef.current = true;
+    }
+  } else {
+    gateShownRef.current = false;
+  }
+
   const wanted =
     sessionVisible &&
     (!settings.showOnlyWhenOnTrack || state.isOnTrack) &&
     state.hasGeometry &&
-    (!settings.showWhenNearby || trafficNear);
+    (!settings.showWhenNearby || gateShownRef.current);
   // Demo mode ignores visibility rules so the widget can be seen while editing.
   const fade = useRadarFade(isDemoMode || wanted, settings.fadeSeconds);
 
@@ -124,20 +135,13 @@ export const Radar = () => {
   return (
     <div className="h-full w-full" style={{ opacity: fade }}>
       <RadarDisplay
-        mode={settings.displayMode}
         blips={isDemoMode ? DEMO_BLIPS : state.blips}
         radarRange={settings.radarRange}
-        nearbyRange={settings.nearbyRange}
         vehicleWidth={settings.vehicleWidth}
         vehicleLength={settings.vehicleLength}
         showCarNumbers={settings.showCarNumbers}
-        pulseWhenCritical={settings.pulseWhenCritical}
-        colorFar={settings.colorFar}
-        colorNearby={settings.colorNearby}
-        colorCritical={settings.colorCritical}
+        colorRival={settings.colorRival}
         colorPlayer={settings.colorPlayer}
-        colorLapping={settings.colorLapping}
-        colorInPit={settings.colorInPit}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
       />

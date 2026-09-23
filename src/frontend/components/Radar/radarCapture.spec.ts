@@ -51,7 +51,7 @@ interface Capture {
   };
 }
 
-const place = (capture: Capture, options: { isRace?: boolean } = {}) => {
+const place = (capture: Capture) => {
   const { telemetry, session } = capture;
   const processor = new RadarProcessor();
   processor.init(session as unknown as Session);
@@ -60,10 +60,8 @@ const place = (capture: Capture, options: { isRace?: boolean } = {}) => {
 
   const result = computeRadarBlips({
     carIdxLapDistPct: snapshot.carIdxLapDistPct,
-    carIdxLap: snapshot.carIdxLap,
     carIdxOnPitRoad: snapshot.carIdxOnPitRoad,
     playerCarIdx: snapshot.focusCarIdx,
-    isRace: options.isRace ?? true,
     trackDrawing: trackDrawings[session.WeekendInfo.TrackID],
     trackLengthM: trackLengthOf(session),
     radarRange: 15,
@@ -73,7 +71,6 @@ const place = (capture: Capture, options: { isRace?: boolean } = {}) => {
     ),
     vehicleWidth: 1.9,
     vehicleLength: 4.5,
-    thresholds: { nearbyRange: 7, clearRange: 10, criticalRange: 1.5 },
     fadeBandM: 3,
     carNumbers: new Map(),
     paceCarIdx: null,
@@ -194,48 +191,5 @@ describe('radar placement over recorded telemetry', () => {
     expect(alongside.lateralM).toBeLessThan(0);
     // One car width plus a margin, so the two bodies do not overlap.
     expect(Math.abs(alongside.lateralM)).toBeGreaterThan(1.9);
-    expect(alongside.level).toBe('nearby');
-  });
-
-  it('flags the car lapping the player and leaves the rest alone', () => {
-    // In that same capture the car is on lap 9 with the player on lap 8, a lap
-    // up and closing from behind: the blue flag, arriving.
-    const placed = place(CAPTURES[0]);
-    expect(placed.blips[0].lapping).toBe(true);
-
-    // The other captures have no car a lap up, however many of them there are.
-    for (const capture of CAPTURES.slice(1)) {
-      expect(place(capture).blips.filter((blip) => blip.lapping)).toEqual([]);
-    }
-  });
-
-  it('treats laps as meaningless outside a race', () => {
-    // In practice a car a lap "up" has simply been out longer, so the counters
-    // must not paint it blue.
-    const placed = place(CAPTURES[0], { isRace: false });
-    expect(placed.blips[0].lapping).toBe(false);
-  });
-
-  it('gives the same car the blue flag when it is a full lap ahead', () => {
-    // A controlled lap gap on a real position: the car 2.1 m ahead of the
-    // player, one lap further round. Nothing else about the frame changes.
-    const capture = CAPTURES[1];
-    const laps = (capture.telemetry.CarIdxLap.value as number[]).slice();
-    const aheadCarIdx = 35;
-    laps[aheadCarIdx] += 1;
-
-    const placed = place({
-      ...capture,
-      telemetry: {
-        ...capture.telemetry,
-        CarIdxLap: { value: laps },
-      },
-    });
-
-    const ahead = placed.blips.find((blip) => blip.carIdx === aheadCarIdx);
-    expect(ahead?.lapping).toBe(true);
-    for (const blip of placed.blips) {
-      if (blip.carIdx !== aheadCarIdx) expect(blip.lapping).toBe(false);
-    }
   });
 });

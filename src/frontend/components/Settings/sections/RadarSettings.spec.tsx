@@ -102,12 +102,12 @@ describe('RadarSettings', () => {
     openOptionsTab();
 
     expect(screen.getByText('Radar Range')).toBeInTheDocument();
-    expect(screen.getByText('Engage Range')).toBeInTheDocument();
   });
 
   it('offers a colour for every blip the display can paint', () => {
-    // The lapping colour has no default in a profile saved before it existed,
-    // so it has to come from the widget defaults rather than render undefined.
+    // A profile saved before the rename holds `colorFar`, not `colorRival`,
+    // so the rival swatch has to come from the widget defaults rather than
+    // render undefined.
     mocks.setDashboard(
       dashboardWith({ ...getWidgetDefaultConfig('radar') } as RadarConfig)
     );
@@ -124,11 +124,7 @@ describe('RadarSettings', () => {
       return (input as HTMLInputElement).value;
     };
 
-    expect(swatch('Rivals')).toBe('#cbd5e1');
-    expect(swatch('Nearby')).toBe('#f59e0b');
-    expect(swatch('Critical')).toBe('#ef4444');
-    expect(swatch('Lapping you')).toBe('#3b82f6');
-    expect(swatch('In pit')).toBe('#6b7280');
     expect(swatch('Your car')).toBe('#2fd16a');
+    expect(swatch('Opponents')).toBe('#cbd5e1');
   });
 });

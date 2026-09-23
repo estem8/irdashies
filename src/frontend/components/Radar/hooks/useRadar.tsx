@@ -3,7 +3,6 @@ import { shallow } from 'zustand/shallow';
 import type { RadarSnapshot } from '@irdashies/types';
 import {
   useBlindSpotSelector,
-  useCurrentSessionType,
   useDriverCarIdx,
   useRadarSelector,
   useSessionDrivers,
@@ -46,9 +45,6 @@ export interface UseRadarOptions {
   vehicleWidth: number;
   vehicleLength: number;
   hideInPit: boolean;
-  nearbyRange: number;
-  clearRange: number;
-  criticalRange: number;
   /** Metres of fade at the outer edge of the range; 0 for none. */
   fadeBandM: number;
 }
@@ -56,29 +52,26 @@ export interface UseRadarOptions {
 type RadarInput = readonly [
   number | null,
   readonly number[],
-  readonly number[],
   readonly boolean[],
   boolean,
 ];
 
-const EMPTY_INPUT: RadarInput = [null, [], [], [], false];
+const EMPTY_INPUT: RadarInput = [null, [], [], false];
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 
 const selectRadarInput = (snapshot: RadarSnapshot): RadarInput => [
   snapshot.focusCarIdx,
   snapshot.carIdxLapDistPct,
-  snapshot.carIdxLap,
   snapshot.carIdxOnPitRoad,
   snapshot.isOnTrack,
 ];
 
 const radarInputEqual = (previous: RadarInput, next: RadarInput): boolean =>
   previous[0] === next[0] &&
-  previous[4] === next[4] &&
+  previous[3] === next[3] &&
   shallow(previous[1], next[1]) &&
-  shallow(previous[2], next[2]) &&
-  shallow(previous[3], next[3]);
+  shallow(previous[2], next[2]);
 
 const trackDrawings = tracks as unknown as Record<
   number,
@@ -91,20 +84,11 @@ const trackDrawings = tracks as unknown as Record<
  * Car numbers come from the session, since the position channel carries none.
  */
 export const useRadar = (options: UseRadarOptions): RadarState => {
-  const {
-    radarRange,
-    hideInPit,
-    vehicleWidth,
-    vehicleLength,
-    nearbyRange,
-    clearRange,
-    criticalRange,
-    fadeBandM,
-  } = options;
-  const [focusCarIdx, positions, laps, onPitRoad, isOnTrack] =
+  const { radarRange, hideInPit, vehicleWidth, vehicleLength, fadeBandM } =
+    options;
+  const [focusCarIdx, positions, onPitRoad, isOnTrack] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
-  const isRace = useCurrentSessionType() === 'Race';
   const carLeftRight = useBlindSpotSelector(
     (snapshot) => snapshot.carLeftRight
   );
@@ -150,11 +134,11 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       ? NO_OVERLAP
       : overlapFromCarLeftRight(carLeftRight);
 
-  // Engagement and side live across frames: the sim's verdict flickers through
-  // a pass, and the proximity hysteresis needs the previous frame to keep a car
-  // engaged. Car indices are re-used between sessions, so the map is dropped
-  // whenever the track or the field size changes rather than carrying a stale
-  // threat into the next session.
+  // Drawn sides live across frames: the sim's verdict flickers through a pass,
+  // and a car abreast must keep the side it was first drawn on. Car indices
+  // are re-used between sessions, so the map is dropped whenever the track or
+  // the field size changes rather than carrying a stale side into the next
+  // session.
   const targetsRef =
     useRef<ReadonlyMap<number, RadarTargetState>>(EMPTY_TARGETS);
   const targetsKeyRef = useRef<string>('');
@@ -166,10 +150,8 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     }
     const result = computeRadarBlips({
       carIdxLapDistPct: positions,
-      carIdxLap: laps,
       carIdxOnPitRoad: onPitRoad,
       playerCarIdx,
-      isRace,
       trackDrawing,
       trackLengthM,
       radarRange,
@@ -177,7 +159,6 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       overlap,
       vehicleWidth,
       vehicleLength,
-      thresholds: { nearbyRange, clearRange, criticalRange },
       fadeBandM,
       carNumbers,
       paceCarIdx,
@@ -187,10 +168,8 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     return result;
   }, [
     positions,
-    laps,
     onPitRoad,
     playerCarIdx,
-    isRace,
     trackId,
     trackDrawing,
     trackLengthM,
@@ -199,9 +178,6 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     overlap,
     vehicleWidth,
     vehicleLength,
-    nearbyRange,
-    clearRange,
-    criticalRange,
     fadeBandM,
     carNumbers,
     paceCarIdx,

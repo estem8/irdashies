@@ -354,6 +354,8 @@ const frame = ({
     CarIdxLapDistPct: [lapPct, rivalPct],
     CarIdxEstTime: [lapPct * 60, rivalPct * 61],
     CarIdxOnPitRoad: [false, false],
+    // CarIdxLap stays in the synthetic tape on purpose: the sim still sends
+    // it, and the radar channel must not carry it forward.
     CarIdxLap: [lap, lap],
     CarIdxLapCompleted: [lap - 1, lap - 1],
     CarIdxPosition: [1, 2],
@@ -514,7 +516,6 @@ const summarize = (snapshots: SnapshotRecord) => ({
   'radar.snapshot': {
     focusCarIdx: snapshots['radar.snapshot'].focusCarIdx,
     carIdxLapDistPct: snapshots['radar.snapshot'].carIdxLapDistPct,
-    carIdxLap: snapshots['radar.snapshot'].carIdxLap,
     carIdxOnPitRoad: snapshots['radar.snapshot'].carIdxOnPitRoad,
     version: snapshots['radar.snapshot'].version,
   },
@@ -597,6 +598,11 @@ describe('runtime boundary replay', () => {
     // This literal is intentionally maintained by hand. There is no update
     // mode or generated snapshot file that can silently accept contract drift.
     expect(summarize(mock)).toEqual(FIXED_GOLDEN);
+
+    // carIdxLap was cut from the radar channel: nothing grades a blip by lap
+    // anymore, and a dead per-car array republished at 25 Hz violates R4.5.
+    // The tape above still delivers it, so this proves it is dropped.
+    expect('carIdxLap' in mock['radar.snapshot']).toBe(false);
   });
 
   it('clears stale data across visibility, churn, lifecycle, and host restart', () => {
@@ -752,7 +758,6 @@ const FIXED_GOLDEN = {
     focusCarIdx: 0,
     // Player 0.18 with the rival the harness places 0.05 ahead.
     carIdxLapDistPct: [0.18, 0.22999999999999998],
-    carIdxLap: [1, 1],
     carIdxOnPitRoad: [false, false],
     version: 5,
   },

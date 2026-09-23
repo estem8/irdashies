@@ -2,8 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import {
   defaultDashboard,
+  type ChannelBridge,
+  type ChannelName,
+  type ChannelPayloads,
   type DashboardLayout,
   type RadarConfig,
+  type RadarSnapshot,
 } from '@irdashies/types';
 import { mountFixture } from '../../../testing/renderWithFixture';
 import type { ReplayFixture } from '../../../testing/replayFixture';
@@ -67,6 +71,39 @@ const waitForDisplay = async () =>
 const waitForHidden = async () =>
   waitFor(() => expect(screen.queryByTestId('radar-canvas')).toBeNull());
 
+/**
+ * Makes the harness bridge hand the widget a fresh radar payload on every
+ * delivery, the way the IPC boundary does. The processor fills one snapshot
+ * object in place, so without this every seek republishes the very arrays the
+ * hook already holds and the selector equality — correctly — sees no change.
+ */
+const cloneRadarDeliveriesPerFrame = () => {
+  const bridge: ChannelBridge = window.channelBridge;
+  window.channelBridge = {
+    subscribe: <K extends ChannelName>(
+      channel: K,
+      callback: (payload: ChannelPayloads[K]) => void,
+      requestedRateHz?: number
+    ) =>
+      bridge.subscribe(
+        channel,
+        (delivered) => {
+          if (channel !== 'radar.snapshot') {
+            callback(delivered);
+            return;
+          }
+          const snapshot = delivered as RadarSnapshot;
+          callback({
+            ...snapshot,
+            carIdxLapDistPct: [...snapshot.carIdxLapDistPct],
+            carIdxOnPitRoad: [...snapshot.carIdxOnPitRoad],
+          } as unknown as ChannelPayloads[K]);
+        },
+        requestedRateHz
+      ),
+  };
+};
+
 const finalFrame = () => {
   const frame = fixture.frames.at(-1);
   if (!frame) throw new Error('fixture has no frames');
@@ -103,23 +140,6 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('grades blips by proximity to the player', async () => {
-    const harness = mountFixture(fixture, {
-      dashboard: radarDashboard({ radarRange: 25 }),
-    });
-    render(<Radar />, { wrapper: harness.wrapper });
-    await waitForDisplay();
-
-    // The one car inside 15 m in this capture is recorded 2.6 m back, so it is
-    // inside the engage range and must come through as at least nearby.
-    expect(latest().blips.length).toBeGreaterThan(0);
-    for (const blip of latest().blips) {
-      const expected =
-        blip.gapM <= 1.5 ? 'critical' : blip.gapM <= 7 ? 'nearby' : 'far';
-      expect(blip.level).toBe(expected);
-    }
-  });
-
   it('labels blips with the car number from the session', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
@@ -153,29 +173,18 @@ describe('Radar widget over a recorded multiclass session', () => {
 
   it('passes the configured range and colours through to the disc', async () => {
     const harness = mountFixture(fixture, {
-      dashboard: radarDashboard({ radarRange: 12, colorNearby: '#ff00ff' }),
+      dashboard: radarDashboard({ radarRange: 12, colorRival: '#ff00ff' }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
     await waitForDisplay();
 
     expect(latest()).toMatchObject({
       radarRange: 12,
-      colorNearby: '#ff00ff',
-      mode: 'disc',
+      colorRival: '#ff00ff',
     });
     for (const blip of latest().blips) {
       expect(Math.abs(blip.alongM)).toBeLessThanOrEqual(12);
     }
-  });
-
-  it('draws the view the settings ask for', async () => {
-    const harness = mountFixture(fixture, {
-      dashboard: radarDashboard({ radarRange: 25, displayMode: 'portrait' }),
-    });
-    render(<Radar />, { wrapper: harness.wrapper });
-    await waitForDisplay();
-
-    expect(latest().mode).toBe('portrait');
   });
 
   it('hides the disc while the session reports the car off track', async () => {
@@ -273,5 +282,101 @@ describe('Radar widget over a recorded multiclass session', () => {
     // The delivery carries the same selected input as the settled frame, so
     // radarInputEqual must keep the display from rendering again.
     expect(rendered.length).toBe(renders);
+  });
+
+  it('brings the panel on screen once at a jittering show-range boundary', async () => {
+    // A rival holding the show range itself, with the ±0.3 m the measured
+    // gap jitters by: `nearestGapM` crosses the boundary on every other
+    // frame, so a plain `<= showRange` gate flips the whole panel on and off
+    // for as long as the car sits there. The hysteresis must bring it on
+    // screen once and keep it there until the car is past the range plus its
+    // margin. Asserted on what Radar renders, frame by frame, not on the
+    // internal gap.
+    const SHOW_RANGE_M = 10;
+    // Metres from the player: beyond the release margin, then the boundary
+    // with jitter, then clear of the margin again. Consecutive frames differ
+    // so every delivery re-renders.
+    const GAPS_M = [12, 9.7, 10.3, 9.7, 10.4, 10.3, 9.7, 10.9, 10.2, 9.8, 12];
+
+    // The recorded capture with one rival re-placed per frame: everything
+    // else about the session stays real. The player index comes from a probe
+    // mount of the unmodified capture — the harness resolves it from the
+    // session exactly as the app does, and guessing it gets the player wrong.
+    const probe = mountFixture(fixture);
+    const playerCarIdx = probe.focusCarIdx;
+    const base = finalFrame();
+    const positions = base.CarIdxLapDistPct as number[];
+    const playerPct = positions[playerCarIdx];
+    if (typeof playerPct !== 'number' || playerPct < 0) {
+      throw new Error('fixture player has no position');
+    }
+    let rivalCarIdx = -1;
+    let bestDelta = Infinity;
+    for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
+      if (carIdx === playerCarIdx) continue;
+      const pct = positions[carIdx];
+      if (typeof pct !== 'number' || pct < 0) continue;
+      let delta = Math.abs(pct - playerPct);
+      if (delta > 0.5) delta = 1 - delta;
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        rivalCarIdx = carIdx;
+      }
+    }
+    if (rivalCarIdx < 0)
+      throw new Error('fixture has no rival near the player');
+
+    const jittered: ReplayFixture = {
+      ...fixture,
+      frames: GAPS_M.map((gapM) => ({
+        ...base,
+        CarIdxLapDistPct: positions.map((pct, carIdx) =>
+          carIdx === rivalCarIdx ? playerPct + gapM / TRACK_LENGTH_M : pct
+        ),
+      })),
+    };
+
+    const harness = mountFixture(jittered, {
+      dashboard: radarDashboard({
+        radarRange: 25,
+        showWhenNearby: true,
+        showRange: SHOW_RANGE_M,
+        fadeSeconds: 0,
+      }),
+    });
+    // The processors fill their snapshot in place, so the harness republishes
+    // one object per channel for the whole run. Over IPC every frame arrives
+    // as a fresh payload, which is what the widget's selector equality is
+    // written against; without that, a seek hands the hook the very array it
+    // already holds and no frame is ever seen as a change.
+    cloneRadarDeliveriesPerFrame();
+    render(<Radar />, { wrapper: harness.wrapper });
+    // The mount plays every frame and ends on the last one, which sits beyond
+    // the release margin: the panel starts hidden.
+    await waitForHidden();
+    expect(rendered).toHaveLength(0);
+
+    const onScreen: boolean[] = [];
+    for (let index = 0; index < GAPS_M.length; index += 1) {
+      act(() => {
+        harness.seekTo(index);
+      });
+      onScreen.push(screen.queryByTestId('radar-canvas') !== null);
+    }
+
+    // On at the first jitter frame inside the range, and still on for every
+    // frame that only jittered past the boundary: one appearance, no flip.
+    const appearances = onScreen.filter(
+      (shown, index) => shown && index > 0 && !onScreen[index - 1]
+    ).length;
+    const disappearances = onScreen.filter(
+      (shown, index) => !shown && index > 0 && onScreen[index - 1]
+    ).length;
+    expect(appearances).toBe(1);
+    expect(onScreen.slice(1, -1).every((shown) => shown)).toBe(true);
+    // The final frame is clear of the margin, so the gate does release —
+    // exactly once, at the end, not through the jitter.
+    expect(disappearances).toBe(1);
+    expect(onScreen.at(-1)).toBe(false);
   });
 });

@@ -9,13 +9,11 @@ const frame = (
   positions: number[],
   {
     camCarIdx = 0,
-    lap = [1, 1],
     onPitRoad = [false, false],
     isOnTrack = true,
     sessionNum = 1,
   }: {
     camCarIdx?: number;
-    lap?: number[];
     onPitRoad?: boolean[];
     isOnTrack?: boolean;
     sessionNum?: number;
@@ -24,7 +22,6 @@ const frame = (
   ({
     CamCarIdx: { value: [camCarIdx] },
     CarIdxLapDistPct: { value: positions },
-    CarIdxLap: { value: lap },
     CarIdxOnPitRoad: { value: onPitRoad },
     IsOnTrack: { value: [isOnTrack] },
     SessionNum: { value: [sessionNum] },
@@ -39,11 +36,14 @@ describe('RadarProcessor', () => {
     expect(processor.snapshot()).toMatchObject({
       focusCarIdx: recordedFrame.CamCarIdx.value[0],
       carIdxLapDistPct: recordedFrame.CarIdxLapDistPct.value,
-      carIdxLap: recordedFrame.CarIdxLap.value,
       carIdxOnPitRoad: recordedFrame.CarIdxOnPitRoad.value,
       isOnTrack: true,
       version: 1,
     });
+    // The recording still carries CarIdxLap, but the channel must not: no
+    // consumer grades a blip by lap anymore, and a dead per-car array
+    // republished at 25 Hz would violate R4.5.
+    expect(processor.snapshot()).not.toHaveProperty('carIdxLap');
   });
 
   it('tolerates a recorded frame that omits variables', () => {
@@ -55,11 +55,6 @@ describe('RadarProcessor', () => {
     expect(processor.snapshot().carIdxLapDistPct).toEqual(
       sparseRecordedFrame.CarIdxLapDistPct.value
     );
-    // The lapping colour needs the lap counter to arrive with the positions it
-    // is compared against, so a sparse capture has to be tolerated here too.
-    expect(processor.snapshot().carIdxLap).toEqual(
-      sparseRecordedFrame.CarIdxLap.value
-    );
   });
 
   it('tolerates a frame carrying none of the variables it reads', () => {
@@ -69,20 +64,18 @@ describe('RadarProcessor', () => {
     expect(processor.snapshot()).toMatchObject({
       focusCarIdx: null,
       carIdxLapDistPct: [],
-      carIdxLap: [],
       carIdxOnPitRoad: [],
       version: 0,
     });
   });
 
-  it('publishes focus car, lap, pit state and full-precision positions', () => {
+  it('publishes focus car, pit state and full-precision positions', () => {
     const processor = new RadarProcessor();
     processor.onFrame(frame([0.123456789, 0.123987654], { camCarIdx: 1 }));
 
     expect(processor.snapshot()).toEqual({
       focusCarIdx: 1,
       carIdxLapDistPct: [0.123456789, 0.123987654],
-      carIdxLap: [1, 1],
       carIdxOnPitRoad: [false, false],
       isOnTrack: true,
       version: 1,
@@ -101,15 +94,12 @@ describe('RadarProcessor', () => {
     expect(processor.snapshot().version).toBe(2);
   });
 
-  it('tracks lap and pit-road changes per car', () => {
+  it('tracks pit-road changes per car', () => {
     const processor = new RadarProcessor();
     processor.onFrame(frame([0.1, 0.2]));
-    processor.onFrame(
-      frame([0.1, 0.2], { lap: [1, 2], onPitRoad: [false, true] })
-    );
+    processor.onFrame(frame([0.1, 0.2], { onPitRoad: [false, true] }));
 
     expect(processor.snapshot()).toMatchObject({
-      carIdxLap: [1, 2],
       carIdxOnPitRoad: [false, true],
       version: 2,
     });
@@ -120,7 +110,6 @@ describe('RadarProcessor', () => {
     processor.onFrame({
       CamCarIdx: { value: [0] },
       CarIdxLapDistPct: { value: [-1, 0.42] },
-      CarIdxLap: { value: [0, 1] },
       CarIdxOnPitRoad: { value: [false, false] },
       IsOnTrack: { value: [true] },
       SessionNum: { value: [1] },
@@ -147,7 +136,6 @@ describe('RadarProcessor', () => {
     expect(processor.snapshot()).toEqual({
       focusCarIdx: null,
       carIdxLapDistPct: [],
-      carIdxLap: [],
       carIdxOnPitRoad: [],
       isOnTrack: false,
       version: 2,

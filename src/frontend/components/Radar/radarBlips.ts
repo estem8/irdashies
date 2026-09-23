@@ -10,11 +10,6 @@ import {
   type OverlapSide,
   type RadarOverlap,
 } from './overlapSides';
-import {
-  evaluateProximity,
-  type ProximityLevel,
-  type ProximityThresholds,
-} from './radarProximity';
 import { carFadeAt } from './radarFade';
 
 export interface RadarBlip {
@@ -29,9 +24,10 @@ export interface RadarBlip {
    * direction cancels out.
    */
   relYaw: number;
-  /** Fore/aft gap in metres — the distance the radar colours by. */
+  /**
+   * Fore/aft gap in metres; the show-when-nearby gate reads the nearest one.
+   */
   gapM: number;
-  level: ProximityLevel;
   /** Set when the sim reports this car directly alongside. */
   side: OverlapSide | null;
   /**
@@ -46,12 +42,6 @@ export interface RadarBlip {
   /** Set when this is the session's pace car, which carries a fixed label. */
   isPaceCar: boolean;
   /**
-   * Set when this car is lapping the player — a lap or more ahead of them. It
-   * is drawn in the blue-flag colour: hold your line and let it by.
-   */
-  lapping: boolean;
-  inPit: boolean;
-  /**
    * Opacity 0..1 for this car, so it fades in over the outer band of the range
    * rather than appearing on a ring. 1 when the band is switched off.
    */
@@ -61,7 +51,6 @@ export interface RadarBlip {
 /** What the widget must carry from one frame to the next, per car. */
 export interface RadarTargetState {
   side: OverlapSide | null;
-  engaged: boolean;
   /**
    * The direction this car was last drawn in (-1 behind, 1 ahead, 0 none yet).
    * A car running abreast oscillates around the player's lap fraction, so the
@@ -87,15 +76,8 @@ export interface RadarBlipResult {
 
 export interface RadarBlipInput {
   carIdxLapDistPct: readonly number[];
-  /** Current lap number by CarIdx; -1 where the sim has none. */
-  carIdxLap: readonly number[];
   carIdxOnPitRoad: readonly boolean[];
   playerCarIdx: number | null;
-  /**
-   * True while the current session is a race. Laps only separate lapping cars
-   * there: in practice the car a lap up on you has simply been out longer.
-   */
-  isRace: boolean;
   trackDrawing: TrackDrawing | undefined;
   /** Track length in metres; from the session's WeekendInfo.TrackLength. */
   trackLengthM: number;
@@ -105,7 +87,6 @@ export interface RadarBlipInput {
   overlap: RadarOverlap;
   vehicleWidth: number;
   vehicleLength: number;
-  thresholds: ProximityThresholds;
   /** Metres of fade at the outer edge of the range; 0 for none. */
   fadeBandM: number;
   /** Car number by CarIdx, for blip labels. */
@@ -220,10 +201,8 @@ export const blipLabel = (
 export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const {
     carIdxLapDistPct: positions,
-    carIdxLap,
     carIdxOnPitRoad,
     playerCarIdx,
-    isRace,
     trackDrawing,
     trackLengthM,
     radarRange,
@@ -231,7 +210,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     overlap,
     vehicleWidth,
     vehicleLength,
-    thresholds,
     carNumbers,
     paceCarIdx,
     fadeBandM,
@@ -300,7 +278,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
   const blips: RadarBlip[] = [];
   const carPoint = { x: 0, y: 0 };
-  const playerLap = carIdxLap[playerCarIdx] ?? -1;
 
   for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
     if (carIdx === playerCarIdx) continue;
@@ -360,15 +337,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       lateralM,
       relYaw,
       gapM: Math.abs(alongM),
-      level: 'far',
       side: null,
       sideUnknown: false,
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
-      lapping:
-        isRace &&
-        isLappingPlayer(carIdxLap[carIdx] ?? -1, pct, playerLap, playerPct),
-      inPit,
       // Faded by how far the car is from the player in the plane the radar
       // draws in, so one closing head-on fades in on approach while one
       // alongside (already near in that plane) never dims.
@@ -416,26 +388,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     // it as though it were in a lane we know it to be in.
     blip.sideUnknown = side === null && blip.gapM <= abreastUnknownM;
 
-    const wasEngaged = previousTargets.get(blip.carIdx)?.engaged ?? false;
-    // A *held* side is not an abutment. The side is kept for several car
-    // lengths beyond the abreast window so a car mid-pass does not snap back
-    // onto the player's own rectangle while the sim's verdict flickers — but
-    // between the release range and the end of that retention a held side
-    // otherwise kept re-engaging the car on the tick after the hysteresis
-    // released it, and the blip alternated amber and neutral every frame.
-    const abutment = side !== null && blip.gapM <= abeam;
-    const verdict = evaluateProximity(
-      blip.gapM,
-      abutment,
-      wasEngaged,
-      thresholds
-    );
-    blip.level = verdict.level;
     // A car with no history adopts its geometric sign, so a car entering the
     // range is unaffected by the latch until it has been drawn once.
     targets.set(blip.carIdx, {
       side,
-      engaged: verdict.engaged,
       alongSign: (Math.sign(blip.alongM) ||
         (previousTargets.get(blip.carIdx)?.alongSign ?? 0)) as -1 | 0 | 1,
     });

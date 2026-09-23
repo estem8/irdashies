@@ -11,13 +11,10 @@ const blip = (carIdx: number, alongM: number, lateralM = 0): RadarBlip => ({
   lateralM,
   relYaw: 0,
   gapM: Math.abs(alongM),
-  level: Math.abs(alongM) <= 1.5 ? 'critical' : 'far',
   side: null,
   sideUnknown: false,
   carNumber: null,
   isPaceCar: false,
-  lapping: false,
-  inPit: false,
   fade: 1,
 });
 
@@ -62,7 +59,7 @@ describe('useRadarMotion', () => {
   it('glides a car between its snapshot positions in metre units', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, false, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
       return null;
     };
 
@@ -91,7 +88,7 @@ describe('useRadarMotion', () => {
   it('never teleports: consecutive draws differ by no more than the target delta', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, false, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
       return null;
     };
 
@@ -116,7 +113,7 @@ describe('useRadarMotion', () => {
   it('draws a car behind the player behind it, not a lap ahead', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, false, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
       return null;
     };
 
@@ -135,33 +132,10 @@ describe('useRadarMotion', () => {
     expect(drawn).toBeCloseTo(-4, 6);
   });
 
-  it('keeps the loop alive while the pulse is active', () => {
-    const observed: Observed = { along: [] };
-    const Harness = ({
-      blips,
-      pulse,
-    }: {
-      blips: readonly RadarBlip[];
-      pulse: boolean;
-    }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, pulse, recordDraw(observed));
-      return null;
-    };
-
-    const staticBlips = [blip(1, 3)];
-    const view = render(<Harness blips={staticBlips} pulse={false} />);
-    // No movement, no pulse: no frames were requested.
-    expect(callbacks).toHaveLength(0);
-
-    // Turning the pulse on keeps a frame in flight even though nothing moves.
-    view.rerender(<Harness blips={staticBlips} pulse={true} />);
-    expect(callbacks.length).toBeGreaterThan(0);
-  });
-
-  it('stops requesting frames once settled without a pulse', () => {
+  it('stops requesting frames once the blips have settled', () => {
     let draws = 0;
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, false, (a, l, c) => {
+      useRadarMotion(blips, TRACK_LENGTH_M, (a, l, c) => {
         void a;
         void l;
         void c;
