@@ -118,18 +118,6 @@ const ABREAST_LATERAL_FACTOR = 1.1;
 export const LONGITUDINAL_LATCH_M = 1;
 
 /**
- * How level a car counts as beside the player, in car lengths.
- *
- * Two cars cannot share a point of the road, so a rival whose centre is within
- * half a car length of the player's is necessarily across the road from them —
- * whether or not the sim's own verdict said so. Measured on a ten-minute race,
- * the verdict stays silent for about half the overtakes and for every overtake
- * of a player standing off the racing surface, so this is what lets the display
- * say a car is beside you when the sim says nothing.
- */
-const ABREAST_UNKNOWN_LENGTHS = 0.5;
-
-/**
  * Holds a car on the side it was last drawn on while its measured offset sits
  * inside the latch: an oscillation about the player must not flip ahead/behind
  * frame to frame. Beyond the latch the measured along-track offset is passed
@@ -350,7 +338,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
   const targets = new Map<number, RadarTargetState>();
   const closeM = Math.max(1, vehicleLength);
-  const abreastUnknownM = Math.max(1, vehicleLength * ABREAST_UNKNOWN_LENGTHS);
   for (const blip of blips) {
     const side = sides.get(blip.carIdx) ?? null;
     blip.side = side;
@@ -362,11 +349,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
     }
     if (blip.gapM <= closeM) {
-      if (side !== null) {
-        blip.rimSignal = side === -1 ? 'left' : 'right';
-      } else if (blip.gapM <= abreastUnknownM) {
-        blip.rimSignal = 'both';
-      }
+      blip.rimSignal = side === null ? 'both' : side === -1 ? 'left' : 'right';
     }
 
     // A car with no history adopts its geometric sign, so a car entering the

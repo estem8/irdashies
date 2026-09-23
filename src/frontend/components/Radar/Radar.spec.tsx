@@ -110,6 +110,50 @@ const finalFrame = () => {
   return frame;
 };
 
+/**
+ * The recorded capture with its nearest rival re-placed at each given gap in
+ * metres, one frame per gap. Everything else about the session stays real, so
+ * the gate sees the same field and track the app would.
+ *
+ * The player index comes from a probe mount of the unmodified capture: the
+ * harness resolves it from the session exactly as the app does, and guessing
+ * it gets the player wrong.
+ */
+const fixtureWithRivalAt = (gapsM: readonly number[]): ReplayFixture => {
+  const probe = mountFixture(fixture);
+  const playerCarIdx = probe.focusCarIdx;
+  const base = finalFrame();
+  const positions = base.CarIdxLapDistPct as number[];
+  const playerPct = positions[playerCarIdx];
+  if (typeof playerPct !== 'number' || playerPct < 0) {
+    throw new Error('fixture player has no position');
+  }
+  let rivalCarIdx = -1;
+  let bestDelta = Infinity;
+  for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
+    if (carIdx === playerCarIdx) continue;
+    const pct = positions[carIdx];
+    if (typeof pct !== 'number' || pct < 0) continue;
+    let delta = Math.abs(pct - playerPct);
+    if (delta > 0.5) delta = 1 - delta;
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      rivalCarIdx = carIdx;
+    }
+  }
+  if (rivalCarIdx < 0) throw new Error('fixture has no rival near the player');
+
+  return {
+    ...fixture,
+    frames: gapsM.map((gapM) => ({
+      ...base,
+      CarIdxLapDistPct: positions.map((pct, carIdx) =>
+        carIdx === rivalCarIdx ? playerPct + gapM / TRACK_LENGTH_M : pct
+      ),
+    })),
+  };
+};
+
 describe('Radar widget over a recorded multiclass session', () => {
   beforeEach(() => {
     rendered.length = 0;
@@ -239,6 +283,33 @@ describe('Radar widget over a recorded multiclass session', () => {
     expect(latest().blips.length).toBeGreaterThan(0);
   });
 
+  it('will not bring the panel on for a car sitting at the clipping edge', async () => {
+    // A profile that sets the near range equal to the radar range — the shape
+    // the live profile has — must not bring the panel on for a car in the last
+    // half metre before the edge: that car is at the clip boundary, where the
+    // disc shows almost nothing of it. The panel has to wait for a car that is
+    // actually inside the view.
+    const RADAR_RANGE = 25;
+    const config = {
+      radarRange: RADAR_RANGE,
+      showWhenNearby: true,
+      showRange: RADAR_RANGE,
+      fadeSeconds: 0,
+    };
+
+    const atEdge = mountFixture(fixtureWithRivalAt([RADAR_RANGE - 0.25]), {
+      dashboard: radarDashboard(config),
+    });
+    render(<Radar />, { wrapper: atEdge.wrapper });
+    await waitForHidden();
+
+    const inside = mountFixture(fixtureWithRivalAt([RADAR_RANGE - 3]), {
+      dashboard: radarDashboard(config),
+    });
+    render(<Radar />, { wrapper: inside.wrapper });
+    await waitForDisplay();
+  });
+
   it('fades a car out towards the range edge, unless the band is off', async () => {
     // Range 3 with a 3 m band puts the 2.6 m car inside the fade, so it must
     // come through part-faded rather than at full strength.
@@ -304,42 +375,8 @@ describe('Radar widget over a recorded multiclass session', () => {
     const GAPS_M = [12, 9.7, 10.3, 9.7, 10.4, 10.3, 9.7, 10.9, 10.2, 9.8, 12];
 
     // The recorded capture with one rival re-placed per frame: everything
-    // else about the session stays real. The player index comes from a probe
-    // mount of the unmodified capture — the harness resolves it from the
-    // session exactly as the app does, and guessing it gets the player wrong.
-    const probe = mountFixture(fixture);
-    const playerCarIdx = probe.focusCarIdx;
-    const base = finalFrame();
-    const positions = base.CarIdxLapDistPct as number[];
-    const playerPct = positions[playerCarIdx];
-    if (typeof playerPct !== 'number' || playerPct < 0) {
-      throw new Error('fixture player has no position');
-    }
-    let rivalCarIdx = -1;
-    let bestDelta = Infinity;
-    for (let carIdx = 0; carIdx < positions.length; carIdx += 1) {
-      if (carIdx === playerCarIdx) continue;
-      const pct = positions[carIdx];
-      if (typeof pct !== 'number' || pct < 0) continue;
-      let delta = Math.abs(pct - playerPct);
-      if (delta > 0.5) delta = 1 - delta;
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        rivalCarIdx = carIdx;
-      }
-    }
-    if (rivalCarIdx < 0)
-      throw new Error('fixture has no rival near the player');
-
-    const jittered: ReplayFixture = {
-      ...fixture,
-      frames: GAPS_M.map((gapM) => ({
-        ...base,
-        CarIdxLapDistPct: positions.map((pct, carIdx) =>
-          carIdx === rivalCarIdx ? playerPct + gapM / TRACK_LENGTH_M : pct
-        ),
-      })),
-    };
+    // else about the session stays real.
+    const jittered = fixtureWithRivalAt(GAPS_M);
 
     const harness = mountFixture(jittered, {
       dashboard: radarDashboard({

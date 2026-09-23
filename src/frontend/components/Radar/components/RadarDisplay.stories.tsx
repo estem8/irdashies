@@ -84,8 +84,12 @@ export const AlongsideRight: Story = {
 };
 
 export const AlongsideBoth: Story = {
-  name: 'Alongside, both',
-  args: { blips: [AHEAD, blip(7, 0.3, 0, '31', { rimSignal: 'both' })] },
+  name: 'Alongside, both arcs only',
+  args: {
+    // A both signal deliberately omits the level car: only the two rim arcs
+    // distinguish this unknown-side overlap from the player underneath it.
+    blips: [AHEAD, blip(7, 0.3, 0, '31', { side: null, rimSignal: 'both' })],
+  },
 };
 
 export const WithoutCarNumbers: Story = {

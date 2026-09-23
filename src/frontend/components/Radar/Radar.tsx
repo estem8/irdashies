@@ -4,6 +4,7 @@ import { RadarDisplay } from './components/RadarDisplay';
 import { useRadar } from './hooks/useRadar';
 import { useRadarFade } from './hooks/useRadarFade';
 import { useRadarSettings } from './hooks/useRadarSettings';
+import { RADAR_SHOW_RANGE_MARGIN_M } from './radarFade';
 import type { RadarBlip } from './radarBlips';
 
 /**
@@ -88,9 +89,12 @@ export const Radar = () => {
   const { isDemoMode } = useDashboard();
   const sessionVisible = useSessionVisibility(settings.sessionVisibility);
 
-  // The show range cannot reach further than the radar draws, or nothing would
-  // ever be near enough to bring it on screen.
-  const showRange = Math.min(settings.showRange, settings.radarRange);
+  // Equality with the radar range is useless here: the car at the clipping
+  // boundary cannot bring on a panel that only appears once it is visible.
+  const showRange = Math.min(
+    settings.showRange,
+    settings.radarRange - RADAR_SHOW_RANGE_MARGIN_M
+  );
 
   // The gate is hysteretic: `nearestGapM` jitters by fractions of a metre
   // around whatever boundary it sits on, so a plain `<= showRange` test would

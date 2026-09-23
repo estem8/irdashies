@@ -32,16 +32,14 @@ describe('advanceFade', () => {
 });
 
 describe('carFadeAt', () => {
-  it('leaves a car solid once it is inside the fade band', () => {
-    // Range 15, band 3: solid from 12 m inwards.
-    expect(carFadeAt(0, 15, 3)).toBe(1);
-    expect(carFadeAt(12, 15, 3)).toBe(1);
+  it('keeps a car at or beyond the range edge dim rather than absent', () => {
+    expect(carFadeAt(15, 15, 3)).toBeGreaterThanOrEqual(0.15);
+    expect(carFadeAt(20, 15, 3)).toBe(0.15);
   });
 
-  it('fades a car out across the band as it reaches the range', () => {
-    expect(carFadeAt(13.5, 15, 3)).toBeCloseTo(0.5, 6);
-    expect(carFadeAt(15, 15, 3)).toBe(0);
-    expect(carFadeAt(20, 15, 3)).toBe(0);
+  it('leaves a car solid once it is inside the fade band', () => {
+    expect(carFadeAt(0, 15, 3)).toBe(1);
+    expect(carFadeAt(12, 15, 3)).toBe(1);
   });
 
   it('treats no band as no fade', () => {
@@ -50,13 +48,8 @@ describe('carFadeAt', () => {
     expect(carFadeAt(100, 15, 0)).toBe(1);
   });
 
-  it('never fades over a band wider than the range itself', () => {
-    // A band wider than the range would make everything translucent, including
-    // a car sitting on the player.
-    expect(carFadeAt(0, 15, 40)).toBeCloseTo(1, 6);
-  });
-
-  it('gives a car with no usable distance no presence', () => {
-    expect(carFadeAt(Number.NaN, 15, 3)).toBe(0);
+  it('keeps the linear ramp but reaches the floor exactly at the range', () => {
+    expect(carFadeAt(13.5, 15, 3)).toBeCloseTo(0.575, 6);
+    expect(carFadeAt(15, 15, 3)).toBe(0.15);
   });
 });

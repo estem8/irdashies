@@ -7,6 +7,15 @@
 export type FadeTarget = 0 | 1;
 
 /**
+ * Keep an edge car visible because a car the driver cannot see is worse than
+ * one that pops in.
+ */
+const CAR_FADE_FLOOR = 0.15;
+
+/** Leave room inside the range so the near-range gate always has a visible car. */
+export const RADAR_SHOW_RANGE_MARGIN_M = 0.5;
+
+/**
  * One step of a linear opacity ramp.
  *
  * @param current Opacity now, 0..1.
@@ -31,10 +40,9 @@ export const advanceFade = (
  * How opaque a car at `distanceM` from the player should be, given a fade band
  * at the outer edge of the range.
  *
- * A car is solid once it is inside the band and fades to nothing as it reaches
- * the range itself, so cars enter and leave the view gradually instead of
- * appearing out of nothing on a ring. `fadeBandM` of 0 means no band and
- * every car is solid.
+ * A car is solid once it is inside the band and ramps toward the edge without
+ * disappearing, so cars enter and leave the view gradually while remaining
+ * visible. `fadeBandM` of 0 means no band and every car is solid.
  */
 export const carFadeAt = (
   distanceM: number,
@@ -45,5 +53,6 @@ export const carFadeAt = (
   if (!Number.isFinite(distanceM)) return 0;
   const band = Math.min(fadeBandM, radarRange);
   const opacity = (radarRange - distanceM) / band;
-  return Math.min(1, Math.max(0, opacity));
+  const fadedOpacity = opacity * (1 - CAR_FADE_FLOOR) + CAR_FADE_FLOOR;
+  return Math.min(1, Math.max(CAR_FADE_FLOOR, fadedOpacity));
 };

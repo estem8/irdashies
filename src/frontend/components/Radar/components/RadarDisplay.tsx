@@ -109,19 +109,27 @@ const drawDisc = (
   ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
   ctx.clip();
 
+  // A car the sim has not placed on a side is painted on the centreline, which
+  // is only right while it is ahead of or behind us. Level with the player it
+  // would land on the player's own rectangle — the car drives through you — so
+  // there the two rim arcs are the whole signal and no vehicle is drawn.
+  const abreastM = Math.max(1, props.vehicleLength * 0.5);
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
-    drawVehicle(
-      ctx,
-      centreX + lateralM[i] * scale,
-      centreY - alongM[i] * scale,
-      widthPx,
-      lengthPx,
-      blip.relYaw,
-      props.colorRival,
-      alphaFor(blip),
-      blipLabel(blip, props.showCarNumbers)
-    );
+    const levelAndUnknown = blip.rimSignal === 'both' && blip.gapM <= abreastM;
+    if (!levelAndUnknown) {
+      drawVehicle(
+        ctx,
+        centreX + lateralM[i] * scale,
+        centreY - alongM[i] * scale,
+        widthPx,
+        lengthPx,
+        blip.relYaw,
+        props.colorRival,
+        alphaFor(blip),
+        blipLabel(blip, props.showCarNumbers)
+      );
+    }
   }
   ctx.restore();
 

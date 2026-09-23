@@ -77,6 +77,21 @@ describe('assignOverlapSides', () => {
     expect(sides.get(1)).toBe(-1);
   });
 
+  it('does not let a car beyond the alongside window consume a fresh slot', () => {
+    const held = new Map<number, OverlapSide>([[1, -1]]);
+    const sides = assignOverlapSides({
+      blips: blips(12, 0.4),
+      overlap: { left: 1, right: 0 },
+      vehicleLength: 4.5,
+      previous: held,
+    });
+
+    // The old side remains available for the offset ramp, but the reported slot
+    // belongs to the car the sim is describing now.
+    expect(sides.get(1)).toBe(-1);
+    expect(sides.get(2)).toBe(-1);
+  });
+
   it('drops a held side once the car is clear in either direction', () => {
     const held = new Map<number, OverlapSide>([[1, -1]]);
     const sides = assignOverlapSides({

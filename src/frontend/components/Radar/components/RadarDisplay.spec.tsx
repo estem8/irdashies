@@ -22,9 +22,9 @@ const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
 });
 
 /**
- * Four rivals plus the player: a plain car well ahead, a car closing from
- * behind, a car with a left rim signal, and a level car whose silent side lights
- * both rims.
+ * Three painted rivals plus the player: a plain car well ahead, a car closing
+ * from behind, a car with a left rim signal, and a level car whose silent side
+ * lights both rims but is not painted.
  */
 const BLIPS: RadarBlip[] = [
   blip({ carIdx: 1 }),
@@ -54,8 +54,8 @@ const BLIPS: RadarBlip[] = [
   }),
 ];
 
-/** Blips plus the player marker. */
-const VEHICLES = BLIPS.length + 1;
+/** Three painted rivals plus the player marker. */
+const VEHICLES = 4;
 
 const COLORS = {
   rival: '#cbd5e1',
@@ -220,7 +220,7 @@ describe('RadarDisplay', () => {
     vi.unstubAllGlobals();
   });
 
-  it('paints every blip and the player, and repaints on resize', () => {
+  it('paints every eligible blip and the player, and repaints on resize', () => {
     render(<RadarDisplay {...props} />);
     deliverSize(300, 300);
     deliverSize(320, 300);
@@ -235,14 +235,13 @@ describe('RadarDisplay', () => {
     // drawn a lap ahead would put the ratio off by orders of magnitude.
     const origins = record.originsPerPaint.at(-1) ?? [];
     expect(origins).toHaveLength(VEHICLES);
-    const [ahead, behind, alongside, level, player] = origins;
+    const [ahead, behind, alongside, player] = origins;
     const centreX = 320 / 2;
     const centreY = 300 / 2;
     const metresToPixels = (centreY - ahead[1]) / 11;
     expect(metresToPixels).toBeGreaterThan(0);
     expect(behind[1] - centreY).toBeCloseTo(4 * metresToPixels, 6);
     expect(alongside[1] - centreY).toBeCloseTo(1 * metresToPixels, 6);
-    expect(level[1] - centreY).toBeCloseTo(-0.3 * metresToPixels, 6);
     expect(player).toEqual([centreX, centreY]);
     // Lateral offsets are metres to the driver's right of the centreline.
     expect(ahead[0] - centreX).toBeCloseTo(0.2 * metresToPixels, 6);
@@ -259,7 +258,6 @@ describe('RadarDisplay', () => {
     );
 
     expect(vehicles).toEqual([
-      COLORS.rival,
       COLORS.rival,
       COLORS.rival,
       COLORS.rival,
@@ -303,13 +301,14 @@ describe('RadarDisplay', () => {
     const view = render(
       <RadarDisplay
         {...props}
-        blips={[blip({ carIdx: 1, rimSignal: 'both' })]}
+        blips={[blip({ carIdx: 1, alongM: 0.3, gapM: 0.3, rimSignal: 'both' })]}
       />
     );
     deliverSize(300, 300);
     let marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
+    expect(record.vehiclesPerPaint.at(-1)).toBe(1);
     expect(marks).toHaveLength(2);
     expect(
       marks.some(([start, end]) => Math.abs((start + end) / 2) < 0.01)
@@ -325,6 +324,51 @@ describe('RadarDisplay', () => {
       ([start, end]) => Math.abs(end - start) < 1
     );
     expect(marks).toHaveLength(0);
+  });
+
+  it('paints a vehicle for a named side but not for both', () => {
+    const view = render(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, rimSignal: 'left' })]}
+      />
+    );
+    deliverSize(300, 300);
+    expect(record.vehiclesPerPaint.at(-1)).toBe(2);
+    expect(record.fillsPerPaint.at(-1)).toContain(COLORS.rival);
+
+    view.rerender(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, rimSignal: 'right' })]}
+      />
+    );
+    expect(record.vehiclesPerPaint.at(-1)).toBe(2);
+    expect(record.fillsPerPaint.at(-1)).toContain(COLORS.rival);
+
+    view.rerender(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, alongM: 0.3, gapM: 0.3, rimSignal: 'both' })]}
+      />
+    );
+    expect(record.vehiclesPerPaint.at(-1)).toBe(1);
+    expect(record.fillsPerPaint.at(-1)).not.toContain(COLORS.rival);
+  });
+
+  it('paints a both-signal car that is not level with the player', () => {
+    // The rim signal only says the sim named no side. Four metres up the road
+    // the car is ahead of us, not across from us, and hiding it there would
+    // throw away a car the driver needs to see.
+    render(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, alongM: 4, gapM: 4, rimSignal: 'both' })]}
+      />
+    );
+    deliverSize(300, 300);
+    expect(record.vehiclesPerPaint.at(-1)).toBe(2);
+    expect(record.fillsPerPaint.at(-1)).toContain(COLORS.rival);
   });
 
   it('uses the alongside colour for a rim arc', () => {

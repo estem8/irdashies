@@ -53,12 +53,13 @@ const dashboardWith = (config: RadarConfig) =>
  * The Options tab renders several sliders, so the right one is picked by the
  * label it belongs to rather than by position.
  */
-const sliderValue = (label: string) => {
+const sliderFor = (label: string) => {
   const row = screen.getByText(label).closest('label');
   const input = row?.parentElement?.querySelector('input[type="range"]');
   if (!input) throw new Error(`no slider for ${label}`);
-  return (input as HTMLInputElement).value;
+  return input as HTMLInputElement;
 };
+const sliderValue = (label: string) => sliderFor(label).value;
 const rangeValue = () => sliderValue('Radar Range');
 
 const openOptionsTab = () => {
@@ -102,6 +103,23 @@ describe('RadarSettings', () => {
     openOptionsTab();
 
     expect(screen.getByText('Radar Range')).toBeInTheDocument();
+  });
+
+  it('scales both range-dependent slider limits with the radar range', () => {
+    mocks.setDashboard(
+      dashboardWith(
+        radarConfig({
+          radarRange: 30,
+          showWhenNearby: true,
+          fadeInCars: true,
+        })
+      )
+    );
+    render(<RadarSettings />);
+    act(() => screen.getByRole('button', { name: 'Display' }).click());
+
+    expect(sliderFor('Near Range').max).toBe('29.5');
+    expect(sliderFor('Fade Width').max).toBe('15');
   });
 
   it('offers a colour for every blip and state signal', () => {

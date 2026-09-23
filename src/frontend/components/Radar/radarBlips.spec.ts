@@ -393,6 +393,19 @@ describe('computeRadarBlips', () => {
     expect(level.lateralM).toBeCloseTo(0, 6);
   });
 
+  it('signals both rims just inside one car length when the sim is silent', () => {
+    const blip = computeRadarBlips({
+      ...baseInput,
+      overlap: NO_OVERLAP,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(304.49)]),
+    }).blips[0];
+
+    expect(blip.gapM).toBeLessThan(4.5);
+    expect(blip.side).toBeNull();
+    expect(blip.rimSignal).toBe('both');
+  });
+
   it('signals no rim for a car beyond one car length', () => {
     const result = computeRadarBlips({
       ...baseInput,
@@ -420,12 +433,15 @@ describe('computeRadarBlips', () => {
         ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
       }).blips[0].fade;
 
-    // Range 15 with a 3 m band: solid from 12 m in, nothing at the range.
+    // Range 15 with a 3 m band: solid from 12 m in, and still visible at the
+    // range itself — the band dims a car, it never hides one.
     expect(fadeAt(2)).toBe(1);
     // The band edge is a floating-point boundary, so it is asserted closely.
     expect(fadeAt(12)).toBeCloseTo(1, 6);
-    expect(fadeAt(13.5)).toBeCloseTo(0.5, 2);
-    expect(fadeAt(14.9)).toBeLessThan(0.1);
+    expect(fadeAt(13.5)).toBeGreaterThan(0.5);
+    expect(fadeAt(13.5)).toBeLessThan(0.7);
+    expect(fadeAt(14.9)).toBeGreaterThan(0.1);
+    expect(fadeAt(14.9)).toBeLessThan(0.3);
   });
 
   it('does not dim a car that is already alongside', () => {

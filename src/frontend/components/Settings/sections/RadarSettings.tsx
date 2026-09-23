@@ -13,6 +13,7 @@ import { SettingNumberRow } from '../components/SettingNumberRow';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingDivider } from '../components/SettingDivider';
 import { SettingToggleRow } from '../components/SettingToggleRow';
+import { RADAR_SHOW_RANGE_MARGIN_M } from '../../Radar/radarFade';
 
 const SETTING_ID = 'radar';
 
@@ -160,14 +161,14 @@ export const RadarSettings = () => {
                 {settings.config.showWhenNearby && (
                   <SettingSliderRow
                     title="Near Range"
-                    description="How close a car has to be to bring the radar on screen, in metres. Capped at the radar range, since nothing beyond it is drawn."
+                    description="How close a car has to be to bring the radar on screen, in metres, with the maximum kept inside the visible field so the panel never waits for an unseen car."
                     value={Math.min(
                       settings.config.showRange,
-                      settings.config.radarRange
+                      settings.config.radarRange - RADAR_SHOW_RANGE_MARGIN_M
                     )}
                     units="m"
                     min={2}
-                    max={settings.config.radarRange}
+                    max={settings.config.radarRange - RADAR_SHOW_RANGE_MARGIN_M}
                     step={0.5}
                     onChange={(v) => handleConfigChange({ showRange: v })}
                   />
@@ -184,18 +185,18 @@ export const RadarSettings = () => {
                 />
                 <SettingToggleRow
                   title="Fade cars in at the range edge"
-                  description="Cars ramp up from invisible as they come inside the range instead of appearing all at once on the edge."
+                  description="Cars ramp up from dim at the range edge so they remain visible before becoming solid inside the fade band."
                   enabled={settings.config.fadeInCars}
                   onToggle={(v) => handleConfigChange({ fadeInCars: v })}
                 />
                 {settings.config.fadeInCars && (
                   <SettingSliderRow
                     title="Fade Width"
-                    description="How much of the outer range the fade covers, in metres. Cars are drawn at full strength inside it."
+                    description="How much of the outer range the fade covers, in metres, capped at half the radar range so most of the view stays solid."
                     value={settings.config.fadeBandM}
                     units="m"
                     min={1}
-                    max={10}
+                    max={settings.config.radarRange / 2}
                     step={0.5}
                     onChange={(v) => handleConfigChange({ fadeBandM: v })}
                   />

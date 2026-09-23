@@ -95,9 +95,14 @@ export const assignOverlapSides = (input: {
     if (Math.abs(blip.alongM) > retain) continue;
     const held = previous.get(blip.carIdx);
     if (held === undefined) continue;
+    // Keep the side through the retention window so the lateral offset can
+    // ramp down, but do not let a car beyond the alongside window occupy a
+    // reported slot that the sim is assigning to a car in the current frame.
     sides.set(blip.carIdx, held);
-    if (held === -1) heldLeft += 1;
-    else heldRight += 1;
+    if (Math.abs(blip.alongM) <= alongside) {
+      if (held === -1) heldLeft += 1;
+      else heldRight += 1;
+    }
   }
 
   let freeLeft = overlap.left - heldLeft;
