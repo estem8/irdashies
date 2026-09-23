@@ -9,11 +9,9 @@ export interface RadarDisplayProps {
   vehicleWidth: number;
   vehicleLength: number;
   showCarNumbers: boolean;
-  holdLine: boolean;
   /** Every rival blip is filled with this; the player is `colorPlayer`. */
   colorRival: string;
   colorAlongside: string;
-  colorHoldLine: string;
   colorPlayer: string;
   bgOpacity: number;
   /** Track length in metres; drives blip motion between snapshots. */
@@ -164,21 +162,6 @@ const drawDisc = (
       rimArch(Math.PI / 2, props.colorAlongside, pulse * alphaFor(blip));
     }
   }
-
-  if (props.holdLine) {
-    const top = centreY - radius + 2;
-    const arm = Math.max(4, radius * 0.18);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(centreX - arm, top + arm);
-    ctx.lineTo(centreX, top);
-    ctx.lineTo(centreX + arm, top + arm);
-    ctx.lineWidth = Math.max(2, radius * 0.06);
-    ctx.strokeStyle = props.colorHoldLine;
-    ctx.globalAlpha = pulse;
-    ctx.stroke();
-    ctx.restore();
-  }
 };
 
 const drawRadar = (
@@ -264,8 +247,7 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     );
   };
 
-  const pulseActive =
-    props.holdLine || props.blips.some((blip) => blip.rimSignal !== null);
+  const pulseActive = props.blips.some((blip) => blip.rimSignal !== null);
   useRadarMotion(
     props.blips,
     props.trackLengthM,

@@ -58,7 +58,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   private readonly latest: RadarSnapshot = {
     focusCarIdx: null,
     carIdxLapDistPct: [],
-    carIdxLap: [],
     carIdxOnPitRoad: [],
     isOnTrack: false,
     version: 0,
@@ -96,11 +95,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
         valuesOf(frame, 'CarIdxLapDistPct')
       ) || changed;
     changed =
-      copyNumbers(
-        this.latest.carIdxLap as number[],
-        valuesOf(frame, 'CarIdxLap')
-      ) || changed;
-    changed =
       copyBooleans(
         this.latest.carIdxOnPitRoad as boolean[],
         valuesOf(frame, 'CarIdxOnPitRoad')
@@ -112,7 +106,6 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
   onLifecycle(event: SessionLifecycleEvent): void {
     if (event.type === 'enter') return;
     (this.latest.carIdxLapDistPct as number[]).length = 0;
-    (this.latest.carIdxLap as number[]).length = 0;
     (this.latest.carIdxOnPitRoad as boolean[]).length = 0;
     this.latest.focusCarIdx = null;
     this.latest.isOnTrack = false;

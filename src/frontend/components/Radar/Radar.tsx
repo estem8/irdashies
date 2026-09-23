@@ -20,7 +20,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 12,
     side: null,
     rimSignal: null,
-    lapAhead: false,
     carNumber: '24',
     isPaceCar: false,
     fade: 1,
@@ -33,7 +32,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 3.2,
     side: null,
     rimSignal: 'left',
-    lapAhead: false,
     carNumber: '7',
     isPaceCar: false,
     fade: 1,
@@ -46,7 +44,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 0.8,
     side: -1,
     rimSignal: 'left',
-    lapAhead: false,
     carNumber: '51',
     isPaceCar: false,
     fade: 1,
@@ -59,7 +56,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 6,
     side: null,
     rimSignal: null,
-    lapAhead: false,
     carNumber: '9',
     isPaceCar: true,
     fade: 0.4,
@@ -72,7 +68,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     gapM: 0.4,
     side: null,
     rimSignal: 'both',
-    lapAhead: true,
     carNumber: '31',
     isPaceCar: false,
     fade: 1,
@@ -146,11 +141,9 @@ export const Radar = () => {
         showCarNumbers={settings.showCarNumbers}
         colorRival={settings.colorRival}
         colorAlongside={settings.colorAlongside}
-        colorHoldLine={settings.colorHoldLine}
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
-        holdLine={state.holdLine}
       />
     </div>
   );

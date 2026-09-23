@@ -516,7 +516,6 @@ const summarize = (snapshots: SnapshotRecord) => ({
   'radar.snapshot': {
     focusCarIdx: snapshots['radar.snapshot'].focusCarIdx,
     carIdxLapDistPct: snapshots['radar.snapshot'].carIdxLapDistPct,
-    carIdxLap: snapshots['radar.snapshot'].carIdxLap,
     carIdxOnPitRoad: snapshots['radar.snapshot'].carIdxOnPitRoad,
     version: snapshots['radar.snapshot'].version,
   },
@@ -599,8 +598,6 @@ describe('runtime boundary replay', () => {
     // This literal is intentionally maintained by hand. There is no update
     // mode or generated snapshot file that can silently accept contract drift.
     expect(summarize(mock)).toEqual(FIXED_GOLDEN);
-
-    expect(mock['radar.snapshot'].carIdxLap).toEqual([1, 1]);
   });
 
   it('clears stale data across visibility, churn, lifecycle, and host restart', () => {
@@ -756,7 +753,6 @@ const FIXED_GOLDEN = {
     focusCarIdx: 0,
     // Player 0.18 with the rival the harness places 0.05 ahead.
     carIdxLapDistPct: [0.18, 0.22999999999999998],
-    carIdxLap: [1, 1],
     carIdxOnPitRoad: [false, false],
     version: 5,
   },

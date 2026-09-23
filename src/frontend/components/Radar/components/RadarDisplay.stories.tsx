@@ -21,7 +21,6 @@ const blip = (
   gapM: Math.abs(alongM),
   side: null,
   rimSignal: null,
-  lapAhead: false,
   carNumber,
   isPaceCar: false,
   fade: 1,
@@ -50,10 +49,8 @@ const meta = {
     vehicleWidth: 1.9,
     vehicleLength: 4.5,
     showCarNumbers: true,
-    holdLine: false,
     colorRival: '#cbd5e1',
     colorAlongside: '#ef4444',
-    colorHoldLine: '#22c55e',
     colorPlayer: '#2fd16a',
     bgOpacity: 30,
     // Any positive length works: the disc places blips by metre offset, and
@@ -66,7 +63,6 @@ const meta = {
     showCarNumbers: { control: { type: 'boolean' } },
     colorRival: { control: { type: 'color' } },
     colorAlongside: { control: { type: 'color' } },
-    colorHoldLine: { control: { type: 'color' } },
     colorPlayer: { control: { type: 'color' } },
   },
 } satisfies Meta<typeof RadarDisplay>;
@@ -90,11 +86,6 @@ export const AlongsideRight: Story = {
 export const AlongsideBoth: Story = {
   name: 'Alongside, both',
   args: { blips: [AHEAD, blip(7, 0.3, 0, '31', { rimSignal: 'both' })] },
-};
-
-export const HoldLine: Story = {
-  name: 'Hold your line',
-  args: { holdLine: true },
 };
 
 export const WithoutCarNumbers: Story = {

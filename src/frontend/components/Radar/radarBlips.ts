@@ -32,8 +32,6 @@ export interface RadarBlip {
   side: OverlapSide | null;
   /** Rim indicator driven by the sim side, or both when it is silent. */
   rimSignal: 'left' | 'right' | 'both' | null;
-  /** Set in a race when this rival is a lap ahead and closing. */
-  lapAhead: boolean;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
@@ -73,9 +71,7 @@ export interface RadarBlipResult {
 
 export interface RadarBlipInput {
   carIdxLapDistPct: readonly number[];
-  carIdxLap: readonly number[];
   carIdxOnPitRoad: readonly boolean[];
-  isRace: boolean;
   playerCarIdx: number | null;
   trackDrawing: TrackDrawing | undefined;
   /** Track length in metres; from the session's WeekendInfo.TrackLength. */
@@ -152,24 +148,6 @@ export const latchAlongSide = (
 const onRoad = (pct: number | undefined): pct is number =>
   typeof pct === 'number' && Number.isFinite(pct) && pct >= 0;
 
-/**
- * Whether a rival is lapping the player: more than half a lap of total distance
- * ahead of them, which is what the standings widget calls `lappedState:
- * 'ahead'` and paints its rows by. Lap counts alone will not do — a leader
- * crossing the line puts every car on the previous count a "lap" behind while
- * it is still seconds up the road — so each counter is taken together with that
- * driver's position on the lap, exactly as `useDriverPositions` computes it.
- */
-export const isLappingPlayer = (
-  rivalLap: number,
-  rivalPct: number,
-  playerLap: number,
-  playerPct: number
-): boolean =>
-  rivalLap >= 0 &&
-  playerLap >= 0 &&
-  Math.round(rivalLap + rivalPct - (playerLap + playerPct)) > 0;
-
 /** The fixed blip tag for the pace car; its number (0) is meaningless. */
 export const PACE_CAR_LABEL = 'PACE';
 
@@ -200,9 +178,7 @@ export const blipLabel = (
 export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const {
     carIdxLapDistPct: positions,
-    carIdxLap,
     carIdxOnPitRoad,
-    isRace,
     playerCarIdx,
     trackDrawing,
     trackLengthM,
@@ -340,18 +316,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       gapM: Math.abs(alongM),
       side: null,
       rimSignal: null,
-      // A car a lap up and closing is the "hold your line" case. Only a race
-      // counts: outside one a car a lap further round has simply been out
-      // longer, and the pace car speaks for itself with its own label.
-      lapAhead:
-        isRace &&
-        carIdx !== paceCarIdx &&
-        isLappingPlayer(
-          carIdxLap[carIdx] ?? -1,
-          pct,
-          carIdxLap[playerCarIdx] ?? -1,
-          playerPct
-        ),
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
       // Faded by how far the car is from the player in the plane the radar

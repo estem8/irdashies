@@ -61,8 +61,6 @@ const positionsOf = (
 
 const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
   {
-    carIdxLap: [0, 0],
-    isRace: false,
     playerCarIdx: 0,
     trackDrawing: trackDrawing(),
     trackLengthM: TRACK_LENGTH_M,
@@ -412,41 +410,6 @@ describe('computeRadarBlips', () => {
 
     expect(blip.side).toBe(-1);
     expect(blip.rimSignal).toBeNull();
-  });
-
-  it('marks a closing car a lap ahead during a race', () => {
-    const result = computeRadarBlips({
-      ...baseInput,
-      isRace: true,
-      carIdxLap: [10, 11],
-      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
-    });
-
-    expect(result.blips[0].lapAhead).toBe(true);
-  });
-
-  it('does not mark a lap ahead outside a race', () => {
-    const result = computeRadarBlips({
-      ...baseInput,
-      isRace: false,
-      carIdxLap: [10, 11],
-      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
-    });
-
-    expect(result.blips[0].lapAhead).toBe(false);
-  });
-
-  it('does not mark the pace car a lap ahead during a race', () => {
-    const result = computeRadarBlips({
-      ...baseInput,
-      isRace: true,
-      paceCarIdx: 1,
-      carIdxLap: [10, 11],
-      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
-    });
-
-    expect(result.blips[0].isPaceCar).toBe(true);
-    expect(result.blips[0].lapAhead).toBe(false);
   });
 
   it('fades a car in over the outer band of the range', () => {

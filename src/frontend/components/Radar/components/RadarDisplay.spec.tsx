@@ -15,7 +15,6 @@ const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
   gapM: 11,
   side: null,
   rimSignal: null,
-  lapAhead: false,
   carNumber: '24',
   isPaceCar: false,
   fade: 1,
@@ -52,7 +51,6 @@ const BLIPS: RadarBlip[] = [
     gapM: 0.3,
     carNumber: '31',
     rimSignal: 'both',
-    lapAhead: true,
   }),
 ];
 
@@ -88,8 +86,6 @@ interface PaintRecord {
    * Vehicle outlines are rgba, so a palette entry here is an edge marker.
    */
   strokesPerPaint: string[][];
-  /** One entry per paint: how many `stroke` calls were made. */
-  strokeCountPerPaint: number[];
   /** One entry per paint: every `fillText` drawn, as text and x position. */
   textsPerPaint: [string, number][][];
 }
@@ -117,11 +113,6 @@ const createFakeContext = (record: PaintRecord) => {
         record.arcsPerPaint.push([]);
         record.strokesPerPaint.push([]);
         record.textsPerPaint.push([]);
-        record.strokeCountPerPaint.push(0);
-      }
-      if (name === 'stroke') {
-        const last = paint();
-        record.strokeCountPerPaint[last] += 1;
       }
       if (name === 'fillText') {
         const last = paint();
@@ -172,10 +163,8 @@ const props: RadarDisplayProps = {
   vehicleWidth: 1.9,
   vehicleLength: 4.5,
   showCarNumbers: true,
-  holdLine: false,
   colorRival: COLORS.rival,
   colorAlongside: '#ef4444',
-  colorHoldLine: '#22c55e',
   colorPlayer: COLORS.player,
   bgOpacity: 30,
   trackLengthM: 5000,
@@ -201,7 +190,6 @@ describe('RadarDisplay', () => {
       arcsPerPaint: [],
       strokesPerPaint: [],
       textsPerPaint: [],
-      strokeCountPerPaint: [],
     };
     observers.length = 0;
     const context = createFakeContext(record);
@@ -349,20 +337,6 @@ describe('RadarDisplay', () => {
     );
     deliverSize(300, 300);
     expect(record.strokesPerPaint.at(-1)).toContain('#123456');
-  });
-
-  it('draws the hold-line chevron only when holdLine is true', () => {
-    const quiet = { ...props, blips: [] };
-    const view = render(<RadarDisplay {...quiet} />);
-    deliverSize(300, 300);
-    const without = record.strokeCountPerPaint.at(-1) ?? 0;
-    const arcsWithout = record.arcsPerPaint.at(-1)?.length ?? 0;
-
-    view.rerender(<RadarDisplay {...quiet} holdLine />);
-    const withHold = record.strokeCountPerPaint.at(-1) ?? 0;
-    expect(withHold).toBeGreaterThan(without);
-    expect(record.arcsPerPaint.at(-1)).toHaveLength(arcsWithout);
-    expect(record.strokesPerPaint.at(-1)).toContain('#22c55e');
   });
 
   it('quantises the pulse to at most nine levels and repeats each second', () => {

@@ -134,11 +134,6 @@ export interface RadarSnapshot {
   focusCarIdx: number | null;
   /** Lap distance fraction (0–1) by CarIdx, full precision; -1 when invalid. */
   carIdxLapDistPct: readonly number[];
-  /**
-   * Lap counter by CarIdx, full precision. The radar needs it beside the lap
-   * positions to detect a car a lap up without depending on track state.
-   */
-  carIdxLap: readonly number[];
   /** Pit road state by CarIdx — used to filter blips (hideInPit). */
   carIdxOnPitRoad: readonly boolean[];
   isOnTrack: boolean;

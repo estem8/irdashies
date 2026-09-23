@@ -149,11 +149,6 @@ export const RadarSettings = () => {
                     value={settings.config.colorAlongside}
                     onChange={(v) => handleConfigChange({ colorAlongside: v })}
                   />
-                  <ColorField
-                    label="Hold your line"
-                    value={settings.config.colorHoldLine}
-                    onChange={(v) => handleConfigChange({ colorHoldLine: v })}
-                  />
                 </div>
                 <SettingDivider />
                 <SettingToggleRow

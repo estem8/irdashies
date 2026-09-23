@@ -355,8 +355,7 @@ Shows the cars around you on a circular disc, like a spotter's proximity radar: 
 - Two blip colours: your car and everyone else's, so how close a car is read off its position on the disc rather than a colour scale
 - Cars the sim reports alongside are pinned to that side rather than onto the point of the centreline you share with them
 - A pulsing red arc marks a car reported alongside within one car length
-- A pulsing green chevron marks a car a lap up in a race, signalling to hold your line
-- Neither signal colour is chosen by distance; they report state
+- The signal colour is not chosen by distance; it reports state
 - Optional car numbers on each blip, so you know who is alongside
 - Configurable range (10-25 m) and car dimensions, since the sim reports no per-car size
 - Optional hiding of cars on pit road, which otherwise sit on the racing line's centreline

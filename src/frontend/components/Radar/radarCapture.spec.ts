@@ -52,7 +52,7 @@ interface Capture {
   };
 }
 
-const place = (capture: Capture, isRace?: boolean) => {
+const place = (capture: Capture) => {
   const { telemetry, session } = capture;
   const processor = new RadarProcessor();
   processor.init(session as unknown as Session);
@@ -61,11 +61,7 @@ const place = (capture: Capture, isRace?: boolean) => {
 
   const result = computeRadarBlips({
     carIdxLapDistPct: snapshot.carIdxLapDistPct,
-    carIdxLap: snapshot.carIdxLap,
     carIdxOnPitRoad: snapshot.carIdxOnPitRoad,
-    // The capture carries no session type of its own, and the recorded frames
-    // are from a race: the player is on lap 8 with a car a lap up behind.
-    isRace: isRace ?? true,
     playerCarIdx: snapshot.focusCarIdx,
     trackDrawing: trackDrawings[session.WeekendInfo.TrackID],
     trackLengthM: trackLengthOf(session),
@@ -183,18 +179,6 @@ describe('radar placement over recorded telemetry', () => {
     const placed = place(CAPTURES[0]);
     expect(placed.blips[0].side).toBe(-1);
     expect(placed.blips[0].rimSignal).toBeNull();
-  });
-
-  it('marks a recorded lap-up car for the hold-line chevron', () => {
-    const placed = place(CAPTURES[0]);
-
-    expect(placed.blips[0].lapAhead).toBe(true);
-  });
-
-  it('does not use lap counts outside a race', () => {
-    const placed = place(CAPTURES[0], false);
-
-    expect(placed.blips[0].lapAhead).toBe(false);
   });
 
   it('draws a car the sim reports alongside on that side, clear of the player', () => {

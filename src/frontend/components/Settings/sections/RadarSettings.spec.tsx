@@ -127,6 +127,5 @@ describe('RadarSettings', () => {
     expect(swatch('Your car')).toBe('#2fd16a');
     expect(swatch('Opponents')).toBe('#cbd5e1');
     expect(swatch('Alongside')).toBe('#ef4444');
-    expect(swatch('Hold your line')).toBe('#22c55e');
   });
 });

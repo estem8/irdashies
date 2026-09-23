@@ -487,8 +487,8 @@ export interface BlindSpotMonitorConfig {
  *
  * The disc is the only view, and blip colour carries no distance information:
  * every car inside the range is drawn at its true position in the player's or
- * opponents' colour. The alongside arc and hold-line chevron are separate
- * state signals, also never selected by distance; there is no proximity scale.
+ * opponents' colour. The alongside arc is a separate state signal, never
+ * selected by distance; there is no proximity scale.
  */
 export interface RadarConfig {
   /** Metres from the player that still get a blip. */
@@ -521,7 +521,6 @@ export interface RadarConfig {
   colorRival: string;
   colorPlayer: string;
   colorAlongside: string;
-  colorHoldLine: string;
   background: { opacity: number };
   showOnlyWhenOnTrack: boolean;
   sessionVisibility: SessionVisibilitySettings;

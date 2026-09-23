@@ -3,7 +3,6 @@ import { shallow } from 'zustand/shallow';
 import type { RadarSnapshot } from '@irdashies/types';
 import {
   useBlindSpotSelector,
-  useCurrentSessionType,
   useDriverCarIdx,
   useRadarSelector,
   useSessionDrivers,
@@ -30,8 +29,6 @@ export interface RadarState {
   blips: readonly RadarBlip[];
   overlap: RadarOverlap;
   isOnTrack: boolean;
-  /** At least one visible rival is a lap ahead in a race. */
-  holdLine: boolean;
   /**
    * Shortest fore/aft gap to any car being drawn, in metres; null when the
    * radar is drawing none. Cars hidden by `hideInPit` do not count, so a car
@@ -55,29 +52,26 @@ export interface UseRadarOptions {
 type RadarInput = readonly [
   number | null,
   readonly number[],
-  readonly number[],
   readonly boolean[],
   boolean,
 ];
 
-const EMPTY_INPUT: RadarInput = [null, [], [], [], false];
+const EMPTY_INPUT: RadarInput = [null, [], [], false];
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 
 const selectRadarInput = (snapshot: RadarSnapshot): RadarInput => [
   snapshot.focusCarIdx,
   snapshot.carIdxLapDistPct,
-  snapshot.carIdxLap,
   snapshot.carIdxOnPitRoad,
   snapshot.isOnTrack,
 ];
 
 const radarInputEqual = (previous: RadarInput, next: RadarInput): boolean =>
   previous[0] === next[0] &&
-  previous[4] === next[4] &&
+  previous[3] === next[3] &&
   shallow(previous[1], next[1]) &&
-  shallow(previous[2], next[2]) &&
-  shallow(previous[3], next[3]);
+  shallow(previous[2], next[2]);
 
 const trackDrawings = tracks as unknown as Record<
   number,
@@ -92,7 +86,7 @@ const trackDrawings = tracks as unknown as Record<
 export const useRadar = (options: UseRadarOptions): RadarState => {
   const { radarRange, hideInPit, vehicleWidth, vehicleLength, fadeBandM } =
     options;
-  const [focusCarIdx, positions, laps, onPitRoad, isOnTrack] =
+  const [focusCarIdx, positions, onPitRoad, isOnTrack] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
   const carLeftRight = useBlindSpotSelector(
@@ -103,7 +97,6 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   const trackId = useSessionStore(
     (state) => state.session?.WeekendInfo?.TrackID
   );
-  const isRace = useCurrentSessionType() === 'Race';
   const trackLengthM = useTrackLength();
   // The camera car is the player while driving and the watched car otherwise.
   const playerCarIdx = focusCarIdx ?? driverCarIdx ?? null;
@@ -157,9 +150,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     }
     const result = computeRadarBlips({
       carIdxLapDistPct: positions,
-      carIdxLap: laps,
       carIdxOnPitRoad: onPitRoad,
-      isRace,
       playerCarIdx,
       trackDrawing,
       trackLengthM,
@@ -177,9 +168,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     return result;
   }, [
     positions,
-    laps,
     onPitRoad,
-    isRace,
     playerCarIdx,
     trackId,
     trackDrawing,
@@ -195,11 +184,9 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   ]);
 
   let nearestGapM: number | null = null;
-  let holdLine = false;
   for (const blip of computed.blips) {
     if (nearestGapM === null || blip.gapM < nearestGapM)
       nearestGapM = blip.gapM;
-    if (blip.lapAhead) holdLine = true;
   }
 
   return {
@@ -207,7 +194,6 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     blips: computed.blips,
     overlap,
     isOnTrack,
-    holdLine,
     nearestGapM,
     trackLengthM,
   };
