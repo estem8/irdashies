@@ -55,7 +55,8 @@ const unwrapFraction = (value: number): number =>
 export const useRadarMotion = (
   blips: readonly RadarBlip[],
   trackLengthM: number,
-  draw: RadarMotionDraw
+  draw: RadarMotionDraw,
+  pulseActive: boolean
 ): void => {
   const alongRef = useRef<ProgressInterpolator | null>(null);
   const lateralRef = useRef<ProgressInterpolator | null>(null);
@@ -124,10 +125,11 @@ export const useRadarMotion = (
     const frame = (now: number) => {
       frameTime = now;
       const active = perfMetrics.measure('radarAnimationFrame', measuredFrame);
-      frameRef.current = active ? requestAnimationFrame(frame) : 0;
+      frameRef.current =
+        active || pulseActive ? requestAnimationFrame(frame) : 0;
     };
 
-    if ((travel || drift) && frameRef.current === 0) {
+    if ((travel || drift || pulseActive) && frameRef.current === 0) {
       frameRef.current = requestAnimationFrame(frame);
     }
 
@@ -137,5 +139,5 @@ export const useRadarMotion = (
         frameRef.current = 0;
       }
     };
-  }, [blips, trackLengthM]);
+  }, [blips, trackLengthM, pulseActive]);
 };

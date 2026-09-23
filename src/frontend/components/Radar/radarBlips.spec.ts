@@ -61,6 +61,8 @@ const positionsOf = (
 
 const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
   {
+    carIdxLap: [0, 0],
+    isRace: false,
     playerCarIdx: 0,
     trackDrawing: trackDrawing(),
     trackLengthM: TRACK_LENGTH_M,
@@ -359,43 +361,92 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].side).toBeNull();
   });
 
-  it('marks a level car the sim did not call as beside us with an unknown side', () => {
-    // Two cars cannot share a point of the road, so a rival level with the
-    // player is beside them whether or not the sim's verdict arrived. Measured
-    // on a recorded race, the verdict is silent for about half the overtakes
-    // and for every overtake of a player off the racing surface.
-    const level = (gap: number) =>
-      computeRadarBlips({
-        ...baseInput,
-        overlap: NO_OVERLAP,
-        carNumbers: new Map([[1, '24']]),
-        ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
-      }).blips[0];
+  const rimFor = (
+    side: 'left' | 'right',
+    gap: number,
+    previousTargets = new Map<number, RadarTargetState>()
+  ) =>
+    computeRadarBlips({
+      ...baseInput,
+      overlap: side === 'left' ? { left: 1, right: 0 } : { left: 0, right: 1 },
+      previousTargets,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
+    }).blips[0];
 
-    // Half a car length either way: beside us, side unknown.
-    const abreast = level(0.2);
-    expect(abreast.side).toBeNull();
-    expect(abreast.sideUnknown).toBe(true);
-    expect(abreast.lateralM).toBeCloseTo(0, 6);
-
-    const justInside = level(2.2);
-    expect(justInside.sideUnknown).toBe(true);
-
-    // A car with room to be in its own lane ahead is not beside us.
-    expect(level(2.5).sideUnknown).toBe(false);
-    expect(level(6).sideUnknown).toBe(false);
+  it('signals the named rim for a close car on the left', () => {
+    expect(rimFor('left', 0).rimSignal).toBe('left');
   });
 
-  it('does not mark a level car whose side the sim reported', () => {
+  it('signals the named rim for a close car on the right', () => {
+    expect(rimFor('right', 0).rimSignal).toBe('right');
+  });
+
+  it('signals both rims when the sim is silent on a level car', () => {
+    const level = computeRadarBlips({
+      ...baseInput,
+      overlap: NO_OVERLAP,
+      carNumbers: new Map([[1, '24']]),
+      ...positionsOf([pctOfArc(300), pctOfArc(300.2)]),
+    }).blips[0];
+
+    expect(level.side).toBeNull();
+    expect(level.rimSignal).toBe('both');
+    expect(level.lateralM).toBeCloseTo(0, 6);
+  });
+
+  it('signals no rim for a car beyond one car length', () => {
     const result = computeRadarBlips({
       ...baseInput,
-      overlap: { left: 1, right: 0 },
+      overlap: NO_OVERLAP,
       carNumbers: new Map([[1, '24']]),
-      ...positionsOf([pctOfArc(300), pctOfArc(300)]),
+      ...positionsOf([pctOfArc(300), pctOfArc(306)]),
+    }).blips[0];
+
+    expect(result.rimSignal).toBeNull();
+  });
+
+  it('signals no rim for a named side beyond one car length', () => {
+    const heldSide = withTargets([[1, held(-1)]]);
+    const blip = rimFor('left', 9, heldSide);
+
+    expect(blip.side).toBe(-1);
+    expect(blip.rimSignal).toBeNull();
+  });
+
+  it('marks a closing car a lap ahead during a race', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      isRace: true,
+      carIdxLap: [10, 11],
+      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
     });
 
-    expect(result.blips[0].side).toBe(-1);
-    expect(result.blips[0].sideUnknown).toBe(false);
+    expect(result.blips[0].lapAhead).toBe(true);
+  });
+
+  it('does not mark a lap ahead outside a race', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      isRace: false,
+      carIdxLap: [10, 11],
+      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
+    });
+
+    expect(result.blips[0].lapAhead).toBe(false);
+  });
+
+  it('does not mark the pace car a lap ahead during a race', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      isRace: true,
+      paceCarIdx: 1,
+      carIdxLap: [10, 11],
+      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
+    });
+
+    expect(result.blips[0].isPaceCar).toBe(true);
+    expect(result.blips[0].lapAhead).toBe(false);
   });
 
   it('fades a car in over the outer band of the range', () => {

@@ -30,13 +30,10 @@ export interface RadarBlip {
   gapM: number;
   /** Set when the sim reports this car directly alongside. */
   side: OverlapSide | null;
-  /**
-   * Set when the car is level with the player and the sim has reported no side
-   * for it. It is beside us — two cars cannot share a point of the road — but
-   * which side it is on is not known, so nothing may be drawn as if it were in
-   * one lane rather than the other.
-   */
-  sideUnknown: boolean;
+  /** Rim indicator driven by the sim side, or both when it is silent. */
+  rimSignal: 'left' | 'right' | 'both' | null;
+  /** Set in a race when this rival is a lap ahead and closing. */
+  lapAhead: boolean;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
@@ -76,7 +73,9 @@ export interface RadarBlipResult {
 
 export interface RadarBlipInput {
   carIdxLapDistPct: readonly number[];
+  carIdxLap: readonly number[];
   carIdxOnPitRoad: readonly boolean[];
+  isRace: boolean;
   playerCarIdx: number | null;
   trackDrawing: TrackDrawing | undefined;
   /** Track length in metres; from the session's WeekendInfo.TrackLength. */
@@ -201,7 +200,9 @@ export const blipLabel = (
 export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const {
     carIdxLapDistPct: positions,
+    carIdxLap,
     carIdxOnPitRoad,
+    isRace,
     playerCarIdx,
     trackDrawing,
     trackLengthM,
@@ -338,7 +339,19 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       relYaw,
       gapM: Math.abs(alongM),
       side: null,
-      sideUnknown: false,
+      rimSignal: null,
+      // A car a lap up and closing is the "hold your line" case. Only a race
+      // counts: outside one a car a lap further round has simply been out
+      // longer, and the pace car speaks for itself with its own label.
+      lapAhead:
+        isRace &&
+        carIdx !== paceCarIdx &&
+        isLappingPlayer(
+          carIdxLap[carIdx] ?? -1,
+          pct,
+          carIdxLap[playerCarIdx] ?? -1,
+          playerPct
+        ),
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
       // Faded by how far the car is from the player in the plane the radar
@@ -372,6 +385,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const fadeSpan = Math.max(1e-6, retain - abeam);
 
   const targets = new Map<number, RadarTargetState>();
+  const closeM = Math.max(1, vehicleLength);
   const abreastUnknownM = Math.max(1, vehicleLength * ABREAST_UNKNOWN_LENGTHS);
   for (const blip of blips) {
     const side = sides.get(blip.carIdx) ?? null;
@@ -383,10 +397,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
           : Math.max(0, 1 - (blip.gapM - abeam) / fadeSpan);
       blip.lateralM = side * vehicleWidth * ABREAST_LATERAL_FACTOR * closeness;
     }
-    // Level with the player and no verdict: the car is beside us, but the only
-    // thing that could say which side is silent. It is marked so nothing draws
-    // it as though it were in a lane we know it to be in.
-    blip.sideUnknown = side === null && blip.gapM <= abreastUnknownM;
+    if (blip.gapM <= closeM) {
+      if (side !== null) {
+        blip.rimSignal = side === -1 ? 'left' : 'right';
+      } else if (blip.gapM <= abreastUnknownM) {
+        blip.rimSignal = 'both';
+      }
+    }
 
     // A car with no history adopts its geometric sign, so a car entering the
     // range is unaffected by the latch until it has been drawn once.

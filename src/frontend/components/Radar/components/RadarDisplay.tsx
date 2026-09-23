@@ -9,13 +9,26 @@ export interface RadarDisplayProps {
   vehicleWidth: number;
   vehicleLength: number;
   showCarNumbers: boolean;
+  holdLine: boolean;
   /** Every rival blip is filled with this; the player is `colorPlayer`. */
   colorRival: string;
+  colorAlongside: string;
+  colorHoldLine: string;
   colorPlayer: string;
   bgOpacity: number;
   /** Track length in metres; drives blip motion between snapshots. */
   trackLengthM: number;
+  nowSeconds: number;
 }
+
+export const PULSE_STEPS_PER_SECOND = 8;
+
+export const pulseAlpha = (seconds: number): number => {
+  const phase = (seconds * PULSE_STEPS_PER_SECOND) % 1;
+  return (
+    Math.round((0.45 + 0.55 * Math.abs(Math.sin(Math.PI * phase))) * 8) / 8
+  );
+};
 
 interface Size {
   width: number;
@@ -126,10 +139,6 @@ const drawDisc = (
     null
   );
 
-  // A car level with us whose side the sim has not reported is somewhere
-  // across the road and we cannot say where. Both rims light rather than one:
-  // a single arch would be a side nobody measured, and the car would otherwise
-  // read as one driving through the player's own rectangle.
   const rimArch = (bearing: number, color: string, alpha: number) => {
     ctx.save();
     ctx.beginPath();
@@ -146,11 +155,29 @@ const drawDisc = (
     ctx.stroke();
     ctx.restore();
   };
+  const pulse = pulseAlpha(props.nowSeconds);
   for (const blip of props.blips) {
-    if (!blip.sideUnknown) continue;
-    for (const side of [-1, 1] as const) {
-      rimArch((side * Math.PI) / 2, props.colorRival, alphaFor(blip));
+    if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
+      rimArch(-Math.PI / 2, props.colorAlongside, pulse * alphaFor(blip));
     }
+    if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
+      rimArch(Math.PI / 2, props.colorAlongside, pulse * alphaFor(blip));
+    }
+  }
+
+  if (props.holdLine) {
+    const top = centreY - radius + 2;
+    const arm = Math.max(4, radius * 0.18);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(centreX - arm, top + arm);
+    ctx.lineTo(centreX, top);
+    ctx.lineTo(centreX + arm, top + arm);
+    ctx.lineWidth = Math.max(2, radius * 0.06);
+    ctx.strokeStyle = props.colorHoldLine;
+    ctx.globalAlpha = pulse;
+    ctx.stroke();
+    ctx.restore();
   }
 };
 
@@ -178,7 +205,7 @@ const drawRadar = (
   drawDisc(ctx, props, size, alongM, lateralM);
 };
 
-export const RadarDisplay = (props: RadarDisplayProps) => {
+export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
 
@@ -229,7 +256,7 @@ export const RadarDisplay = (props: RadarDisplayProps) => {
     lateralRef.current.set(lateralM.subarray(0, count));
     drawRadar(
       canvas,
-      propsRef.current,
+      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
       sizeRef.current,
       'dark',
       alongRef.current,
@@ -237,9 +264,16 @@ export const RadarDisplay = (props: RadarDisplayProps) => {
     );
   };
 
-  useRadarMotion(props.blips, props.trackLengthM, (a, l, c) => {
-    drawRef.current(a, l, c);
-  });
+  const pulseActive =
+    props.holdLine || props.blips.some((blip) => blip.rimSignal !== null);
+  useRadarMotion(
+    props.blips,
+    props.trackLengthM,
+    (a, l, c) => {
+      drawRef.current(a, l, c);
+    },
+    pulseActive
+  );
 
   // Resize repaints: the motion loop only repaints on new snapshots, so a
   // size change must redraw the last committed frame from the cached buffers.
@@ -250,7 +284,7 @@ export const RadarDisplay = (props: RadarDisplayProps) => {
       return;
     drawRadar(
       canvas,
-      propsRef.current,
+      { ...propsRef.current, nowSeconds: performance.now() / 1000 },
       sizeRef.current,
       'dark',
       alongRef.current,

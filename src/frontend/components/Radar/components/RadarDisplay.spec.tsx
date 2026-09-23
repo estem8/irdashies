@@ -1,7 +1,12 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RadarBlip } from '../radarBlips';
-import { RadarDisplay, type RadarDisplayProps } from './RadarDisplay';
+import {
+  PULSE_STEPS_PER_SECOND,
+  pulseAlpha,
+  RadarDisplay,
+  type RadarDisplayProps,
+} from './RadarDisplay';
 
 const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
   alongM: 11,
@@ -9,7 +14,8 @@ const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
   relYaw: 0,
   gapM: 11,
   side: null,
-  sideUnknown: false,
+  rimSignal: null,
+  lapAhead: false,
   carNumber: '24',
   isPaceCar: false,
   fade: 1,
@@ -18,8 +24,8 @@ const blip = (over: Partial<RadarBlip> & { carIdx: number }): RadarBlip => ({
 
 /**
  * Four rivals plus the player: a plain car well ahead, a car closing from
- * behind, a car the sim named a side for, and a car level with the player that
- * the sim never called.
+ * behind, a car with a left rim signal, and a level car whose silent side lights
+ * both rims.
  */
 const BLIPS: RadarBlip[] = [
   blip({ carIdx: 1 }),
@@ -37,6 +43,7 @@ const BLIPS: RadarBlip[] = [
     gapM: 1,
     carNumber: '51',
     side: -1,
+    rimSignal: 'left',
   }),
   blip({
     carIdx: 4,
@@ -44,7 +51,8 @@ const BLIPS: RadarBlip[] = [
     lateralM: 0,
     gapM: 0.3,
     carNumber: '31',
-    sideUnknown: true,
+    rimSignal: 'both',
+    lapAhead: true,
   }),
 ];
 
@@ -164,10 +172,14 @@ const props: RadarDisplayProps = {
   vehicleWidth: 1.9,
   vehicleLength: 4.5,
   showCarNumbers: true,
+  holdLine: false,
   colorRival: COLORS.rival,
+  colorAlongside: '#ef4444',
+  colorHoldLine: '#22c55e',
   colorPlayer: COLORS.player,
   bgOpacity: 30,
   trackLengthM: 5000,
+  nowSeconds: 0,
 };
 
 const deliverSize = (width: number, height: number) => {
@@ -267,39 +279,106 @@ describe('RadarDisplay', () => {
     ]);
   });
 
-  it('marks both rims for a car level with the player whose side is unknown', () => {
-    render(<RadarDisplay {...props} />);
+  it('lights the left arc for a left signal', () => {
+    render(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, rimSignal: 'left' })]}
+      />
+    );
     deliverSize(300, 300);
-
-    // The rim marks are the short arcs; the disc and its clip are full turns.
     const marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
-    const centres = marks.map(([start, end]) => (start + end) / 2);
-
-    // A car level with us that the sim stayed silent about lights the right
-    // rim and the left one: a single arch would be a side nobody measured.
-    expect(centres).toHaveLength(2);
-    expect(centres.some((c) => Math.abs(c - 0) < 1e-9)).toBe(true);
-    expect(centres.some((c) => Math.abs(Math.abs(c) - Math.PI) < 1e-9)).toBe(
+    expect(marks).toHaveLength(1);
+    expect(Math.abs((marks[0][0] + marks[0][1]) / 2 + Math.PI) < 0.01).toBe(
       true
     );
   });
 
-  it('leaves the rim dark when a level car has a side the sim reported', () => {
-    const withKnownSide = {
-      ...props,
-      blips: [blip({ carIdx: 1, alongM: 0.2, gapM: 0.2, side: 1 })],
-    };
-    render(<RadarDisplay {...withKnownSide} />);
+  it('lights the right arc for a right signal', () => {
+    render(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, rimSignal: 'right' })]}
+      />
+    );
     deliverSize(300, 300);
-
     const marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
-    // The car has a side, so no rim speaks for it: nothing but the disc and
-    // its clip is drawn as an arc.
+    expect(marks).toHaveLength(1);
+    expect(Math.abs((marks[0][0] + marks[0][1]) / 2) < 0.01).toBe(true);
+  });
+
+  it('lights both arcs for a both signal and none without a signal', () => {
+    const view = render(
+      <RadarDisplay
+        {...props}
+        blips={[blip({ carIdx: 1, rimSignal: 'both' })]}
+      />
+    );
+    deliverSize(300, 300);
+    let marks = (record.arcsPerPaint.at(-1) ?? []).filter(
+      ([start, end]) => Math.abs(end - start) < 1
+    );
+    expect(marks).toHaveLength(2);
+    expect(
+      marks.some(([start, end]) => Math.abs((start + end) / 2) < 0.01)
+    ).toBe(true);
+    expect(
+      marks.some(([start, end]) => Math.abs((start + end) / 2 + Math.PI) < 0.01)
+    ).toBe(true);
+
+    view.rerender(
+      <RadarDisplay {...props} blips={[blip({ carIdx: 1, rimSignal: null })]} />
+    );
+    marks = (record.arcsPerPaint.at(-1) ?? []).filter(
+      ([start, end]) => Math.abs(end - start) < 1
+    );
     expect(marks).toHaveLength(0);
+  });
+
+  it('uses the alongside colour for a rim arc', () => {
+    render(
+      <RadarDisplay
+        {...props}
+        colorAlongside="#123456"
+        blips={[blip({ carIdx: 1, rimSignal: 'left' })]}
+      />
+    );
+    deliverSize(300, 300);
+    expect(record.strokesPerPaint.at(-1)).toContain('#123456');
+  });
+
+  it('draws the hold-line chevron only when holdLine is true', () => {
+    const quiet = { ...props, blips: [] };
+    const view = render(<RadarDisplay {...quiet} />);
+    deliverSize(300, 300);
+    const without = record.strokeCountPerPaint.at(-1) ?? 0;
+    const arcsWithout = record.arcsPerPaint.at(-1)?.length ?? 0;
+
+    view.rerender(<RadarDisplay {...quiet} holdLine />);
+    const withHold = record.strokeCountPerPaint.at(-1) ?? 0;
+    expect(withHold).toBeGreaterThan(without);
+    expect(record.arcsPerPaint.at(-1)).toHaveLength(arcsWithout);
+    expect(record.strokesPerPaint.at(-1)).toContain('#22c55e');
+  });
+
+  it('quantises the pulse to at most nine levels and repeats each second', () => {
+    const sampleCount = PULSE_STEPS_PER_SECOND * 4;
+    const firstSecond = Array.from({ length: sampleCount }, (_, i) =>
+      pulseAlpha(i / PULSE_STEPS_PER_SECOND)
+    );
+    expect(new Set(firstSecond).size).toBeLessThanOrEqual(9);
+
+    for (let second = 1; second < 4; second += 1) {
+      for (let i = 0; i < sampleCount; i += 1) {
+        expect(pulseAlpha(second + i / PULSE_STEPS_PER_SECOND)).toBe(
+          firstSecond[i]
+        );
+      }
+    }
   });
 
   it('never changes the colour a jittering rival is painted in', () => {

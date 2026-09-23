@@ -7,10 +7,9 @@ import { useRadarSettings } from './hooks/useRadarSettings';
 import type { RadarBlip } from './radarBlips';
 
 /**
- * A car metres ahead, one alongside on the left, a car level with us whose
- * side the sim has not reported, and the pace car in the pits: between them
- * the lettered label, the fade band and the symmetric rim marks the display
- * can produce.
+ * A car metres ahead, one alongside on the left, a car level with us, and the
+ * pace car in the pits: between them the lettered label, fade band and rim
+ * signals the display can produce.
  */
 const DEMO_BLIPS: RadarBlip[] = [
   {
@@ -20,7 +19,8 @@ const DEMO_BLIPS: RadarBlip[] = [
     relYaw: 0,
     gapM: 12,
     side: null,
-    sideUnknown: false,
+    rimSignal: null,
+    lapAhead: false,
     carNumber: '24',
     isPaceCar: false,
     fade: 1,
@@ -32,7 +32,8 @@ const DEMO_BLIPS: RadarBlip[] = [
     relYaw: 0.05,
     gapM: 3.2,
     side: null,
-    sideUnknown: false,
+    rimSignal: 'left',
+    lapAhead: false,
     carNumber: '7',
     isPaceCar: false,
     fade: 1,
@@ -44,7 +45,8 @@ const DEMO_BLIPS: RadarBlip[] = [
     relYaw: 0,
     gapM: 0.8,
     side: -1,
-    sideUnknown: false,
+    rimSignal: 'left',
+    lapAhead: false,
     carNumber: '51',
     isPaceCar: false,
     fade: 1,
@@ -56,7 +58,8 @@ const DEMO_BLIPS: RadarBlip[] = [
     relYaw: 0.2,
     gapM: 6,
     side: null,
-    sideUnknown: false,
+    rimSignal: null,
+    lapAhead: false,
     carNumber: '9',
     isPaceCar: true,
     fade: 0.4,
@@ -68,7 +71,8 @@ const DEMO_BLIPS: RadarBlip[] = [
     relYaw: 0,
     gapM: 0.4,
     side: null,
-    sideUnknown: true,
+    rimSignal: 'both',
+    lapAhead: true,
     carNumber: '31',
     isPaceCar: false,
     fade: 1,
@@ -141,9 +145,12 @@ export const Radar = () => {
         vehicleLength={settings.vehicleLength}
         showCarNumbers={settings.showCarNumbers}
         colorRival={settings.colorRival}
+        colorAlongside={settings.colorAlongside}
+        colorHoldLine={settings.colorHoldLine}
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
+        holdLine={state.holdLine}
       />
     </div>
   );

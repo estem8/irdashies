@@ -46,12 +46,13 @@ interface Capture {
   name: string;
   telemetry: Record<string, { value: unknown[] }>;
   session: {
+    Type: string;
     WeekendInfo: { TrackID: number; TrackLength: string };
     DriverInfo: { DriverCarIdx: number };
   };
 }
 
-const place = (capture: Capture) => {
+const place = (capture: Capture, isRace?: boolean) => {
   const { telemetry, session } = capture;
   const processor = new RadarProcessor();
   processor.init(session as unknown as Session);
@@ -60,7 +61,11 @@ const place = (capture: Capture) => {
 
   const result = computeRadarBlips({
     carIdxLapDistPct: snapshot.carIdxLapDistPct,
+    carIdxLap: snapshot.carIdxLap,
     carIdxOnPitRoad: snapshot.carIdxOnPitRoad,
+    // The capture carries no session type of its own, and the recorded frames
+    // are from a race: the player is on lap 8 with a car a lap up behind.
+    isRace: isRace ?? true,
     playerCarIdx: snapshot.focusCarIdx,
     trackDrawing: trackDrawings[session.WeekendInfo.TrackID],
     trackLengthM: trackLengthOf(session),
@@ -166,10 +171,10 @@ describe('radar placement over recorded telemetry', () => {
     const [beside] = level;
     expect(beside.carIdx).toBe(17);
     expect(beside.side).toBeNull();
-    expect(beside.sideUnknown).toBe(true);
+    expect(beside.rimSignal).toBe('both');
     // The car behind it, ten metres back in its own lane, is not beside us.
     const behind = placed.blips.find((blip) => blip.carIdx === 19);
-    expect(behind?.sideUnknown).toBe(false);
+    expect(behind?.rimSignal).toBeNull();
   });
 
   it('does not mark cars the sim did call, nor cars in their own lane', () => {
@@ -177,7 +182,19 @@ describe('radar placement over recorded telemetry', () => {
     // car is placed, not flagged as unknown.
     const placed = place(CAPTURES[0]);
     expect(placed.blips[0].side).toBe(-1);
-    expect(placed.blips[0].sideUnknown).toBe(false);
+    expect(placed.blips[0].rimSignal).toBeNull();
+  });
+
+  it('marks a recorded lap-up car for the hold-line chevron', () => {
+    const placed = place(CAPTURES[0]);
+
+    expect(placed.blips[0].lapAhead).toBe(true);
+  });
+
+  it('does not use lap counts outside a race', () => {
+    const placed = place(CAPTURES[0], false);
+
+    expect(placed.blips[0].lapAhead).toBe(false);
   });
 
   it('draws a car the sim reports alongside on that side, clear of the player', () => {

@@ -103,9 +103,8 @@ describe('widget runtime metadata', () => {
     expect(rendererNeedsChannel([widget('radar')], 'radar.snapshot')).toBe(
       true
     );
-    // The lap-based colouring is gone, so the radar no longer pulls
-    // track-state for the session number that decided whether lap counters
-    // meant a lapping car.
+    // The radar snapshot now carries CarIdxLap, so it no longer needs
+    // track-state for the lap counter used by the hold-line signal.
     expect(
       rendererNeedsChannel([widget('radar')], 'track-state.snapshot')
     ).toBe(false);

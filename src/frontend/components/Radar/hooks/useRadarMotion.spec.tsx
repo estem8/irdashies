@@ -12,7 +12,8 @@ const blip = (carIdx: number, alongM: number, lateralM = 0): RadarBlip => ({
   relYaw: 0,
   gapM: Math.abs(alongM),
   side: null,
-  sideUnknown: false,
+  rimSignal: null,
+  lapAhead: false,
   carNumber: null,
   isPaceCar: false,
   fade: 1,
@@ -59,7 +60,7 @@ describe('useRadarMotion', () => {
   it('glides a car between its snapshot positions in metre units', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;
     };
 
@@ -88,7 +89,7 @@ describe('useRadarMotion', () => {
   it('never teleports: consecutive draws differ by no more than the target delta', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;
     };
 
@@ -113,7 +114,7 @@ describe('useRadarMotion', () => {
   it('draws a car behind the player behind it, not a lap ahead', () => {
     const observed: Observed = { along: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed));
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;
     };
 
@@ -132,15 +133,54 @@ describe('useRadarMotion', () => {
     expect(drawn).toBeCloseTo(-4, 6);
   });
 
+  it('keeps ticking after geometry settles while the pulse is active', () => {
+    // A stable blip list: a fresh array on every render would look like a
+    // geometry change and request a frame on its own account.
+    const blips = [blip(1, 1)];
+    const Harness = ({ pulseActive }: { pulseActive: boolean }) => {
+      useRadarMotion(
+        blips,
+        TRACK_LENGTH_M,
+        (a, l, c) => {
+          void a;
+          void l;
+          void c;
+        },
+        pulseActive
+      );
+      return null;
+    };
+
+    const view = render(<Harness pulseActive={false} />);
+    expect(callbacks).toHaveLength(0);
+
+    view.rerender(<Harness pulseActive />);
+    expect(callbacks).toHaveLength(1);
+    act(() => callbacks.shift()?.(16));
+    expect(callbacks).toHaveLength(1);
+
+    // The pending callback is cancelled, not removed from the log, so what
+    // matters is that turning the pulse off requests nothing further.
+    const pending = callbacks.length;
+    view.rerender(<Harness pulseActive={false} />);
+    expect(callbacks).toHaveLength(pending);
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
+
   it('stops requesting frames once the blips have settled', () => {
     let draws = 0;
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
-      useRadarMotion(blips, TRACK_LENGTH_M, (a, l, c) => {
-        void a;
-        void l;
-        void c;
-        draws++;
-      });
+      useRadarMotion(
+        blips,
+        TRACK_LENGTH_M,
+        (a, l, c) => {
+          void a;
+          void l;
+          void c;
+          draws++;
+        },
+        false
+      );
       return null;
     };
 

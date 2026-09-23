@@ -96,6 +96,7 @@ const cloneRadarDeliveriesPerFrame = () => {
           callback({
             ...snapshot,
             carIdxLapDistPct: [...snapshot.carIdxLapDistPct],
+            carIdxLap: [...snapshot.carIdxLap],
             carIdxOnPitRoad: [...snapshot.carIdxOnPitRoad],
           } as unknown as ChannelPayloads[K]);
         },
@@ -173,7 +174,12 @@ describe('Radar widget over a recorded multiclass session', () => {
 
   it('passes the configured range and colours through to the disc', async () => {
     const harness = mountFixture(fixture, {
-      dashboard: radarDashboard({ radarRange: 12, colorRival: '#ff00ff' }),
+      dashboard: radarDashboard({
+        radarRange: 12,
+        colorRival: '#ff00ff',
+        colorAlongside: '#aa0000',
+        colorHoldLine: '#00aa00',
+      }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
     await waitForDisplay();
@@ -181,7 +187,12 @@ describe('Radar widget over a recorded multiclass session', () => {
     expect(latest()).toMatchObject({
       radarRange: 12,
       colorRival: '#ff00ff',
+      colorAlongside: '#aa0000',
+      colorHoldLine: '#00aa00',
     });
+    // The pulse clock lives inside the display, read in the frame path: a
+    // widget re-render per pulse step would wake the whole dashboard.
+    expect(typeof latest().holdLine).toBe('boolean');
     for (const blip of latest().blips) {
       expect(Math.abs(blip.alongM)).toBeLessThanOrEqual(12);
     }

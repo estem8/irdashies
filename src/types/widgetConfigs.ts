@@ -485,11 +485,10 @@ export interface BlindSpotMonitorConfig {
  * fractions; bearing comes from the track centreline, so blips are placed
  * relative to the road ahead of the player rather than to world axes.
  *
- * The disc is the only view, and colour carries no distance information:
- * every car inside the range is drawn at its true position in one of two
- * colours — the player's and the opponents' — so how close a car is read
- * off where it sits on the disc. There is no proximity scale, and nothing
- * in the draw path grades or pulses a blip by its gap.
+ * The disc is the only view, and blip colour carries no distance information:
+ * every car inside the range is drawn at its true position in the player's or
+ * opponents' colour. The alongside arc and hold-line chevron are separate
+ * state signals, also never selected by distance; there is no proximity scale.
  */
 export interface RadarConfig {
   /** Metres from the player that still get a blip. */
@@ -521,6 +520,8 @@ export interface RadarConfig {
   /** Every opponent, whatever its gap — distance is read off the disc, not the colour. */
   colorRival: string;
   colorPlayer: string;
+  colorAlongside: string;
+  colorHoldLine: string;
   background: { opacity: number };
   showOnlyWhenOnTrack: boolean;
   sessionVisibility: SessionVisibilitySettings;

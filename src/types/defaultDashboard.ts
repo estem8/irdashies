@@ -1093,6 +1093,8 @@ export const defaultDashboard: {
         showCarNumbers: true,
         colorRival: '#cbd5e1',
         colorPlayer: '#2fd16a',
+        colorAlongside: '#ef4444',
+        colorHoldLine: '#22c55e',
         background: {
           opacity: 30,
         },
