@@ -81,6 +81,7 @@ const PROCESSOR_CHANNELS: Readonly<Record<string, string>> = {
   lapTimesProcessing: 'lap-times.snapshot',
   lapTraceSampleProcessing: 'lap-trace.sample',
   radioProcessing: 'radio.snapshot',
+  radarProcessing: 'radar.snapshot',
   referenceLapProcessing: 'reference-laps.snapshot',
   relativeGapProcessing: 'relative-gaps.snapshot',
   sectorTimingProcessing: 'sector-timing.snapshot',

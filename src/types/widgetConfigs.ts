@@ -480,6 +480,62 @@ export interface BlindSpotMonitorConfig {
   thresholdColor2?: number;
 }
 
+/**
+ * Proximity radar. Distances are real metres, derived from lap distance
+ * fractions; bearing comes from the track centreline, so blips are placed
+ * relative to the road ahead of the player rather than to world axes.
+ *
+ * Blip colour carries no distance information: every car inside the range is
+ * drawn at its true position in the player's or opponents' colour. The
+ * alongside arc is a separate state signal, never selected by distance; there
+ * is no proximity scale.
+ */
+export interface RadarConfig {
+  /** Metres from the player that still get a blip. */
+  radarRange: number;
+  /** Opponent car body dimensions in metres — the SDK reports none per car. */
+  vehicleWidth: number;
+  vehicleLength: number;
+  /** Stop drawing cars on pit road; they sit on the same centreline as the track. */
+  hideInPit: boolean;
+  /**
+   * Keep the radar off screen until a car comes within `showRange`, so an
+   * empty radar does not take up sightline while the track is clear.
+   */
+  showWhenNearby: boolean;
+  /** Metres; a car this close brings the radar on screen. */
+  showRange: number;
+  /**
+   * Seconds the radar takes to fade in and out. 0 shows and hides it
+   * instantly. The fade is what keeps the panel from blinking in and out as
+   * traffic crosses the show range.
+   */
+  fadeSeconds: number;
+  /** Fade each car in over the outer band of the range instead of popping it in. */
+  fadeInCars: boolean;
+  /** Width of that band, in metres. */
+  fadeBandM: number;
+  /** Replace the disc with a map that follows the car. */
+  showTrackMap: boolean;
+  /** Draw the car number on each blip. */
+  showCarNumbers: boolean;
+  /** Every opponent, whatever its gap — distance is read off the disc, not the colour. */
+  colorRival: string;
+  colorPlayer: string;
+  colorAlongside: string;
+  /** Road border colour for the following map. */
+  mapBorderColor: string;
+  /** Road border opacity, from 0 to 100 percent. */
+  mapBorderOpacity: number;
+  /** Road surface colour for the following map. */
+  mapFillColor: string;
+  /** Road surface opacity, from 0 to 100 percent. */
+  mapFillOpacity: number;
+  background: { opacity: number };
+  showOnlyWhenOnTrack: boolean;
+  sessionVisibility: SessionVisibilitySettings;
+}
+
 export interface RejoinIndicatorConfig {
   showAtSpeed: number;
   careGap: number;
@@ -947,6 +1003,7 @@ export interface WidgetConfigMap {
   tachometer: TachometerConfig;
   fuel: FuelConfig;
   blindspotmonitor: BlindSpotMonitorConfig;
+  radar: RadarConfig;
   garagecover: GarageCoverConfig;
   rejoin: RejoinIndicatorConfig;
   flag: FlagConfig;
@@ -1050,6 +1107,7 @@ export type TachometerWidgetSettings = BaseWidgetSettings<TachometerConfig>;
 export type FuelWidgetSettings = BaseWidgetSettings<FuelConfig>;
 export type BlindSpotMonitorWidgetSettings =
   BaseWidgetSettings<BlindSpotMonitorConfig>;
+export type RadarWidgetSettings = BaseWidgetSettings<RadarConfig>;
 export type RejoinIndicatorWidgetSettings =
   BaseWidgetSettings<RejoinIndicatorConfig>;
 export type FlagWidgetSettings = BaseWidgetSettings<FlagConfig> & {

@@ -17,6 +17,7 @@ export interface ChannelPayloads {
   'lap-times.snapshot': LapTimesSnapshot;
   'lap-log.snapshot': LapLogSnapshot;
   'lap-history.snapshot': LapHistorySnapshot;
+  'radar.snapshot': RadarSnapshot;
   'reference-laps.snapshot': ReferenceLapsSnapshot;
   'radio.snapshot': RadioSnapshot;
   'relative-gaps.snapshot': RelativeGapsSnapshot;
@@ -118,6 +119,23 @@ export interface LapTraceSampleSnapshot {
 export interface BlindSpotSnapshot {
   carLeftRight: number;
   carIdxLapDistPct: readonly number[];
+  isOnTrack: boolean;
+  version: number;
+}
+
+/**
+ * Per-frame radar input: raw per-car track position plus the pit state used
+ * to filter blips. Geometry (bearing and lateral projection) is renderer-side,
+ * from the track centreline — the processor has no track geometry and
+ * publishes none, keeping this channel small and always valid.
+ */
+export interface RadarSnapshot {
+  /** Car the camera follows (CamCarIdx); null until the first valid frame. */
+  focusCarIdx: number | null;
+  /** Lap distance fraction (0–1) by CarIdx, full precision; -1 when invalid. */
+  carIdxLapDistPct: readonly number[];
+  /** Pit road state by CarIdx — used to filter blips (hideInPit). */
+  carIdxOnPitRoad: readonly boolean[];
   isOnTrack: boolean;
   version: number;
 }
@@ -449,6 +467,11 @@ export type ChannelDefinition =
 export type ChannelRegistry = Readonly<Record<ChannelName, ChannelDefinition>>;
 
 export const channelRegistry = {
+  'radar.snapshot': {
+    kind: 'snapshot',
+    defaultRateHz: 25,
+    maxRateHz: 25,
+  },
   'blind-spot.snapshot': {
     kind: 'snapshot',
     defaultRateHz: 25,
