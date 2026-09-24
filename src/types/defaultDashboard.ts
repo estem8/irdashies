@@ -1095,6 +1095,10 @@ export const defaultDashboard: {
         colorRival: '#cbd5e1',
         colorPlayer: '#2fd16a',
         colorAlongside: '#ef4444',
+        mapBorderColor: '#020617',
+        mapBorderOpacity: 90,
+        mapFillColor: '#94a3b8',
+        mapFillOpacity: 45,
         background: {
           opacity: 30,
         },

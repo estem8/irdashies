@@ -301,16 +301,18 @@ describe('computeRadarBlips', () => {
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(result.mapPointCount).toBe(25);
+    expect(result.mapPointCount).toBe(49);
     expect(mapBuffer[0]).toBe(-24);
     expect(mapBuffer[(result.mapPointCount - 1) * 2]).toBe(24);
     for (let i = 1; i < result.mapPointCount; i += 1) {
-      expect(mapBuffer[i * 2] - mapBuffer[(i - 1) * 2]).toBe(2);
+      expect(mapBuffer[i * 2] - mapBuffer[(i - 1) * 2]).toBe(1);
     }
   });
 
   it('curves the road lateral offset and keeps it constant on a straight', () => {
-    const curvedBuffer = new Float64Array(512);
+    // A 100 m range gives a 300 m window: 301 samples at one metre, so the
+    // buffer has to hold 602 floats or the tail writes go nowhere.
+    const curvedBuffer = new Float64Array(602);
     const curved = computeRadarBlips({
       ...baseInput,
       radarRange: 100,
@@ -318,7 +320,7 @@ describe('computeRadarBlips', () => {
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(curved.mapPointCount).toBe(151);
+    expect(curved.mapPointCount).toBe(301);
     expect(curvedBuffer[1]).toBeCloseTo(0, 6);
     expect(curvedBuffer[(curved.mapPointCount - 1) * 2 + 1]).toBeCloseTo(50, 6);
 

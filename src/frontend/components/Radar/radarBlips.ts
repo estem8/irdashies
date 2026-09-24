@@ -110,7 +110,7 @@ const NO_GEOMETRY: RadarBlipResult = {
 };
 
 /** Metres between centreline samples in the following-car map. */
-export const MAP_SAMPLE_M = 2;
+export const MAP_SAMPLE_M = 1;
 
 const wrap01 = (value: number): number => ((value % 1) + 1) % 1;
 

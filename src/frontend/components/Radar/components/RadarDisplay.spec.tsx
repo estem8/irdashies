@@ -2,9 +2,11 @@ import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RadarBlip } from '../radarBlips';
 import {
+  MAP_VEHICLE_MIN_WIDTH_PX,
   PULSE_STEPS_PER_SECOND,
   pulseAlpha,
   RadarDisplay,
+  VEHICLE_LABEL_MIN_WIDTH_PX,
   type RadarDisplayProps,
 } from './RadarDisplay';
 
@@ -88,8 +90,14 @@ interface PaintRecord {
   strokesPerPaint: string[][];
   /** One entry per paint: every `fillText` drawn, as text and x position. */
   textsPerPaint: [string, number][][];
-  /** One entry per paint: every `lineTo` on the road polyline. */
-  lineTosPerPaint: number[][];
+  /** One entry per paint: every `lineTo` on the road, as x and y. */
+  lineTosPerPaint: [number, number][][];
+  /** One entry per paint: every road quadratic's control and endpoint. */
+  quadraticsPerPaint: number[][][];
+  /** One entry per paint: global alpha assigned with each stroke style. */
+  strokeAlphasPerPaint: number[][];
+  /** One entry per paint: the width and length passed to each vehicle. */
+  vehicleSizesPerPaint: [number, number][][];
 }
 
 const observers: ((entries: unknown) => void)[] = [];
@@ -116,6 +124,9 @@ const createFakeContext = (record: PaintRecord) => {
         record.strokesPerPaint.push([]);
         record.textsPerPaint.push([]);
         record.lineTosPerPaint.push([]);
+        record.quadraticsPerPaint.push([]);
+        record.strokeAlphasPerPaint.push([]);
+        record.vehicleSizesPerPaint.push([]);
       }
       if (name === 'fillText') {
         const last = paint();
@@ -125,6 +136,10 @@ const createFakeContext = (record: PaintRecord) => {
         const last = paint();
         record.vehiclesPerPaint[last] =
           (record.vehiclesPerPaint[last] ?? 0) + 1;
+        record.vehicleSizesPerPaint[last].push([
+          args[2] as number,
+          args[3] as number,
+        ]);
       }
       if (name === 'translate') {
         const last = paint();
@@ -138,7 +153,18 @@ const createFakeContext = (record: PaintRecord) => {
         record.arcsPerPaint[last].push([args[3] as number, args[4] as number]);
       }
       if (name === 'lineTo') {
-        record.lineTosPerPaint[paint()].push(args[0] as number);
+        record.lineTosPerPaint[paint()].push([
+          args[0] as number,
+          args[1] as number,
+        ]);
+      }
+      if (name === 'quadraticCurveTo') {
+        record.quadraticsPerPaint[paint()].push([
+          args[0] as number,
+          args[1] as number,
+          args[2] as number,
+          args[3] as number,
+        ]);
       }
     });
   return new Proxy(methods, {
@@ -156,6 +182,9 @@ const createFakeContext = (record: PaintRecord) => {
         record.strokesPerPaint[record.strokesPerPaint.length - 1].push(
           String(value)
         );
+        record.strokeAlphasPerPaint[
+          record.strokeAlphasPerPaint.length - 1
+        ].push((target.globalAlpha as number | undefined) ?? 1);
       }
       target[property] = value;
       return true;
@@ -180,6 +209,10 @@ const props: RadarDisplayProps = {
   ]),
   mapPointCount: 7,
   mapWindowM: 90,
+  mapBorderColor: '#334155',
+  mapBorderOpacity: 80,
+  mapFillColor: '#64748b',
+  mapFillOpacity: 45,
   nowSeconds: 0,
 };
 
@@ -203,6 +236,9 @@ describe('RadarDisplay', () => {
       strokesPerPaint: [],
       textsPerPaint: [],
       lineTosPerPaint: [],
+      quadraticsPerPaint: [],
+      strokeAlphasPerPaint: [],
+      vehicleSizesPerPaint: [],
     };
     observers.length = 0;
     const context = createFakeContext(record);
@@ -243,6 +279,7 @@ describe('RadarDisplay', () => {
       true
     );
     expect(record.lineTosPerPaint.at(-1)).toHaveLength(0);
+    expect(record.quadraticsPerPaint.at(-1)).toHaveLength(0);
 
     // Draw order is the blips, then the player. The 11 m car sits ahead of the
     // centre and the cars behind it below, in the same pixels per metre: a car
@@ -274,34 +311,49 @@ describe('RadarDisplay', () => {
     deliverSize(300, 300);
 
     const paint = record.vehiclesPerPaint.length - 1;
-    expect(record.lineTosPerPaint[paint]).toHaveLength(props.mapPointCount - 1);
-    // The road is one polyline stroked twice: the dark outline first, then the
-    // surface over it, which is the order every map in the app uses.
-    expect(
-      record.strokesPerPaint[paint].filter(
-        (stroke) => stroke === 'rgba(2, 6, 23, 0.9)'
-      )
-    ).toHaveLength(1);
-    expect(
-      record.strokesPerPaint[paint].filter(
-        (stroke) => stroke === 'rgba(148, 163, 184, 0.45)'
-      )
-    ).toHaveLength(1);
+    // Each interior sample controls a quadratic that ends halfway to the next
+    // sample, so the canvas reads the shared buffer directly without building
+    // an intermediate midpoint array. The final sample closes the ribbon.
+    expect(record.quadraticsPerPaint[paint]).toHaveLength(
+      props.mapPointCount - 2
+    );
+    expect(record.lineTosPerPaint[paint]).toHaveLength(1);
+    const [controlX, controlY, endX, endY] =
+      record.quadraticsPerPaint[paint][0];
+    const scale = 148 / (props.mapWindowM / 2);
+    const centre = 150;
+    expect(controlX).toBeCloseTo(centre + 1 * scale, 6);
+    expect(controlY).toBeCloseTo(centre + 30 * scale, 6);
+    expect(endX).toBeCloseTo(centre + 2 * scale, 6);
+    expect(endY).toBeCloseTo(centre + 22.5 * scale, 6);
+
+    // The border and surface are both configured and painted in that order.
+    const configuredStrokes = record.strokesPerPaint[paint].filter((stroke) =>
+      [props.mapBorderColor, props.mapFillColor].includes(stroke)
+    );
+    expect(configuredStrokes).toEqual([
+      props.mapBorderColor,
+      props.mapFillColor,
+    ]);
+    const configuredAlphas = record.strokeAlphasPerPaint[paint].filter(
+      (alpha) => alpha === 0.8 || alpha === 0.45
+    );
+    expect(configuredAlphas).toEqual([0.8, 0.45]);
     expect(record.vehiclesPerPaint[paint]).toBe(2);
 
-    const centre = 150;
-    const scale = 148 / (props.mapWindowM / 2);
     const [car] = record.originsPerPaint[paint];
     expect(car[0]).toBeCloseTo(centre + 0.2 * scale, 6);
     expect(car[1]).toBeCloseTo(centre - 4 * scale, 6);
 
-    // The two full-circle arcs are the shared background and clip. A rim
-    // signal in map view must not add the short disc arcs.
+    // Map view has only the full-circle clip. It has no background disc and a
+    // rim signal in map view must not add the short disc arcs.
+    expect(record.arcsPerPaint[paint]).toHaveLength(1);
     expect(
       record.arcsPerPaint[paint].filter(
         ([start, end]) => Math.abs(end - start) < 1
       )
     ).toHaveLength(0);
+    expect(record.fillsPerPaint[paint]).not.toContain('rgba(0, 0, 0, 0.3)');
   });
 
   it('draws a level unknown-side car in map view, where the overlap is the signal', () => {
@@ -319,10 +371,46 @@ describe('RadarDisplay', () => {
     expect(record.vehiclesPerPaint.at(-1)).toBe(1);
   });
 
+  it('keeps every map vehicle identifiable without enlarging true-scale cars', () => {
+    const view = render(
+      <RadarDisplay
+        {...props}
+        showMap
+        radarRange={20}
+        blips={[blip({ carIdx: 1 })]}
+      />
+    );
+    deliverSize(300, 300);
+
+    const trueMapWidth = 1.9 * (148 / 30);
+    expect(trueMapWidth).toBeLessThan(MAP_VEHICLE_MIN_WIDTH_PX);
+    expect(record.vehicleSizesPerPaint.at(-1)).toEqual([
+      [MAP_VEHICLE_MIN_WIDTH_PX, expect.any(Number)],
+      [MAP_VEHICLE_MIN_WIDTH_PX, expect.any(Number)],
+    ]);
+    expect(VEHICLE_LABEL_MIN_WIDTH_PX).toBeLessThanOrEqual(
+      MAP_VEHICLE_MIN_WIDTH_PX
+    );
+    expect(record.textsPerPaint.at(-1)).toEqual([['24', 0]]);
+
+    // The floor only lifts bodies below it: the disc keeps physical scale, and
+    // at a 20 m range that is already above the label gate.
+    const trueDiscWidth = 1.9 * (148 / 20);
+    view.rerender(
+      <RadarDisplay {...props} radarRange={20} blips={[blip({ carIdx: 1 })]} />
+    );
+    expect(record.vehicleSizesPerPaint.at(-1)?.map(([width]) => width)).toEqual(
+      [trueDiscWidth, trueDiscWidth]
+    );
+    expect(trueDiscWidth).toBeGreaterThan(VEHICLE_LABEL_MIN_WIDTH_PX);
+    expect(record.textsPerPaint.at(-1)).toEqual([['24', 0]]);
+  });
+
   it('paints every rival in the rival colour and the player in their own', () => {
     render(<RadarDisplay {...props} />);
     deliverSize(300, 300);
 
+    expect(record.fillsPerPaint.at(-1)).toContain('rgba(0, 0, 0, 0.3)');
     const vehicles = (record.fillsPerPaint.at(-1) ?? []).filter((fill) =>
       Object.values(COLORS).includes(fill)
     );

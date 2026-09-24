@@ -523,6 +523,14 @@ export interface RadarConfig {
   colorRival: string;
   colorPlayer: string;
   colorAlongside: string;
+  /** Road border colour for the following map. */
+  mapBorderColor: string;
+  /** Road border opacity, from 0 to 100 percent. */
+  mapBorderOpacity: number;
+  /** Road surface colour for the following map. */
+  mapFillColor: string;
+  /** Road surface opacity, from 0 to 100 percent. */
+  mapFillOpacity: number;
   background: { opacity: number };
   showOnlyWhenOnTrack: boolean;
   sessionVisibility: SessionVisibilitySettings;

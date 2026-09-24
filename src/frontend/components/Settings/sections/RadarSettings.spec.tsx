@@ -154,4 +154,35 @@ describe('RadarSettings', () => {
     expect(swatch('Opponents')).toBe('#cbd5e1');
     expect(swatch('Alongside')).toBe('#ef4444');
   });
+
+  it('reads the saved road colours and opacities', () => {
+    mocks.setDashboard(
+      dashboardWith(
+        radarConfig({
+          // The road controls only render while the map is the active view,
+          // so the profile under test has it on.
+          showTrackMap: true,
+          mapBorderColor: '#111827',
+          mapBorderOpacity: 80,
+          mapFillColor: '#64748b',
+          mapFillOpacity: 35,
+        })
+      )
+    );
+    render(<RadarSettings />);
+    act(() => screen.getByRole('button', { name: 'Display' }).click());
+
+    const swatch = (label: string) => {
+      const input = screen
+        .getByText(label)
+        .parentElement?.querySelector('input[type="color"]');
+      if (!input) throw new Error(`no colour field for ${label}`);
+      return (input as HTMLInputElement).value;
+    };
+
+    expect(swatch('Border')).toBe('#111827');
+    expect(swatch('Fill')).toBe('#64748b');
+    expect(sliderFor('Border Opacity').value).toBe('80');
+    expect(sliderFor('Fill Opacity').value).toBe('35');
+  });
 });

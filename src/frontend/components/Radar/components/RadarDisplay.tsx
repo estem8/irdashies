@@ -22,6 +22,10 @@ export interface RadarDisplayProps {
   mapPointCount: number;
   /** Total metres of road shown in the following map. */
   mapWindowM: number;
+  mapBorderColor: string;
+  mapBorderOpacity: number;
+  mapFillColor: string;
+  mapFillOpacity: number;
   nowSeconds: number;
 }
 
@@ -44,6 +48,15 @@ interface Size {
  * strength on the edge of the range.
  */
 const alphaFor = (blip: RadarBlip): number => blip.fade;
+
+/**
+ * A car the driver cannot identify defeats the point of drawing it, so map
+ * vehicles keep a body the driver can see and label even at long range.
+ */
+export const MAP_VEHICLE_MIN_WIDTH_PX = 12;
+
+/** The minimum body width that can still carry a car number or PACE tag. */
+export const VEHICLE_LABEL_MIN_WIDTH_PX = 8;
 
 const drawVehicle = (
   ctx: CanvasRenderingContext2D,
@@ -74,7 +87,7 @@ const drawVehicle = (
   ctx.strokeStyle = 'rgba(0,0,0,0.45)';
   ctx.stroke();
 
-  if (label && widthPx >= 10) {
+  if (label && widthPx >= VEHICLE_LABEL_MIN_WIDTH_PX) {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     // Four-character PACE needs a smaller face than a two-digit number.
     const wideLabel = label.length > 3;
@@ -164,27 +177,42 @@ const drawRoad = (
   if (pointCount < 2) return;
 
   ctx.beginPath();
-  for (let point = 0; point < pointCount; point++) {
+  ctx.moveTo(
+    centreX + ((props.mapPath[1] + props.mapPath[3]) / 2) * scale,
+    centreY - ((props.mapPath[0] + props.mapPath[2]) / 2) * scale
+  );
+  for (let point = 1; point < pointCount - 1; point += 1) {
     const index = point * 2;
-    const x = centreX + props.mapPath[index + 1] * scale;
-    const y = centreY - props.mapPath[index] * scale;
-    if (point === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    const nextIndex = index + 2;
+    ctx.quadraticCurveTo(
+      centreX + props.mapPath[index + 1] * scale,
+      centreY - props.mapPath[index] * scale,
+      centreX +
+        ((props.mapPath[index + 1] + props.mapPath[nextIndex + 1]) / 2) * scale,
+      centreY - ((props.mapPath[index] + props.mapPath[nextIndex]) / 2) * scale
+    );
   }
+  const lastIndex = (pointCount - 1) * 2;
+  ctx.lineTo(
+    centreX + props.mapPath[lastIndex + 1] * scale,
+    centreY - props.mapPath[lastIndex] * scale
+  );
 
   // The road has to be wider than the cars driving on it, or a blip reads as
   // an obstacle standing beside a line rather than traffic using the road.
-  // The dark pass underneath is the outline every map in the app draws first,
-  // so the road keeps its shape against a car of any colour.
+  // The border goes down first so the surface has a configurable edge.
   const roadPx = Math.max(8, widthPx * 1.9);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.lineWidth = roadPx + 4;
-  ctx.strokeStyle = 'rgba(2, 6, 23, 0.9)';
+  ctx.globalAlpha = Math.min(100, Math.max(0, props.mapBorderOpacity)) / 100;
+  ctx.strokeStyle = props.mapBorderColor;
   ctx.stroke();
   ctx.lineWidth = roadPx;
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+  ctx.globalAlpha = Math.min(100, Math.max(0, props.mapFillOpacity)) / 100;
+  ctx.strokeStyle = props.mapFillColor;
   ctx.stroke();
+  ctx.globalAlpha = 1;
 };
 
 const drawRimArch = (
@@ -242,17 +270,25 @@ const drawRadar = (
     ? Math.max(1, props.mapWindowM / 2)
     : Math.max(1, props.radarRange);
   const scale = radius / viewHalfWidthM;
-  const widthPx = Math.max(4, props.vehicleWidth * scale);
+  const trueWidthPx = Math.max(4, props.vehicleWidth * scale);
+  const widthPx = props.showMap
+    ? Math.max(trueWidthPx, MAP_VEHICLE_MIN_WIDTH_PX)
+    : trueWidthPx;
   const lengthPx = Math.max(6, props.vehicleLength * scale);
 
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
-  ctx.fill();
+  // The following map uses the overlay behind the widget as its background, so
+  // it draws no disc of its own; the disc keeps its translucent background.
+  if (!props.showMap) {
+    ctx.beginPath();
+    ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
+    ctx.fill();
+  }
 
   // Both views share the same circular boundary, including the following road
   // and every vehicle, so none of their geometry can escape the widget.
+  ctx.beginPath();
   ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
   ctx.clip();
 

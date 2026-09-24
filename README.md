@@ -347,7 +347,7 @@ Displays a compact three-row view of the cars immediately ahead of and behind yo
 
 ### Radar
 
-Shows the cars around you on a circular disc, like a spotter's proximity radar: your car sits at the centre pointing up, and nearby cars are drawn where they are on the road. Cars are placed by their real distance along the track — the sim reports no per-car world position for iRacing, so the disc is built from lap distance and the track centreline.
+Shows the cars around you on a circular disc, like a spotter's proximity radar: your car sits at the centre pointing up, and nearby cars are drawn where they are on the road. Cars are placed by their real distance along the track — the sim reports no per-car world position for iRacing, so the disc is built from lap distance and the track centreline. The map road's border and surface, and their transparency, are configurable; the map has no background of its own.
 
 **Features:**
 

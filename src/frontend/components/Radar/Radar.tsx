@@ -152,6 +152,10 @@ export const Radar = () => {
         mapPath={state.mapPath}
         mapPointCount={state.mapPointCount}
         mapWindowM={state.mapWindowM}
+        mapBorderColor={settings.mapBorderColor}
+        mapBorderOpacity={settings.mapBorderOpacity}
+        mapFillColor={settings.mapFillColor}
+        mapFillOpacity={settings.mapFillOpacity}
       />
     </div>
   );

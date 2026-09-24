@@ -64,10 +64,22 @@ const meta = {
     ]),
     mapPointCount: 7,
     mapWindowM: 90,
+    mapBorderColor: '#334155',
+    mapBorderOpacity: 95,
+    mapFillColor: '#64748b',
+    mapFillOpacity: 55,
   },
   argTypes: {
     radarRange: { control: { type: 'range', min: 10, max: 25, step: 1 } },
     bgOpacity: { control: { type: 'range', min: 0, max: 100, step: 5 } },
+    mapBorderOpacity: {
+      control: { type: 'range', min: 0, max: 100, step: 5 },
+    },
+    mapFillOpacity: {
+      control: { type: 'range', min: 0, max: 100, step: 5 },
+    },
+    mapBorderColor: { control: { type: 'color' } },
+    mapFillColor: { control: { type: 'color' } },
     showCarNumbers: { control: { type: 'boolean' } },
     colorRival: { control: { type: 'color' } },
     colorAlongside: { control: { type: 'color' } },
@@ -119,6 +131,10 @@ export const FollowingMap: Story = {
   name: 'Following track map',
   args: {
     showMap: true,
+    mapBorderColor: '#fbbf24',
+    mapBorderOpacity: 90,
+    mapFillColor: '#78350f',
+    mapFillOpacity: 70,
     // Cars on the road rather than beside it. The player's frame puts the
     // player at lateral 0 on the centreline, so the road passes through
     // (0, 0) and the cars sit on the curve that leaves it.

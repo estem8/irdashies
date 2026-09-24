@@ -151,7 +151,68 @@ export const RadarSettings = () => {
                     onChange={(v) => handleConfigChange({ colorAlongside: v })}
                   />
                 </div>
-                <SettingDivider />
+                <SettingToggleRow
+                  title="Track map"
+                  description="Replaces the disc with a map that follows the car."
+                  enabled={settings.config.showTrackMap}
+                  onToggle={(v) => handleConfigChange({ showTrackMap: v })}
+                />
+                {settings.config.showTrackMap && (
+                  <>
+                    <SettingDivider />
+                    <div>
+                      <h3 className="text-sm font-medium text-slate-200">
+                        Road
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-400">
+                        These paint the map road only; the map background is
+                        transparent.
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        <div className="space-y-3">
+                          <ColorField
+                            label="Border"
+                            value={settings.config.mapBorderColor}
+                            onChange={(v) =>
+                              handleConfigChange({ mapBorderColor: v })
+                            }
+                          />
+                          <SettingSliderRow
+                            title="Border Opacity"
+                            value={settings.config.mapBorderOpacity}
+                            units="%"
+                            min={0}
+                            max={100}
+                            step={5}
+                            onChange={(v) =>
+                              handleConfigChange({ mapBorderOpacity: v })
+                            }
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <ColorField
+                            label="Fill"
+                            value={settings.config.mapFillColor}
+                            onChange={(v) =>
+                              handleConfigChange({ mapFillColor: v })
+                            }
+                          />
+                          <SettingSliderRow
+                            title="Fill Opacity"
+                            value={settings.config.mapFillOpacity}
+                            units="%"
+                            min={0}
+                            max={100}
+                            step={5}
+                            onChange={(v) =>
+                              handleConfigChange({ mapFillOpacity: v })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
                 <SettingToggleRow
                   title="Show only when a car is near"
                   description="Keep the radar off screen until a car comes within the near range. Nothing is drawn while the track around you is clear."
@@ -202,12 +263,6 @@ export const RadarSettings = () => {
                   />
                 )}
                 <SettingDivider />
-                <SettingToggleRow
-                  title="Track map"
-                  description="Replaces the disc with a map that follows the car."
-                  enabled={settings.config.showTrackMap}
-                  onToggle={(v) => handleConfigChange({ showTrackMap: v })}
-                />
                 <SettingToggleRow
                   title="Car numbers on blips"
                   description="Label each car with its number, so you know who is alongside."

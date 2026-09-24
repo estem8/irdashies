@@ -236,11 +236,15 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
-  it('passes the track-map setting and radar state to the display', async () => {
+  it('passes the track-map settings and radar state to the display', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({
         radarRange: 25,
         showTrackMap: true,
+        mapBorderColor: '#112233',
+        mapBorderOpacity: 85,
+        mapFillColor: '#abcdef',
+        mapFillOpacity: 35,
         fadeSeconds: 0,
       }),
     });
@@ -249,6 +253,12 @@ describe('Radar widget over a recorded multiclass session', () => {
 
     const display = latest();
     expect(display.showMap).toBe(true);
+    expect(display).toMatchObject({
+      mapBorderColor: '#112233',
+      mapBorderOpacity: 85,
+      mapFillColor: '#abcdef',
+      mapFillOpacity: 35,
+    });
     expect(display.mapWindowM).toBe(75);
     expect(display.mapPath).toBeInstanceOf(Float64Array);
     expect(display.mapPointCount).toBeGreaterThanOrEqual(0);
