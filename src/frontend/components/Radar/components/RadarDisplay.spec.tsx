@@ -92,8 +92,10 @@ interface PaintRecord {
   textsPerPaint: [string, number][][];
   /** One entry per paint: every `lineTo` on the road, as x and y. */
   lineTosPerPaint: [number, number][][];
-  /** One entry per paint: every road quadratic's control and endpoint. */
+  /** One entry per paint: every legacy road quadratic's control and endpoint. */
   quadraticsPerPaint: number[][][];
+  /** One entry per paint: every road cubic's controls and endpoint. */
+  beziersPerPaint: number[][][];
   /** One entry per paint: global alpha assigned with each stroke style. */
   strokeAlphasPerPaint: number[][];
   /** One entry per paint: the width and length passed to each vehicle. */
@@ -113,7 +115,7 @@ const createFakeContext = (record: PaintRecord) => {
   const paint = () => record.vehiclesPerPaint.length - 1;
   const method = (name: string) =>
     vi.fn((...args: unknown[]) => {
-      if (name === 'createLinearGradient') {
+      if (name === 'createLinearGradient' || name === 'createRadialGradient') {
         return { addColorStop: () => undefined };
       }
       if (name === 'clearRect') {
@@ -125,6 +127,7 @@ const createFakeContext = (record: PaintRecord) => {
         record.textsPerPaint.push([]);
         record.lineTosPerPaint.push([]);
         record.quadraticsPerPaint.push([]);
+        record.beziersPerPaint.push([]);
         record.strokeAlphasPerPaint.push([]);
         record.vehicleSizesPerPaint.push([]);
       }
@@ -165,6 +168,9 @@ const createFakeContext = (record: PaintRecord) => {
           args[2] as number,
           args[3] as number,
         ]);
+      }
+      if (name === 'bezierCurveTo') {
+        record.beziersPerPaint[paint()].push(args.map(Number));
       }
     });
   return new Proxy(methods, {
@@ -237,6 +243,7 @@ describe('RadarDisplay', () => {
       textsPerPaint: [],
       lineTosPerPaint: [],
       quadraticsPerPaint: [],
+      beziersPerPaint: [],
       strokeAlphasPerPaint: [],
       vehicleSizesPerPaint: [],
     };
@@ -311,21 +318,14 @@ describe('RadarDisplay', () => {
     deliverSize(300, 300);
 
     const paint = record.vehiclesPerPaint.length - 1;
-    // Each interior sample controls a quadratic that ends halfway to the next
-    // sample, so the canvas reads the shared buffer directly without building
-    // an intermediate midpoint array. The final sample closes the ribbon.
-    expect(record.quadraticsPerPaint[paint]).toHaveLength(
-      props.mapPointCount - 2
-    );
-    expect(record.lineTosPerPaint[paint]).toHaveLength(1);
-    const [controlX, controlY, endX, endY] =
-      record.quadraticsPerPaint[paint][0];
+    expect(record.beziersPerPaint[paint]).toHaveLength(2);
+    expect(record.lineTosPerPaint[paint]).toHaveLength(0);
+    const [, , , , endX, endY] = record.beziersPerPaint[paint][0];
     const scale = 148 / (props.mapWindowM / 2);
     const centre = 150;
-    expect(controlX).toBeCloseTo(centre + 1 * scale, 6);
-    expect(controlY).toBeCloseTo(centre + 30 * scale, 6);
-    expect(endX).toBeCloseTo(centre + 2 * scale, 6);
-    expect(endY).toBeCloseTo(centre + 22.5 * scale, 6);
+    expect(endX).toBeCloseTo(centre + 3 * scale, 6);
+    expect(endY).toBeGreaterThan(centre - 20 * scale);
+    expect(endY).toBeLessThan(centre);
 
     // The border and surface are both configured and painted in that order.
     const configuredStrokes = record.strokesPerPaint[paint].filter((stroke) =>
@@ -342,18 +342,14 @@ describe('RadarDisplay', () => {
     expect(record.vehiclesPerPaint[paint]).toBe(2);
 
     const [car] = record.originsPerPaint[paint];
-    expect(car[0]).toBeCloseTo(centre + 0.2 * scale, 6);
-    expect(car[1]).toBeCloseTo(centre - 4 * scale, 6);
+    const radarScale = 148 / props.radarRange;
+    expect(car[0]).toBeCloseTo(centre + 0.2 * radarScale, 6);
+    expect(car[1]).toBeCloseTo(centre - 4 * radarScale, 6);
 
-    // Map view has only the full-circle clip. It has no background disc and a
-    // rim signal in map view must not add the short disc arcs.
-    expect(record.arcsPerPaint[paint]).toHaveLength(1);
-    expect(
-      record.arcsPerPaint[paint].filter(
-        ([start, end]) => Math.abs(end - start) < 1
-      )
-    ).toHaveLength(0);
-    expect(record.fillsPerPaint[paint]).not.toContain('rgba(0, 0, 0, 0.3)');
+    // The map is a layer inside the normal radar: the radar background and
+    // its rim signals remain visible when the layer is enabled.
+    expect(record.arcsPerPaint[paint]).toHaveLength(4);
+    expect(record.fillsPerPaint[paint]).toContain('rgba(0, 0, 0, 0.3)');
   });
 
   it('draws a level unknown-side car in map view, where the overlap is the signal', () => {
@@ -385,8 +381,8 @@ describe('RadarDisplay', () => {
     const trueMapWidth = 1.9 * (148 / 30);
     expect(trueMapWidth).toBeLessThan(MAP_VEHICLE_MIN_WIDTH_PX);
     expect(record.vehicleSizesPerPaint.at(-1)).toEqual([
-      [MAP_VEHICLE_MIN_WIDTH_PX, expect.any(Number)],
-      [MAP_VEHICLE_MIN_WIDTH_PX, expect.any(Number)],
+      [1.9 * (148 / 20), expect.any(Number)],
+      [1.9 * (148 / 20), expect.any(Number)],
     ]);
     expect(VEHICLE_LABEL_MIN_WIDTH_PX).toBeLessThanOrEqual(
       MAP_VEHICLE_MIN_WIDTH_PX

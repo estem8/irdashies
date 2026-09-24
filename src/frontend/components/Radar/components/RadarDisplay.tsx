@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { blipLabel, type RadarBlip } from '../radarBlips';
 import { useRadarMotion, type RadarMotionDraw } from '../hooks/useRadarMotion';
 
@@ -11,6 +11,8 @@ export interface RadarDisplayProps {
   showCarNumbers: boolean;
   /** Every rival blip is filled with this; the player is `colorPlayer`. */
   colorRival: string;
+  closingWarningColor?: string;
+  closingSpeedThreshold?: number;
   colorAlongside: string;
   colorPlayer: string;
   bgOpacity: number;
@@ -26,6 +28,15 @@ export interface RadarDisplayProps {
   mapBorderOpacity: number;
   mapFillColor: string;
   mapFillOpacity: number;
+  /** Original track path, used when the browser supports Path2D. */
+  mapTrackPath?: string | null;
+  mapPlayerX?: number;
+  mapPlayerY?: number;
+  mapForwardX?: number;
+  mapForwardY?: number;
+  mapRightX?: number;
+  mapRightY?: number;
+  mapUnitsPerMetre?: number;
   nowSeconds: number;
 }
 
@@ -48,6 +59,29 @@ interface Size {
  * strength on the edge of the range.
  */
 const alphaFor = (blip: RadarBlip): number => blip.fade;
+const SMOOTHING_WEIGHTS = [1, 4, 6, 4, 1] as const;
+
+const hexColor = (value: string): [number, number, number] => {
+  const match = /^#([0-9a-f]{6})$/i.exec(value);
+  if (!match) return [239, 68, 68];
+  return [
+    parseInt(match[1].slice(0, 2), 16),
+    parseInt(match[1].slice(2, 4), 16),
+    parseInt(match[1].slice(4, 6), 16),
+  ];
+};
+
+const rivalColor = (blip: RadarBlip, props: RadarDisplayProps): string => {
+  const speed = blip.closingSpeedMps ?? 0;
+  const threshold = Math.max(0.1, props.closingSpeedThreshold ?? 5);
+  if (speed <= 0) return props.colorRival;
+  const amount = Math.min(1, speed / threshold);
+  const from = hexColor(props.closingWarningColor ?? '#ef4444');
+  const to = hexColor(props.colorRival);
+  const channel = (index: number) =>
+    Math.round(from[index] + (to[index] - from[index]) * amount);
+  return `rgb(${channel(0)}, ${channel(1)}, ${channel(2)})`;
+};
 
 /**
  * A car the driver cannot identify defeats the point of drawing it, so map
@@ -133,7 +167,7 @@ const drawBlipVehicles = (
         widthPx,
         lengthPx,
         blip.relYaw,
-        props.colorRival,
+        rivalColor(blip, props),
         alphaFor(blip),
         blipLabel(blip, props.showCarNumbers)
       );
@@ -168,35 +202,97 @@ const drawRoad = (
   centreX: number,
   centreY: number,
   scale: number,
-  widthPx: number
+  widthPx: number,
+  trackPath: Path2D | null
 ) => {
+  if (trackPath) {
+    const pathScale = scale / (props.mapUnitsPerMetre ?? 1);
+    const playerX = props.mapPlayerX ?? 0;
+    const playerY = props.mapPlayerY ?? 0;
+    const forwardX = props.mapForwardX ?? 1;
+    const forwardY = props.mapForwardY ?? 0;
+    const rightX = props.mapRightX ?? 0;
+    const rightY = props.mapRightY ?? 1;
+    const playerAlong = playerX * forwardX + playerY * forwardY;
+    const playerRight = playerX * rightX + playerY * rightY;
+    const roadPx = Math.max(8, widthPx * 1.9);
+
+    ctx.save();
+    ctx.transform(
+      pathScale * rightX,
+      -pathScale * forwardY,
+      pathScale * rightY,
+      -pathScale * forwardX,
+      centreX - playerRight * pathScale,
+      centreY + playerAlong * pathScale
+    );
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = (roadPx + 4) / pathScale;
+    ctx.globalAlpha = Math.min(100, Math.max(0, props.mapBorderOpacity)) / 100;
+    ctx.strokeStyle = props.mapBorderColor;
+    ctx.stroke(trackPath);
+    ctx.lineWidth = roadPx / pathScale;
+    ctx.globalAlpha = Math.min(100, Math.max(0, props.mapFillOpacity)) / 100;
+    ctx.strokeStyle = props.mapFillColor;
+    ctx.stroke(trackPath);
+    ctx.restore();
+    return;
+  }
+
   const pointCount = Math.min(
     props.mapPointCount,
     Math.floor(props.mapPath.length / 2)
   );
   if (pointCount < 2) return;
 
+  // The radar only needs a short local road segment. Drawing every one-metre
+  // sample magnifies tiny projection noise into a visibly wavy edge, even on
+  // a straight. Use a four-metre polyline and let the cubic segments carry
+  // the smooth turns between those stable anchor points.
+  const ROAD_SAMPLE_STEP = 4;
+  const roadPointCount = Math.ceil((pointCount - 1) / ROAD_SAMPLE_STEP) + 1;
+  const roadIndex = (index: number) =>
+    Math.min(index * ROAD_SAMPLE_STEP, pointCount - 1);
+  const pointX = (index: number) =>
+    centreX + props.mapPath[roadIndex(index) * 2 + 1] * scale;
+  const rawPointY = (index: number) =>
+    centreY - props.mapPath[roadIndex(index) * 2] * scale;
+  // The source track polyline is sampled from SVG geometry and can contain
+  // one-pixel-scale reversals. They are very visible when a short local
+  // segment is magnified to radar size. A binomial B-spline filter removes
+  // that sampling noise while retaining the real centreline shape; car
+  // positions are not filtered and remain exactly where the radar placed
+  // them.
+  const smoothPointY = (index: number, pass: number): number => {
+    const radius = 2;
+    const weight = (offset: number) => SMOOTHING_WEIGHTS[offset + 2];
+    let total = 0;
+    let weightTotal = 0;
+    for (let offset = -radius; offset <= radius; offset += 1) {
+      const sample = Math.max(0, Math.min(roadPointCount - 1, index + offset));
+      const w = weight(offset);
+      total +=
+        (pass === 0 ? rawPointY(sample) : smoothPointY(sample, pass - 1)) * w;
+      weightTotal += w;
+    }
+    return total / weightTotal;
+  };
+  const pointY = (index: number) => smoothPointY(index, 1);
   ctx.beginPath();
-  ctx.moveTo(
-    centreX + ((props.mapPath[1] + props.mapPath[3]) / 2) * scale,
-    centreY - ((props.mapPath[0] + props.mapPath[2]) / 2) * scale
-  );
-  for (let point = 1; point < pointCount - 1; point += 1) {
-    const index = point * 2;
-    const nextIndex = index + 2;
-    ctx.quadraticCurveTo(
-      centreX + props.mapPath[index + 1] * scale,
-      centreY - props.mapPath[index] * scale,
-      centreX +
-        ((props.mapPath[index + 1] + props.mapPath[nextIndex + 1]) / 2) * scale,
-      centreY - ((props.mapPath[index] + props.mapPath[nextIndex]) / 2) * scale
+  ctx.moveTo(pointX(0), pointY(0));
+  for (let point = 0; point < roadPointCount - 1; point += 1) {
+    const previous = Math.max(0, point - 1);
+    const next = Math.min(roadPointCount - 1, point + 2);
+    ctx.bezierCurveTo(
+      pointX(point) + (pointX(point + 1) - pointX(previous)) / 6,
+      pointY(point) + (pointY(point + 1) - pointY(previous)) / 6,
+      pointX(point + 1) - (pointX(next) - pointX(point)) / 6,
+      pointY(point + 1) - (pointY(next) - pointY(point)) / 6,
+      pointX(point + 1),
+      pointY(point + 1)
     );
   }
-  const lastIndex = (pointCount - 1) * 2;
-  ctx.lineTo(
-    centreX + props.mapPath[lastIndex + 1] * scale,
-    centreY - props.mapPath[lastIndex] * scale
-  );
 
   // The road has to be wider than the cars driving on it, or a blip reads as
   // an obstacle standing beside a line rather than traffic using the road.
@@ -246,7 +342,8 @@ const drawRadar = (
   size: Size,
   theme: 'light' | 'dark',
   alongM: Float64Array,
-  lateralM: Float64Array
+  lateralM: Float64Array,
+  trackPath: Path2D | null
 ) => {
   const ctx = canvas.getContext('2d');
   if (!ctx || size.width <= 0 || size.height <= 0) return;
@@ -264,12 +361,10 @@ const drawRadar = (
   const centreX = size.width / 2;
   const centreY = size.height / 2;
   const radius = Math.max(1, Math.min(size.width, size.height) / 2 - 2);
-  // A map covers three radar ranges, while a disc covers one. In both views
-  // this single conversion preserves the physical metres-per-pixel scale.
-  const viewHalfWidthM = props.showMap
-    ? Math.max(1, props.mapWindowM / 2)
-    : Math.max(1, props.radarRange);
-  const scale = radius / viewHalfWidthM;
+  // Cars always use the radar scale. The optional map is a separate layer
+  // behind them, not a replacement view with a different car coordinate space.
+  const scale = radius / Math.max(1, props.radarRange);
+  const mapScale = radius / Math.max(1, props.mapWindowM / 2);
   const trueWidthPx = Math.max(4, props.vehicleWidth * scale);
   const widthPx = props.showMap
     ? Math.max(trueWidthPx, MAP_VEHICLE_MIN_WIDTH_PX)
@@ -277,14 +372,29 @@ const drawRadar = (
   const lengthPx = Math.max(6, props.vehicleLength * scale);
 
   ctx.save();
-  // The following map uses the overlay behind the widget as its background, so
-  // it draws no disc of its own; the disc keeps its translucent background.
-  if (!props.showMap) {
-    ctx.beginPath();
-    ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(100, Math.max(0, props.bgOpacity)) / 100})`;
-    ctx.fill();
-  }
+  ctx.beginPath();
+  ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
+  const backgroundAlpha = Math.min(100, Math.max(0, props.bgOpacity)) / 100;
+  const backgroundColor = `rgba(0, 0, 0, ${backgroundAlpha})`;
+  // Keep the configured opacity through the inner 80% of the disc, then
+  // taper it to zero at the rim. This removes the hard-edged circle while
+  // preserving the same centre opacity used by the old setting.
+  const backgroundGradient = ctx.createRadialGradient(
+    centreX,
+    centreY,
+    0,
+    centreX,
+    centreY,
+    radius
+  );
+  backgroundGradient.addColorStop(0, backgroundColor);
+  backgroundGradient.addColorStop(0.8, backgroundColor);
+  backgroundGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  // Keep the explicit colour assignment for non-canvas test contexts; the
+  // gradient is the final value used by the browser.
+  ctx.fillStyle = backgroundColor;
+  ctx.fillStyle = backgroundGradient;
+  ctx.fill();
 
   // Both views share the same circular boundary, including the following road
   // and every vehicle, so none of their geometry can escape the widget.
@@ -293,61 +403,46 @@ const drawRadar = (
   ctx.clip();
 
   if (props.showMap) {
-    drawRoad(ctx, props, centreX, centreY, scale, widthPx);
-    drawBlipVehicles(
-      ctx,
-      props,
-      centreX,
-      centreY,
-      scale,
-      widthPx,
-      lengthPx,
-      alongM,
-      lateralM
-    );
-    ctx.restore();
-    drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
-    // Rim arcs belong to the disc's edge. A rim around a scrolling map adds no
-    // positional information, so map view deliberately paints no arcs.
-  } else {
-    drawBlipVehicles(
-      ctx,
-      props,
-      centreX,
-      centreY,
-      scale,
-      widthPx,
-      lengthPx,
-      alongM,
-      lateralM
-    );
-    ctx.restore();
-    drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
+    drawRoad(ctx, props, centreX, centreY, mapScale, widthPx, trackPath);
+  }
 
-    const pulse = pulseAlpha(props.nowSeconds);
-    for (const blip of props.blips) {
-      if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
-        drawRimArch(
-          ctx,
-          centreX,
-          centreY,
-          radius,
-          -Math.PI / 2,
-          props.colorAlongside,
-          pulse * alphaFor(blip)
-        );
-      }
-      if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
-        drawRimArch(
-          ctx,
-          centreX,
-          centreY,
-          radius,
-          Math.PI / 2,
-          props.colorAlongside,
-          pulse * alphaFor(blip)
-        );
-      }
+  drawBlipVehicles(
+    ctx,
+    props,
+    centreX,
+    centreY,
+    scale,
+    widthPx,
+    lengthPx,
+    alongM,
+    lateralM
+  );
+  ctx.restore();
+  drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
+
+  const pulse = pulseAlpha(props.nowSeconds);
+  for (const blip of props.blips) {
+    if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
+      drawRimArch(
+        ctx,
+        centreX,
+        centreY,
+        radius,
+        -Math.PI / 2,
+        props.colorAlongside,
+        pulse * alphaFor(blip)
+      );
+    }
+    if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
+      drawRimArch(
+        ctx,
+        centreX,
+        centreY,
+        radius,
+        Math.PI / 2,
+        props.colorAlongside,
+        pulse * alphaFor(blip)
+      );
     }
   }
 };
@@ -394,6 +489,13 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   // can redraw what the interpolator last produced.
   const alongRef = useRef(new Float64Array(0));
   const lateralRef = useRef(new Float64Array(0));
+  const trackPath = useMemo(() => {
+    if (!props.mapTrackPath || typeof Path2D === 'undefined') return null;
+    return new Path2D(props.mapTrackPath);
+  }, [props.mapTrackPath]);
+  const trackPathRef = useRef(trackPath);
+  trackPathRef.current = trackPath;
+
   const drawRef = useRef<RadarMotionDraw>(() => undefined);
   drawRef.current = (alongM, lateralM, count) => {
     const canvas = canvasRef.current;
@@ -411,12 +513,12 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
       sizeRef.current,
       'dark',
       alongRef.current,
-      lateralRef.current
+      lateralRef.current,
+      trackPathRef.current
     );
   };
 
-  const pulseActive =
-    !props.showMap && props.blips.some((blip) => blip.rimSignal !== null);
+  const pulseActive = props.blips.some((blip) => blip.rimSignal !== null);
   useRadarMotion(
     props.blips,
     props.trackLengthM,
@@ -440,7 +542,8 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
       sizeRef.current,
       'dark',
       alongRef.current,
-      lateralRef.current
+      lateralRef.current,
+      trackPathRef.current
     );
   });
 

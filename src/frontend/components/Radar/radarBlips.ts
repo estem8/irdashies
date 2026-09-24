@@ -32,6 +32,8 @@ export interface RadarBlip {
   side: OverlapSide | null;
   /** Rim indicator driven by the sim side, or both when it is silent. */
   rimSignal: 'left' | 'right' | 'both' | null;
+  /** Positive closing speed toward the player, in metres per second. */
+  closingSpeedMps?: number;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
@@ -69,6 +71,14 @@ export interface RadarBlipResult {
   targets: ReadonlyMap<number, RadarTargetState>;
   /** Number of valid `(alongM, lateralM)` pairs written to the map buffer. */
   mapPointCount: number;
+  /** Player frame in the track drawing space, for the original SVG path. */
+  mapPlayerX: number;
+  mapPlayerY: number;
+  mapForwardX: number;
+  mapForwardY: number;
+  mapRightX: number;
+  mapRightY: number;
+  mapUnitsPerMetre: number;
 }
 
 export interface RadarBlipInput {
@@ -107,6 +117,13 @@ const NO_GEOMETRY: RadarBlipResult = {
   blips: [],
   targets: EMPTY_TARGETS,
   mapPointCount: 0,
+  mapPlayerX: 0,
+  mapPlayerY: 0,
+  mapForwardX: 1,
+  mapForwardY: 0,
+  mapRightX: 0,
+  mapRightY: 1,
+  mapUnitsPerMetre: 1,
 };
 
 /** Metres between centreline samples in the following-car map. */
@@ -216,6 +233,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       blips: [],
       targets: EMPTY_TARGETS,
       mapPointCount: 0,
+      mapPlayerX: 0,
+      mapPlayerY: 0,
+      mapForwardX: 1,
+      mapForwardY: 0,
+      mapRightX: 0,
+      mapRightY: 1,
+      mapUnitsPerMetre: 1,
     };
   }
 
@@ -233,6 +257,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       blips: [],
       targets: EMPTY_TARGETS,
       mapPointCount: 0,
+      mapPlayerX: 0,
+      mapPlayerY: 0,
+      mapForwardX: 1,
+      mapForwardY: 0,
+      mapRightX: 0,
+      mapRightY: 1,
+      mapUnitsPerMetre: 1,
     };
   }
 
@@ -345,6 +376,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       gapM: Math.abs(alongM),
       side: null,
       rimSignal: null,
+      closingSpeedMps: 0,
       carNumber: carNumbers.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
       // Faded by how far the car is from the player in the plane the radar
@@ -408,5 +440,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     blips,
     targets,
     mapPointCount,
+    mapPlayerX: playerPoint.x,
+    mapPlayerY: playerPoint.y,
+    mapForwardX: rightY,
+    mapForwardY: -rightX,
+    mapRightX: rightX,
+    mapRightY: rightY,
+    mapUnitsPerMetre: totalLength / trackLengthM,
   };
 };

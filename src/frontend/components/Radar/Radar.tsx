@@ -144,6 +144,8 @@ export const Radar = () => {
         vehicleLength={settings.vehicleLength}
         showCarNumbers={settings.showCarNumbers}
         colorRival={settings.colorRival}
+        closingWarningColor={settings.closingWarningColor ?? '#ef4444'}
+        closingSpeedThreshold={settings.closingSpeedThreshold ?? 5}
         colorAlongside={settings.colorAlongside}
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
@@ -156,6 +158,17 @@ export const Radar = () => {
         mapBorderOpacity={settings.mapBorderOpacity}
         mapFillColor={settings.mapFillColor}
         mapFillOpacity={settings.mapFillOpacity}
+        // Use the same SVG path and Path2D geometry as the Track Map widget.
+        // Radar applies the moving-player transform and clips the projected
+        // path to its circular viewport.
+        mapTrackPath={state.mapTrackPath}
+        mapPlayerX={state.mapPlayerX}
+        mapPlayerY={state.mapPlayerY}
+        mapForwardX={state.mapForwardX}
+        mapForwardY={state.mapForwardY}
+        mapRightX={state.mapRightX}
+        mapRightY={state.mapRightY}
+        mapUnitsPerMetre={state.mapUnitsPerMetre}
       />
     </div>
   );

@@ -150,10 +150,28 @@ export const RadarSettings = () => {
                     value={settings.config.colorAlongside}
                     onChange={(v) => handleConfigChange({ colorAlongside: v })}
                   />
+                  <ColorField
+                    label="Closing car"
+                    value={settings.config.closingWarningColor ?? '#ef4444'}
+                    onChange={(v) =>
+                      handleConfigChange({ closingWarningColor: v })
+                    }
+                  />
                 </div>
+                <SettingNumberRow
+                  title="Closing car warning speed"
+                  description="A rival blends from the opponent colour to the warning colour as its closing speed reaches this value."
+                  value={settings.config.closingSpeedThreshold ?? 5}
+                  min={0.5}
+                  max={50}
+                  step={0.5}
+                  onChange={(v) =>
+                    handleConfigChange({ closingSpeedThreshold: v })
+                  }
+                />
                 <SettingToggleRow
                   title="Track map"
-                  description="Replaces the disc with a map that follows the car."
+                  description="Show the track map inside the radar."
                   enabled={settings.config.showTrackMap}
                   onToggle={(v) => handleConfigChange({ showTrackMap: v })}
                 />
@@ -165,8 +183,8 @@ export const RadarSettings = () => {
                         Road
                       </h3>
                       <p className="mt-1 text-xs text-slate-400">
-                        These paint the map road only; the map background is
-                        transparent.
+                        Customize the track map border and its fill. The map is
+                        always drawn inside the radar.
                       </p>
                       <div className="mt-3 grid grid-cols-2 gap-3">
                         <div className="space-y-3">

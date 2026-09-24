@@ -128,6 +128,8 @@ describe('RadarSettings', () => {
     act(() => screen.getByRole('button', { name: 'Display' }).click());
 
     expect(screen.getByRole('switch', { name: 'Track map' })).toBeChecked();
+    expect(screen.getByText('Border Opacity')).toBeInTheDocument();
+    expect(screen.getByText('Fill Opacity')).toBeInTheDocument();
   });
 
   it('offers a colour for every blip and state signal', () => {

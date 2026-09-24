@@ -516,11 +516,16 @@ export interface RadarConfig {
   /** Width of that band, in metres. */
   fadeBandM: number;
   /** Replace the disc with a map that follows the car. */
+  /** @deprecated The radar always uses the following track map. */
   showTrackMap: boolean;
   /** Draw the car number on each blip. */
   showCarNumbers: boolean;
   /** Every opponent, whatever its gap — distance is read off the disc, not the colour. */
   colorRival: string;
+  /** Closing speed in m/s at which the warning colour is strongest. */
+  closingSpeedThreshold: number;
+  /** Colour used for a rapidly closing opponent; blends toward colorRival. */
+  closingWarningColor: string;
   colorPlayer: string;
   colorAlongside: string;
   /** Road border colour for the following map. */

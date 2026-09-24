@@ -44,6 +44,16 @@ export interface RadarState {
   mapPointCount: number;
   /** Road shown, in metres, from half this window behind to half ahead. */
   mapWindowM: number;
+  /** The original SVG track path, used for its smooth developer geometry. */
+  mapTrackPath: string | null;
+  /** Player frame in the track drawing's coordinate space. */
+  mapPlayerX: number;
+  mapPlayerY: number;
+  mapForwardX: number;
+  mapForwardY: number;
+  mapRightX: number;
+  mapRightY: number;
+  mapUnitsPerMetre: number;
 }
 
 export interface UseRadarOptions {
@@ -61,9 +71,10 @@ type RadarInput = readonly [
   readonly number[],
   readonly boolean[],
   boolean,
+  number,
 ];
 
-const EMPTY_INPUT: RadarInput = [null, [], [], false];
+const EMPTY_INPUT: RadarInput = [null, [], [], false, 0];
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 
@@ -72,11 +83,13 @@ const selectRadarInput = (snapshot: RadarSnapshot): RadarInput => [
   snapshot.carIdxLapDistPct,
   snapshot.carIdxOnPitRoad,
   snapshot.isOnTrack,
+  snapshot.version,
 ];
 
 const radarInputEqual = (previous: RadarInput, next: RadarInput): boolean =>
   previous[0] === next[0] &&
   previous[3] === next[3] &&
+  previous[4] === next[4] &&
   shallow(previous[1], next[1]) &&
   shallow(previous[2], next[2]);
 
@@ -93,7 +106,7 @@ const trackDrawings = tracks as unknown as Record<
 export const useRadar = (options: UseRadarOptions): RadarState => {
   const { radarRange, hideInPit, vehicleWidth, vehicleLength, fadeBandM } =
     options;
-  const [focusCarIdx, positions, onPitRoad, isOnTrack] =
+  const [focusCarIdx, positions, onPitRoad, isOnTrack, frameVersion] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
   const carLeftRight = useBlindSpotSelector(
@@ -163,6 +176,13 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   }
   const mapBuffer = mapBufferRef.current;
 
+  const previousPositionsRef = useRef<{
+    positions: readonly number[];
+    playerCarIdx: number | null;
+    trackId: number | undefined;
+    version: number;
+  } | null>(null);
+
   const computed = useMemo(() => {
     const targetsKey = `${trackId}:${positions.length}`;
     if (targetsKey !== targetsKeyRef.current) {
@@ -186,6 +206,39 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       previousTargets: targetsRef.current,
       mapBuffer,
     });
+    const previous = previousPositionsRef.current;
+    if (
+      previous &&
+      previous.playerCarIdx === playerCarIdx &&
+      previous.trackId === trackId &&
+      previous.version !== frameVersion &&
+      trackLengthM > 0
+    ) {
+      const previousPlayer = previous.positions[playerCarIdx ?? -1];
+      const currentPlayer = positions[playerCarIdx ?? -1];
+      for (const blip of result.blips) {
+        const previousCar = previous.positions[blip.carIdx];
+        const currentCar = positions[blip.carIdx];
+        if (
+          typeof previousPlayer === 'number' &&
+          typeof currentPlayer === 'number' &&
+          typeof previousCar === 'number' &&
+          typeof currentCar === 'number'
+        ) {
+          let relativeDelta =
+            previousCar - currentCar - (previousPlayer - currentPlayer);
+          if (relativeDelta > 0.5) relativeDelta -= 1;
+          if (relativeDelta < -0.5) relativeDelta += 1;
+          blip.closingSpeedMps = Math.max(0, relativeDelta * trackLengthM * 25);
+        }
+      }
+    }
+    previousPositionsRef.current = {
+      positions,
+      playerCarIdx,
+      trackId,
+      version: frameVersion,
+    };
     targetsRef.current = result.targets;
     return result;
   }, [
@@ -204,6 +257,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     carNumbers,
     paceCarIdx,
     mapBuffer,
+    frameVersion,
   ]);
 
   let nearestGapM: number | null = null;
@@ -222,5 +276,13 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     mapPath: mapBuffer,
     mapPointCount: computed.mapPointCount,
     mapWindowM,
+    mapTrackPath: trackDrawing?.active?.inside ?? null,
+    mapPlayerX: computed.mapPlayerX,
+    mapPlayerY: computed.mapPlayerY,
+    mapForwardX: computed.mapForwardX,
+    mapForwardY: computed.mapForwardY,
+    mapRightX: computed.mapRightX,
+    mapRightY: computed.mapRightY,
+    mapUnitsPerMetre: computed.mapUnitsPerMetre,
   };
 };
