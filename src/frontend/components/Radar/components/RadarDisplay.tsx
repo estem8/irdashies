@@ -220,9 +220,9 @@ const drawRoad = (
     ctx.save();
     ctx.transform(
       pathScale * rightX,
-      -pathScale * forwardY,
-      pathScale * rightY,
       -pathScale * forwardX,
+      pathScale * rightY,
+      -pathScale * forwardY,
       centreX - playerRight * pathScale,
       centreY + playerAlong * pathScale
     );

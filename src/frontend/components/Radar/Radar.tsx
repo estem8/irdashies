@@ -8,8 +8,8 @@ import { RADAR_SHOW_RANGE_MARGIN_M } from './radarFade';
 import type { RadarBlip } from './radarBlips';
 
 /**
- * A car metres ahead, one alongside on the left, a car level with us, and the
- * pace car in the pits: between them the lettered label, fade band and rim
+ * A car metres ahead, one alongside on the left, a car level with us, and
+ * a car fading in: between them the lettered label, fade band and rim
  * signals the display can produce.
  */
 const DEMO_BLIPS: RadarBlip[] = [
@@ -48,18 +48,6 @@ const DEMO_BLIPS: RadarBlip[] = [
     carNumber: '51',
     isPaceCar: false,
     fade: 1,
-  },
-  {
-    carIdx: 4,
-    alongM: 6,
-    lateralM: 3.4,
-    relYaw: 0.2,
-    gapM: 6,
-    side: null,
-    rimSignal: null,
-    carNumber: '9',
-    isPaceCar: true,
-    fade: 0.4,
   },
   {
     carIdx: 5,
@@ -158,9 +146,9 @@ export const Radar = () => {
         mapBorderOpacity={settings.mapBorderOpacity}
         mapFillColor={settings.mapFillColor}
         mapFillOpacity={settings.mapFillOpacity}
-        // Use the same SVG path and Path2D geometry as the Track Map widget.
-        // Radar applies the moving-player transform and clips the projected
-        // path to its circular viewport.
+        // Use the author's original SVG geometry as the map layer. The
+        // display applies the corrected camera transform and clips it to the
+        // radar viewport; trackPathPoints remains the source for car positions.
         mapTrackPath={state.mapTrackPath}
         mapPlayerX={state.mapPlayerX}
         mapPlayerY={state.mapPlayerY}
