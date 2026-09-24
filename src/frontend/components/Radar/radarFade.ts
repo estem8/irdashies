@@ -13,6 +13,8 @@ export type FadeTarget = 0 | 1;
 const CAR_FADE_FLOOR = 0.15;
 
 /** Leave room inside the range so the near-range gate always has a visible car. */
+export const MAX_RADAR_RANGE_M = 500;
+
 export const RADAR_SHOW_RANGE_MARGIN_M = 0.5;
 
 /**

@@ -13,7 +13,9 @@ import { SettingNumberRow } from '../components/SettingNumberRow';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingDivider } from '../components/SettingDivider';
 import { SettingToggleRow } from '../components/SettingToggleRow';
+import { SettingSelectRow } from '../components/SettingSelectRow';
 import { RADAR_SHOW_RANGE_MARGIN_M } from '../../Radar/radarFade';
+import { normaliseRadarConfig } from '../../Radar/hooks/useRadarSettings';
 
 const SETTING_ID = 'radar';
 
@@ -48,8 +50,9 @@ export const RadarSettings = () => {
   const [settings, setSettings] = useState<RadarWidgetSettings>({
     id: SETTING_ID,
     enabled: savedSettings?.enabled ?? false,
-    config:
-      (savedSettings?.config as RadarWidgetSettings['config']) ?? defaultConfig,
+    config: normaliseRadarConfig(
+      (savedSettings?.config as RadarWidgetSettings['config']) ?? defaultConfig
+    ),
   });
 
   // useState only reads its initialiser on the first render, and the Loading
@@ -66,9 +69,10 @@ export const RadarSettings = () => {
       setSettings({
         id: SETTING_ID,
         enabled: savedSettings.enabled ?? false,
-        config:
+        config: normaliseRadarConfig(
           (savedSettings.config as RadarWidgetSettings['config']) ??
-          defaultConfig,
+            defaultConfig
+        ),
       });
     }
   }
@@ -134,41 +138,31 @@ export const RadarSettings = () => {
                   }
                 />
                 <SettingDivider />
+                <SettingSelectRow
+                  title="Opponent colour"
+                  description="Use the iRacing class colour, the driver badge colour, or one custom colour for every opponent."
+                  value={settings.config.rivalColorMode}
+                  options={[
+                    { label: 'Class colour (multi-class)', value: 'class' },
+                    { label: 'Driver badge', value: 'badge' },
+                    { label: 'Custom', value: 'custom' },
+                  ]}
+                  onChange={(v) => handleConfigChange({ rivalColorMode: v })}
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <ColorField
                     label="Your car"
                     value={settings.config.colorPlayer}
                     onChange={(v) => handleConfigChange({ colorPlayer: v })}
                   />
-                  <ColorField
-                    label="Opponents"
-                    value={settings.config.colorRival}
-                    onChange={(v) => handleConfigChange({ colorRival: v })}
-                  />
-                  <ColorField
-                    label="Alongside"
-                    value={settings.config.colorAlongside}
-                    onChange={(v) => handleConfigChange({ colorAlongside: v })}
-                  />
-                  <ColorField
-                    label="Closing car"
-                    value={settings.config.closingWarningColor ?? '#ef4444'}
-                    onChange={(v) =>
-                      handleConfigChange({ closingWarningColor: v })
-                    }
-                  />
+                  {settings.config.rivalColorMode === 'custom' && (
+                    <ColorField
+                      label="Opponents"
+                      value={settings.config.colorRival}
+                      onChange={(v) => handleConfigChange({ colorRival: v })}
+                    />
+                  )}
                 </div>
-                <SettingNumberRow
-                  title="Closing car warning speed"
-                  description="A rival blends from the opponent colour to the warning colour as its closing speed reaches this value."
-                  value={settings.config.closingSpeedThreshold ?? 5}
-                  min={0.5}
-                  max={50}
-                  step={0.5}
-                  onChange={(v) =>
-                    handleConfigChange({ closingSpeedThreshold: v })
-                  }
-                />
                 <SettingToggleRow
                   title="Track map"
                   description="Show the track map inside the radar."
@@ -183,20 +177,20 @@ export const RadarSettings = () => {
                         Road
                       </h3>
                       <p className="mt-1 text-xs text-slate-400">
-                        Customize the track map border and its fill. The map is
-                        always drawn inside the radar.
+                        Border is the outer edge of the road. Fill is the inner
+                        road surface. They are independent layers.
                       </p>
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        <div className="space-y-3">
+                      <div className="mt-3 space-y-3">
+                        <div className="rounded bg-slate-900/50 p-2">
                           <ColorField
-                            label="Border"
+                            label="Road border"
                             value={settings.config.mapBorderColor}
                             onChange={(v) =>
                               handleConfigChange({ mapBorderColor: v })
                             }
                           />
                           <SettingSliderRow
-                            title="Border Opacity"
+                            title="Border opacity"
                             value={settings.config.mapBorderOpacity}
                             units="%"
                             min={0}
@@ -207,16 +201,16 @@ export const RadarSettings = () => {
                             }
                           />
                         </div>
-                        <div className="space-y-3">
+                        <div className="rounded bg-slate-900/50 p-2">
                           <ColorField
-                            label="Fill"
+                            label="Road surface"
                             value={settings.config.mapFillColor}
                             onChange={(v) =>
                               handleConfigChange({ mapFillColor: v })
                             }
                           />
                           <SettingSliderRow
-                            title="Fill Opacity"
+                            title="Surface opacity"
                             value={settings.config.mapFillOpacity}
                             units="%"
                             min={0}

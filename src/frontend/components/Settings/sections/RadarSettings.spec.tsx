@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DashboardLayout, RadarConfig } from '@irdashies/types';
 import { getWidgetDefaultConfig } from '@irdashies/types';
@@ -128,20 +128,15 @@ describe('RadarSettings', () => {
     act(() => screen.getByRole('button', { name: 'Display' }).click());
 
     expect(screen.getByRole('switch', { name: 'Track map' })).toBeChecked();
-    expect(screen.getByText('Border Opacity')).toBeInTheDocument();
-    expect(screen.getByText('Fill Opacity')).toBeInTheDocument();
+    expect(screen.getByText('Border opacity')).toBeInTheDocument();
+    expect(screen.getByText('Surface opacity')).toBeInTheDocument();
   });
 
-  it('offers a colour for every blip and state signal', () => {
-    // Older profiles may not have the current rival and state-signal colours,
-    // so every swatch has to come from the widget defaults rather than render
-    // undefined.
+  it('offers the player and custom opponent colours', () => {
     mocks.setDashboard(
       dashboardWith({ ...getWidgetDefaultConfig('radar') } as RadarConfig)
     );
     render(<RadarSettings />);
-    // The chosen tab is remembered in localStorage, which another test in this
-    // file has already moved to Options.
     act(() => screen.getByRole('button', { name: 'Display' }).click());
 
     const swatch = (label: string) => {
@@ -154,7 +149,6 @@ describe('RadarSettings', () => {
 
     expect(swatch('Your car')).toBe('#2fd16a');
     expect(swatch('Opponents')).toBe('#cbd5e1');
-    expect(swatch('Alongside')).toBe('#ef4444');
   });
 
   it('reads the saved road colours and opacities', () => {
@@ -182,9 +176,36 @@ describe('RadarSettings', () => {
       return (input as HTMLInputElement).value;
     };
 
-    expect(swatch('Border')).toBe('#111827');
-    expect(swatch('Fill')).toBe('#64748b');
-    expect(sliderFor('Border Opacity').value).toBe('80');
-    expect(sliderFor('Fill Opacity').value).toBe('35');
+    expect(swatch('Road border')).toBe('#111827');
+    expect(swatch('Road surface')).toBe('#64748b');
+    expect(sliderFor('Border opacity').value).toBe('80');
+    expect(sliderFor('Surface opacity').value).toBe('35');
+  });
+
+  it('keeps border and surface colours independent', () => {
+    mocks.setDashboard(
+      dashboardWith(
+        radarConfig({
+          showTrackMap: true,
+          mapBorderColor: '#111827',
+          mapFillColor: '#64748b',
+        })
+      )
+    );
+    render(<RadarSettings />);
+    act(() => screen.getByRole('button', { name: 'Display' }).click());
+
+    const colorInput = (label: string) =>
+      screen
+        .getByText(label)
+        .parentElement?.querySelector(
+          'input[type="color"]'
+        ) as HTMLInputElement;
+    const border = colorInput('Road border');
+    const surface = colorInput('Road surface');
+    fireEvent.change(border, { target: { value: '#f97316' } });
+
+    expect(border.value).toBe('#f97316');
+    expect(surface.value).toBe('#64748b');
   });
 });

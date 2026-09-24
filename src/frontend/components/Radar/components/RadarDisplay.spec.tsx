@@ -205,7 +205,6 @@ const props: RadarDisplayProps = {
   vehicleLength: 4.5,
   showCarNumbers: true,
   colorRival: COLORS.rival,
-  colorAlongside: '#ef4444',
   colorPlayer: COLORS.player,
   bgOpacity: 30,
   trackLengthM: 5000,
@@ -527,18 +526,6 @@ describe('RadarDisplay', () => {
     deliverSize(300, 300);
     expect(record.vehiclesPerPaint.at(-1)).toBe(2);
     expect(record.fillsPerPaint.at(-1)).toContain(COLORS.rival);
-  });
-
-  it('uses the alongside colour for a rim arc', () => {
-    render(
-      <RadarDisplay
-        {...props}
-        colorAlongside="#123456"
-        blips={[blip({ carIdx: 1, rimSignal: 'left' })]}
-      />
-    );
-    deliverSize(300, 300);
-    expect(record.strokesPerPaint.at(-1)).toContain('#123456');
   });
 
   it('quantises the pulse to at most nine levels and repeats each second', () => {

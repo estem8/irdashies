@@ -50,7 +50,6 @@ const meta = {
     vehicleLength: 4.5,
     showCarNumbers: true,
     colorRival: '#cbd5e1',
-    colorAlongside: '#ef4444',
     colorPlayer: '#2fd16a',
     bgOpacity: 30,
     // Any positive length works: the disc places blips by metre offset, and
@@ -82,7 +81,6 @@ const meta = {
     followingMapFillColor: { control: { type: 'color' } },
     showCarNumbers: { control: { type: 'boolean' } },
     colorRival: { control: { type: 'color' } },
-    colorAlongside: { control: { type: 'color' } },
     colorPlayer: { control: { type: 'color' } },
   },
 } satisfies Meta<typeof RadarDisplay>;

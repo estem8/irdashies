@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Session, Telemetry } from '@irdashies/types';
-import { RadarProcessor } from '../../../app/processors/RadarProcessor';
+import type { RadarSnapshot } from '@irdashies/types';
 import tracks from '../../assets/data/tracks.json';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import { computeRadarBlips, type RadarBlip } from './radarBlips';
@@ -54,10 +53,14 @@ interface Capture {
 
 const place = (capture: Capture) => {
   const { telemetry, session } = capture;
-  const processor = new RadarProcessor();
-  processor.init(session as unknown as Session);
-  processor.onFrame(telemetry as unknown as Telemetry);
-  const snapshot = processor.snapshot();
+  const snapshot: RadarSnapshot = {
+    carIdxLapDistPct: (telemetry.CarIdxLapDistPct?.value ?? []) as number[],
+    carIdxOnPitRoad: (telemetry.CarIdxOnPitRoad?.value ?? []) as boolean[],
+    focusCarIdx:
+      (telemetry.CamCarIdx?.value?.[0] as number | undefined) ?? null,
+    isOnTrack: true,
+    version: 0,
+  };
 
   const result = computeRadarBlips({
     carIdxLapDistPct: snapshot.carIdxLapDistPct,

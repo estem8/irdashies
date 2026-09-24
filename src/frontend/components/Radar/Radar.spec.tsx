@@ -12,6 +12,7 @@ import {
 import { mountFixture } from '../../../testing/renderWithFixture';
 import type { ReplayFixture } from '../../../testing/replayFixture';
 import roadAmerica from '../../../../test-data/fixtures/multiclass-road-america.json';
+import { getClassColorHex } from '@irdashies/utils/colors';
 import type { RadarDisplayProps } from './components/RadarDisplay';
 
 /**
@@ -184,6 +185,52 @@ describe('Radar widget over a recorded multiclass session', () => {
     }
   });
 
+  it('uses class and badge colours when selected', async () => {
+    const classHarness = mountFixture(fixture, {
+      dashboard: radarDashboard({ rivalColorMode: 'class' }),
+    });
+    const classView = render(<Radar />, { wrapper: classHarness.wrapper });
+    await waitForDisplay();
+    const classColors = new Map(
+      fixture.drivers.map((driver) => [Number(driver.CarIdx), driver])
+    );
+    for (const blip of latest().blips) {
+      const value = Number(classColors.get(blip.carIdx)?.CarClassColor ?? 0);
+      expect(blip.color).toBe(getClassColorHex(value, true, '#cbd5e1'));
+    }
+    classView.unmount();
+
+    rendered.length = 0;
+    const badgeHarness = mountFixture(fixture, {
+      dashboard: radarDashboard({ rivalColorMode: 'badge' }),
+    });
+    render(<Radar />, { wrapper: badgeHarness.wrapper });
+    await waitForDisplay();
+    const badgeColors: Record<string, string> = {
+      W: '#71717a',
+      P: '#7e22ce',
+      A: '#1d4ed8',
+      B: '#15803d',
+      C: '#a16207',
+      D: '#c2410c',
+      R: '#b91c1c',
+    };
+    for (const blip of latest().blips) {
+      const driver = classColors.get(blip.carIdx);
+      const license = String(driver?.LicString ?? '').charAt(0);
+      expect(blip.color).toBe(badgeColors[license] ?? null);
+    }
+  });
+
+  it('keeps custom opponent colour free of session colours', async () => {
+    const harness = mountFixture(fixture, {
+      dashboard: radarDashboard({ rivalColorMode: 'custom' }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+    expect(latest().blips.every((blip) => !blip.color)).toBe(true);
+  });
+
   it('labels blips with the car number from the session', async () => {
     const harness = mountFixture(fixture, {
       dashboard: radarDashboard({ radarRange: 25 }),
@@ -220,7 +267,6 @@ describe('Radar widget over a recorded multiclass session', () => {
       dashboard: radarDashboard({
         radarRange: 12,
         colorRival: '#ff00ff',
-        colorAlongside: '#aa0000',
       }),
     });
     render(<Radar />, { wrapper: harness.wrapper });
@@ -229,7 +275,6 @@ describe('Radar widget over a recorded multiclass session', () => {
     expect(latest()).toMatchObject({
       radarRange: 12,
       colorRival: '#ff00ff',
-      colorAlongside: '#aa0000',
     });
     for (const blip of latest().blips) {
       expect(Math.abs(blip.alongM)).toBeLessThanOrEqual(12);

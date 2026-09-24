@@ -11,9 +11,6 @@ export interface RadarDisplayProps {
   showCarNumbers: boolean;
   /** Every rival blip is filled with this; the player is `colorPlayer`. */
   colorRival: string;
-  closingWarningColor?: string;
-  closingSpeedThreshold?: number;
-  colorAlongside: string;
   colorPlayer: string;
   bgOpacity: number;
   /** Track length in metres; drives blip motion between snapshots. */
@@ -40,7 +37,7 @@ export interface RadarDisplayProps {
   nowSeconds: number;
 }
 
-export const PULSE_STEPS_PER_SECOND = 8;
+export const PULSE_STEPS_PER_SECOND = 4;
 
 export const pulseAlpha = (seconds: number): number => {
   const phase = (seconds * PULSE_STEPS_PER_SECOND) % 1;
@@ -61,27 +58,10 @@ interface Size {
 const alphaFor = (blip: RadarBlip): number => blip.fade;
 const SMOOTHING_WEIGHTS = [1, 4, 6, 4, 1] as const;
 
-const hexColor = (value: string): [number, number, number] => {
-  const match = /^#([0-9a-f]{6})$/i.exec(value);
-  if (!match) return [239, 68, 68];
-  return [
-    parseInt(match[1].slice(0, 2), 16),
-    parseInt(match[1].slice(2, 4), 16),
-    parseInt(match[1].slice(4, 6), 16),
-  ];
-};
+const ALONGSIDE_COLOR = '#ef4444';
 
-const rivalColor = (blip: RadarBlip, props: RadarDisplayProps): string => {
-  const speed = blip.closingSpeedMps ?? 0;
-  const threshold = Math.max(0.1, props.closingSpeedThreshold ?? 5);
-  if (speed <= 0) return props.colorRival;
-  const amount = Math.min(1, speed / threshold);
-  const from = hexColor(props.closingWarningColor ?? '#ef4444');
-  const to = hexColor(props.colorRival);
-  const channel = (index: number) =>
-    Math.round(from[index] + (to[index] - from[index]) * amount);
-  return `rgb(${channel(0)}, ${channel(1)}, ${channel(2)})`;
-};
+const rivalColor = (blip: RadarBlip, props: RadarDisplayProps): string =>
+  blip.color ?? props.colorRival;
 
 /**
  * A car the driver cannot identify defeats the point of drawing it, so map
@@ -439,7 +419,7 @@ const drawRadar = (
         centreY,
         radius,
         -Math.PI / 2,
-        props.colorAlongside,
+        ALONGSIDE_COLOR,
         pulse * alphaFor(blip)
       );
     }
@@ -450,7 +430,7 @@ const drawRadar = (
         centreY,
         radius,
         Math.PI / 2,
-        props.colorAlongside,
+        ALONGSIDE_COLOR,
         pulse * alphaFor(blip)
       );
     }

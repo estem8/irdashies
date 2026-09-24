@@ -10,7 +10,7 @@ import {
   type OverlapSide,
   type RadarOverlap,
 } from './overlapSides';
-import { carFadeAt } from './radarFade';
+import { carFadeAt, MAX_RADAR_RANGE_M } from './radarFade';
 
 export interface RadarBlip {
   carIdx: number;
@@ -32,8 +32,7 @@ export interface RadarBlip {
   side: OverlapSide | null;
   /** Rim indicator driven by the sim side, or both when it is silent. */
   rimSignal: 'left' | 'right' | 'both' | null;
-  /** Positive closing speed toward the player, in metres per second. */
-  closingSpeedMps?: number;
+  color?: string | null;
   /** Car number for the blip label; null when the session has none. */
   carNumber: string | null;
   /** Set when this is the session's pace car, which carries a fixed label. */
@@ -98,6 +97,8 @@ export interface RadarBlipInput {
   fadeBandM: number;
   /** Car number by CarIdx, for blip labels. */
   carNumbers: ReadonlyMap<number, string>;
+  /** Resolved class or badge colour by CarIdx, when available. */
+  carColors?: ReadonlyMap<number, string>;
   /**
    * The pace car's CarIdx as the driver roster flags it, or null when no
    * driver is flagged CarIsPaceCar.
@@ -203,11 +204,15 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     vehicleWidth,
     vehicleLength,
     carNumbers,
+    carColors,
     paceCarIdx,
     fadeBandM,
     previousTargets,
     followingMapBuffer,
   } = input;
+  const safeRadarRange = Number.isFinite(radarRange)
+    ? Math.max(0, Math.min(radarRange, MAX_RADAR_RANGE_M))
+    : 0;
 
   const trackPathPoints = trackDrawing?.active?.trackPathPoints;
   const totalLength = trackDrawing?.active?.totalLength;
@@ -285,7 +290,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     playerPoint
   );
 
-  const followingMapWindowM = radarRange * 3;
+  const followingMapWindowM = safeRadarRange * 3;
   const halfMapWindowM = followingMapWindowM / 2;
   // The map and blips are projected sequentially, so one scratch point is
   // enough for both and the road path itself adds no per-frame allocation.
@@ -328,7 +333,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     if (delta > 0.5) delta -= 1;
     else if (delta < -0.5) delta += 1;
     const rawAlongM = delta * trackLengthM;
-    if (Math.abs(rawAlongM) > radarRange) continue;
+    if (Math.abs(rawAlongM) > safeRadarRange) continue;
     // A car abreast oscillates about the player's lap fraction; hold it on the
     // side it was drawn on while the offset is inside the latch. The range
     // test deliberately ran on the raw value, so a latched car near the edge
@@ -376,13 +381,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       gapM: Math.abs(alongM),
       side: null,
       rimSignal: null,
-      closingSpeedMps: 0,
       carNumber: carNumbers.get(carIdx) ?? null,
+      color: carColors?.get(carIdx) ?? null,
       isPaceCar: carIdx === paceCarIdx,
       // Faded by how far the car is from the player in the plane the radar
       // draws in, so one closing head-on fades in on approach while one
       // alongside (already near in that plane) never dims.
-      fade: carFadeAt(Math.hypot(alongM, lateralM), radarRange, fadeBandM),
+      fade: carFadeAt(Math.hypot(alongM, lateralM), safeRadarRange, fadeBandM),
     });
   }
 

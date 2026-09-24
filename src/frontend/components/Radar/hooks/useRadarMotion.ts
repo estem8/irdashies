@@ -19,16 +19,20 @@ interface MotionTarget {
 }
 
 const buildTargets = (
+  targets: MotionTarget[],
   blips: readonly RadarBlip[],
   trackLengthM: number,
   pick: (blip: RadarBlip) => number
 ): MotionTarget[] => {
-  const targets: MotionTarget[] = [];
-  for (const blip of blips) {
-    targets.push({
-      progress: pick(blip) / trackLengthM,
-      driver: { CarIdx: blip.carIdx },
+  targets.length = blips.length;
+  for (let index = 0; index < blips.length; index += 1) {
+    const blip = blips[index];
+    const target = (targets[index] ??= {
+      progress: 0,
+      driver: { CarIdx: 0 },
     });
+    target.progress = pick(blip) / trackLengthM;
+    target.driver.CarIdx = blip.carIdx;
   }
   return targets;
 };
@@ -62,6 +66,8 @@ export const useRadarMotion = (
   const lateralRef = useRef<ProgressInterpolator | null>(null);
   const alongMRef = useRef(new Float64Array(0));
   const lateralMRef = useRef(new Float64Array(0));
+  const alongTargetsRef = useRef<MotionTarget[]>([]);
+  const lateralTargetsRef = useRef<MotionTarget[]>([]);
   const drawRef = useRef(draw);
   const trackLengthRef = useRef(trackLengthM);
   const frameRef = useRef(0);
@@ -86,11 +92,21 @@ export const useRadarMotion = (
 
     const now = performance.now();
     const travel = along.setTargets(
-      buildTargets(blips, trackLengthM, (blip) => blip.alongM),
+      buildTargets(
+        alongTargetsRef.current,
+        blips,
+        trackLengthM,
+        (blip) => blip.alongM
+      ),
       now
     );
     const drift = lateral.setTargets(
-      buildTargets(blips, trackLengthM, (blip) => blip.lateralM),
+      buildTargets(
+        lateralTargetsRef.current,
+        blips,
+        trackLengthM,
+        (blip) => blip.lateralM
+      ),
       now
     );
 

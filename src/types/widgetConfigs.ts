@@ -519,14 +519,11 @@ export interface RadarConfig {
   showTrackMap: boolean;
   /** Draw the car number on each blip. */
   showCarNumbers: boolean;
-  /** Every opponent, whatever its gap — distance is read off the disc, not the colour. */
+  /** Source of each rival's fill colour. */
+  rivalColorMode: 'class' | 'badge' | 'custom';
+  /** Custom opponent fill used when `rivalColorMode` is `custom`. */
   colorRival: string;
-  /** Closing speed in m/s at which the warning colour is strongest. */
-  closingSpeedThreshold: number;
-  /** Colour used for a rapidly closing opponent; blends toward colorRival. */
-  closingWarningColor: string;
   colorPlayer: string;
-  colorAlongside: string;
   /** Road border colour for the following map. */
   mapBorderColor: string;
   /** Road border opacity, from 0 to 100 percent. */

@@ -73,6 +73,8 @@ export const Radar = () => {
     vehicleWidth: settings.vehicleWidth,
     vehicleLength: settings.vehicleLength,
     fadeBandM: settings.fadeInCars ? settings.fadeBandM : 0,
+    rivalColorMode: settings.rivalColorMode,
+    colorRival: settings.colorRival,
   });
   const { isDemoMode } = useDashboard();
   const sessionVisible = useSessionVisibility(settings.sessionVisibility);
@@ -132,9 +134,6 @@ export const Radar = () => {
         vehicleLength={settings.vehicleLength}
         showCarNumbers={settings.showCarNumbers}
         colorRival={settings.colorRival}
-        closingWarningColor={settings.closingWarningColor ?? '#ef4444'}
-        closingSpeedThreshold={settings.closingSpeedThreshold ?? 5}
-        colorAlongside={settings.colorAlongside}
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}

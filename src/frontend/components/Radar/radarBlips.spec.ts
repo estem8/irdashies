@@ -103,6 +103,17 @@ describe('computeRadarBlips', () => {
     expect(result.blips[0].relYaw).toBeCloseTo(0, 6);
   });
 
+  it('bounds an invalid persisted radar range before sampling', () => {
+    const result = computeRadarBlips({
+      ...baseInput,
+      radarRange: Number.POSITIVE_INFINITY,
+      ...positionsOf([pctOfArc(300), pctOfArc(312)]),
+    });
+
+    expect(result.blips).toHaveLength(0);
+    expect(result.followingMapPointCount).toBe(1);
+  });
+
   it('signs cars behind the player as negative along-track metres', () => {
     const result = computeRadarBlips({
       ...baseInput,
