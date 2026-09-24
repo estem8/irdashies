@@ -70,15 +70,15 @@ export interface RadarBlipResult {
   /** State to hand back in as `previousTargets` next frame. */
   targets: ReadonlyMap<number, RadarTargetState>;
   /** Number of valid `(alongM, lateralM)` pairs written to the map buffer. */
-  mapPointCount: number;
+  followingMapPointCount: number;
   /** Player frame in the track drawing space, for the original SVG path. */
-  mapPlayerX: number;
-  mapPlayerY: number;
-  mapForwardX: number;
-  mapForwardY: number;
-  mapRightX: number;
-  mapRightY: number;
-  mapUnitsPerMetre: number;
+  followingMapCameraPlayerX: number;
+  followingMapCameraPlayerY: number;
+  followingMapCameraForwardX: number;
+  followingMapCameraForwardY: number;
+  followingMapCameraRightX: number;
+  followingMapCameraRightY: number;
+  followingMapUnitsPerMetre: number;
 }
 
 export interface RadarBlipInput {
@@ -106,7 +106,7 @@ export interface RadarBlipInput {
   /** State carried over from the previous frame; the caller owns it. */
   previousTargets: ReadonlyMap<number, RadarTargetState>;
   /** Caller-owned storage for the road path's `(alongM, lateralM)` pairs. */
-  mapBuffer: Float64Array;
+  followingMapBuffer: Float64Array;
 }
 
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
@@ -116,14 +116,14 @@ const NO_GEOMETRY: RadarBlipResult = {
   playerOnRoad: false,
   blips: [],
   targets: EMPTY_TARGETS,
-  mapPointCount: 0,
-  mapPlayerX: 0,
-  mapPlayerY: 0,
-  mapForwardX: 1,
-  mapForwardY: 0,
-  mapRightX: 0,
-  mapRightY: 1,
-  mapUnitsPerMetre: 1,
+  followingMapPointCount: 0,
+  followingMapCameraPlayerX: 0,
+  followingMapCameraPlayerY: 0,
+  followingMapCameraForwardX: 1,
+  followingMapCameraForwardY: 0,
+  followingMapCameraRightX: 0,
+  followingMapCameraRightY: 1,
+  followingMapUnitsPerMetre: 1,
 };
 
 /** Metres between centreline samples in the following-car map. */
@@ -206,7 +206,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     paceCarIdx,
     fadeBandM,
     previousTargets,
-    mapBuffer,
+    followingMapBuffer,
   } = input;
 
   const trackPathPoints = trackDrawing?.active?.trackPathPoints;
@@ -232,14 +232,14 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       playerOnRoad: false,
       blips: [],
       targets: EMPTY_TARGETS,
-      mapPointCount: 0,
-      mapPlayerX: 0,
-      mapPlayerY: 0,
-      mapForwardX: 1,
-      mapForwardY: 0,
-      mapRightX: 0,
-      mapRightY: 1,
-      mapUnitsPerMetre: 1,
+      followingMapPointCount: 0,
+      followingMapCameraPlayerX: 0,
+      followingMapCameraPlayerY: 0,
+      followingMapCameraForwardX: 1,
+      followingMapCameraForwardY: 0,
+      followingMapCameraRightX: 0,
+      followingMapCameraRightY: 1,
+      followingMapUnitsPerMetre: 1,
     };
   }
 
@@ -256,14 +256,14 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       playerOnRoad: false,
       blips: [],
       targets: EMPTY_TARGETS,
-      mapPointCount: 0,
-      mapPlayerX: 0,
-      mapPlayerY: 0,
-      mapForwardX: 1,
-      mapForwardY: 0,
-      mapRightX: 0,
-      mapRightY: 1,
-      mapUnitsPerMetre: 1,
+      followingMapPointCount: 0,
+      followingMapCameraPlayerX: 0,
+      followingMapCameraPlayerY: 0,
+      followingMapCameraForwardX: 1,
+      followingMapCameraForwardY: 0,
+      followingMapCameraRightX: 0,
+      followingMapCameraRightY: 1,
+      followingMapUnitsPerMetre: 1,
     };
   }
 
@@ -285,12 +285,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     playerPoint
   );
 
-  const mapWindowM = radarRange * 3;
-  const halfMapWindowM = mapWindowM / 2;
+  const followingMapWindowM = radarRange * 3;
+  const halfMapWindowM = followingMapWindowM / 2;
   // The map and blips are projected sequentially, so one scratch point is
   // enough for both and the road path itself adds no per-frame allocation.
   const carPoint = { x: 0, y: 0 };
-  let mapPointCount = 0;
+  let followingMapPointCount = 0;
   for (
     let alongM = -halfMapWindowM;
     alongM <= halfMapWindowM;
@@ -305,13 +305,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
       direction,
       carPoint
     );
-    const offset = mapPointCount * 2;
-    mapBuffer[offset] = alongM;
-    mapBuffer[offset + 1] =
+    const offset = followingMapPointCount * 2;
+    followingMapBuffer[offset] = alongM;
+    followingMapBuffer[offset + 1] =
       ((carPoint.x - playerPoint.x) * rightX +
         (carPoint.y - playerPoint.y) * rightY) *
       metresPerUnit;
-    mapPointCount += 1;
+    followingMapPointCount += 1;
   }
 
   const blips: RadarBlip[] = [];
@@ -439,13 +439,13 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     playerOnRoad: true,
     blips,
     targets,
-    mapPointCount,
-    mapPlayerX: playerPoint.x,
-    mapPlayerY: playerPoint.y,
-    mapForwardX: rightY,
-    mapForwardY: -rightX,
-    mapRightX: rightX,
-    mapRightY: rightY,
-    mapUnitsPerMetre: totalLength / trackLengthM,
+    followingMapPointCount,
+    followingMapCameraPlayerX: playerPoint.x,
+    followingMapCameraPlayerY: playerPoint.y,
+    followingMapCameraForwardX: rightY,
+    followingMapCameraForwardY: -rightX,
+    followingMapCameraRightX: rightX,
+    followingMapCameraRightY: rightY,
+    followingMapUnitsPerMetre: totalLength / trackLengthM,
   };
 };

@@ -56,30 +56,30 @@ const meta = {
     // Any positive length works: the disc places blips by metre offset, and
     // without it the motion targets are NaN and no car is drawn at all.
     trackLengthM: 5000,
-    showMap: false,
+    showFollowingMap: false,
     // The road passes through (0, 0): the player's own path point is the
     // origin of this frame, and the player is drawn at the centre.
-    mapPath: new Float64Array([
+    followingMapPath: new Float64Array([
       -45, -5, -30, -3, -15, -1, 0, 0, 15, 1.5, 30, 4, 45, 8,
     ]),
-    mapPointCount: 7,
-    mapWindowM: 90,
-    mapBorderColor: '#334155',
-    mapBorderOpacity: 95,
-    mapFillColor: '#64748b',
-    mapFillOpacity: 55,
+    followingMapPointCount: 7,
+    followingMapWindowM: 90,
+    followingMapBorderColor: '#334155',
+    followingMapBorderOpacity: 95,
+    followingMapFillColor: '#64748b',
+    followingMapFillOpacity: 55,
   },
   argTypes: {
     radarRange: { control: { type: 'range', min: 10, max: 25, step: 1 } },
     bgOpacity: { control: { type: 'range', min: 0, max: 100, step: 5 } },
-    mapBorderOpacity: {
+    followingMapBorderOpacity: {
       control: { type: 'range', min: 0, max: 100, step: 5 },
     },
-    mapFillOpacity: {
+    followingMapFillOpacity: {
       control: { type: 'range', min: 0, max: 100, step: 5 },
     },
-    mapBorderColor: { control: { type: 'color' } },
-    mapFillColor: { control: { type: 'color' } },
+    followingMapBorderColor: { control: { type: 'color' } },
+    followingMapFillColor: { control: { type: 'color' } },
     showCarNumbers: { control: { type: 'boolean' } },
     colorRival: { control: { type: 'color' } },
     colorAlongside: { control: { type: 'color' } },
@@ -130,11 +130,11 @@ export const PaceCar: Story = {
 export const FollowingMap: Story = {
   name: 'Following track map',
   args: {
-    showMap: true,
-    mapBorderColor: '#fbbf24',
-    mapBorderOpacity: 90,
-    mapFillColor: '#78350f',
-    mapFillOpacity: 70,
+    showFollowingMap: true,
+    followingMapBorderColor: '#fbbf24',
+    followingMapBorderOpacity: 90,
+    followingMapFillColor: '#78350f',
+    followingMapFillOpacity: 70,
     // Cars on the road rather than beside it. The player's frame puts the
     // player at lateral 0 on the centreline, so the road passes through
     // (0, 0) and the cars sit on the curve that leaves it.

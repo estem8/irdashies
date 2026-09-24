@@ -515,8 +515,7 @@ export interface RadarConfig {
   fadeInCars: boolean;
   /** Width of that band, in metres. */
   fadeBandM: number;
-  /** Replace the disc with a map that follows the car. */
-  /** @deprecated The radar always uses the following track map. */
+  /** Draw the following track map as a layer inside the radar disc. */
   showTrackMap: boolean;
   /** Draw the car number on each blip. */
   showCarNumbers: boolean;

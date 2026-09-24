@@ -1,7 +1,10 @@
 import { act, render } from '@testing-library/react';
 import { useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { progressToFlatX, useProgressAnimation } from './useProgressAnimation';
+import {
+  progressToFlatX,
+  useTrackProgressAnimation,
+} from './useTrackProgressAnimation';
 
 import { progressToTrackPoint } from '@irdashies/domain/trackGeometry';
 describe('map projection', () => {
@@ -27,7 +30,7 @@ describe('map projection', () => {
   });
 });
 
-describe('useProgressAnimation', () => {
+describe('useTrackProgressAnimation', () => {
   let callbacks: FrameRequestCallback[];
   let nextFrameId: number;
 
@@ -58,7 +61,7 @@ describe('useProgressAnimation', () => {
       if (stableDrivers.current[0].progress !== progress) {
         stableDrivers.current = [{ progress }];
       }
-      useProgressAnimation(stableDrivers.current, () => drawCount++);
+      useTrackProgressAnimation(stableDrivers.current, () => drawCount++);
       return null;
     };
 
@@ -85,7 +88,7 @@ describe('useProgressAnimation', () => {
       if (stableDrivers.current[0].progress !== progress) {
         stableDrivers.current = [{ progress }];
       }
-      useProgressAnimation(stableDrivers.current, () => undefined);
+      useTrackProgressAnimation(stableDrivers.current, () => undefined);
       return null;
     };
 
@@ -106,7 +109,7 @@ describe('useProgressAnimation', () => {
       if (stableDrivers.current[0].progress !== progress) {
         stableDrivers.current = [{ progress }];
       }
-      useProgressAnimation(stableDrivers.current, () => undefined);
+      useTrackProgressAnimation(stableDrivers.current, () => undefined);
       return null;
     };
 

@@ -12,7 +12,7 @@ export const TRACK_POSITION_INTERVAL_MS = PROGRESS_INTERVAL_MS;
 export { progressToFlatX, ProgressInterpolator };
 export type { DrawProgress };
 
-export const useProgressAnimation = (
+export const useTrackProgressAnimation = (
   drivers: ProgressSource,
   draw: DrawProgress
 ) => {

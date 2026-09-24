@@ -18,25 +18,25 @@ export interface RadarDisplayProps {
   bgOpacity: number;
   /** Track length in metres; drives blip motion between snapshots. */
   trackLengthM: number;
-  showMap: boolean;
+  showFollowingMap: boolean;
   /** Interleaved along-track and rightward lateral offsets, in metres. */
-  mapPath: Float64Array;
-  mapPointCount: number;
+  followingMapPath: Float64Array;
+  followingMapPointCount: number;
   /** Total metres of road shown in the following map. */
-  mapWindowM: number;
-  mapBorderColor: string;
-  mapBorderOpacity: number;
-  mapFillColor: string;
-  mapFillOpacity: number;
+  followingMapWindowM: number;
+  followingMapBorderColor: string;
+  followingMapBorderOpacity: number;
+  followingMapFillColor: string;
+  followingMapFillOpacity: number;
   /** Original track path, used when the browser supports Path2D. */
-  mapTrackPath?: string | null;
-  mapPlayerX?: number;
-  mapPlayerY?: number;
-  mapForwardX?: number;
-  mapForwardY?: number;
-  mapRightX?: number;
-  mapRightY?: number;
-  mapUnitsPerMetre?: number;
+  followingMapSvgPath?: string | null;
+  followingMapCameraPlayerX?: number;
+  followingMapCameraPlayerY?: number;
+  followingMapCameraForwardX?: number;
+  followingMapCameraForwardY?: number;
+  followingMapCameraRightX?: number;
+  followingMapCameraRightY?: number;
+  followingMapUnitsPerMetre?: number;
   nowSeconds: number;
 }
 
@@ -154,7 +154,7 @@ const drawBlipVehicles = (
   // rim, so there the overlap itself is the signal and the car is drawn on top
   // of the player.
   const abreastM = Math.max(1, props.vehicleLength * 0.5);
-  const hideLevelCar = !props.showMap;
+  const hideLevelCar = !props.showFollowingMap;
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
     const levelAndUnknown =
@@ -196,7 +196,7 @@ const drawPlayer = (
   );
 };
 
-const drawRoad = (
+const drawFollowingRoad = (
   ctx: CanvasRenderingContext2D,
   props: RadarDisplayProps,
   centreX: number,
@@ -206,13 +206,13 @@ const drawRoad = (
   trackPath: Path2D | null
 ) => {
   if (trackPath) {
-    const pathScale = scale / (props.mapUnitsPerMetre ?? 1);
-    const playerX = props.mapPlayerX ?? 0;
-    const playerY = props.mapPlayerY ?? 0;
-    const forwardX = props.mapForwardX ?? 1;
-    const forwardY = props.mapForwardY ?? 0;
-    const rightX = props.mapRightX ?? 0;
-    const rightY = props.mapRightY ?? 1;
+    const pathScale = scale / (props.followingMapUnitsPerMetre ?? 1);
+    const playerX = props.followingMapCameraPlayerX ?? 0;
+    const playerY = props.followingMapCameraPlayerY ?? 0;
+    const forwardX = props.followingMapCameraForwardX ?? 1;
+    const forwardY = props.followingMapCameraForwardY ?? 0;
+    const rightX = props.followingMapCameraRightX ?? 0;
+    const rightY = props.followingMapCameraRightY ?? 1;
     const playerAlong = playerX * forwardX + playerY * forwardY;
     const playerRight = playerX * rightX + playerY * rightY;
     const roadPx = Math.max(8, widthPx * 1.9);
@@ -229,20 +229,22 @@ const drawRoad = (
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = (roadPx + 4) / pathScale;
-    ctx.globalAlpha = Math.min(100, Math.max(0, props.mapBorderOpacity)) / 100;
-    ctx.strokeStyle = props.mapBorderColor;
+    ctx.globalAlpha =
+      Math.min(100, Math.max(0, props.followingMapBorderOpacity)) / 100;
+    ctx.strokeStyle = props.followingMapBorderColor;
     ctx.stroke(trackPath);
     ctx.lineWidth = roadPx / pathScale;
-    ctx.globalAlpha = Math.min(100, Math.max(0, props.mapFillOpacity)) / 100;
-    ctx.strokeStyle = props.mapFillColor;
+    ctx.globalAlpha =
+      Math.min(100, Math.max(0, props.followingMapFillOpacity)) / 100;
+    ctx.strokeStyle = props.followingMapFillColor;
     ctx.stroke(trackPath);
     ctx.restore();
     return;
   }
 
   const pointCount = Math.min(
-    props.mapPointCount,
-    Math.floor(props.mapPath.length / 2)
+    props.followingMapPointCount,
+    Math.floor(props.followingMapPath.length / 2)
   );
   if (pointCount < 2) return;
 
@@ -255,9 +257,9 @@ const drawRoad = (
   const roadIndex = (index: number) =>
     Math.min(index * ROAD_SAMPLE_STEP, pointCount - 1);
   const pointX = (index: number) =>
-    centreX + props.mapPath[roadIndex(index) * 2 + 1] * scale;
+    centreX + props.followingMapPath[roadIndex(index) * 2 + 1] * scale;
   const rawPointY = (index: number) =>
-    centreY - props.mapPath[roadIndex(index) * 2] * scale;
+    centreY - props.followingMapPath[roadIndex(index) * 2] * scale;
   // The source track polyline is sampled from SVG geometry and can contain
   // one-pixel-scale reversals. They are very visible when a short local
   // segment is magnified to radar size. A binomial B-spline filter removes
@@ -301,12 +303,14 @@ const drawRoad = (
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.lineWidth = roadPx + 4;
-  ctx.globalAlpha = Math.min(100, Math.max(0, props.mapBorderOpacity)) / 100;
-  ctx.strokeStyle = props.mapBorderColor;
+  ctx.globalAlpha =
+    Math.min(100, Math.max(0, props.followingMapBorderOpacity)) / 100;
+  ctx.strokeStyle = props.followingMapBorderColor;
   ctx.stroke();
   ctx.lineWidth = roadPx;
-  ctx.globalAlpha = Math.min(100, Math.max(0, props.mapFillOpacity)) / 100;
-  ctx.strokeStyle = props.mapFillColor;
+  ctx.globalAlpha =
+    Math.min(100, Math.max(0, props.followingMapFillOpacity)) / 100;
+  ctx.strokeStyle = props.followingMapFillColor;
   ctx.stroke();
   ctx.globalAlpha = 1;
 };
@@ -340,7 +344,6 @@ const drawRadar = (
   canvas: HTMLCanvasElement,
   props: RadarDisplayProps,
   size: Size,
-  theme: 'light' | 'dark',
   alongM: Float64Array,
   lateralM: Float64Array,
   trackPath: Path2D | null
@@ -356,7 +359,6 @@ const drawRadar = (
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size.width, size.height);
-  void theme;
 
   const centreX = size.width / 2;
   const centreY = size.height / 2;
@@ -364,9 +366,9 @@ const drawRadar = (
   // Cars always use the radar scale. The optional map is a separate layer
   // behind them, not a replacement view with a different car coordinate space.
   const scale = radius / Math.max(1, props.radarRange);
-  const mapScale = radius / Math.max(1, props.mapWindowM / 2);
+  const followingMapScale = radius / Math.max(1, props.followingMapWindowM / 2);
   const trueWidthPx = Math.max(4, props.vehicleWidth * scale);
-  const widthPx = props.showMap
+  const widthPx = props.showFollowingMap
     ? Math.max(trueWidthPx, MAP_VEHICLE_MIN_WIDTH_PX)
     : trueWidthPx;
   const lengthPx = Math.max(6, props.vehicleLength * scale);
@@ -402,8 +404,16 @@ const drawRadar = (
   ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
   ctx.clip();
 
-  if (props.showMap) {
-    drawRoad(ctx, props, centreX, centreY, mapScale, widthPx, trackPath);
+  if (props.showFollowingMap) {
+    drawFollowingRoad(
+      ctx,
+      props,
+      centreX,
+      centreY,
+      followingMapScale,
+      widthPx,
+      trackPath
+    );
   }
 
   drawBlipVehicles(
@@ -490,9 +500,10 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
   const alongRef = useRef(new Float64Array(0));
   const lateralRef = useRef(new Float64Array(0));
   const trackPath = useMemo(() => {
-    if (!props.mapTrackPath || typeof Path2D === 'undefined') return null;
-    return new Path2D(props.mapTrackPath);
-  }, [props.mapTrackPath]);
+    if (!props.followingMapSvgPath || typeof Path2D === 'undefined')
+      return null;
+    return new Path2D(props.followingMapSvgPath);
+  }, [props.followingMapSvgPath]);
   const trackPathRef = useRef(trackPath);
   trackPathRef.current = trackPath;
 
@@ -511,7 +522,6 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
       canvas,
       propsRef.current,
       sizeRef.current,
-      'dark',
       alongRef.current,
       lateralRef.current,
       trackPathRef.current
@@ -540,7 +550,6 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
       canvas,
       propsRef.current,
       sizeRef.current,
-      'dark',
       alongRef.current,
       lateralRef.current,
       trackPathRef.current

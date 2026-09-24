@@ -39,21 +39,21 @@ export interface RadarState {
   /** Track length in metres; forwarded for motion interpolation. */
   trackLengthM: number;
   /** Reusable `(alongM, lateralM)` storage for the following-car road. */
-  mapPath: Float64Array;
-  /** Number of valid road pairs in `mapPath`. */
-  mapPointCount: number;
+  followingMapPath: Float64Array;
+  /** Number of valid road pairs in `followingMapPath`. */
+  followingMapPointCount: number;
   /** Road shown, in metres, from half this window behind to half ahead. */
-  mapWindowM: number;
+  followingMapWindowM: number;
   /** The original SVG track path, used for its smooth developer geometry. */
-  mapTrackPath: string | null;
+  followingMapSvgPath: string | null;
   /** Player frame in the track drawing's coordinate space. */
-  mapPlayerX: number;
-  mapPlayerY: number;
-  mapForwardX: number;
-  mapForwardY: number;
-  mapRightX: number;
-  mapRightY: number;
-  mapUnitsPerMetre: number;
+  followingMapCameraPlayerX: number;
+  followingMapCameraPlayerY: number;
+  followingMapCameraForwardX: number;
+  followingMapCameraForwardY: number;
+  followingMapCameraRightX: number;
+  followingMapCameraRightY: number;
+  followingMapUnitsPerMetre: number;
 }
 
 export interface UseRadarOptions {
@@ -162,19 +162,19 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   const targetsRef =
     useRef<ReadonlyMap<number, RadarTargetState>>(EMPTY_TARGETS);
   const targetsKeyRef = useRef<string>('');
-  const mapWindowM = radarRange * 3;
+  const followingMapWindowM = radarRange * 3;
   const mapPointCapacity =
-    Number.isFinite(mapWindowM) && mapWindowM >= 0
-      ? Math.floor(mapWindowM / MAP_SAMPLE_M) + 1
+    Number.isFinite(followingMapWindowM) && followingMapWindowM >= 0
+      ? Math.floor(followingMapWindowM / MAP_SAMPLE_M) + 1
       : 0;
-  const mapBufferRef = useRef<Float64Array | null>(null);
+  const followingMapBufferRef = useRef<Float64Array | null>(null);
   if (
-    mapBufferRef.current === null ||
-    mapBufferRef.current.length < mapPointCapacity * 2
+    followingMapBufferRef.current === null ||
+    followingMapBufferRef.current.length < mapPointCapacity * 2
   ) {
-    mapBufferRef.current = new Float64Array(mapPointCapacity * 2);
+    followingMapBufferRef.current = new Float64Array(mapPointCapacity * 2);
   }
-  const mapBuffer = mapBufferRef.current;
+  const followingMapBuffer = followingMapBufferRef.current;
 
   const previousPositionsRef = useRef<{
     positions: readonly number[];
@@ -204,7 +204,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       carNumbers,
       paceCarIdx,
       previousTargets: targetsRef.current,
-      mapBuffer,
+      followingMapBuffer,
     });
     const previous = previousPositionsRef.current;
     if (
@@ -256,7 +256,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     fadeBandM,
     carNumbers,
     paceCarIdx,
-    mapBuffer,
+    followingMapBuffer,
     frameVersion,
   ]);
 
@@ -273,16 +273,16 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     isOnTrack,
     nearestGapM,
     trackLengthM,
-    mapPath: mapBuffer,
-    mapPointCount: computed.mapPointCount,
-    mapWindowM,
-    mapTrackPath: trackDrawing?.active?.inside ?? null,
-    mapPlayerX: computed.mapPlayerX,
-    mapPlayerY: computed.mapPlayerY,
-    mapForwardX: computed.mapForwardX,
-    mapForwardY: computed.mapForwardY,
-    mapRightX: computed.mapRightX,
-    mapRightY: computed.mapRightY,
-    mapUnitsPerMetre: computed.mapUnitsPerMetre,
+    followingMapPath: followingMapBuffer,
+    followingMapPointCount: computed.followingMapPointCount,
+    followingMapWindowM,
+    followingMapSvgPath: trackDrawing?.active?.inside ?? null,
+    followingMapCameraPlayerX: computed.followingMapCameraPlayerX,
+    followingMapCameraPlayerY: computed.followingMapCameraPlayerY,
+    followingMapCameraForwardX: computed.followingMapCameraForwardX,
+    followingMapCameraForwardY: computed.followingMapCameraForwardY,
+    followingMapCameraRightX: computed.followingMapCameraRightX,
+    followingMapCameraRightY: computed.followingMapCameraRightY,
+    followingMapUnitsPerMetre: computed.followingMapUnitsPerMetre,
   };
 };

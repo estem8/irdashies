@@ -138,25 +138,25 @@ export const Radar = () => {
         colorPlayer={settings.colorPlayer}
         bgOpacity={settings.background.opacity}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
-        showMap={settings.showTrackMap}
-        mapPath={state.mapPath}
-        mapPointCount={state.mapPointCount}
-        mapWindowM={state.mapWindowM}
-        mapBorderColor={settings.mapBorderColor}
-        mapBorderOpacity={settings.mapBorderOpacity}
-        mapFillColor={settings.mapFillColor}
-        mapFillOpacity={settings.mapFillOpacity}
+        showFollowingMap={settings.showTrackMap}
+        followingMapPath={state.followingMapPath}
+        followingMapPointCount={state.followingMapPointCount}
+        followingMapWindowM={state.followingMapWindowM}
+        followingMapBorderColor={settings.mapBorderColor}
+        followingMapBorderOpacity={settings.mapBorderOpacity}
+        followingMapFillColor={settings.mapFillColor}
+        followingMapFillOpacity={settings.mapFillOpacity}
         // Use the author's original SVG geometry as the map layer. The
         // display applies the corrected camera transform and clips it to the
         // radar viewport; trackPathPoints remains the source for car positions.
-        mapTrackPath={state.mapTrackPath}
-        mapPlayerX={state.mapPlayerX}
-        mapPlayerY={state.mapPlayerY}
-        mapForwardX={state.mapForwardX}
-        mapForwardY={state.mapForwardY}
-        mapRightX={state.mapRightX}
-        mapRightY={state.mapRightY}
-        mapUnitsPerMetre={state.mapUnitsPerMetre}
+        followingMapSvgPath={state.followingMapSvgPath}
+        followingMapCameraPlayerX={state.followingMapCameraPlayerX}
+        followingMapCameraPlayerY={state.followingMapCameraPlayerY}
+        followingMapCameraForwardX={state.followingMapCameraForwardX}
+        followingMapCameraForwardY={state.followingMapCameraForwardY}
+        followingMapCameraRightX={state.followingMapCameraRightX}
+        followingMapCameraRightY={state.followingMapCameraRightY}
+        followingMapUnitsPerMetre={state.followingMapUnitsPerMetre}
       />
     </div>
   );

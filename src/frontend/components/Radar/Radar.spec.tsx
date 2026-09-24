@@ -252,18 +252,18 @@ describe('Radar widget over a recorded multiclass session', () => {
     await waitForDisplay();
 
     const display = latest();
-    expect(display.showMap).toBe(true);
+    expect(display.showFollowingMap).toBe(true);
     expect(display).toMatchObject({
-      mapBorderColor: '#112233',
-      mapBorderOpacity: 85,
-      mapFillColor: '#abcdef',
-      mapFillOpacity: 35,
+      followingMapBorderColor: '#112233',
+      followingMapBorderOpacity: 85,
+      followingMapFillColor: '#abcdef',
+      followingMapFillOpacity: 35,
     });
-    expect(display.mapWindowM).toBe(75);
-    expect(display.mapPath).toBeInstanceOf(Float64Array);
-    expect(display.mapPointCount).toBeGreaterThanOrEqual(0);
-    expect(display.mapPointCount * 2).toBeLessThanOrEqual(
-      display.mapPath.length
+    expect(display.followingMapWindowM).toBe(75);
+    expect(display.followingMapPath).toBeInstanceOf(Float64Array);
+    expect(display.followingMapPointCount).toBeGreaterThanOrEqual(0);
+    expect(display.followingMapPointCount * 2).toBeLessThanOrEqual(
+      display.followingMapPath.length
     );
   });
 

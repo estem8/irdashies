@@ -209,16 +209,16 @@ const props: RadarDisplayProps = {
   colorPlayer: COLORS.player,
   bgOpacity: 30,
   trackLengthM: 5000,
-  showMap: false,
-  mapPath: new Float64Array([
+  showFollowingMap: false,
+  followingMapPath: new Float64Array([
     -45, 0, -30, 1, -15, 3, 0, 4, 15, 3, 30, 1, 45, 0,
   ]),
-  mapPointCount: 7,
-  mapWindowM: 90,
-  mapBorderColor: '#334155',
-  mapBorderOpacity: 80,
-  mapFillColor: '#64748b',
-  mapFillOpacity: 45,
+  followingMapPointCount: 7,
+  followingMapWindowM: 90,
+  followingMapBorderColor: '#334155',
+  followingMapBorderOpacity: 80,
+  followingMapFillColor: '#64748b',
+  followingMapFillOpacity: 45,
   nowSeconds: 0,
 };
 
@@ -311,7 +311,7 @@ describe('RadarDisplay', () => {
     render(
       <RadarDisplay
         {...props}
-        showMap
+        showFollowingMap
         blips={[blip({ carIdx: 1, alongM: 4, gapM: 4, rimSignal: 'both' })]}
       />
     );
@@ -321,7 +321,7 @@ describe('RadarDisplay', () => {
     expect(record.beziersPerPaint[paint]).toHaveLength(2);
     expect(record.lineTosPerPaint[paint]).toHaveLength(0);
     const [, , , , endX, endY] = record.beziersPerPaint[paint][0];
-    const scale = 148 / (props.mapWindowM / 2);
+    const scale = 148 / (props.followingMapWindowM / 2);
     const centre = 150;
     expect(endX).toBeCloseTo(centre + 3 * scale, 6);
     expect(endY).toBeGreaterThan(centre - 20 * scale);
@@ -329,11 +329,13 @@ describe('RadarDisplay', () => {
 
     // The border and surface are both configured and painted in that order.
     const configuredStrokes = record.strokesPerPaint[paint].filter((stroke) =>
-      [props.mapBorderColor, props.mapFillColor].includes(stroke)
+      [props.followingMapBorderColor, props.followingMapFillColor].includes(
+        stroke
+      )
     );
     expect(configuredStrokes).toEqual([
-      props.mapBorderColor,
-      props.mapFillColor,
+      props.followingMapBorderColor,
+      props.followingMapFillColor,
     ]);
     const configuredAlphas = record.strokeAlphasPerPaint[paint].filter(
       (alpha) => alpha === 0.8 || alpha === 0.45
@@ -359,7 +361,9 @@ describe('RadarDisplay', () => {
       blip({ carIdx: 1, alongM: 0.3, gapM: 0.3, rimSignal: 'both' }),
     ];
 
-    const view = render(<RadarDisplay {...props} showMap blips={level} />);
+    const view = render(
+      <RadarDisplay {...props} showFollowingMap blips={level} />
+    );
     deliverSize(300, 300);
     expect(record.vehiclesPerPaint.at(-1)).toBe(2);
 
@@ -371,7 +375,7 @@ describe('RadarDisplay', () => {
     const view = render(
       <RadarDisplay
         {...props}
-        showMap
+        showFollowingMap
         radarRange={20}
         blips={[blip({ carIdx: 1 })]}
       />

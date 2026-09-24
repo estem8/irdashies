@@ -16,7 +16,7 @@ import {
   compareDriverDrawOrder,
   type PositionedTrackDriver,
 } from './trackDrawingUtils';
-import { useProgressAnimation } from './useProgressAnimation';
+import { useTrackProgressAnimation } from './useTrackProgressAnimation';
 import {
   progressToTrackPoint,
   type TrackDrawing,
@@ -382,7 +382,7 @@ export const TrackCanvas = ({
   ]);
 
   // Dynamic layer — interpolates and paints imperatively between 25 Hz snapshots.
-  useProgressAnimation(drivers, (progressValues, count) => {
+  useTrackProgressAnimation(drivers, (progressValues, count) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx || !cacheCanvasRef.current) return;

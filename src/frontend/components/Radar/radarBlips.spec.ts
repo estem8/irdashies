@@ -76,7 +76,7 @@ const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
     ]),
     paceCarIdx: null,
     previousTargets: new Map<number, RadarTargetState>(),
-    mapBuffer: new Float64Array(2048),
+    followingMapBuffer: new Float64Array(2048),
   };
 
 const withTargets = (targets: [number, RadarTargetState][]) =>
@@ -293,19 +293,23 @@ describe('computeRadarBlips', () => {
 
   it('samples the road at the contract spacing across the full map window', () => {
     const radarRange = 16;
-    const mapBuffer = new Float64Array(128);
+    const followingMapBuffer = new Float64Array(128);
     const result = computeRadarBlips({
       ...baseInput,
       radarRange,
-      mapBuffer,
+      followingMapBuffer,
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(result.mapPointCount).toBe(49);
-    expect(mapBuffer[0]).toBe(-24);
-    expect(mapBuffer[(result.mapPointCount - 1) * 2]).toBe(24);
-    for (let i = 1; i < result.mapPointCount; i += 1) {
-      expect(mapBuffer[i * 2] - mapBuffer[(i - 1) * 2]).toBe(1);
+    expect(result.followingMapPointCount).toBe(49);
+    expect(followingMapBuffer[0]).toBe(-24);
+    expect(followingMapBuffer[(result.followingMapPointCount - 1) * 2]).toBe(
+      24
+    );
+    for (let i = 1; i < result.followingMapPointCount; i += 1) {
+      expect(followingMapBuffer[i * 2] - followingMapBuffer[(i - 1) * 2]).toBe(
+        1
+      );
     }
   });
 
@@ -316,59 +320,63 @@ describe('computeRadarBlips', () => {
     const curved = computeRadarBlips({
       ...baseInput,
       radarRange: 100,
-      mapBuffer: curvedBuffer,
+      followingMapBuffer: curvedBuffer,
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(curved.mapPointCount).toBe(301);
+    expect(curved.followingMapPointCount).toBe(301);
     expect(curvedBuffer[1]).toBeCloseTo(0, 6);
-    expect(curvedBuffer[(curved.mapPointCount - 1) * 2 + 1]).toBeCloseTo(50, 6);
+    expect(
+      curvedBuffer[(curved.followingMapPointCount - 1) * 2 + 1]
+    ).toBeCloseTo(50, 6);
 
     const straightBuffer = new Float64Array(128);
     const straight = computeRadarBlips({
       ...baseInput,
       radarRange: 8,
-      mapBuffer: straightBuffer,
+      followingMapBuffer: straightBuffer,
       ...positionsOf([pctOfArc(200)]),
     });
-    for (let i = 0; i < straight.mapPointCount; i += 1) {
+    for (let i = 0; i < straight.followingMapPointCount; i += 1) {
       expect(straightBuffer[i * 2 + 1]).toBeCloseTo(0, 6);
     }
   });
 
   it('leaves the map buffer untouched when there is no geometry', () => {
-    const mapBuffer = Float64Array.from([7, 11, 13]);
+    const followingMapBuffer = Float64Array.from([7, 11, 13]);
     const result = computeRadarBlips({
       ...baseInput,
       trackDrawing: undefined,
-      mapBuffer,
+      followingMapBuffer,
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(result.mapPointCount).toBe(0);
-    expect(Array.from(mapBuffer)).toEqual([7, 11, 13]);
+    expect(result.followingMapPointCount).toBe(0);
+    expect(Array.from(followingMapBuffer)).toEqual([7, 11, 13]);
   });
 
   it('writes deterministic road pairs in place for repeated calls', () => {
-    const mapBuffer = new Float64Array(512);
+    const followingMapBuffer = new Float64Array(512);
     const first = computeRadarBlips({
       ...baseInput,
-      mapBuffer,
+      followingMapBuffer,
       ...positionsOf([pctOfArc(300)]),
     });
     const firstValues = Array.from(
-      mapBuffer.subarray(0, first.mapPointCount * 2)
+      followingMapBuffer.subarray(0, first.followingMapPointCount * 2)
     );
     const second = computeRadarBlips({
       ...baseInput,
-      mapBuffer,
+      followingMapBuffer,
       ...positionsOf([pctOfArc(300)]),
     });
 
-    expect(second.mapPointCount).toBe(first.mapPointCount);
-    expect(Array.from(mapBuffer.subarray(0, second.mapPointCount * 2))).toEqual(
-      firstValues
-    );
+    expect(second.followingMapPointCount).toBe(first.followingMapPointCount);
+    expect(
+      Array.from(
+        followingMapBuffer.subarray(0, second.followingMapPointCount * 2)
+      )
+    ).toEqual(firstValues);
   });
 
   it('reports an unusable player position without emitting blips', () => {
