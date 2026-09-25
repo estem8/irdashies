@@ -112,12 +112,11 @@ export interface RadarBlipInput {
 
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 
-const NO_GEOMETRY: RadarBlipResult = {
-  hasGeometry: false,
-  playerOnRoad: false,
-  blips: [],
-  targets: EMPTY_TARGETS,
-  followingMapPointCount: 0,
+/**
+ * Camera fields for a result that draws nothing. The units are identity so a
+ * caller reading them without checking `hasGeometry` still gets finite values.
+ */
+const ZERO_CAMERA = {
   followingMapCameraPlayerX: 0,
   followingMapCameraPlayerY: 0,
   followingMapCameraForwardX: 1,
@@ -125,6 +124,25 @@ const NO_GEOMETRY: RadarBlipResult = {
   followingMapCameraRightX: 0,
   followingMapCameraRightY: 1,
   followingMapUnitsPerMetre: 1,
+};
+
+const NO_GEOMETRY: RadarBlipResult = {
+  hasGeometry: false,
+  playerOnRoad: false,
+  blips: [],
+  targets: EMPTY_TARGETS,
+  followingMapPointCount: 0,
+  ...ZERO_CAMERA,
+};
+
+/** Geometry exists, but the focus car is off the road: nothing to draw. */
+const NOT_ON_ROAD: RadarBlipResult = {
+  hasGeometry: true,
+  playerOnRoad: false,
+  blips: [],
+  targets: EMPTY_TARGETS,
+  followingMapPointCount: 0,
+  ...ZERO_CAMERA,
 };
 
 /** Metres between centreline samples in the following-car map. */
@@ -232,20 +250,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
   const playerPct = playerCarIdx === null ? undefined : positions[playerCarIdx];
   if (playerCarIdx === null || !onRoad(playerPct)) {
-    return {
-      hasGeometry: true,
-      playerOnRoad: false,
-      blips: [],
-      targets: EMPTY_TARGETS,
-      followingMapPointCount: 0,
-      followingMapCameraPlayerX: 0,
-      followingMapCameraPlayerY: 0,
-      followingMapCameraForwardX: 1,
-      followingMapCameraForwardY: 0,
-      followingMapCameraRightX: 0,
-      followingMapCameraRightY: 1,
-      followingMapUnitsPerMetre: 1,
-    };
+    return NOT_ON_ROAD;
   }
 
   const playerTangent = tangentAngleAt(
@@ -256,20 +261,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     direction
   );
   if (playerTangent === null) {
-    return {
-      hasGeometry: true,
-      playerOnRoad: false,
-      blips: [],
-      targets: EMPTY_TARGETS,
-      followingMapPointCount: 0,
-      followingMapCameraPlayerX: 0,
-      followingMapCameraPlayerY: 0,
-      followingMapCameraForwardX: 1,
-      followingMapCameraForwardY: 0,
-      followingMapCameraRightX: 0,
-      followingMapCameraRightY: 1,
-      followingMapUnitsPerMetre: 1,
-    };
+    return NOT_ON_ROAD;
   }
 
   const metresPerUnit = trackLengthM / totalLength;
