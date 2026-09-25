@@ -182,6 +182,26 @@ const NOT_ON_ROAD: RadarBlipResult = {
 const playerPoint = { x: 0, y: 0 };
 const carPoint = { x: 0, y: 0 };
 
+/**
+ * A frame that draws nothing, as a result built in the caller's own buffer.
+ *
+ * Both buffers are zeroed, not just the output one. Nothing this call reads
+ * `previousTargets`, and a car that left while the radar was drawing nothing
+ * would otherwise still be holding a side and a direction in whichever buffer
+ * the next frame that does draw something reads from.
+ *
+ * `template` supplies the camera fields; its `targets` is replaced.
+ */
+const nothingToDraw = (
+  template: RadarBlipResult,
+  previousTargets: RadarTargetState,
+  nextTargets: RadarTargetState
+): RadarBlipResult => {
+  previousTargets.side.fill(0);
+  previousTargets.alongSign.fill(0);
+  return { ...template, targets: nextTargets };
+};
+
 /** Metres between centreline samples in the following-car map. */
 export const MAP_SAMPLE_M = 1;
 
@@ -266,6 +286,14 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     nextTargets,
     followingMapBuffer,
   } = input;
+
+  // The output buffer must hold this frame's state and nothing else. A car
+  // that has left the radar has to lose its entry: with a map that happened for
+  // free on every frame, and here it is the difference between a car that comes
+  // back still latched to the side it left on and one that adopts where it
+  // actually is now.
+  nextTargets.side.fill(0);
+  nextTargets.alongSign.fill(0);
   const safeRadarRange = Number.isFinite(radarRange)
     ? Math.max(0, Math.min(radarRange, MAX_RADAR_RANGE_M))
     : 0;
@@ -283,12 +311,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     trackLengthM <= 0 ||
     trackPathPoints.length < 3
   ) {
-    return NO_GEOMETRY;
+    return nothingToDraw(NO_GEOMETRY, previousTargets, nextTargets);
   }
 
   const playerPct = playerCarIdx === null ? undefined : positions[playerCarIdx];
   if (playerCarIdx === null || !onRoad(playerPct)) {
-    return NOT_ON_ROAD;
+    return nothingToDraw(NOT_ON_ROAD, previousTargets, nextTargets);
   }
 
   const playerTangent = tangentAngleAt(
@@ -299,7 +327,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     direction
   );
   if (playerTangent === null) {
-    return NOT_ON_ROAD;
+    return nothingToDraw(NOT_ON_ROAD, previousTargets, nextTargets);
   }
 
   const metresPerUnit = trackLengthM / totalLength;
@@ -426,8 +454,8 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   //
   // The sides go straight into the caller's buffer, which this frame's state
   // is built in: one array serves as both the result and the record for the
-  // next frame, so no side map is allocated at all.
-  nextTargets.side.fill(0);
+  // next frame, so no side map is allocated at all. The buffer was zeroed at
+  // the top of the call, so only the cars given a side appear in it.
   assignOverlapSides({
     blips,
     overlap,

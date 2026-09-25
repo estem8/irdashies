@@ -4,6 +4,7 @@ import {
   blipLabel,
   computeRadarBlips,
   emptyTargetState,
+  type RadarBlip,
   type RadarBlipInput,
   type RadarTargetState,
 } from './radarBlips';
@@ -656,6 +657,96 @@ describe('computeRadarBlips', () => {
     expect(signs[3]).toBe(-1);
     expect(signs[7]).toBe(1);
     expect(signs).toEqual([-1, -1, -1, -1, -1, 1, 1, 1]);
+  });
+
+  it('drops the drawn direction of a car that left the radar', () => {
+    // Half a metre is inside LONGITUDINAL_LATCH_M, so a stale direction from
+    // when the car was behind would drag it back behind as it comes past. The
+    // gap has to be long enough to cycle both alternating buffers: with one
+    // buffer's entry never rewritten while the car is away, the sign survives
+    // until that buffer is read as the previous frame's state.
+    const behindThenAwayThenAhead = [-0.5, -0.5, 100, 100, 0.5];
+    let buffers = targetBuffers();
+    let last: RadarBlip | undefined;
+    for (const gapM of behindThenAwayThenAhead) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gapM)]),
+      });
+      buffers = [buffers[1], buffers[0]];
+      last = result.blips[0];
+    }
+
+    if (!last) throw new Error('the rival never came back');
+    expect(last.alongM).toBeCloseTo(0.5, 6);
+  });
+
+  it('drops a held side across a frame that draws nothing', () => {
+    // The player goes off the road for one frame and comes back with the rival
+    // still inside the retain window. Nothing was drawn in between, so the
+    // rival has no side any more and must sit on the road projection rather
+    // than keep the one it had before the gap.
+    let buffers = targetBuffers();
+    interface GapFrame {
+      positions: { carIdxLapDistPct: number[]; carIdxOnPitRoad: boolean[] };
+      overlap: RadarOverlap;
+    }
+    const frames: GapFrame[] = [
+      {
+        positions: positionsOf([pctOfArc(300), pctOfArc(300.2)]),
+        overlap: { left: 1, right: 0 },
+      },
+      {
+        // The player is off the road, so there is nothing to draw at all.
+        positions: positionsOf([-1, pctOfArc(300.2)]),
+        overlap: { left: 1, right: 0 },
+      },
+      {
+        // Back on the road, the rival 10 m ahead: inside the 13.5 m retain
+        // window, so a carried side would still be applied to it.
+        positions: positionsOf([pctOfArc(300), pctOfArc(310)]),
+        overlap: NO_OVERLAP,
+      },
+    ];
+
+    let last: RadarBlip | undefined;
+    let afterGap: readonly RadarTargetState[] = [];
+    for (const [index, frame] of frames.entries()) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
+        carNumbers: new Map([[1, '24']]),
+        ...frame.positions,
+        overlap: frame.overlap,
+      });
+      buffers = [buffers[1], buffers[0]];
+      last = result.blips[0];
+      // Snapshot the contents, not the pair: the next frame writes through it.
+      if (index === 1) {
+        afterGap = buffers.map((buffer) => ({
+          side: new Int8Array(buffer.side),
+          alongSign: new Int8Array(buffer.alongSign),
+        }));
+      }
+    }
+
+    if (!last) throw new Error('the rival never appeared');
+    expect(last.side).toBeNull();
+    expect(last.lateralM).toBeCloseTo(0, 6);
+
+    // Straight after the frame that drew nothing, no car may still be holding
+    // anything — not the buffer that was written and not the one that was only
+    // read. The alternation means the next drawn frame reads whichever buffer
+    // the gap wrote, so clearing only the output would leave the caller's other
+    // buffer holding state from before the radar drew anything at all.
+    for (const buffer of afterGap) {
+      expect([...buffer.side].some((side) => side !== 0)).toBe(false);
+      expect([...buffer.alongSign].some((sign) => sign !== 0)).toBe(false);
+    }
   });
 
   it('keeps the geometric sign for a car entering with no history', () => {
