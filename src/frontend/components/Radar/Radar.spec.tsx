@@ -196,6 +196,64 @@ const fixtureWithRadarOverlap = (
   };
 };
 
+/**
+ * Two frames of the same session: a rival 0.5 m behind the player in a full
+ * field, then the same rival 0.5 m ahead in a field one car shorter. The
+ * shorter car array is what changes the field size, and the rival's drawn
+ * direction is what shows whether the previous frame's per-car state was
+ * carried across it.
+ */
+const fixtureAcrossAFieldChange = (): ReplayFixture => {
+  const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+  const rivalCarIdx = fixture.drivers
+    .map((driver) => Number(driver.CarIdx))
+    .find((carIdx) => carIdx !== playerCarIdx);
+  if (!Number.isInteger(playerCarIdx) || rivalCarIdx === undefined) {
+    throw new Error('fixture has no player and rival');
+  }
+  const positions = finalFrame().CarIdxLapDistPct as number[];
+  const playerPct = positions[playerCarIdx];
+  const rivalPct = positions[rivalCarIdx];
+  if (typeof playerPct !== 'number' || typeof rivalPct !== 'number') {
+    throw new Error('the player or the rival has no position');
+  }
+  const offsetM = 0.5 / TRACK_LENGTH_M;
+  return {
+    ...fixture,
+    frames: [
+      {
+        ...finalFrame(),
+        Speed: 20,
+        CarLeftRight: CarLeftRight.Clear,
+        CarIdxLapDistPct: positions.map((_, carIdx) =>
+          carIdx === playerCarIdx
+            ? playerPct
+            : carIdx === rivalCarIdx
+              ? playerPct - offsetM
+              : -1
+        ),
+      },
+      {
+        ...finalFrame(),
+        Speed: 20,
+        CarLeftRight: CarLeftRight.Clear,
+        // One car shorter than the frame before, with the rival now ahead. The
+        // shorter field still has to hold both cars, or the player would be
+        // off the road and the radar would blank for a different reason.
+        CarIdxLapDistPct: positions
+          .slice(0, Math.max(playerCarIdx, rivalCarIdx) + 1)
+          .map((_, carIdx) =>
+            carIdx === playerCarIdx
+              ? playerPct
+              : carIdx === rivalCarIdx
+                ? playerPct + offsetM
+                : -1
+          ),
+      },
+    ],
+  };
+};
+
 describe('Radar widget over a recorded multiclass session', () => {
   beforeEach(() => {
     rendered.length = 0;
@@ -275,6 +333,45 @@ describe('Radar widget over a recorded multiclass session', () => {
     expect(
       latest().blips.find((blip) => blip.carIdx === playerCarIdx)
     ).toMatchObject({ side: -1, rimSignal: 'left' });
+  });
+
+  it('does not carry a car drawn behind into a session with a smaller field', async () => {
+    const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+    const rivalCarIdx = fixture.drivers
+      .map((driver) => Number(driver.CarIdx))
+      .find((carIdx) => carIdx !== playerCarIdx);
+    if (rivalCarIdx === undefined) throw new Error('fixture has no rival');
+    const harness = mountFixture(fixtureAcrossAFieldChange(), {
+      dashboard: radarDashboard({ radarRange: 25, fadeSeconds: 0 }),
+      // Stop on the first frame so the transition happens while the widget is
+      // mounted, with the first frame's state actually carried into it.
+      warmFrames: 1,
+    });
+    // The processors fill one snapshot object in place and the harness installs
+    // its bridge when it mounts, so this has to wrap that bridge rather than
+    // precede it. Over IPC every frame arrives as a fresh payload, which is
+    // what the widget's selector equality is written against; without a copy,
+    // the seek hands the hook the very array it already holds and no frame is
+    // ever seen as a change.
+    cloneRadarDeliveriesPerFrame();
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+    expect(
+      latest().blips.find((b) => b.carIdx === rivalCarIdx)?.alongM
+    ).toBeCloseTo(-0.5, 3);
+
+    act(() => {
+      harness.seekTo(1);
+    });
+
+    // The rival is now ahead of the player, in a field one car shorter. Car
+    // indices are re-used between sessions, so the per-car state has to be
+    // dropped when the field size changes: kept, the latch would hold a car
+    // that is now in front on the side it was last drawn on, and the blip would
+    // read -0.5 m instead of +0.5 m.
+    const blip = latest().blips.find((b) => b.carIdx === rivalCarIdx);
+    if (!blip) throw new Error('the rival left the radar');
+    expect(blip.alongM).toBeCloseTo(0.5, 3);
   });
 
   it('uses class and badge colours when selected', async () => {

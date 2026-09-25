@@ -21,12 +21,14 @@
  * keeps the young generation large enough that this is usually not a fight.
  */
 
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { performance } from 'node:perf_hooks';
+import { performance, PerformanceObserver } from 'node:perf_hooks';
 import tracks from '../../src/frontend/assets/data/tracks.json';
 import {
   computeRadarBlips,
+  emptyTargetState,
   MAP_SAMPLE_M,
   type RadarBlipResult,
   type RadarTargetState,
@@ -60,6 +62,8 @@ const WARMUP_FRAMES = 2000;
 const BATCH_FRAMES = 1000;
 /** Clean batches to keep per density; the fastest and smallest of them wins. */
 const KEEP_BATCHES = 5;
+/** Give up rather than spin forever if the collector will not leave it alone. */
+const MAX_DISCARDED_BATCHES = 40;
 
 const RADAR_RANGE_M = 15;
 const VEHICLE_WIDTH_M = 1.9;
@@ -224,7 +228,10 @@ const runDensity = (
   const followingMapBuffer = new Float64Array(
     RADAR_RANGE_M * 3 * MAP_SAMPLE_M * 2 + 2
   );
-  let targets: ReadonlyMap<number, RadarTargetState> = new Map();
+  let buffers: [RadarTargetState, RadarTargetState] = [
+    emptyTargetState(field.positions.length),
+    emptyTargetState(field.positions.length),
+  ];
   let blipCount = 0;
   let frames = 0;
 
@@ -250,10 +257,11 @@ const runDensity = (
       fadeBandM: 3,
       carNumbers: EMPTY_CAR_NUMBERS,
       paceCarIdx: null,
-      previousTargets: targets,
+      previousTargets: buffers[0],
+      nextTargets: buffers[1],
       followingMapBuffer,
     });
-    targets = result.targets;
+    buffers = [buffers[1], buffers[0]];
     blipCount += result.blips.length;
     frames += 1;
     retained?.push(result);
@@ -262,7 +270,10 @@ const runDensity = (
   return { frame, blips: () => blipCount / frames, field };
 };
 
-const measure = (carsInRange: number): Measurement => {
+/** Yields long enough for a performance observer entry to be delivered. */
+const settle = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+const measure = async (carsInRange: number): Promise<Measurement> => {
   const fixture = readFixture();
   const drawing = trackDrawings[fixture.weekend.TrackID];
   if (!drawing) {
@@ -280,12 +291,23 @@ const measure = (carsInRange: number): Measurement => {
 
   // Each batch keeps every result it produced, so the collector has nothing to
   // free and the heap delta is the bytes allocated rather than the bytes that
-  // happened to survive. The minimum over batches is reported: retention also
-  // means the heap grows through the batch, and the smallest growth is the one
-  // where the machine interfered least.
+  // happened to survive. Retention alone is not enough: a mark-compact still
+  // compacts and can shrink the heap, which lowers `heapUsed` without freeing
+  // anything the batch allocated. So a batch that saw a collection is thrown
+  // away as well, and the entries are matched by timestamp — the observer
+  // delivers them late, so counting them would charge a batch for the forced
+  // collection that preceded it.
+  const collected: PerformanceEntry[] = [];
+  const observer = new PerformanceObserver((list) => {
+    collected.push(...list.getEntries());
+  });
+  observer.observe({ entryTypes: ['gc'] });
+
   let bestNanoseconds = Number.POSITIVE_INFINITY;
   let bestBytes = Number.POSITIVE_INFINITY;
-  for (let batch = 0; batch < KEEP_BATCHES; batch += 1) {
+  let kept = 0;
+  let discarded = 0;
+  while (kept < KEEP_BATCHES && discarded < MAX_DISCARDED_BATCHES) {
     const retained: RadarBlipResult[] = [];
     forceGc();
     const heapBefore = process.memoryUsage().heapUsed;
@@ -295,10 +317,21 @@ const measure = (carsInRange: number): Measurement => {
     }
     const elapsedMs = performance.now() - startedAt;
     const heapAfter = process.memoryUsage().heapUsed;
+    await settle();
 
     if (retained.length !== BATCH_FRAMES) {
       throw new Error('the benchmark dropped a frame it meant to measure');
     }
+    const collectedInside = collected.some(
+      (entry) =>
+        entry.startTime >= startedAt && entry.startTime <= startedAt + elapsedMs
+    );
+    collected.length = 0;
+    if (collectedInside) {
+      discarded += 1;
+      continue;
+    }
+    kept += 1;
     bestNanoseconds = Math.min(
       bestNanoseconds,
       (elapsedMs * 1e6) / BATCH_FRAMES
@@ -308,6 +341,14 @@ const measure = (carsInRange: number): Measurement => {
       Math.max(0, heapAfter - heapBefore) / BATCH_FRAMES
     );
     retained.length = 0;
+  }
+  observer.disconnect();
+
+  if (kept === 0) {
+    throw new Error(
+      `no batch of ${BATCH_FRAMES} calls ran without a collection; ` +
+        'lower BATCH_FRAMES or raise --min-semi-space-size'
+    );
   }
 
   const meanBlips = run.blips();
@@ -331,16 +372,45 @@ const format = (value: number, digits = 1) =>
 const size = (bytes: number) =>
   bytes < 1024 ? `${format(bytes, 0)} B` : `${format(bytes / 1024, 2)} KiB`;
 
-const main = () => {
+const DENSITY_SWEEP = [0, 5, 10, 15, 20, 25, 30];
+
+/**
+ * Measures one density in a process of its own. Measuring several in sequence
+ * in one process does not work: the heap each density leaves behind shifts when
+ * the next one compacts, and the figure for the densest field came out below
+ * the figure for a sparser one, which cannot be true. A fresh process per
+ * density is what makes the numbers comparable.
+ */
+const measureInChildProcess = (carsInRange: number): Measurement => {
+  const output = execFileSync(
+    process.execPath,
+    [
+      ...process.execArgv,
+      import.meta.filename,
+      '--cars-in-range',
+      String(carsInRange),
+      '--json',
+    ],
+    { encoding: 'utf8' }
+  );
+  const measurement = (JSON.parse(output) as Measurement[])[0];
+  if (!measurement) {
+    throw new Error(`the ${carsInRange}-car run reported no measurement`);
+  }
+  return measurement;
+};
+
+const main = async () => {
   const args = process.argv.slice(2);
   const single = args.indexOf('--cars-in-range') !== -1;
-  const density = single
-    ? [numberFlag(args, '--cars-in-range', 15)]
-    : [0, 5, 15, 30];
 
-  const results = [];
-  for (const carsInRange of density) {
-    results.push(measure(carsInRange));
+  const results: Measurement[] = [];
+  if (single) {
+    results.push(await measure(numberFlag(args, '--cars-in-range', 15)));
+  } else {
+    for (const carsInRange of DENSITY_SWEEP) {
+      results.push(measureInChildProcess(carsInRange));
+    }
   }
 
   if (args.includes('--json')) {
@@ -373,9 +443,7 @@ const main = () => {
   );
 };
 
-try {
-  main();
-} catch (error) {
+main().catch((error: unknown) => {
   process.stderr.write(`${error instanceof Error ? error.message : error}\n`);
   process.exitCode = 1;
-}
+});

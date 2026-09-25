@@ -44,17 +44,33 @@ export interface RadarBlip {
   fade: number;
 }
 
-/** What the widget must carry from one frame to the next, per car. */
+/**
+ * What the widget must carry from one frame to the next, per car, as two
+ * arrays indexed by car index. Car indices are dense and small, so this is
+ * the shape the data already has; a map keyed by the same indices allocated a
+ * hash table and an object per car on every snapshot. 0 is "none" in both.
+ *
+ * The caller owns the storage, keeps two sets and alternates between them, and
+ * drops both when the session, track or field size changes: car indices are
+ * re-used between sessions, so carried-over state would belong to other cars.
+ */
 export interface RadarTargetState {
-  side: OverlapSide | null;
+  /** Which side the car was last drawn on: -1 its left, 1 its right, 0 none. */
+  side: Int8Array;
   /**
-   * The direction this car was last drawn in (-1 behind, 1 ahead, 0 none yet).
-   * A car running abreast oscillates around the player's lap fraction, so the
+   * The direction the car was last drawn in: -1 behind, 1 ahead, 0 never drawn.
+   * A car running abreast oscillates about the player's lap fraction, so the
    * sign of its measured offset hops between frames; the radar holds the side
    * it first drew the car on instead of letting it flicker.
    */
-  alongSign: -1 | 0 | 1;
+  alongSign: Int8Array;
 }
+
+/** A zeroed target state for a field of `carCount` cars. */
+export const emptyTargetState = (carCount: number): RadarTargetState => ({
+  side: new Int8Array(carCount),
+  alongSign: new Int8Array(carCount),
+});
 
 export interface RadarBlipResult {
   /**
@@ -66,8 +82,11 @@ export interface RadarBlipResult {
   /** The focus car has a usable position; false blanks the radar. */
   playerOnRoad: boolean;
   blips: RadarBlip[];
-  /** State to hand back in as `previousTargets` next frame. */
-  targets: ReadonlyMap<number, RadarTargetState>;
+  /**
+   * This frame's state, to alternate with `previousTargets` next frame. This
+   * is the buffer the caller passed as `nextTargets`, filled in place.
+   */
+  targets: RadarTargetState;
   /** Number of valid `(alongM, lateralM)` pairs written to the map buffer. */
   followingMapPointCount: number;
   /** Player frame in the track drawing space, for the original SVG path. */
@@ -104,13 +123,22 @@ export interface RadarBlipInput {
    * driver is flagged CarIsPaceCar.
    */
   paceCarIdx: number | null;
-  /** State carried over from the previous frame; the caller owns it. */
-  previousTargets: ReadonlyMap<number, RadarTargetState>;
+  /**
+   * State carried over from the previous frame; the caller owns it and
+   * alternates it with `nextTargets`.
+   */
+  previousTargets: RadarTargetState;
+  /**
+   * Caller-owned storage this frame's state is written into. It is cleared
+   * here, so it must not be the same object as `previousTargets`, and it must
+   * be at least as long as `carIdxLapDistPct`.
+   */
+  nextTargets: RadarTargetState;
   /** Caller-owned storage for the road path's `(alongM, lateralM)` pairs. */
   followingMapBuffer: Float64Array;
 }
 
-const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
+const EMPTY_TARGETS: RadarTargetState = emptyTargetState(0);
 
 /**
  * Camera fields for a result that draws nothing. The units are identity so a
@@ -180,7 +208,7 @@ export const LONGITUDINAL_LATCH_M = 1;
  */
 export const latchAlongSide = (
   alongM: number,
-  previousSign: -1 | 0 | 1,
+  previousSign: number,
   latchM: number
 ): number =>
   previousSign !== 0 &&
@@ -235,6 +263,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     paceCarIdx,
     fadeBandM,
     previousTargets,
+    nextTargets,
     followingMapBuffer,
   } = input;
   const safeRadarRange = Number.isFinite(radarRange)
@@ -337,7 +366,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     // side it was drawn on while the offset is inside the latch. The range
     // test deliberately ran on the raw value, so a latched car near the edge
     // is not dropped.
-    const previousSign = previousTargets.get(carIdx)?.alongSign ?? 0;
+    const previousSign = previousTargets.alongSign[carIdx];
     const alongM = latchAlongSide(
       rawAlongM,
       previousSign,
@@ -394,16 +423,17 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   // centreline — the SDK publishes no lateral offset — so without this it would
   // be drawn on top of the player's rectangle. The sim's own side verdict puts
   // it to one side instead.
-  const previousSides = new Map<number, OverlapSide>();
-  for (const blip of blips) {
-    const held = previousTargets.get(blip.carIdx)?.side;
-    if (held != null) previousSides.set(blip.carIdx, held);
-  }
-  const sides = assignOverlapSides({
+  //
+  // The sides go straight into the caller's buffer, which this frame's state
+  // is built in: one array serves as both the result and the record for the
+  // next frame, so no side map is allocated at all.
+  nextTargets.side.fill(0);
+  assignOverlapSides({
     blips,
     overlap,
     vehicleLength,
-    previous: previousSides,
+    previousSides: previousTargets.side,
+    sides: nextTargets.side,
   });
 
   // The offset is full while the verdict covers the car, so a genuine overlap
@@ -413,10 +443,10 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const retain = retainSideWindowM(vehicleLength);
   const fadeSpan = Math.max(1e-6, retain - abeam);
 
-  const targets = new Map<number, RadarTargetState>();
   const closeM = Math.max(1, vehicleLength);
   for (const blip of blips) {
-    const side = sides.get(blip.carIdx) ?? null;
+    const sideValue = nextTargets.side[blip.carIdx];
+    const side = sideValue === 0 ? null : (sideValue as OverlapSide);
     blip.side = side;
     if (side !== null) {
       const closeness =
@@ -431,18 +461,15 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
 
     // A car with no history adopts its geometric sign, so a car entering the
     // range is unaffected by the latch until it has been drawn once.
-    targets.set(blip.carIdx, {
-      side,
-      alongSign: (Math.sign(blip.alongM) ||
-        (previousTargets.get(blip.carIdx)?.alongSign ?? 0)) as -1 | 0 | 1,
-    });
+    nextTargets.alongSign[blip.carIdx] =
+      Math.sign(blip.alongM) || previousTargets.alongSign[blip.carIdx];
   }
 
   return {
     hasGeometry: true,
     playerOnRoad: true,
     blips,
-    targets,
+    targets: nextTargets,
     followingMapPointCount,
     followingMapCameraPlayerX: playerPoint.x,
     followingMapCameraPlayerY: playerPoint.y,

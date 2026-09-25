@@ -262,6 +262,67 @@ stutter. Do not compare its FPS directly with the replay baseline.
 | FPS is stable but 50 ms renderer frames rise       | renderer main-thread stalls or GC                                   |
 | Renderer timing is clean but visible hitch remains | compositor/GPU present trace with PresentMon/ETW                    |
 
+## Radar geometry microbenchmark
+
+`npm run perf:radar-geometry` is a separate, much narrower measurement than
+the runs above. It replays the recorded road america field at the 25 Hz rate
+`RadarProcessor` publishes and reports duration and bytes allocated per call
+to `computeRadarBlips`, swept over how many cars are inside the range.
+
+Density is swept rather than assumed. A full grid spread over a 6.4 km lap
+leaves a 15 m radar looking at almost nothing, so the bunched, safety-car and
+race-start traffic that actually allocates is a different regime again. The
+figure to watch is the per-blip slope, not any single row.
+
+Two things about the method, because without them the numbers are not
+comparable:
+
+- Every result a batch produces is retained for the batch's duration, so the
+  collector has nothing to free and the heap delta is the bytes allocated
+  rather than the bytes that survived. A batch that still saw a collection is
+  discarded.
+- Each density runs in a process of its own. Measuring several densities in one
+  process does not work: the heap the previous density left behind shifts when
+  the next one compacts, and the figure for the densest field comes out below
+  the figure for a sparser one, which cannot be true.
+
+### Result of the 2026-09-25 cleanup
+
+Bytes allocated per call, before and after the per-snapshot cleanup, each
+measured in its own process:
+
+| cars in range | blips | before       | after | change |
+| ------------- | ----- | ------------ | ----- | ------ |
+| 0             | 0     | 2.73         | 1.82  | -33%   |
+| 5             | 4     | 5.15         | 3.93  | -24%   |
+| 10            | 9     | 7.94         | 5.48  | -31%   |
+| 15            | 14    | 9.90         | 7.02  | -29%   |
+| 20            | 19    | 13.17        | 8.95  | -32%   |
+| 25            | 24    | 15.18        | 10.55 | -31%   |
+| 30            | 29    | not reliable | 12.11 | -      |
+
+At the published rate, with 24 cars in range, that is roughly 379 KB/s of
+garbage down to roughly 264 KB/s.
+
+The 29-blip row has no trustworthy "before". The old code allocated enough at
+that density for a mark-compact to land mid-batch, and the resulting figure was
+bimodal across attempts — 8.71, 8.75, 8.76, 9.52 and 9.60 KiB on most runs but
+18.28 KiB when that density ran alone, and it sat below the 24-blip row in
+every low reading. The after figure is stable at 12.11 KiB across every run and
+is linear in blip count, so the row is reported as measured on the new code
+only. If a future change needs a before number at that density, raise
+`BATCH_FRAMES`' headroom further rather than trusting a single reading.
+
+### What is left, and why
+
+The per-blip slope fell from about 0.50 KiB to about 0.32 KiB per car, and the
+remaining cost is the widget's own output: the blip array and one object per
+car in range. Neither is reused. The blips are handed to the display and
+interpolated on the animation frame loop, so a buffer reused across frames
+would be read while the next frame overwrote it. The fixed per-call cost that
+is left, about 1.8 KiB with an empty radar, is the result object and the
+projection work itself.
+
 ## Architectural decision rule
 
 Do not begin the worker-thread SDK loop, channel bus, binary IPC, or native
