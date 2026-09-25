@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDashboard, useSessionVisibility } from '@irdashies/context';
 import { RadarDisplay } from './components/RadarDisplay';
 import { useRadar } from './hooks/useRadar';
@@ -64,6 +64,42 @@ const DEMO_BLIPS: RadarBlip[] = [
 ];
 /** Metres; the demo blips are laid out against a 5.8 km lap. */
 const DEMO_TRACK_LENGTH_M = 5800;
+const DEMO_CLASS_COLORS = ['#ffda59', '#33ceff', '#ef4444', '#06b6d4'];
+const DEMO_BADGE_COLORS = ['#b91c1c', '#15803d', '#1d4ed8', '#a16207'];
+
+const useDemoBlips = (
+  mode: 'class' | 'badge' | 'custom',
+  enabled: boolean
+): RadarBlip[] => {
+  const [phase, setPhase] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const timer = window.setInterval(
+      () => setPhase((current) => (current + 0.04) % (Math.PI * 2)),
+      50
+    );
+    return () => window.clearInterval(timer);
+  }, [enabled]);
+
+  return useMemo(
+    () =>
+      DEMO_BLIPS.map((blip, index) => {
+        const alongM = blip.alongM + Math.sin(phase + index * 1.7) * 1.2;
+        return {
+          ...blip,
+          alongM,
+          gapM: Math.abs(alongM),
+          color:
+            mode === 'class'
+              ? DEMO_CLASS_COLORS[index % DEMO_CLASS_COLORS.length]
+              : mode === 'badge'
+                ? DEMO_BADGE_COLORS[index % DEMO_BADGE_COLORS.length]
+                : null,
+        };
+      }),
+    [mode, phase]
+  );
+};
 
 export const Radar = () => {
   const settings = useRadarSettings();
@@ -77,6 +113,7 @@ export const Radar = () => {
     colorRival: settings.colorRival,
   });
   const { isDemoMode } = useDashboard();
+  const demoBlips = useDemoBlips(settings.rivalColorMode, isDemoMode);
   const sessionVisible = useSessionVisibility(settings.sessionVisibility);
 
   // Equality with the radar range is useless here: the car at the clipping
@@ -128,7 +165,7 @@ export const Radar = () => {
   return (
     <div className="h-full w-full" style={{ opacity: fade }}>
       <RadarDisplay
-        blips={isDemoMode ? DEMO_BLIPS : state.blips}
+        blips={isDemoMode ? demoBlips : state.blips}
         radarRange={settings.radarRange}
         vehicleWidth={settings.vehicleWidth}
         vehicleLength={settings.vehicleLength}
@@ -145,9 +182,6 @@ export const Radar = () => {
         followingMapBorderOpacity={settings.mapBorderOpacity}
         followingMapFillColor={settings.mapFillColor}
         followingMapFillOpacity={settings.mapFillOpacity}
-        // Use the author's original SVG geometry as the map layer. The
-        // display applies the corrected camera transform and clips it to the
-        // radar viewport; trackPathPoints remains the source for car positions.
         followingMapSvgPath={state.followingMapSvgPath}
         followingMapCameraPlayerX={state.followingMapCameraPlayerX}
         followingMapCameraPlayerY={state.followingMapCameraPlayerY}
