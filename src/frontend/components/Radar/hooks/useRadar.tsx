@@ -21,6 +21,7 @@ import {
 import { MAX_RADAR_RANGE_M } from '../radarFade';
 import {
   computeRadarBlips,
+  emptyTargetState,
   MAP_SAMPLE_M,
   type RadarBlip,
   type RadarTargetState,
@@ -81,7 +82,11 @@ type RadarInput = readonly [
 ];
 
 const EMPTY_INPUT: RadarInput = [null, [], [], false, 0];
-const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
+/** Placeholder for the first render, before the field size is known. */
+const EMPTY_TARGETS: [RadarTargetState, RadarTargetState] = [
+  emptyTargetState(0),
+  emptyTargetState(0),
+];
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 const EMPTY_COLORS: ReadonlyMap<number, string> = new Map();
 
@@ -236,8 +241,13 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     : 0;
   const followingMapWindowM = safeRadarRange * 3;
   const mapPointCapacity = Math.floor(followingMapWindowM / MAP_SAMPLE_M) + 1;
-  const targetsRef =
-    useRef<ReadonlyMap<number, RadarTargetState>>(EMPTY_TARGETS);
+  // Two sets, alternated each frame: this frame's state is written into the
+  // one the previous frame was not read from, so neither read and write ever
+  // touch the same buffer. Both are sized to the field and dropped when the
+  // session, track or field size changes, because car indices are re-used
+  // between sessions and carried-over state would belong to other cars.
+  const targetBuffersRef =
+    useRef<[RadarTargetState, RadarTargetState]>(EMPTY_TARGETS);
   const targetsKeyRef = useRef<string>('');
   const followingMapBufferRef = useRef<Float64Array | null>(null);
   if (
@@ -247,13 +257,23 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     followingMapBufferRef.current = new Float64Array(mapPointCapacity * 2);
   }
   const followingMapBuffer = followingMapBufferRef.current;
-
   const computed = useMemo(() => {
+    // Car indices are re-used between sessions, so the buffers are dropped
+    // whenever the session, track or field size changes rather than carrying
+    // state forward that would now belong to different cars. This is the same
+    // guarded sync the map this replaced used.
     const targetsKey = `${sessionKey}:${trackId}:${positions.length}`;
     if (targetsKey !== targetsKeyRef.current) {
       targetsKeyRef.current = targetsKey;
-      targetsRef.current = EMPTY_TARGETS;
+      targetBuffersRef.current = [
+        emptyTargetState(positions.length),
+        emptyTargetState(positions.length),
+      ];
     }
+    // Read through the ref rather than closing over the pair: the pair is
+    // swapped at the end of every run, and a captured one would hand the next
+    // frame the buffer it just wrote instead of the one it should read.
+    const buffers = targetBuffersRef.current;
     const result = computeRadarBlips({
       carIdxLapDistPct: positions,
       carIdxOnPitRoad: onPitRoad,
@@ -269,10 +289,12 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       carNumbers,
       carColors,
       paceCarIdx,
-      previousTargets: targetsRef.current,
+      previousTargets: buffers[0],
+      nextTargets: buffers[1],
       followingMapBuffer,
     });
-    targetsRef.current = result.targets;
+    // Next frame reads what this one wrote, and writes the other buffer.
+    targetBuffersRef.current = [buffers[1], buffers[0]];
     if (isGrid) {
       // These blips are freshly owned by this calculation; clear only the
       // display signals in place instead of cloning every blip at 25 Hz.

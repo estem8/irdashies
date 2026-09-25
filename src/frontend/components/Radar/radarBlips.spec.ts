@@ -3,6 +3,8 @@ import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
 import {
   blipLabel,
   computeRadarBlips,
+  emptyTargetState,
+  type RadarBlip,
   type RadarBlipInput,
   type RadarTargetState,
 } from './radarBlips';
@@ -75,16 +77,25 @@ const baseInput: Omit<RadarBlipInput, 'carIdxLapDistPct' | 'carIdxOnPitRoad'> =
       [2, '7'],
     ]),
     paceCarIdx: null,
-    previousTargets: new Map<number, RadarTargetState>(),
+    previousTargets: emptyTargetState(8),
+    nextTargets: emptyTargetState(8),
     followingMapBuffer: new Float64Array(2048),
   };
 
-const withTargets = (targets: [number, RadarTargetState][]) =>
-  new Map<number, RadarTargetState>(targets);
-const held = (side: OverlapSide | null): RadarTargetState => ({
-  side,
-  alongSign: 0,
-});
+/** The two state buffers the widget alternates between, as fresh pairs. */
+const targetBuffers = (): [RadarTargetState, RadarTargetState] => [
+  emptyTargetState(8),
+  emptyTargetState(8),
+];
+
+/** A previous frame's state holding the given sides. */
+const heldSides = (sides: Record<number, OverlapSide>): RadarTargetState => {
+  const state = emptyTargetState(8);
+  for (const [carIdx, side] of Object.entries(sides)) {
+    state.side[Number(carIdx)] = side;
+  }
+  return state;
+};
 
 describe('computeRadarBlips', () => {
   it('measures a car ahead on the same straight as along-track metres', () => {
@@ -173,7 +184,7 @@ describe('computeRadarBlips', () => {
     const gapM = 12;
     const stepM = 0.9; // what a 25 Hz snapshot covers at about 80 km/h
 
-    let targets: ReadonlyMap<number, RadarTargetState> = new Map();
+    let buffers = targetBuffers();
     let previousRelYaw: number | null = null;
     let previousLateral: number | null = null;
     let worstYaw = 0;
@@ -185,14 +196,15 @@ describe('computeRadarBlips', () => {
         trackDrawing: drawing,
         trackLengthM: circumference,
         radarRange: 40,
-        previousTargets: targets,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
         carIdxLapDistPct: [
           playerArc / circumference,
           (playerArc + gapM) / circumference,
         ],
         carIdxOnPitRoad: [false, false],
       });
-      targets = result.targets;
+      buffers = [buffers[1], buffers[0]];
       const blip = result.blips[0];
       if (!blip) throw new Error('the rival left the radar');
       if (previousRelYaw !== null) {
@@ -421,13 +433,14 @@ describe('computeRadarBlips', () => {
   it('holds the offset across the overlap window and fades it in the tail', () => {
     const run = (
       gap: number,
-      previousTargets = new Map<number, RadarTargetState>(),
+      previousTargets: RadarTargetState = emptyTargetState(8),
       overlap: RadarOverlap = { left: 1, right: 0 }
     ) =>
       computeRadarBlips({
         ...baseInput,
         overlap,
         previousTargets,
+        nextTargets: emptyTargetState(8),
         carNumbers: new Map([[1, '24']]),
         ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
       });
@@ -441,8 +454,7 @@ describe('computeRadarBlips', () => {
     expect(run(11).blips[0].lateralM).toBeCloseTo(0, 6);
 
     // But one that *was* alongside keeps a fading side on the way out.
-    const heldTargets = withTargets([[1, held(-1)]]);
-    const tail = run(11, heldTargets, NO_OVERLAP).blips[0].lateralM;
+    const tail = run(11, heldSides({ 1: -1 }), NO_OVERLAP).blips[0].lateralM;
     expect(tail).toBeLessThan(0);
     expect(Math.abs(tail)).toBeLessThan(full);
   });
@@ -462,12 +474,13 @@ describe('computeRadarBlips', () => {
   const rimFor = (
     side: 'left' | 'right',
     gap: number,
-    previousTargets = new Map<number, RadarTargetState>()
+    previousTargets: RadarTargetState = emptyTargetState(8)
   ) =>
     computeRadarBlips({
       ...baseInput,
       overlap: side === 'left' ? { left: 1, right: 0 } : { left: 0, right: 1 },
       previousTargets,
+      nextTargets: emptyTargetState(8),
       carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300 + gap)]),
     }).blips[0];
@@ -518,8 +531,7 @@ describe('computeRadarBlips', () => {
   });
 
   it('signals no rim for a named side beyond one car length', () => {
-    const heldSide = withTargets([[1, held(-1)]]);
-    const blip = rimFor('left', 9, heldSide);
+    const blip = rimFor('left', 9, heldSides({ 1: -1 }));
 
     expect(blip.side).toBe(-1);
     expect(blip.rimSignal).toBeNull();
@@ -569,29 +581,32 @@ describe('computeRadarBlips', () => {
   });
 
   it('hands the per-car state back so the next frame can hold it', () => {
+    const buffers = targetBuffers();
     const first = computeRadarBlips({
       ...baseInput,
       overlap: { left: 1, right: 0 },
+      previousTargets: buffers[0],
+      nextTargets: buffers[1],
       carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300.2)]),
     });
-    expect(first.targets.get(1)).toEqual({
-      side: -1,
-      alongSign: 1,
-    });
+    expect(first.targets.side[1]).toBe(-1);
+    expect(first.targets.alongSign[1]).toBe(1);
 
     // The verdict drops to clear, but the car is still alongside: it keeps the
-    // side it was given rather than snapping back onto the player.
+    // side it was given rather than snapping back onto the player. The next
+    // frame reads what this one wrote, and writes the buffer this one did not.
     const second = computeRadarBlips({
       ...baseInput,
       overlap: NO_OVERLAP,
       previousTargets: first.targets,
+      nextTargets: buffers[0],
       carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300.3)]),
     });
 
     expect(second.blips[0].lateralM).toBeLessThan(0);
-    expect(second.targets.get(1)?.side).toBe(-1);
+    expect(second.targets.side[1]).toBe(-1);
   });
 
   it('holds an alongside car on its drawn side through measured jitter', () => {
@@ -599,54 +614,152 @@ describe('computeRadarBlips', () => {
     // independently-updated lap fractions oscillate about the player's and
     // flip the sign frame to frame without the latch.
     const jitter = [0.232, -0.116, 0.174, -0.348, 0.29, -0.406];
-    let targets: ReadonlyMap<number, RadarTargetState> = new Map();
+    let buffers = targetBuffers();
     const signs: number[] = [];
     for (const gapM of jitter) {
       const result = computeRadarBlips({
         ...baseInput,
         overlap: { left: 1, right: 0 },
-        previousTargets: targets,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
         carNumbers: new Map([[1, '24']]),
         ...positionsOf([pctOfArc(300), pctOfArc(300 + gapM * Math.sign(gapM))]),
       });
       expect(result.blips).toHaveLength(1);
       signs.push(Math.sign(result.blips[0].alongM));
-      targets = result.targets;
+      buffers = [buffers[1], buffers[0]];
     }
     expect(new Set(signs).size).toBe(1);
   });
 
   it('lets a real pass cross between behind and ahead', () => {
     const pass = [-3, -2.2, -1.4, -0.6, 0.6, 1.4, 2.2, 3];
-    const targets = new Map<number, RadarTargetState>();
+    let buffers = targetBuffers();
     const signs: number[] = [];
     let crossings = 0;
     for (let i = 0; i < pass.length; i++) {
       const result = computeRadarBlips({
         ...baseInput,
-        previousTargets: targets,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
         carNumbers: new Map([[1, '24']]),
         ...positionsOf([pctOfArc(300), pctOfArc(300 + pass[i])]),
       });
+      buffers = [buffers[1], buffers[0]];
       signs.push(Math.sign(result.blips[0].alongM));
       if (i > 0 && signs[i] !== signs[i - 1]) crossings++;
     }
+    // The car is carried frame to frame, so the latch holds it on its drawn
+    // side while it is inside LONGITUDINAL_LATCH_M — at 0.6 m it is still
+    // within the metre of the frame before, and only the 1.4 m frame sweeps
+    // through the latch and crosses.
     expect(crossings).toBe(1);
     expect(signs[3]).toBe(-1);
     expect(signs[7]).toBe(1);
-    expect(signs).toEqual([-1, -1, -1, -1, 1, 1, 1, 1]);
+    expect(signs).toEqual([-1, -1, -1, -1, -1, 1, 1, 1]);
+  });
+
+  it('drops the drawn direction of a car that left the radar', () => {
+    // Half a metre is inside LONGITUDINAL_LATCH_M, so a stale direction from
+    // when the car was behind would drag it back behind as it comes past. The
+    // gap has to be long enough to cycle both alternating buffers: with one
+    // buffer's entry never rewritten while the car is away, the sign survives
+    // until that buffer is read as the previous frame's state.
+    const behindThenAwayThenAhead = [-0.5, -0.5, 100, 100, 0.5];
+    let buffers = targetBuffers();
+    let last: RadarBlip | undefined;
+    for (const gapM of behindThenAwayThenAhead) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
+        carNumbers: new Map([[1, '24']]),
+        ...positionsOf([pctOfArc(300), pctOfArc(300 + gapM)]),
+      });
+      buffers = [buffers[1], buffers[0]];
+      last = result.blips[0];
+    }
+
+    if (!last) throw new Error('the rival never came back');
+    expect(last.alongM).toBeCloseTo(0.5, 6);
+  });
+
+  it('drops a held side across a frame that draws nothing', () => {
+    // The player goes off the road for one frame and comes back with the rival
+    // still inside the retain window. Nothing was drawn in between, so the
+    // rival has no side any more and must sit on the road projection rather
+    // than keep the one it had before the gap.
+    let buffers = targetBuffers();
+    interface GapFrame {
+      positions: { carIdxLapDistPct: number[]; carIdxOnPitRoad: boolean[] };
+      overlap: RadarOverlap;
+    }
+    const frames: GapFrame[] = [
+      {
+        positions: positionsOf([pctOfArc(300), pctOfArc(300.2)]),
+        overlap: { left: 1, right: 0 },
+      },
+      {
+        // The player is off the road, so there is nothing to draw at all.
+        positions: positionsOf([-1, pctOfArc(300.2)]),
+        overlap: { left: 1, right: 0 },
+      },
+      {
+        // Back on the road, the rival 10 m ahead: inside the 13.5 m retain
+        // window, so a carried side would still be applied to it.
+        positions: positionsOf([pctOfArc(300), pctOfArc(310)]),
+        overlap: NO_OVERLAP,
+      },
+    ];
+
+    let last: RadarBlip | undefined;
+    let afterGap: readonly RadarTargetState[] = [];
+    for (const [index, frame] of frames.entries()) {
+      const result = computeRadarBlips({
+        ...baseInput,
+        previousTargets: buffers[0],
+        nextTargets: buffers[1],
+        carNumbers: new Map([[1, '24']]),
+        ...frame.positions,
+        overlap: frame.overlap,
+      });
+      buffers = [buffers[1], buffers[0]];
+      last = result.blips[0];
+      // Snapshot the contents, not the pair: the next frame writes through it.
+      if (index === 1) {
+        afterGap = buffers.map((buffer) => ({
+          side: new Int8Array(buffer.side),
+          alongSign: new Int8Array(buffer.alongSign),
+        }));
+      }
+    }
+
+    if (!last) throw new Error('the rival never appeared');
+    expect(last.side).toBeNull();
+    expect(last.lateralM).toBeCloseTo(0, 6);
+
+    // Straight after the frame that drew nothing, no car may still be holding
+    // anything — not the buffer that was written and not the one that was only
+    // read. The alternation means the next drawn frame reads whichever buffer
+    // the gap wrote, so clearing only the output would leave the caller's other
+    // buffer holding state from before the radar drew anything at all.
+    for (const buffer of afterGap) {
+      expect([...buffer.side].some((side) => side !== 0)).toBe(false);
+      expect([...buffer.alongSign].some((sign) => sign !== 0)).toBe(false);
+    }
   });
 
   it('keeps the geometric sign for a car entering with no history', () => {
     const result = computeRadarBlips({
       ...baseInput,
-      previousTargets: new Map<number, RadarTargetState>(),
+      previousTargets: emptyTargetState(8),
+      nextTargets: emptyTargetState(8),
       carNumbers: new Map([[1, '24']]),
       ...positionsOf([pctOfArc(300), pctOfArc(300 + 0.4)]),
     });
 
     expect(result.blips[0].alongM).toBeCloseTo(0.4, 6);
-    expect(result.targets.get(1)?.alongSign).toBe(1);
+    expect(result.targets.alongSign[1]).toBe(1);
   });
 
   it('flags only the pace car with the pace tag', () => {

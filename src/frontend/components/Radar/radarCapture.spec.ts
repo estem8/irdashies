@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { RadarSnapshot } from '@irdashies/types';
 import tracks from '../../assets/data/tracks.json';
 import type { TrackDrawing } from '@irdashies/domain/trackGeometry';
-import { computeRadarBlips, type RadarBlip } from './radarBlips';
+import {
+  computeRadarBlips,
+  emptyTargetState,
+  type RadarBlip,
+} from './radarBlips';
 import { overlapFromCarLeftRight } from './overlapSides';
 import interlagosLeft from '../../../../test-data/1747384033336/telemetry.json';
 import interlagosLeftSession from '../../../../test-data/1747384033336/session.json';
@@ -79,7 +83,8 @@ const place = (capture: Capture) => {
     fadeBandM: 3,
     carNumbers: new Map(),
     paceCarIdx: null,
-    previousTargets: new Map(),
+    previousTargets: emptyTargetState(snapshot.carIdxLapDistPct.length),
+    nextTargets: emptyTargetState(snapshot.carIdxLapDistPct.length),
     followingMapBuffer: new Float64Array(128),
   });
 

@@ -73,7 +73,7 @@ export interface FixtureHarness {
  */
 export const mountFixture = (
   fixture: ReplayFixture,
-  options: { dashboard?: DashboardLayout } = {}
+  options: { dashboard?: DashboardLayout; warmFrames?: number } = {}
 ): FixtureHarness => {
   const session = toSession(fixture);
   const standings = new StandingsProcessor();
@@ -128,7 +128,10 @@ export const mountFixture = (
 
   // Wind through every frame so the hooks see a settled session rather than a
   // cold first tick — several values only appear once a lap has been observed.
-  fixture.frames.forEach((_, index) => seekTo(index));
+  // A test that has to observe a transition while mounted can stop early and
+  // drive the rest itself with `seekTo`.
+  const warmFrames = options.warmFrames ?? fixture.frames.length;
+  for (let index = 0; index < warmFrames; index += 1) seekTo(index);
 
   const bridge: ChannelBridge = {
     subscribe: <K extends ChannelName>(
