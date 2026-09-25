@@ -22,7 +22,9 @@ export function SettingToggleRow({
         )}
       </div>
 
-      <ToggleSwitch enabled={enabled} onToggle={onToggle} />
+      {/* A switch with no name tells a screen reader nothing about what it
+          turns on, and leaves it impossible to find in the settings at all. */}
+      <ToggleSwitch enabled={enabled} onToggle={onToggle} label={title} />
     </div>
   );
 }
