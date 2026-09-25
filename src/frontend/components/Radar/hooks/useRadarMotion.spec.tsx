@@ -47,17 +47,18 @@ describe('useRadarMotion', () => {
 
   interface Observed {
     along: number[];
+    lateral: number[];
   }
 
   const recordDraw =
     (observed: Observed) =>
-    (alongM: Float64Array, _lateralM: Float64Array, count: number) => {
+    (alongM: Float64Array, lateralM: Float64Array, count: number) => {
       observed.along.push(alongM[0]);
+      observed.lateral?.push(lateralM[0]);
       void count;
     };
-
   it('glides a car between its snapshot positions in metre units', () => {
-    const observed: Observed = { along: [] };
+    const observed: Observed = { along: [], lateral: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
       useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;
@@ -85,8 +86,23 @@ describe('useRadarMotion', () => {
     expect(callbacks).toHaveLength(0);
   });
 
+  it('advances lateral motion while along-track motion is active', () => {
+    const observed: Observed = { along: [], lateral: [] };
+    const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
+      useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
+      return null;
+    };
+
+    const view = render(<Harness blips={[blip(1, 0, 0)]} />);
+    view.rerender(<Harness blips={[blip(1, 2, 2)]} />);
+    act(() => callbacks.shift()?.(20));
+
+    expect(observed.lateral.at(-1)).toBeGreaterThan(0.01);
+    expect(observed.lateral.at(-1)).toBeLessThan(1.99);
+  });
+
   it('never teleports: consecutive draws differ by no more than the target delta', () => {
-    const observed: Observed = { along: [] };
+    const observed: Observed = { along: [], lateral: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
       useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;
@@ -111,7 +127,7 @@ describe('useRadarMotion', () => {
   });
 
   it('draws a car behind the player behind it, not a lap ahead', () => {
-    const observed: Observed = { along: [] };
+    const observed: Observed = { along: [], lateral: [] };
     const Harness = ({ blips }: { blips: readonly RadarBlip[] }) => {
       useRadarMotion(blips, TRACK_LENGTH_M, recordDraw(observed), false);
       return null;

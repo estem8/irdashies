@@ -134,7 +134,9 @@ export const useRadarMotion = (
 
     let frameTime = 0;
     const measuredFrame = () => {
-      const moving = along.advance(frameTime) || lateral.advance(frameTime);
+      const travelling = along.advance(frameTime);
+      const drifting = lateral.advance(frameTime);
+      const moving = travelling || drifting;
       paint();
       return moving;
     };

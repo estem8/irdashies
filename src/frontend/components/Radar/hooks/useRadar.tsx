@@ -210,10 +210,13 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     trackDrawing !== undefined &&
     shouldShowTrack(trackId, trackDrawing);
 
-  const overlap =
-    carLeftRight === undefined
-      ? NO_OVERLAP
-      : overlapFromCarLeftRight(carLeftRight);
+  const overlap = useMemo(
+    () =>
+      carLeftRight === undefined
+        ? NO_OVERLAP
+        : overlapFromCarLeftRight(carLeftRight),
+    [carLeftRight]
+  );
 
   // Drawn sides live across frames: the sim's verdict flickers through a pass,
   // and a car abreast must keep the side it was first drawn on. Car indices
