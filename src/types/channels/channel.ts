@@ -136,6 +136,8 @@ export interface RadarSnapshot {
   carIdxLapDistPct: readonly number[];
   /** Pit road state by CarIdx — used to filter blips (hideInPit). */
   carIdxOnPitRoad: readonly boolean[];
+  /** Player speed in m/s; used to detect the standing grid state. */
+  carSpeed: number;
   isOnTrack: boolean;
   version: number;
 }

@@ -59,6 +59,7 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
     focusCarIdx: null,
     carIdxLapDistPct: [],
     carIdxOnPitRoad: [],
+    carSpeed: 0,
     isOnTrack: false,
     version: 0,
   };
@@ -89,6 +90,15 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
       changed = true;
     }
 
+    const carSpeedValue = scalar(frame, 'CarSpeed');
+    const carSpeed =
+      typeof carSpeedValue === 'number' && Number.isFinite(carSpeedValue)
+        ? carSpeedValue
+        : 0;
+    if (this.latest.carSpeed !== carSpeed) {
+      this.latest.carSpeed = carSpeed;
+      changed = true;
+    }
     changed =
       copyNumbers(
         this.latest.carIdxLapDistPct as number[],
@@ -108,6 +118,7 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
     (this.latest.carIdxLapDistPct as number[]).length = 0;
     (this.latest.carIdxOnPitRoad as boolean[]).length = 0;
     this.latest.focusCarIdx = null;
+    this.latest.carSpeed = 0;
     this.latest.isOnTrack = false;
     this.latest.version += 1;
   }

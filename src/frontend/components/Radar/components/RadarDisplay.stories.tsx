@@ -51,7 +51,13 @@ const meta = {
     showCarNumbers: true,
     colorRival: '#cbd5e1',
     colorPlayer: '#2fd16a',
+    viewMode: 'top',
+    rearCameraTilt: 45,
     bgOpacity: 30,
+    sideIndicatorColor: '#ef4444',
+    sideIndicatorStyle: 'double-arc',
+    sideIndicatorEnabled: true,
+    sideIndicatorOpacity: 90,
     // Any positive length works: the disc places blips by metre offset, and
     // without it the motion targets are NaN and no car is drawn at all.
     trackLengthM: 5000,
@@ -90,6 +96,10 @@ export default meta;
 type Story = StoryObj<typeof RadarDisplay>;
 
 export const Disc: Story = {};
+
+export const RearCamera: Story = {
+  args: { viewMode: 'rear', rearCameraTilt: 45 },
+};
 
 export const AlongsideLeft: Story = {
   name: 'Alongside, left',

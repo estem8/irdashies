@@ -12,7 +12,19 @@ export interface RadarDisplayProps {
   /** Every rival blip is filled with this; the player is `colorPlayer`. */
   colorRival: string;
   colorPlayer: string;
+  viewMode: 'top' | 'rear';
+  rearCameraTilt: number;
   bgOpacity: number;
+  sideIndicatorStyle:
+    | 'soft-glow'
+    | 'double-arc'
+    | 'follow-sector'
+    | 'distance-pulse'
+    | 'trail'
+    | 'static-pulse';
+  sideIndicatorColor: string;
+  sideIndicatorOpacity: number;
+  sideIndicatorEnabled: boolean;
   /** Track length in metres; drives blip motion between snapshots. */
   trackLengthM: number;
   showFollowingMap: boolean;
@@ -57,8 +69,6 @@ interface Size {
  */
 const alphaFor = (blip: RadarBlip): number => blip.fade;
 const SMOOTHING_WEIGHTS = [1, 4, 6, 4, 1] as const;
-
-const ALONGSIDE_COLOR = '#ef4444';
 
 const rivalColor = (blip: RadarBlip, props: RadarDisplayProps): string =>
   blip.color ?? props.colorRival;
@@ -134,7 +144,7 @@ const drawBlipVehicles = (
   // rim, so there the overlap itself is the signal and the car is drawn on top
   // of the player.
   const abreastM = Math.max(1, props.vehicleLength * 0.5);
-  const hideLevelCar = !props.showFollowingMap;
+  const hideLevelCar = !props.showFollowingMap && props.sideIndicatorEnabled;
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
     const levelAndUnknown =
@@ -302,21 +312,57 @@ const drawRimArch = (
   radius: number,
   bearing: number,
   color: string,
-  alpha: number
+  alpha: number,
+  style: RadarDisplayProps['sideIndicatorStyle']
 ) => {
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(
-    centreX,
-    centreY,
-    radius - 2,
-    -Math.PI / 2 + bearing - 0.32,
-    -Math.PI / 2 + bearing + 0.32
-  );
+  const start = -Math.PI / 2 + bearing;
+  const drawArc = (arcRadius: number, arcAlpha: number) => {
+    ctx.beginPath();
+    ctx.arc(centreX, centreY, arcRadius, start - 0.32, start + 0.32);
+    ctx.globalAlpha = arcAlpha;
+    ctx.stroke();
+  };
   ctx.lineWidth = Math.max(2, radius * 0.06);
   ctx.strokeStyle = color;
   ctx.globalAlpha = alpha;
-  ctx.stroke();
+  if (style === 'follow-sector') {
+    for (let index = 0; index < 3; index += 1) {
+      const segmentStart = start - 0.24 + index * 0.16;
+      ctx.beginPath();
+      ctx.arc(centreX, centreY, radius - 5, segmentStart, segmentStart + 0.14);
+      ctx.globalAlpha = alpha;
+      ctx.stroke();
+    }
+  } else {
+    drawArc(radius - 2, alpha);
+    drawArc(radius - Math.max(6, radius * 0.12), alpha * 0.75);
+  }
+  ctx.restore();
+};
+
+const RANGE_RING_SPACING_M = 5;
+
+const drawRangeRings = (
+  ctx: CanvasRenderingContext2D,
+  centreX: number,
+  centreY: number,
+  scale: number,
+  radarRange: number
+) => {
+  ctx.save();
+  ctx.setLineDash([3, 5]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.24)';
+  for (
+    let distanceM = RANGE_RING_SPACING_M;
+    distanceM < radarRange;
+    distanceM += RANGE_RING_SPACING_M
+  ) {
+    ctx.beginPath();
+    ctx.arc(centreX, centreY, distanceM * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.restore();
 };
 
@@ -383,6 +429,13 @@ const drawRadar = (
   ctx.beginPath();
   ctx.arc(centreX, centreY, radius, 0, Math.PI * 2);
   ctx.clip();
+  if (props.viewMode === 'rear') {
+    const angle = (props.rearCameraTilt * Math.PI) / 180;
+    ctx.translate(centreX, centreY);
+    ctx.transform(1, 0, 0, Math.cos(angle), 0, 0);
+    ctx.translate(-centreX, -centreY);
+  }
+  drawRangeRings(ctx, centreX, centreY, scale, props.radarRange);
 
   if (props.showFollowingMap) {
     drawFollowingRoad(
@@ -408,33 +461,66 @@ const drawRadar = (
     lateralM
   );
   ctx.restore();
+  ctx.save();
+  if (props.viewMode === 'rear') {
+    const angle = (props.rearCameraTilt * Math.PI) / 180;
+    ctx.translate(centreX, centreY);
+    ctx.transform(1, 0, 0, Math.cos(angle), 0, 0);
+    ctx.translate(-centreX, -centreY);
+  }
   drawPlayer(ctx, props, centreX, centreY, widthPx, lengthPx);
 
   const pulse = pulseAlpha(props.nowSeconds);
-  for (const blip of props.blips) {
-    if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
+  for (let index = 0; index < props.blips.length; index += 1) {
+    const blip = props.blips[index];
+    const indicatorBearing =
+      props.sideIndicatorStyle === 'follow-sector'
+        ? Math.atan2(lateralM[index], alongM[index])
+        : 0;
+    const indicatorAlpha =
+      props.sideIndicatorStyle === 'follow-sector'
+        ? alphaFor(blip)
+        : pulse * alphaFor(blip);
+    if (!props.sideIndicatorEnabled) continue;
+    if (props.sideIndicatorStyle === 'follow-sector') {
       drawRimArch(
         ctx,
         centreX,
         centreY,
         radius,
-        -Math.PI / 2,
-        ALONGSIDE_COLOR,
-        pulse * alphaFor(blip)
+        indicatorBearing,
+        props.sideIndicatorColor,
+        indicatorAlpha * (props.sideIndicatorOpacity / 100),
+        props.sideIndicatorStyle
       );
-    }
-    if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
-      drawRimArch(
-        ctx,
-        centreX,
-        centreY,
-        radius,
-        Math.PI / 2,
-        ALONGSIDE_COLOR,
-        pulse * alphaFor(blip)
-      );
+    } else {
+      if (blip.rimSignal === 'left' || blip.rimSignal === 'both') {
+        drawRimArch(
+          ctx,
+          centreX,
+          centreY,
+          radius,
+          -Math.PI / 2,
+          props.sideIndicatorColor,
+          indicatorAlpha * (props.sideIndicatorOpacity / 100),
+          props.sideIndicatorStyle
+        );
+      }
+      if (blip.rimSignal === 'right' || blip.rimSignal === 'both') {
+        drawRimArch(
+          ctx,
+          centreX,
+          centreY,
+          radius,
+          Math.PI / 2,
+          props.sideIndicatorColor,
+          indicatorAlpha * (props.sideIndicatorOpacity / 100),
+          props.sideIndicatorStyle
+        );
+      }
     }
   }
+  ctx.restore();
 };
 
 export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
@@ -508,7 +594,10 @@ export const RadarDisplay = (props: Omit<RadarDisplayProps, 'nowSeconds'>) => {
     );
   };
 
-  const pulseActive = props.blips.some((blip) => blip.rimSignal !== null);
+  const pulseActive =
+    props.sideIndicatorEnabled &&
+    props.sideIndicatorStyle !== 'follow-sector' &&
+    props.blips.some((blip) => blip.rimSignal !== null);
   useRadarMotion(
     props.blips,
     props.trackLengthM,

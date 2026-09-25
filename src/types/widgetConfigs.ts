@@ -524,8 +524,23 @@ export interface RadarConfig {
   /** Custom opponent fill used when `rivalColorMode` is `custom`. */
   colorRival: string;
   colorPlayer: string;
+  /** Display projection for the radar disc. */
+  viewMode: 'top' | 'rear';
+  /** Rear camera tilt in degrees. */
+  rearCameraTilt: number;
   /** Road border colour for the following map. */
   mapBorderColor: string;
+  /** Visual treatment for left/right overlap indicators. */
+  sideIndicatorStyle:
+    | 'soft-glow'
+    | 'double-arc'
+    | 'follow-sector'
+    | 'distance-pulse'
+    | 'trail'
+    | 'static-pulse';
+  sideIndicatorColor: string;
+  sideIndicatorOpacity: number;
+  sideIndicatorEnabled: boolean;
   /** Road border opacity, from 0 to 100 percent. */
   mapBorderOpacity: number;
   /** Road surface colour for the following map. */

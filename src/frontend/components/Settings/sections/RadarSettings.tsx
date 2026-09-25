@@ -139,6 +139,68 @@ export const RadarSettings = () => {
                 />
                 <SettingDivider />
                 <SettingSelectRow
+                  title="View mode"
+                  description="Use the normal top-down radar or a rear-facing camera tilt."
+                  value={settings.config.viewMode}
+                  options={[
+                    { label: 'Top-down', value: 'top' },
+                    { label: 'Rear camera', value: 'rear' },
+                  ]}
+                  onChange={(v) => handleConfigChange({ viewMode: v })}
+                />
+                <SettingSelectRow
+                  title="Side indicator"
+                  description="Choose how left and right overlap signals are drawn."
+                  value={settings.config.sideIndicatorStyle}
+                  options={[
+                    { label: 'Double arc', value: 'double-arc' },
+                    { label: 'Following sector', value: 'follow-sector' },
+                  ]}
+                  onChange={(v) =>
+                    handleConfigChange({ sideIndicatorStyle: v })
+                  }
+                />
+                <SettingToggleRow
+                  title="Side indicator"
+                  description="Show the selected overlap/following sector indicator."
+                  enabled={settings.config.sideIndicatorEnabled}
+                  onToggle={(v) =>
+                    handleConfigChange({ sideIndicatorEnabled: v })
+                  }
+                />
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <ColorField
+                    label="Side indicator"
+                    value={settings.config.sideIndicatorColor}
+                    onChange={(v) =>
+                      handleConfigChange({ sideIndicatorColor: v })
+                    }
+                  />
+                  <SettingSliderRow
+                    title="Side indicator opacity"
+                    value={settings.config.sideIndicatorOpacity}
+                    units="%"
+                    min={0}
+                    max={100}
+                    step={5}
+                    onChange={(v) =>
+                      handleConfigChange({ sideIndicatorOpacity: v })
+                    }
+                  />
+                </div>
+                {settings.config.viewMode === 'rear' && (
+                  <SettingSliderRow
+                    title="Rear camera tilt"
+                    description="Tilts the camera behind the car for a following perspective."
+                    value={settings.config.rearCameraTilt}
+                    units="°"
+                    min={15}
+                    max={75}
+                    step={5}
+                    onChange={(v) => handleConfigChange({ rearCameraTilt: v })}
+                  />
+                )}
+                <SettingSelectRow
                   title="Opponent colour"
                   description="Use the iRacing class colour, the driver badge colour, or one custom colour for every opponent."
                   value={settings.config.rivalColorMode}

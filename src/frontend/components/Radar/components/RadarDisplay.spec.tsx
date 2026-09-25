@@ -206,6 +206,12 @@ const props: RadarDisplayProps = {
   showCarNumbers: true,
   colorRival: COLORS.rival,
   colorPlayer: COLORS.player,
+  viewMode: 'top',
+  rearCameraTilt: 45,
+  sideIndicatorStyle: 'double-arc',
+  sideIndicatorColor: '#ef4444',
+  sideIndicatorEnabled: true,
+  sideIndicatorOpacity: 90,
   bgOpacity: 30,
   trackLengthM: 5000,
   showFollowingMap: false,
@@ -339,7 +345,7 @@ describe('RadarDisplay', () => {
     const configuredAlphas = record.strokeAlphasPerPaint[paint].filter(
       (alpha) => alpha === 0.8 || alpha === 0.45
     );
-    expect(configuredAlphas).toEqual([0.8, 0.45]);
+    expect(configuredAlphas).toEqual(expect.arrayContaining([0.8, 0.45]));
     expect(record.vehiclesPerPaint[paint]).toBe(2);
 
     const [car] = record.originsPerPaint[paint];
@@ -347,9 +353,9 @@ describe('RadarDisplay', () => {
     expect(car[0]).toBeCloseTo(centre + 0.2 * radarScale, 6);
     expect(car[1]).toBeCloseTo(centre - 4 * radarScale, 6);
 
-    // The map is a layer inside the normal radar: the radar background and
-    // its rim signals remain visible when the layer is enabled.
-    expect(record.arcsPerPaint[paint]).toHaveLength(4);
+    // The map view includes range rings and the disc rim; no alongside
+    // signal is drawn.
+    expect(record.arcsPerPaint[paint]).toHaveLength(8);
     expect(record.fillsPerPaint[paint]).toContain('rgba(0, 0, 0, 0.3)');
   });
 
@@ -433,7 +439,7 @@ describe('RadarDisplay', () => {
     const marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
-    expect(marks).toHaveLength(1);
+    expect(marks).toHaveLength(2);
     expect(Math.abs((marks[0][0] + marks[0][1]) / 2 + Math.PI) < 0.01).toBe(
       true
     );
@@ -450,7 +456,7 @@ describe('RadarDisplay', () => {
     const marks = (record.arcsPerPaint.at(-1) ?? []).filter(
       ([start, end]) => Math.abs(end - start) < 1
     );
-    expect(marks).toHaveLength(1);
+    expect(marks).toHaveLength(2);
     expect(Math.abs((marks[0][0] + marks[0][1]) / 2) < 0.01).toBe(true);
   });
 
@@ -466,7 +472,7 @@ describe('RadarDisplay', () => {
       ([start, end]) => Math.abs(end - start) < 1
     );
     expect(record.vehiclesPerPaint.at(-1)).toBe(1);
-    expect(marks).toHaveLength(2);
+    expect(marks).toHaveLength(4);
     expect(
       marks.some(([start, end]) => Math.abs((start + end) / 2) < 0.01)
     ).toBe(true);

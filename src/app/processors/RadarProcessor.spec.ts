@@ -73,6 +73,7 @@ describe('RadarProcessor', () => {
       focusCarIdx: 1,
       carIdxLapDistPct: [0.123456789, 0.123987654],
       carIdxOnPitRoad: [false, false],
+      carSpeed: 0,
       isOnTrack: true,
       version: 1,
     });
@@ -136,6 +137,7 @@ describe('RadarProcessor', () => {
       focusCarIdx: null,
       carIdxLapDistPct: [],
       carIdxOnPitRoad: [],
+      carSpeed: 0,
       isOnTrack: false,
       version: 2,
     });

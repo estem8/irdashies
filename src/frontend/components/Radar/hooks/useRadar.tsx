@@ -31,6 +31,8 @@ export interface RadarState {
   hasGeometry: boolean;
   blips: readonly RadarBlip[];
   overlap: RadarOverlap;
+  /** True while the player is stationary and the grid layout is ambiguous. */
+  isGrid: boolean;
   isOnTrack: boolean;
   /**
    * Shortest fore/aft gap to any car being drawn, in metres; null when the
@@ -75,9 +77,10 @@ type RadarInput = readonly [
   readonly number[],
   readonly boolean[],
   boolean,
+  number,
 ];
 
-const EMPTY_INPUT: RadarInput = [null, [], [], false];
+const EMPTY_INPUT: RadarInput = [null, [], [], false, 0];
 const EMPTY_TARGETS: ReadonlyMap<number, RadarTargetState> = new Map();
 const EMPTY_NUMBERS: ReadonlyMap<number, string> = new Map();
 const EMPTY_COLORS: ReadonlyMap<number, string> = new Map();
@@ -118,11 +121,13 @@ const selectRadarInput = (snapshot: RadarSnapshot): RadarInput => [
   snapshot.carIdxLapDistPct,
   snapshot.carIdxOnPitRoad,
   snapshot.isOnTrack,
+  snapshot.carSpeed,
 ];
 
 const radarInputEqual = (previous: RadarInput, next: RadarInput): boolean =>
   previous[0] === next[0] &&
   previous[3] === next[3] &&
+  previous[4] === next[4] &&
   shallow(previous[1], next[1]) &&
   shallow(previous[2], next[2]);
 
@@ -139,9 +144,10 @@ const trackDrawings = tracks as unknown as Record<
 export const useRadar = (options: UseRadarOptions): RadarState => {
   const { radarRange, hideInPit, vehicleWidth, vehicleLength, fadeBandM } =
     options;
-  const [focusCarIdx, positions, onPitRoad, isOnTrack] =
+  const [focusCarIdx, positions, onPitRoad, isOnTrack, carSpeed] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
+  const isGrid = carSpeed < 0.5;
   const carLeftRight = useBlindSpotSelector(
     (snapshot) => snapshot.carLeftRight
   );
@@ -264,7 +270,16 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       followingMapBuffer,
     });
     targetsRef.current = result.targets;
-    return result;
+    return {
+      ...result,
+      blips: isGrid
+        ? result.blips.map((blip) => ({
+            ...blip,
+            side: null,
+            rimSignal: null,
+          }))
+        : result.blips,
+    };
   }, [
     positions,
     onPitRoad,
@@ -282,6 +297,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     carNumbers,
     carColors,
     paceCarIdx,
+    isGrid,
     followingMapBuffer,
   ]);
 
@@ -296,6 +312,7 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
     blips: computed.blips,
     overlap,
     isOnTrack,
+    isGrid,
     nearestGapM,
     trackLengthM,
     followingMapPath: followingMapBuffer,

@@ -172,7 +172,13 @@ export const Radar = () => {
         showCarNumbers={settings.showCarNumbers}
         colorRival={settings.colorRival}
         colorPlayer={settings.colorPlayer}
+        viewMode={settings.viewMode}
+        rearCameraTilt={settings.rearCameraTilt}
         bgOpacity={settings.background.opacity}
+        sideIndicatorStyle={settings.sideIndicatorStyle}
+        sideIndicatorColor={settings.sideIndicatorColor}
+        sideIndicatorOpacity={settings.sideIndicatorOpacity}
+        sideIndicatorEnabled={settings.sideIndicatorEnabled}
         trackLengthM={isDemoMode ? DEMO_TRACK_LENGTH_M : state.trackLengthM}
         showFollowingMap={settings.showTrackMap}
         followingMapPath={state.followingMapPath}

@@ -4,6 +4,8 @@ import { deepMergeConfig, getWidgetDefaultConfig } from '@irdashies/types';
 import type { RadarConfig } from '@irdashies/types';
 const MAX_PERSISTED_RADAR_RANGE_M = 500;
 const RADAR_COLOR_MODES = ['class', 'badge', 'custom'] as const;
+const RADAR_VIEW_MODES = ['top', 'rear'] as const;
+const SIDE_INDICATOR_STYLES = ['double-arc', 'follow-sector'] as const;
 
 const defaultConfig = getWidgetDefaultConfig('radar');
 
@@ -86,9 +88,39 @@ export const normaliseRadarConfig = (config: RadarConfig): RadarConfig => {
     rivalColorMode: colorMode,
     colorRival: colourValue(raw.colorRival, defaultConfig.colorRival),
     colorPlayer: colourValue(raw.colorPlayer, defaultConfig.colorPlayer),
+    viewMode: RADAR_VIEW_MODES.includes(
+      raw.viewMode as (typeof RADAR_VIEW_MODES)[number]
+    )
+      ? (raw.viewMode as RadarConfig['viewMode'])
+      : defaultConfig.viewMode,
+    rearCameraTilt: boundedNumber(
+      raw.rearCameraTilt,
+      defaultConfig.rearCameraTilt,
+      15,
+      75
+    ),
     mapBorderColor: colourValue(
       raw.mapBorderColor,
       defaultConfig.mapBorderColor
+    ),
+    sideIndicatorStyle: SIDE_INDICATOR_STYLES.includes(
+      raw.sideIndicatorStyle as (typeof SIDE_INDICATOR_STYLES)[number]
+    )
+      ? (raw.sideIndicatorStyle as RadarConfig['sideIndicatorStyle'])
+      : defaultConfig.sideIndicatorStyle,
+    sideIndicatorColor: colourValue(
+      raw.sideIndicatorColor,
+      defaultConfig.sideIndicatorColor
+    ),
+    sideIndicatorOpacity: boundedNumber(
+      raw.sideIndicatorOpacity,
+      defaultConfig.sideIndicatorOpacity,
+      0,
+      100
+    ),
+    sideIndicatorEnabled: booleanValue(
+      raw.sideIndicatorEnabled,
+      defaultConfig.sideIndicatorEnabled
     ),
     mapBorderOpacity: boundedNumber(
       raw.mapBorderOpacity,

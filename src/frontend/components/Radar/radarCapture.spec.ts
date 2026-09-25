@@ -58,6 +58,7 @@ const place = (capture: Capture) => {
     carIdxOnPitRoad: (telemetry.CarIdxOnPitRoad?.value ?? []) as boolean[],
     focusCarIdx:
       (telemetry.CamCarIdx?.value?.[0] as number | undefined) ?? null,
+    carSpeed: 0,
     isOnTrack: true,
     version: 0,
   };
