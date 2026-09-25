@@ -67,6 +67,18 @@ export const retainSideWindowM = (vehicleLength: number): number =>
   Math.max(1, vehicleLength * RETAIN_WINDOW_LENGTHS);
 
 /**
+ * Scratch for the contenders sort, and the comparator itself. Both are reused
+ * across calls: this runs once per changed snapshot, so the filtered array and
+ * the comparator closure it needs were two allocations per frame. The array is
+ * only read inside this function and never handed out, and the function is
+ * synchronous, so there is nothing to overlap with.
+ */
+const contenders: OverlapCandidate[] = [];
+const byDistanceFromPlayer = (
+  left: OverlapCandidate,
+  right: OverlapCandidate
+) => Math.abs(left.alongM) - Math.abs(right.alongM);
+/**
  * Decides which side each alongside car is drawn on.
  *
  * The sim reports that *a* car is on the left, never which one, so cars are
@@ -97,9 +109,11 @@ export const assignOverlapSides = (input: {
   }
 
   // Слоты раздаются по близости всем машинам в "живом" окне — старым и новым.
-  const contenders = blips
-    .filter((blip) => Math.abs(blip.alongM) <= alongside)
-    .sort((left, right) => Math.abs(left.alongM) - Math.abs(right.alongM));
+  contenders.length = 0;
+  for (const blip of blips) {
+    if (Math.abs(blip.alongM) <= alongside) contenders.push(blip);
+  }
+  contenders.sort(byDistanceFromPlayer);
 
   let freeLeft = overlap.left;
   let freeRight = overlap.right;

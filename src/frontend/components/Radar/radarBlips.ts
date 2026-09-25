@@ -145,6 +145,15 @@ const NOT_ON_ROAD: RadarBlipResult = {
   ...ZERO_CAMERA,
 };
 
+/**
+ * Scratch points the projection writes into, reused across calls. They are
+ * filled by `progressToTrackPoint` and read back inside this one function,
+ * which is synchronous and re-enters nothing, so two objects per call were
+ * two objects the collector had to deal with 25 times a second for nothing.
+ */
+const playerPoint = { x: 0, y: 0 };
+const carPoint = { x: 0, y: 0 };
+
 /** Metres between centreline samples in the following-car map. */
 export const MAP_SAMPLE_M = 1;
 
@@ -272,7 +281,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const rightX = -Math.sin(playerTangent + travelFlip);
   const rightY = Math.cos(playerTangent + travelFlip);
 
-  const playerPoint = { x: 0, y: 0 };
   progressToTrackPoint(
     playerPct,
     trackPathPoints,
@@ -286,7 +294,6 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
   const halfMapWindowM = followingMapWindowM / 2;
   // The map and blips are projected sequentially, so one scratch point is
   // enough for both and the road path itself adds no per-frame allocation.
-  const carPoint = { x: 0, y: 0 };
   let followingMapPointCount = 0;
   for (
     let alongM = -halfMapWindowM;
