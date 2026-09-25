@@ -89,34 +89,27 @@ export const assignOverlapSides = (input: {
   const retain = retainSideWindowM(vehicleLength);
   const sides = new Map<number, OverlapSide>();
 
-  let heldLeft = 0;
-  let heldRight = 0;
+  // Держим сторону, пока машина в retain-окне — независимо от текущего счёта.
   for (const blip of blips) {
     if (Math.abs(blip.alongM) > retain) continue;
     const held = previous.get(blip.carIdx);
-    if (held === undefined) continue;
-    // Keep the side through the retention window so the lateral offset can
-    // ramp down, but do not let a car beyond the alongside window occupy a
-    // reported slot that the sim is assigning to a car in the current frame.
-    sides.set(blip.carIdx, held);
-    if (Math.abs(blip.alongM) <= alongside) {
-      if (held === -1) heldLeft += 1;
-      else heldRight += 1;
-    }
+    if (held !== undefined) sides.set(blip.carIdx, held);
   }
 
-  let freeLeft = overlap.left - heldLeft;
-  let freeRight = overlap.right - heldRight;
-  if (freeLeft <= 0 && freeRight <= 0) return sides;
-
-  const unassigned = blips
-    .filter(
-      (blip) => Math.abs(blip.alongM) <= alongside && !sides.has(blip.carIdx)
-    )
+  // Слоты раздаются по близости всем машинам в "живом" окне — старым и новым.
+  const contenders = blips
+    .filter((blip) => Math.abs(blip.alongM) <= alongside)
     .sort((left, right) => Math.abs(left.alongM) - Math.abs(right.alongM));
 
-  for (const blip of unassigned) {
-    if (freeLeft > 0) {
+  let freeLeft = overlap.left;
+  let freeRight = overlap.right;
+  for (const blip of contenders) {
+    const held = previous.get(blip.carIdx);
+    if (held === -1) {
+      if (freeLeft > 0) freeLeft -= 1;
+    } else if (held === 1) {
+      if (freeRight > 0) freeRight -= 1;
+    } else if (freeLeft > 0) {
       sides.set(blip.carIdx, -1);
       freeLeft -= 1;
     } else if (freeRight > 0) {
