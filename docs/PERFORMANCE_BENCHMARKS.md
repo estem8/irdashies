@@ -288,21 +288,21 @@ comparable:
 
 ### Result of the 2026-09-25 cleanup
 
-Bytes allocated per call, before and after the per-snapshot cleanup, each
+KiB allocated per call, before and after the per-snapshot cleanup, each
 measured in its own process:
 
-| cars in range | blips | before       | after | change |
-| ------------- | ----- | ------------ | ----- | ------ |
-| 0             | 0     | 2.73         | 1.82  | -33%   |
-| 5             | 4     | 5.15         | 3.93  | -24%   |
-| 10            | 9     | 7.94         | 5.48  | -31%   |
-| 15            | 14    | 9.90         | 7.02  | -29%   |
-| 20            | 19    | 13.17        | 8.95  | -32%   |
-| 25            | 24    | 15.18        | 10.55 | -31%   |
-| 30            | 29    | not reliable | 12.11 | -      |
+| Cars in range | Blips | Before (KiB/call) | After (KiB/call) | Change |
+| ------------- | ----- | ----------------: | ---------------: | -----: |
+| 0             | 0     |              2.73 |             1.82 |   -33% |
+| 5             | 4     |              5.15 |             3.93 |   -24% |
+| 10            | 9     |              7.94 |             5.48 |   -31% |
+| 15            | 14    |              9.90 |             7.02 |   -29% |
+| 20            | 19    |             13.17 |             8.95 |   -32% |
+| 25            | 24    |             15.18 |            10.55 |   -31% |
+| 30            | 29    |      not reliable |            12.11 |      — |
 
-At the published rate, with 24 cars in range, that is roughly 379 KB/s of
-garbage down to roughly 264 KB/s.
+At the published rate, with 24 cars in range, that is roughly 379 KiB/s of
+garbage down to roughly 264 KiB/s.
 
 The 29-blip row has no trustworthy "before". The old code allocated enough at
 that density for a mark-compact to land mid-batch, and the resulting figure was

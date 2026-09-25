@@ -531,13 +531,7 @@ export interface RadarConfig {
   /** Road border colour for the following map. */
   mapBorderColor: string;
   /** Visual treatment for left/right overlap indicators. */
-  sideIndicatorStyle:
-    | 'soft-glow'
-    | 'double-arc'
-    | 'follow-sector'
-    | 'distance-pulse'
-    | 'trail'
-    | 'static-pulse';
+  sideIndicatorStyle: 'double-arc' | 'follow-sector';
   sideIndicatorColor: string;
   sideIndicatorOpacity: number;
   sideIndicatorEnabled: boolean;

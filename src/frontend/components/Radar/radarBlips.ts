@@ -183,24 +183,16 @@ const playerPoint = { x: 0, y: 0 };
 const carPoint = { x: 0, y: 0 };
 
 /**
- * A frame that draws nothing, as a result built in the caller's own buffer.
+ * A frame that draws nothing, as a result built in the caller's output buffer.
  *
- * Both buffers are zeroed, not just the output one. Nothing this call reads
- * `previousTargets`, and a car that left while the radar was drawing nothing
- * would otherwise still be holding a side and a direction in whichever buffer
- * the next frame that does draw something reads from.
- *
- * `template` supplies the camera fields; its `targets` is replaced.
+ * `nextTargets` was cleared before the geometry checks, so its returned state
+ * is empty without mutating `previousTargets`. The caller can promote this
+ * output only if the render commits.
  */
 const nothingToDraw = (
   template: RadarBlipResult,
-  previousTargets: RadarTargetState,
   nextTargets: RadarTargetState
-): RadarBlipResult => {
-  previousTargets.side.fill(0);
-  previousTargets.alongSign.fill(0);
-  return { ...template, targets: nextTargets };
-};
+): RadarBlipResult => ({ ...template, targets: nextTargets });
 
 /** Metres between centreline samples in the following-car map. */
 export const MAP_SAMPLE_M = 1;
@@ -311,12 +303,12 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     trackLengthM <= 0 ||
     trackPathPoints.length < 3
   ) {
-    return nothingToDraw(NO_GEOMETRY, previousTargets, nextTargets);
+    return nothingToDraw(NO_GEOMETRY, nextTargets);
   }
 
   const playerPct = playerCarIdx === null ? undefined : positions[playerCarIdx];
   if (playerCarIdx === null || !onRoad(playerPct)) {
-    return nothingToDraw(NOT_ON_ROAD, previousTargets, nextTargets);
+    return nothingToDraw(NOT_ON_ROAD, nextTargets);
   }
 
   const playerTangent = tangentAngleAt(
@@ -327,7 +319,7 @@ export const computeRadarBlips = (input: RadarBlipInput): RadarBlipResult => {
     direction
   );
   if (playerTangent === null) {
-    return nothingToDraw(NOT_ON_ROAD, previousTargets, nextTargets);
+    return nothingToDraw(NOT_ON_ROAD, nextTargets);
   }
 
   const metresPerUnit = trackLengthM / totalLength;
