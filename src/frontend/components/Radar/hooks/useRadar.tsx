@@ -147,11 +147,14 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
   const [focusCarIdx, positions, onPitRoad, isOnTrack, carSpeed] =
     useRadarSelector(selectRadarInput, { equality: radarInputEqual }) ??
     EMPTY_INPUT;
-  const isGrid = carSpeed < 0.5;
   const carLeftRight = useBlindSpotSelector(
     (snapshot) => snapshot.carLeftRight
   );
   const driverCarIdx = useDriverCarIdx();
+  // Speed describes the player's car. Do not classify a watched car as
+  // stationary from the player's speed when the camera follows someone else.
+  const isGrid =
+    focusCarIdx !== null && focusCarIdx === driverCarIdx && carSpeed < 0.5;
   const drivers = useSessionDrivers();
   const session = useSessionStore((state) => state.session);
   const trackId = session?.WeekendInfo?.TrackID;
@@ -270,16 +273,15 @@ export const useRadar = (options: UseRadarOptions): RadarState => {
       followingMapBuffer,
     });
     targetsRef.current = result.targets;
-    return {
-      ...result,
-      blips: isGrid
-        ? result.blips.map((blip) => ({
-            ...blip,
-            side: null,
-            rimSignal: null,
-          }))
-        : result.blips,
-    };
+    if (isGrid) {
+      // These blips are freshly owned by this calculation; clear only the
+      // display signals in place instead of cloning every blip at 25 Hz.
+      for (const blip of result.blips) {
+        blip.side = null;
+        blip.rimSignal = null;
+      }
+    }
+    return result;
   }, [
     positions,
     onPitRoad,

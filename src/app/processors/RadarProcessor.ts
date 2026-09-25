@@ -90,7 +90,7 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
       changed = true;
     }
 
-    const carSpeedValue = scalar(frame, 'CarSpeed');
+    const carSpeedValue = scalar(frame, 'Speed');
     const carSpeed =
       typeof carSpeedValue === 'number' && Number.isFinite(carSpeedValue)
         ? carSpeedValue
@@ -123,6 +123,12 @@ export class RadarProcessor implements TelemetryProcessor<RadarSnapshot> {
     this.latest.version += 1;
   }
 
+  /**
+   * @returns the live mutable snapshot; do not hold references across frames.
+   * `onFrame` overwrites the arrays and fields in place and bumps `version`, so
+   * a retained reference silently changes underneath the caller. Read it within
+   * the tick, or copy what you need.
+   */
   snapshot(): RadarSnapshot {
     return this.latest;
   }

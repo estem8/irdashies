@@ -9,11 +9,13 @@ const frame = (
   positions: number[],
   {
     camCarIdx = 0,
+    speed = 0,
     onPitRoad = [false, false],
     isOnTrack = true,
     sessionNum = 1,
   }: {
     camCarIdx?: number;
+    speed?: number;
     onPitRoad?: boolean[];
     isOnTrack?: boolean;
     sessionNum?: number;
@@ -21,6 +23,7 @@ const frame = (
 ) =>
   ({
     CamCarIdx: { value: [camCarIdx] },
+    Speed: { value: [speed] },
     CarIdxLapDistPct: { value: positions },
     CarIdxOnPitRoad: { value: onPitRoad },
     IsOnTrack: { value: [isOnTrack] },
@@ -77,6 +80,15 @@ describe('RadarProcessor', () => {
       isOnTrack: true,
       version: 1,
     });
+  });
+  it('uses the supported player Speed variable', () => {
+    const processor = new RadarProcessor();
+    processor.onFrame({
+      ...frame([0.1, 0.2], { speed: 42 }),
+      CarSpeed: { value: [0] },
+    } as unknown as Telemetry);
+
+    expect(processor.snapshot().carSpeed).toBe(42);
   });
 
   it('bumps the version only when a published field changes', () => {

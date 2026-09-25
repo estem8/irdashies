@@ -74,6 +74,12 @@ export const RadarSettings = () => {
             defaultConfig
         ),
       });
+    } else {
+      setSettings({
+        id: SETTING_ID,
+        enabled: false,
+        config: normaliseRadarConfig(defaultConfig),
+      });
     }
   }
 

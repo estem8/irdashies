@@ -358,6 +358,8 @@ Shows the cars around you on a circular disc, like a spotter's proximity radar: 
 - Cars the sim reports alongside are pinned to that side rather than onto the point of the centreline you share with them
 - A pulsing red arc marks a car reported alongside within one car length
 - The signal colour is not chosen by distance; it reports state
+- Stationary-grid overlap indicators are suppressed only while the camera follows the player's car; player speed does not classify watched cars as stopped.
+- An unknown-side level car stays visible when side-indicator opacity is 0.
 - Optional car numbers on each blip, so you know who is alongside
 - Configurable range (10-25 m) and car dimensions, since the sim reports no per-car size
 - Optional hiding of cars on pit road, which otherwise sit on the racing line's centreline

@@ -144,7 +144,10 @@ const drawBlipVehicles = (
   // rim, so there the overlap itself is the signal and the car is drawn on top
   // of the player.
   const abreastM = Math.max(1, props.vehicleLength * 0.5);
-  const hideLevelCar = !props.showFollowingMap && props.sideIndicatorEnabled;
+  const hideLevelCar =
+    !props.showFollowingMap &&
+    props.sideIndicatorEnabled &&
+    props.sideIndicatorOpacity > 0;
   for (let i = 0; i < props.blips.length; i++) {
     const blip = props.blips[i];
     const levelAndUnknown =
@@ -366,6 +369,45 @@ const drawRangeRings = (
   ctx.restore();
 };
 
+/**
+ * The disc background is a radial gradient that only depends on the centre,
+ * the radius and the configured opacity. Building it once per canvas and
+ * reusing it keeps a 60 fps repaint allocation-free. A CanvasGradient survives
+ * a canvas resize — resizing resets the context state, not the object — so
+ * only those three inputs are part of the key.
+ */
+const backgroundGradients = new WeakMap<
+  HTMLCanvasElement,
+  { key: string; gradient: CanvasGradient }
+>();
+
+const backgroundGradientFor = (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  centreX: number,
+  centreY: number,
+  radius: number,
+  backgroundColor: string
+): CanvasGradient => {
+  const key = `${centreX}|${centreY}|${radius}|${backgroundColor}`;
+  const cached = backgroundGradients.get(canvas);
+  if (cached && cached.key === key) return cached.gradient;
+
+  const gradient = ctx.createRadialGradient(
+    centreX,
+    centreY,
+    0,
+    centreX,
+    centreY,
+    radius
+  );
+  gradient.addColorStop(0, backgroundColor);
+  gradient.addColorStop(0.8, backgroundColor);
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  backgroundGradients.set(canvas, { key, gradient });
+  return gradient;
+};
+
 const drawRadar = (
   canvas: HTMLCanvasElement,
   props: RadarDisplayProps,
@@ -407,17 +449,14 @@ const drawRadar = (
   // Keep the configured opacity through the inner 80% of the disc, then
   // taper it to zero at the rim. This removes the hard-edged circle while
   // preserving the same centre opacity used by the old setting.
-  const backgroundGradient = ctx.createRadialGradient(
+  const backgroundGradient = backgroundGradientFor(
+    ctx,
+    canvas,
     centreX,
     centreY,
-    0,
-    centreX,
-    centreY,
-    radius
+    radius,
+    backgroundColor
   );
-  backgroundGradient.addColorStop(0, backgroundColor);
-  backgroundGradient.addColorStop(0.8, backgroundColor);
-  backgroundGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
   // Keep the explicit colour assignment for non-canvas test contexts; the
   // gradient is the final value used by the browser.
   ctx.fillStyle = backgroundColor;

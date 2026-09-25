@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DashboardLayout, RadarConfig } from '@irdashies/types';
@@ -17,20 +18,22 @@ const mocks = vi.hoisted(() => {
       dashboard = next;
       listeners.forEach((listener) => listener());
     },
+    updateDashboard: (next: DashboardLayout) => {
+      dashboard = next;
+      listeners.forEach((listener) => listener());
+    },
   };
 });
 
-vi.mock('@irdashies/context', async () => {
-  const { useSyncExternalStore } = await import('react');
-  return {
-    useDashboard: () => ({
-      currentDashboard: useSyncExternalStore((onChange) => {
-        mocks.listeners.add(onChange);
-        return () => mocks.listeners.delete(onChange);
-      }, mocks.getDashboard),
-    }),
-  };
-});
+vi.mock('@irdashies/context', () => ({
+  useDashboard: () => ({
+    currentDashboard: useSyncExternalStore((onChange) => {
+      mocks.listeners.add(onChange);
+      return () => mocks.listeners.delete(onChange);
+    }, mocks.getDashboard),
+    onDashboardUpdated: mocks.updateDashboard,
+  }),
+}));
 
 const radarConfig = (overrides: Partial<RadarConfig> = {}): RadarConfig => ({
   ...getWidgetDefaultConfig('radar'),
@@ -95,6 +98,36 @@ describe('RadarSettings', () => {
     );
 
     expect(rangeValue()).toBe('11');
+  });
+
+  it('uses and persists defaults after switching to a profile without Radar', () => {
+    const defaults = getWidgetDefaultConfig('radar');
+    mocks.setDashboard(
+      dashboardWith(
+        radarConfig({ radarRange: 22, sideIndicatorColor: '#ff00ff' })
+      )
+    );
+    render(<RadarSettings />);
+    openOptionsTab();
+    expect(rangeValue()).toBe('22');
+
+    act(() =>
+      mocks.setDashboard({ widgets: [] } as unknown as DashboardLayout)
+    );
+    expect(rangeValue()).toBe(String(defaults.radarRange));
+
+    const changedRange = defaults.radarRange + 1;
+    fireEvent.change(sliderFor('Radar Range'), {
+      target: { value: String(changedRange) },
+    });
+
+    const savedRadar = mocks
+      .getDashboard()
+      ?.widgets.find((widget) => widget.id === 'radar');
+    expect(savedRadar?.config).toMatchObject({
+      radarRange: changedRange,
+      sideIndicatorColor: defaults.sideIndicatorColor,
+    });
   });
 
   it('falls back to the column defaults for a config the profile never had', () => {

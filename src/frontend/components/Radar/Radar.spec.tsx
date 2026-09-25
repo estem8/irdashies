@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import {
+  CarLeftRight,
   defaultDashboard,
   type ChannelBridge,
   type ChannelName,
@@ -155,6 +156,46 @@ const fixtureWithRivalAt = (gapsM: readonly number[]): ReplayFixture => {
   };
 };
 
+const fixtureWithRadarOverlap = (
+  cameraCarIdx: number,
+  speed: number
+): ReplayFixture => {
+  const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+  const rivalCarIdx = fixture.drivers
+    .map((driver) => Number(driver.CarIdx))
+    .find((carIdx) => carIdx !== playerCarIdx);
+  if (!Number.isInteger(playerCarIdx) || rivalCarIdx === undefined) {
+    throw new Error('fixture has no player and rival');
+  }
+
+  const overlapCarIdx =
+    cameraCarIdx === playerCarIdx ? rivalCarIdx : playerCarIdx;
+  const positions = finalFrame().CarIdxLapDistPct as number[];
+  const cameraPct = positions[cameraCarIdx];
+  if (typeof cameraPct !== 'number' || cameraPct < 0) {
+    throw new Error('camera car has no position');
+  }
+
+  return {
+    ...fixture,
+    frames: [
+      {
+        ...finalFrame(),
+        CamCarIdx: cameraCarIdx,
+        Speed: speed,
+        CarLeftRight: CarLeftRight.CarLeft,
+        CarIdxLapDistPct: positions.map((_, carIdx) =>
+          carIdx === cameraCarIdx
+            ? cameraPct
+            : carIdx === overlapCarIdx
+              ? cameraPct + 0.3 / TRACK_LENGTH_M
+              : -1
+        ),
+      },
+    ],
+  };
+};
+
 describe('Radar widget over a recorded multiclass session', () => {
   beforeEach(() => {
     rendered.length = 0;
@@ -183,6 +224,57 @@ describe('Radar widget over a recorded multiclass session', () => {
       expect(blip.alongM).toBeCloseTo(delta * TRACK_LENGTH_M, 3);
       expect(Math.abs(blip.alongM)).toBeLessThanOrEqual(25);
     }
+  });
+
+  it('clears overlap markers when the stationary player is on the grid', async () => {
+    const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+    const rivalCarIdx = fixture.drivers
+      .map((driver) => Number(driver.CarIdx))
+      .find((carIdx) => carIdx !== playerCarIdx);
+    if (rivalCarIdx === undefined) throw new Error('fixture has no rival');
+    const harness = mountFixture(fixtureWithRadarOverlap(playerCarIdx, 0), {
+      dashboard: radarDashboard({ fadeSeconds: 0 }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    expect(
+      latest().blips.find((blip) => blip.carIdx === rivalCarIdx)
+    ).toMatchObject({ side: null, rimSignal: null });
+  });
+
+  it('keeps overlap markers when the player is moving', async () => {
+    const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+    const rivalCarIdx = fixture.drivers
+      .map((driver) => Number(driver.CarIdx))
+      .find((carIdx) => carIdx !== playerCarIdx);
+    if (rivalCarIdx === undefined) throw new Error('fixture has no rival');
+    const harness = mountFixture(fixtureWithRadarOverlap(playerCarIdx, 12), {
+      dashboard: radarDashboard({ fadeSeconds: 0 }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    expect(
+      latest().blips.find((blip) => blip.carIdx === rivalCarIdx)
+    ).toMatchObject({ side: -1, rimSignal: 'left' });
+  });
+
+  it('does not infer a watched car is on the grid from player speed', async () => {
+    const playerCarIdx = Number(fixture.driverInfo?.DriverCarIdx);
+    const cameraCarIdx = fixture.drivers
+      .map((driver) => Number(driver.CarIdx))
+      .find((carIdx) => carIdx !== playerCarIdx);
+    if (cameraCarIdx === undefined) throw new Error('fixture has no rival');
+    const harness = mountFixture(fixtureWithRadarOverlap(cameraCarIdx, 0), {
+      dashboard: radarDashboard({ fadeSeconds: 0 }),
+    });
+    render(<Radar />, { wrapper: harness.wrapper });
+    await waitForDisplay();
+
+    expect(
+      latest().blips.find((blip) => blip.carIdx === playerCarIdx)
+    ).toMatchObject({ side: -1, rimSignal: 'left' });
   });
 
   it('uses class and badge colours when selected', async () => {

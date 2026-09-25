@@ -100,6 +100,13 @@ interface PaintRecord {
   strokeAlphasPerPaint: number[][];
   /** One entry per paint: the width and length passed to each vehicle. */
   vehicleSizesPerPaint: [number, number][][];
+  /**
+   * One entry per `createRadialGradient` call: the outer radius it was built
+   * with and the colour stops added to it. The disc background is cached
+   * between repaints, so this is what shows whether a repaint reused the
+   * gradient or built a stale one.
+   */
+  radialGradients: { radius: number; stops: string[] }[];
 }
 
 const observers: ((entries: unknown) => void)[] = [];
@@ -115,7 +122,16 @@ const createFakeContext = (record: PaintRecord) => {
   const paint = () => record.vehiclesPerPaint.length - 1;
   const method = (name: string) =>
     vi.fn((...args: unknown[]) => {
-      if (name === 'createLinearGradient' || name === 'createRadialGradient') {
+      if (name === 'createRadialGradient') {
+        const stops: string[] = [];
+        record.radialGradients.push({ radius: args[5] as number, stops });
+        return {
+          addColorStop: (_offset: number, color: string) => {
+            stops.push(color);
+          },
+        };
+      }
+      if (name === 'createLinearGradient') {
         return { addColorStop: () => undefined };
       }
       if (name === 'clearRect') {
@@ -251,6 +267,7 @@ describe('RadarDisplay', () => {
       beziersPerPaint: [],
       strokeAlphasPerPaint: [],
       vehicleSizesPerPaint: [],
+      radialGradients: [],
     };
     observers.length = 0;
     const context = createFakeContext(record);
@@ -310,6 +327,33 @@ describe('RadarDisplay', () => {
     expect(ahead[0] - centreX).toBeCloseTo(0.2 * metresToPixels, 6);
     expect(behind[0] - centreX).toBeCloseTo(2.4 * metresToPixels, 6);
     expect(alongside[0] - centreX).toBeCloseTo(-2.1 * metresToPixels, 6);
+  });
+
+  it('reuses the disc gradient across repaints, but not once the disc changes', () => {
+    const { rerender } = render(<RadarDisplay {...props} />);
+    deliverSize(300, 300);
+
+    expect(record.radialGradients).toHaveLength(1);
+    expect(record.radialGradients[0].stops).toEqual([
+      'rgba(0, 0, 0, 0.3)',
+      'rgba(0, 0, 0, 0.3)',
+      'rgba(0, 0, 0, 0)',
+    ]);
+
+    // Same disc, same size: a repaint reuses the gradient rather than building
+    // a second one.
+    rerender(<RadarDisplay {...props} showCarNumbers={false} />);
+    expect(record.radialGradients).toHaveLength(1);
+
+    // A new disc radius is a new gradient.
+    deliverSize(320, 300);
+    expect(record.radialGradients).toHaveLength(2);
+    expect(record.radialGradients[1].radius).toBeCloseTo(148, 6);
+
+    // A new disc opacity must not repaint through the old gradient's stops.
+    rerender(<RadarDisplay {...props} showCarNumbers={false} bgOpacity={80} />);
+    expect(record.radialGradients).toHaveLength(3);
+    expect(record.radialGradients[2].stops[0]).toBe('rgba(0, 0, 0, 0.8)');
   });
 
   it('paints the following road, a car at metre offsets, and no rim arcs in map view', () => {
@@ -374,6 +418,16 @@ describe('RadarDisplay', () => {
 
     view.rerender(<RadarDisplay {...props} blips={level} />);
     expect(record.vehiclesPerPaint.at(-1)).toBe(1);
+  });
+
+  it('draws an unknown-side level car when side indicators have zero opacity', () => {
+    const level = [
+      blip({ carIdx: 1, alongM: 0.3, gapM: 0.3, rimSignal: 'both' }),
+    ];
+    render(<RadarDisplay {...props} sideIndicatorOpacity={0} blips={level} />);
+    deliverSize(300, 300);
+
+    expect(record.vehiclesPerPaint.at(-1)).toBe(2);
   });
 
   it('keeps every map vehicle identifiable without enlarging true-scale cars', () => {
