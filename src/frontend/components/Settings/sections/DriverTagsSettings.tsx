@@ -434,7 +434,7 @@ export const DriverTagsSettings = () => {
                   });
                 }
               }}
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               <option value="badge-fill">Badges (icons, filled)</option>
               <option value="badge-regular">Badges (icons, outlined)</option>
@@ -493,7 +493,7 @@ export const DriverTagsSettings = () => {
             <h3 className="text-lg">Custom Groups</h3>
             <button
               onClick={addGroup}
-              className="px-3 py-1 bg-blue-600 rounded"
+              className="px-3 py-1 bg-accent-600 rounded"
             >
               Add Group
             </button>

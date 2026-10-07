@@ -1726,6 +1726,7 @@ export const defaultDashboard: {
     fontSize: 'sm',
     fontWeight: 'normal',
     colorPalette: 'black',
+    settingsTheme: 'carbon' as const,
     showOnlyWhenOnTrack: true,
     highlightColor: 960745,
     skipTaskbar: true,

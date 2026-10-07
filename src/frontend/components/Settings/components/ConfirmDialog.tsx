@@ -66,7 +66,7 @@ export const ConfirmDialog = ({
       icon: '',
     },
     info: {
-      confirmButton: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+      confirmButton: 'bg-accent-600 hover:bg-accent-700 focus:ring-accent-500',
       icon: '',
     },
   };

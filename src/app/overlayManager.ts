@@ -10,6 +10,7 @@ import type {
   DashboardWidget,
   ContainerBoundsInfo,
   GantryConfig,
+  SettingsTheme,
 } from '@irdashies/types';
 import {
   fitLayoutToDisplay,
@@ -1309,6 +1310,13 @@ export class OverlayManager {
     }
   }
 
+  /** Recolour the settings window's native controls after a theme change. */
+  public setSettingsTitleBarTheme(theme: SettingsTheme | undefined): void {
+    const win = this.currentSettingsWindow;
+    if (!win || win.isDestroyed() || process.platform === 'darwin') return;
+    win.setTitleBarOverlay(settingsTitleBarOverlay(theme));
+  }
+
   public createSettingsWindow(
     widgetType?: string,
     options?: { startHidden?: boolean }
@@ -1329,6 +1337,12 @@ export class OverlayManager {
     const defaultOptions: BrowserWindowConstructorOptions = {
       title: `irDashies - Settings`,
       frame: true,
+      // The renderer draws its own header (and drag region); the OS keeps
+      // drawing min/max/close, recoloured to match the settings theme.
+      titleBarStyle: 'hidden',
+      titleBarOverlay: settingsTitleBarOverlay(
+        this.currentDashboard?.generalSettings?.settingsTheme
+      ),
       width: 800,
       height: 700,
       autoHideMenuBar: true,
@@ -1465,4 +1479,27 @@ function loadWindowBounds(): Electron.Rectangle | undefined {
   }
 
   return bounds;
+}
+
+// Mirrors bg-slate-700 / text-slate-300 of each .settings-theme-* in theme.css,
+// so the native window buttons sit on the same colour as the header.
+const SETTINGS_TITLE_BAR: Record<
+  SettingsTheme,
+  { color: string; symbolColor: string }
+> = {
+  carbon: { color: '#17181b', symbolColor: '#a7aab0' },
+  pitwall: { color: '#1b1e23', symbolColor: '#9aa1ab' },
+};
+
+const SETTINGS_TITLE_BAR_HEIGHT = 40;
+
+function settingsTitleBarOverlay(
+  theme: SettingsTheme | undefined
+): Electron.TitleBarOverlay {
+  // Persisted config is untrusted; unknown values get the default theme.
+  const colors =
+    theme && Object.hasOwn(SETTINGS_TITLE_BAR, theme)
+      ? SETTINGS_TITLE_BAR[theme]
+      : SETTINGS_TITLE_BAR.carbon;
+  return { ...colors, height: SETTINGS_TITLE_BAR_HEIGHT };
 }

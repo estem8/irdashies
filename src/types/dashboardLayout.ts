@@ -101,6 +101,9 @@ export type FontSize =
   | '8xl'
   | '9xl';
 
+export const SETTINGS_THEMES = ['carbon', 'pitwall'] as const;
+export type SettingsTheme = (typeof SETTINGS_THEMES)[number];
+
 export interface GeneralSettingsType {
   fontType?: FontType;
   fontSize?: FontSize;
@@ -128,6 +131,8 @@ export interface GeneralSettingsType {
     | 'rose'
     | 'zinc'
     | 'stone';
+  /** Look of the settings window only; overlays use colorPalette. */
+  settingsTheme?: SettingsTheme;
   showOnlyWhenOnTrack?: boolean;
   highlightColor?: number;
   skipTaskbar?: boolean;

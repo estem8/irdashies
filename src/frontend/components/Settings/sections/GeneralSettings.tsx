@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAvailableSimulators, useDashboard } from '@irdashies/context';
 import { SIMULATOR_IDS, SIMULATOR_LABELS } from '@irdashies/types';
-import type { GeneralSettingsType } from '@irdashies/types';
+import type { GeneralSettingsType, SettingsTheme } from '@irdashies/types';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
+import { SettingButtonGroupRow } from '../components/SettingButtonGroupRow';
 
 const FONT_PRESETS = {
   lato: 'Lato',
@@ -89,6 +90,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     fontSize: currentDashboard?.generalSettings?.fontSize ?? 'sm',
     fontWeight: currentDashboard?.generalSettings?.fontWeight ?? 'normal',
     colorPalette: currentDashboard?.generalSettings?.colorPalette ?? 'default',
+    settingsTheme: currentDashboard?.generalSettings?.settingsTheme ?? 'carbon',
     highlightColor: currentDashboard?.generalSettings?.highlightColor ?? 960745,
     skipTaskbar: currentDashboard?.generalSettings?.skipTaskbar ?? true,
     disableHardwareAcceleration:
@@ -228,6 +230,12 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     updateDashboard(newSettings);
   };
 
+  const handleSettingsThemeChange = (newTheme: SettingsTheme) => {
+    const newSettings = { ...settings, settingsTheme: newTheme };
+    setSettings(newSettings);
+    updateDashboard(newSettings);
+  };
+
   const handleHighlightColorChange = (newColor: number) => {
     const newSettings = { ...settings, highlightColor: newColor };
     setSettings(newSettings);
@@ -350,7 +358,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   e.target.value as NonNullable<GeneralSettingsType['fontType']>
                 )
               }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               {Object.entries(FONT_PRESETS).map(([key, value]) => (
                 <option key={key} value={key}>
@@ -377,7 +385,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   >
                 )
               }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               {Object.entries(filteredWeights).map(([key, value]) => (
                 <option key={key} value={key}>
@@ -408,7 +416,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
               step="1"
               value={getSliderValue(settings.fontSize)}
               onChange={handleSliderChange}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider accent-blue-500"
+              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider accent-accent-500"
             />
           </div>
         </div>
@@ -428,7 +436,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   >
                 )
               }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               <option value="off">Off</option>
               <option value="compact">Compact</option>
@@ -465,7 +473,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 aria-labelledby="show-edit-mode-pixel-distances-label"
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
 
@@ -493,10 +501,21 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 aria-labelledby="snap-edit-mode-widgets-to-grid-label"
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
         </BaseSettingsSection>
+
+        <SettingButtonGroupRow<SettingsTheme>
+          title="Settings Window Style"
+          description="Look of this settings window. Overlays are not affected."
+          value={settings.settingsTheme ?? 'carbon'}
+          options={[
+            { label: 'Carbon', value: 'carbon' },
+            { label: 'Pit Wall', value: 'pitwall' },
+          ]}
+          onChange={handleSettingsThemeChange}
+        />
 
         {/* Color Theme Settings */}
         <div className="space-y-4">
@@ -526,7 +545,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   e.target.value as GeneralSettingsType['colorPalette']
                 )
               }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               {Object.entries(COLOR_THEME_PRESETS).map(([key, value]) => (
                 <option key={key} value={key}>
@@ -561,7 +580,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
               onChange={(e) =>
                 handleHighlightColorChange(parseInt(e.target.value))
               }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             >
               {Array.from(HIGHLIGHT_COLOR_PRESETS.entries()).map(
                 ([key, value]) => (
@@ -603,7 +622,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     onChange={(e) => handleSkipTaskbarChange(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -629,7 +648,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -656,7 +675,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     onChange={(e) => handleWebServerChange(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -684,7 +703,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -711,7 +730,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -735,7 +754,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     onChange={(e) => handleAutoStartChange(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -761,7 +780,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -785,7 +804,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     onChange={(e) => handleCloseToTrayChange(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
                 </label>
               </div>
             </div>
@@ -811,7 +830,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                       >
                     )
                   }
-                  className="shrink-0 px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="shrink-0 px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
                 >
                   <option value="auto">Auto</option>
                   {SIMULATOR_IDS.map((id) => {
