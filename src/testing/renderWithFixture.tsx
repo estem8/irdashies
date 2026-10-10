@@ -6,7 +6,7 @@ import type {
   DashboardBridge,
   DashboardLayout,
 } from '@irdashies/types';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { StandingsProcessor } from '../app/processors/StandingsProcessor';
 import {
   RelativeGapProcessor,

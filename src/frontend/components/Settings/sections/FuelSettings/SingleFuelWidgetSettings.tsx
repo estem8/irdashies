@@ -12,7 +12,7 @@ import { SessionVisibility } from '../../components/SessionVisibility';
 import { TabButton } from '../../components/TabButton';
 import { LayoutVisualizer, migrateToTree } from '../LayoutVisualizer';
 import { DEFAULT_FUEL_LAYOUT_TREE } from '../../../FuelCalculator/defaults';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { DualFontSizeInput } from './FontSizeInputs';
 import { GridOrderSettingsList } from './GridOrderSettingsList';
 import { AVAILABLE_WIDGETS_FUEL, generateId } from './utils';

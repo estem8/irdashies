@@ -1,10 +1,10 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import { type PropertySpecs } from '@irdashies/types';
 import {
   getPath,
   getWidgetManifest,
   setPath,
-  type PropertySpecs,
-} from '@irdashies/types';
+} from '@irdashies/types/widgetDefaults';
 import logger from '@irdashies/utils/logger';
 import { SettingButtonGroupRow } from './SettingButtonGroupRow';
 import { SettingNumberRow } from './SettingNumberRow';

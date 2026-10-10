@@ -1,5 +1,5 @@
 import type { WidgetId } from '@irdashies/types';
-import { WIDGET_MANIFESTS } from '@irdashies/types';
+import { WIDGET_MANIFESTS } from '@irdashies/types/widgetDefaults';
 
 /**
  * Mapping of widget IDs to their display names

@@ -5,7 +5,7 @@ import type {
   PitlaneHelperWidgetSettings,
   SettingsTabType,
 } from '@irdashies/types';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingToggleRow } from '../components/SettingToggleRow';

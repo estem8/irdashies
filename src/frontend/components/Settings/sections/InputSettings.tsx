@@ -9,8 +9,8 @@ import {
   InputWidgetSettings,
   LayoutNode,
   SettingsTabType,
-  getWidgetDefaultConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SettingDivider } from '../components/SettingDivider';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingToggleRow } from '../components/SettingToggleRow';

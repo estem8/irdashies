@@ -5,10 +5,10 @@ import {
   RADAR_OVERLAP_THRESHOLDS,
   RADAR_PROFILE_KEYS,
   RADAR_RIVAL_COLOR_MODES,
-  getWidgetDefaultConfig,
   type RadarConfig,
   type RadarPoleSides,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { isValidSize, type CarSize } from '@irdashies/domain/radar/carSizes';
 
 const RADAR_DEFAULTS = getWidgetDefaultConfig('radar');

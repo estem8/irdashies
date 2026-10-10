@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SettingProp, SettingProps } from './SettingProp';
 
 const meta: Meta<typeof SettingProp> = {

@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useSessionStore } from '@irdashies/context';
 import {
-  getWidgetDefaultConfig,
   type SessionQualifyPosition,
   type StandingsWidgetSettings,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { mountFixture } from '../../../testing/renderWithFixture';
 import type { ReplayFixture } from '../../../testing/replayFixture';
 import roadAmerica from '../../../../test-data/fixtures/multiclass-road-america.json';

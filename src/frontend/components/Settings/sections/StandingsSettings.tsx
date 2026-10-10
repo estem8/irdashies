@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import {
-  StandingsWidgetSettings,
-  SettingsTabType,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { StandingsWidgetSettings, SettingsTabType } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { TabButton } from '../components/TabButton';
 import { SortableList } from '../../SortableList';

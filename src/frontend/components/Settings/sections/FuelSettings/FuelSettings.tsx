@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '@irdashies/context';
 import { PlusIcon } from '@phosphor-icons/react';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SingleFuelWidgetSettings } from './SingleFuelWidgetSettings';
 import { generateId } from './utils';
 

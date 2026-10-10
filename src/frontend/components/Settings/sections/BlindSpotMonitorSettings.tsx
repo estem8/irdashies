@@ -4,8 +4,8 @@ import { useDashboard } from '@irdashies/context';
 import {
   BlindSpotMonitorWidgetSettings,
   SettingsTabType,
-  getWidgetDefaultConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SessionVisibility } from '../components/SessionVisibility';
 import { TabButton } from '../components/TabButton';
 import { SettingsSection } from '../components/SettingSection';

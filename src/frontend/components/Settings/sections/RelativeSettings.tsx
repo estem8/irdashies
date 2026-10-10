@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import { useDashboard } from '@irdashies/context';
-import {
-  RelativeWidgetSettings,
-  SettingsTabType,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { RelativeWidgetSettings, SettingsTabType } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { TabButton } from '../components/TabButton';
 import { SortableList } from '../../SortableList';
 import { DraggableSettingItem } from '../components/DraggableSettingItem';

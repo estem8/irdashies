@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import {
-  BattleWidgetSettings,
-  SettingsTabType,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { BattleWidgetSettings, SettingsTabType } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { TabButton } from '../components/TabButton';
 import { SortableList } from '../../SortableList';

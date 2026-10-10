@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { StandingsWidgetSettings } from '@irdashies/types';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { mountFixture } from '../../../testing/renderWithFixture';
 import type { ReplayFixture } from '../../../testing/replayFixture';
 import roadAmerica from '../../../../test-data/fixtures/multiclass-road-america.json';

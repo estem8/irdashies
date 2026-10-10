@@ -1,1 +1,4 @@
-export { defaultDashboard, getWidgetDefaultConfig } from '@irdashies/types';
+export {
+  defaultDashboard,
+  getWidgetDefaultConfig,
+} from '@irdashies/types/widgetDefaults';

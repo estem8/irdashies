@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import {
-  ShiftLightWidgetSettings,
-  getWidgetDefaultConfig,
-  SettingsTabType,
-} from '@irdashies/types';
+import { ShiftLightWidgetSettings, SettingsTabType } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { ToggleSwitch } from '../components/ToggleSwitch';
 import { SessionVisibility } from '../components/SessionVisibility';

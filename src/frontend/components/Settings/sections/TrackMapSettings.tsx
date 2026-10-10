@@ -3,9 +3,9 @@ import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import {
   TrackMapWidgetSettings,
   SettingsTabType,
-  getWidgetDefaultConfig,
   DashboardBridge,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import type { SectorDeltaConfig } from '@irdashies/types';
 import { useDashboard } from '@irdashies/context';
 import { getSectorDeltaThresholdPercentages } from '../../SectorDelta/sectorColorUtils';

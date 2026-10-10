@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import {
-  CornerNameWidgetSettings,
-  SettingsTabType,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { CornerNameWidgetSettings, SettingsTabType } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingSliderRow } from '../components/SettingSliderRow';

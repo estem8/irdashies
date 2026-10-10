@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import {
   activeProfile,
   applyProfileChange,

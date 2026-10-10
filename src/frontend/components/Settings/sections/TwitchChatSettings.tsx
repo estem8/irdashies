@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import type { TwitchChatWidgetSettings } from '@irdashies/types';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingProp, SettingProps } from '../components/SettingProp';

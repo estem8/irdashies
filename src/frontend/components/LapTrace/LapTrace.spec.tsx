@@ -13,10 +13,9 @@ vi.mock('@irdashies/utils/logger', () => ({
 // The widget reads its config from the dashboard context; these tests drive it
 // through props instead, which take precedence over the stored settings.
 vi.mock('./hooks/useLapTraceSettings', async () => {
-  const { getWidgetDefaultConfig } =
-    await vi.importActual<typeof import('@irdashies/types')>(
-      '@irdashies/types'
-    );
+  const { getWidgetDefaultConfig } = await vi.importActual<
+    typeof import('@irdashies/types/widgetDefaults')
+  >('@irdashies/types/widgetDefaults');
   const defaults = getWidgetDefaultConfig('laptrace');
   return { useLapTraceSettings: () => defaults };
 });

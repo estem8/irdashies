@@ -8,7 +8,7 @@ import {
   InfoIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
-import { WIDGET_MANIFESTS } from '@irdashies/types';
+import { WIDGET_MANIFESTS } from '@irdashies/types/widgetDefaults';
 
 export interface MenuItem {
   to: string;

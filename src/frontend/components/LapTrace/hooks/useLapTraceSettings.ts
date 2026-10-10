@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { useDashboard } from '@irdashies/context';
-import {
-  getWidgetDefaultConfig,
-  type LapTraceWidgetSettings,
-} from '@irdashies/types';
+import { type LapTraceWidgetSettings } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 
 const defaultConfig = getWidgetDefaultConfig('laptrace');
 

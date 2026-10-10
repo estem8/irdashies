@@ -1,4 +1,5 @@
-import { FuelWidgetSettings, getWidgetDefaultConfig } from '@irdashies/types';
+import { FuelWidgetSettings } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SettingsSection } from '../../components/SettingSection';
 import { SettingProp } from '../../components/SettingProp';
 

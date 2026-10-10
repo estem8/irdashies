@@ -6,7 +6,7 @@ import {
   saveDashboard,
   updateDashboardWidget,
 } from './dashboards';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { DashboardLayout } from '@irdashies/types';
 
 const mockReadData = vi.hoisted(() => vi.fn());

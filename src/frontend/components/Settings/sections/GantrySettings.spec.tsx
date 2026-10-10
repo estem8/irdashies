@@ -5,7 +5,8 @@ import type {
   DashboardLayout,
   LapGraphConfig,
 } from '@irdashies/types';
-import { deepMergeConfig, getWidgetDefaultConfig } from '@irdashies/types';
+import { deepMergeConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { GantrySettings } from './GantrySettings';
 
 /** Camera groups as the session publishes them; Cameras is unused by these tests. */

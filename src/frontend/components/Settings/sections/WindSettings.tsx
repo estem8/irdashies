@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import {
-  getWidgetDefaultConfig,
-  getWidgetManifest,
-  isConfigValid,
   type DashboardWidget,
   type WindWidgetSettings,
 } from '@irdashies/types';
+import {
+  getWidgetDefaultConfig,
+  getWidgetManifest,
+  isConfigValid,
+} from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { SessionVisibility } from '../components/SessionVisibility';
 import { SettingDivider } from '../components/SettingDivider';

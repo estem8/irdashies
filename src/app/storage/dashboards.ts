@@ -4,7 +4,8 @@ import type {
   DashboardProfile,
 } from '@irdashies/types';
 import { emitDashboardUpdated } from './dashboardEvents';
-import { defaultDashboard, deepMergeConfig } from '@irdashies/types';
+import { deepMergeConfig } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { readData, writeData } from './storage';
 import { writeFile, mkdir, readFile, readdir, unlink } from 'node:fs/promises';
 import { resolve, basename, sep } from 'node:path';

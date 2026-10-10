@@ -1,10 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  RATING_COLUMN_IDS,
-  deepMergeConfig,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { RATING_COLUMN_IDS, deepMergeConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { DriverInfoRow } from './DriverInfoRow';
 
 vi.mock('@irdashies/context', () => ({

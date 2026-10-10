@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { SessionBar } from './SessionBar';
 import { DashboardProvider } from '@irdashies/context';
 import { mockDashboardBridge } from '../../../../../../.storybook/mockDashboardBridge';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import type { SessionBarSnapshot } from '@irdashies/types';
 import {
   ChannelSnapshotDecorator,

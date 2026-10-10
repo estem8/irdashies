@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { WIDGET_MANIFESTS, getWidgetManifest } from '@irdashies/types';
+import {
+  WIDGET_MANIFESTS,
+  getWidgetManifest,
+} from '@irdashies/types/widgetDefaults';
 import { WIDGET_MAP, getWidget } from './WidgetIndex';
 import { WIDGET_SETTINGS } from './components/Settings/SettingsLoader';
 

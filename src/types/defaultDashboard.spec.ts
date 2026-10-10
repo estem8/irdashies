@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { deepMergeConfig, getWidgetDefaultConfig } from './defaultDashboard';
+import { getWidgetDefaultConfig } from './defaultDashboard';
+import { deepMergeConfig } from './mergeConfig';
 import { DEFAULT_LAP_TRACE_COLORS, DEFAULT_LAP_TRACE_SOUND } from './lapTrace';
 
 describe('deepMergeConfig', () => {

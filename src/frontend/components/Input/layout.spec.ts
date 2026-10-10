@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { LayoutNode } from '@irdashies/types';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import {
   buildDefaultInputTree,
   getInputLayoutTree,

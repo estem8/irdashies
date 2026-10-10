@@ -9,7 +9,7 @@ import {
 import { DEMO_LABELS, demoRadarFrame } from './radarDemo';
 import type { RadarStyle } from './radarDraw';
 import { radarStyleFrom } from './radarStyle';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 
 const STYLE: RadarStyle = radarStyleFrom(getWidgetDefaultConfig('radar'), {
   length: 4.5,

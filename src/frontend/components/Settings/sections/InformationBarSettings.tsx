@@ -3,8 +3,8 @@ import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import {
   InformationBarWidgetSettings,
   SettingsTabType,
-  getWidgetDefaultConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { TabButton } from '../components/TabButton';
 import { SettingsSection } from '../components/SettingSection';

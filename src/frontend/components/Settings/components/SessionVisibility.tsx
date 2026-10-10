@@ -1,9 +1,11 @@
 import {
   BaseWidgetSettings,
-  DEFAULT_SESSION_KEYS,
-  SESSION_VISIBILITY_LABELS,
   SessionVisibilitySettings,
 } from '@irdashies/types';
+import {
+  DEFAULT_SESSION_KEYS,
+  SESSION_VISIBILITY_LABELS,
+} from '@irdashies/types/widgetDefaults';
 import { SettingToggleRow } from '../components/SettingToggleRow';
 
 type SessionKey = keyof SessionVisibilitySettings;

@@ -9,8 +9,8 @@ import {
   INCIDENT_THRESHOLD_BOUNDS,
   LAP_GRAPH_LAP_WINDOW_BOUNDS,
   DEFAULT_INCIDENT_CAMERA_GROUP,
-  getWidgetDefaultConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import {
   useDashboard,
   useSessionCameraGroups,

@@ -7,7 +7,6 @@ import {
   StoryTelemetryProvider,
 } from '@irdashies/context';
 import {
-  getWidgetDefaultConfig,
   LAP_GRAPH_LAP_WINDOW_BOUNDS,
   type ChannelBridge,
   type ChannelName,
@@ -19,6 +18,7 @@ import {
   type Session,
   type SessionRetention,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { generateMockDataFromPath } from '../src/app/bridge/iracingSdk/mock-data/generateMockData';
 import { createMockBridgeWithConfig } from './telemetryDecorator';
 import { standingsStorySnapshot } from './standingsSnapshot';

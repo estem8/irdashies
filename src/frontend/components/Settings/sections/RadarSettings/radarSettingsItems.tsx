@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react';
 import {
   DEFAULT_RADAR_TUNING,
-  getWidgetDefaultConfig,
-  getWidgetManifest,
   type PropertySpec,
   type RadarConfig,
   type RadarTuning,
 } from '@irdashies/types';
+import {
+  getWidgetDefaultConfig,
+  getWidgetManifest,
+} from '@irdashies/types/widgetDefaults';
 import { SessionVisibility } from '../../components/SessionVisibility';
 import { SettingButtonGroupRow } from '../../components/SettingButtonGroupRow';
 import { SettingSelectRow } from '../../components/SettingSelectRow';

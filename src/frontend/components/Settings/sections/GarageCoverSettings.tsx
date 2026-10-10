@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import { useDashboard } from '@irdashies/context';
-import {
-  GarageCoverWidgetSettings,
-  getWidgetDefaultConfig,
-} from '@irdashies/types';
+import { GarageCoverWidgetSettings } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { DashboardBridge } from '@irdashies/types';
 
 const SETTING_ID = 'garagecover';

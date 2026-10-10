@@ -12,7 +12,7 @@ import type {
 } from '@irdashies/types';
 import { useState } from 'react';
 import { WIDGET_MAP } from '../../WidgetIndex';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 
 const meta: Meta<typeof ThemeManager> = {
   component: ThemeManager,

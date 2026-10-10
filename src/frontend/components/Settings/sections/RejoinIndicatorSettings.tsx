@@ -3,8 +3,8 @@ import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import {
   RejoinIndicatorWidgetSettings,
   SettingsTabType,
-  getWidgetDefaultConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useDashboard } from '@irdashies/context';
 import { SessionVisibility } from '../components/SessionVisibility';
 import { TabButton } from '../components/TabButton';

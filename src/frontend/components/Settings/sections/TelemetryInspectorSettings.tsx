@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import { useDashboard } from '@irdashies/context';
 import { TrashIcon, PlusIcon } from '@phosphor-icons/react';

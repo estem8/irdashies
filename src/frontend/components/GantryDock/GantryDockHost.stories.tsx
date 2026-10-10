@@ -6,11 +6,11 @@ import {
   trackStateStorySnapshot,
 } from '@irdashies/storybook';
 import {
-  defaultDashboard,
   type DashboardWidget,
   type FuelProjectionSnapshot,
   type ResolvedDock,
 } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { GantryDockHost } from './GantryDockHost';
 
 const widget = (id: string) =>

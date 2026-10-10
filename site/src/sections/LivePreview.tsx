@@ -12,7 +12,7 @@ import { WIDGET_MAP, type WidgetId } from '../../../src/frontend/WidgetIndex';
 import { WIDGET_NAMES } from '../../../src/frontend/constants/widgetNames';
 import { SectorTimingUpdater } from '../../../src/frontend/context/SectorTimingStore/SectorTimingUpdater';
 import { WidgetRuntimeProvider } from '../../../src/frontend/widgetRuntime';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 
 // Site-local components and utilities
 import { DashboardReady } from '../components/DashboardReady';

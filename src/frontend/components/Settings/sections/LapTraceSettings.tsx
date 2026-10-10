@@ -4,11 +4,11 @@ import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import {
   LapTraceWidgetSettings,
   SettingsTabType,
-  getWidgetDefaultConfig,
   DEFAULT_AUDIO_OUTPUT_DEVICE_ID,
   DEFAULT_LAP_TRACE_COLORS,
   DEFAULT_LAP_TRACE_SOUND,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import type {
   LapTraceBestInfo,
   Garage61SearchInfo,
