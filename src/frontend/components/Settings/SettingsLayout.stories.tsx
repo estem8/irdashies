@@ -71,10 +71,10 @@ export const CarbonTheme: Story = {
   } as StoryProps,
 };
 
-export const PitWallTheme: Story = {
+export const RedTheme: Story = {
   args: {
     initialPath: '/settings/fuel',
-    theme: 'pitwall',
+    theme: 'red',
   } as StoryProps,
 };
 

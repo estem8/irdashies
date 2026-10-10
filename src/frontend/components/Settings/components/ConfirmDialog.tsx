@@ -103,7 +103,7 @@ export const ConfirmDialog = ({
 
           {/* Content */}
           <div className="mb-6">
-            <p className="text-gray-300 leading-relaxed">{message}</p>
+            <p className="text-slate-300 leading-relaxed">{message}</p>
           </div>
 
           {/* Actions */}
@@ -111,7 +111,7 @@ export const ConfirmDialog = ({
             <button
               ref={cancelButtonRef}
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border border-slate-600 rounded-md hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors"
             >
               {cancelText}
             </button>

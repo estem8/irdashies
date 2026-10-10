@@ -101,7 +101,7 @@ export type FontSize =
   | '8xl'
   | '9xl';
 
-export const SETTINGS_THEMES = ['carbon', 'pitwall'] as const;
+export const SETTINGS_THEMES = ['carbon', 'red'] as const;
 export type SettingsTheme = (typeof SETTINGS_THEMES)[number];
 
 export interface GeneralSettingsType {

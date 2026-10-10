@@ -512,7 +512,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
           value={settings.settingsTheme ?? 'carbon'}
           options={[
             { label: 'Carbon', value: 'carbon' },
-            { label: 'Pit Wall', value: 'pitwall' },
+            { label: 'Red', value: 'red' },
           ]}
           onChange={handleSettingsThemeChange}
         />

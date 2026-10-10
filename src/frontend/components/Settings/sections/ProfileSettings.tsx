@@ -349,7 +349,7 @@ export const ProfileSettings = () => {
             <button
               onClick={handleCreateProfile}
               disabled={isCreating || !newProfileName.trim()}
-              className="bg-accent-600 hover:bg-accent-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-medium transition-colors"
+              className="bg-accent-600 hover:bg-accent-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-on-accent px-4 py-2 rounded font-medium transition-colors"
             >
               {isCreating ? 'Creating...' : 'Create'}
             </button>
@@ -363,7 +363,7 @@ export const ProfileSettings = () => {
           </div>
           <div className="divide-y divide-slate-700 overflow-y-auto min-h-0">
             {profiles.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-400">
+              <div className="px-4 py-8 text-center text-slate-400">
                 No profiles found. Create your first profile above.
               </div>
             ) : (
@@ -405,7 +405,7 @@ export const ProfileSettings = () => {
                             {profile.name}
                           </div>
                           {profile.lastModified && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-slate-500">
                               Modified:{' '}
                               {new Date(profile.lastModified).toLocaleString()}
                             </div>
@@ -425,7 +425,7 @@ export const ProfileSettings = () => {
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                            className="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                           >
                             Cancel
                           </button>
@@ -435,7 +435,7 @@ export const ProfileSettings = () => {
                           {!isActive && (
                             <button
                               onClick={() => handleSwitchProfile(profile.id)}
-                              className="bg-accent-600 hover:bg-accent-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                              className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-1 rounded text-sm font-medium transition-colors"
                             >
                               Switch
                             </button>
@@ -446,7 +446,7 @@ export const ProfileSettings = () => {
                               const url = `http://${serverIP}:${serverPort}/dashboard?profile=${profile.id}`;
                               navigator.clipboard.writeText(url);
                             }}
-                            className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                            className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-1 rounded text-sm font-medium transition-colors"
                             title="Copy browser URL for this profile"
                           >
                             Copy URL
@@ -606,7 +606,7 @@ export const ProfileSettings = () => {
             <h3 className="text-lg font-semibold text-white mb-2">
               Switch Profile By Session
             </h3>
-            <p className="text-sm text-gray-400 mb-3">
+            <p className="text-sm text-slate-400 mb-3">
               Set a profile for each session type and it is applied
               automatically as the event moves from practice through to the
               race. A session left on Don&apos;t switch keeps whatever profile
@@ -663,7 +663,7 @@ export const ProfileSettings = () => {
             <h3 className="text-lg font-semibold text-white mb-2">
               OBS Browser Source
             </h3>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-slate-400">
               The built-in web server is turned off, so browser source URLs are
               unavailable. Re-enable it under Settings &rarr; General &rarr;
               Enable Web Server (requires restart).
@@ -677,7 +677,7 @@ export const ProfileSettings = () => {
               <h3 className="text-lg font-semibold text-white mb-2">
                 OBS Browser Source
               </h3>
-              <p className="text-sm text-gray-400 mb-3">
+              <p className="text-sm text-slate-400 mb-3">
                 Use the URL below for OBS browser sources. OBS requires IP
                 addresses instead of localhost.
               </p>
@@ -724,7 +724,7 @@ export const ProfileSettings = () => {
                       `http://${serverIP}:3000/dashboard?profile=${currentProfile.id}`
                     );
                   }}
-                  className="bg-accent-600 hover:bg-accent-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
+                  className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
                 >
                   Copy for OBS
                 </button>

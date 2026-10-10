@@ -1488,7 +1488,7 @@ const SETTINGS_TITLE_BAR: Record<
   { color: string; symbolColor: string }
 > = {
   carbon: { color: '#17181b', symbolColor: '#a7aab0' },
-  pitwall: { color: '#1b1e23', symbolColor: '#9aa1ab' },
+  red: { color: '#1b1e23', symbolColor: '#9aa1ab' },
 };
 
 const SETTINGS_TITLE_BAR_HEIGHT = 40;
