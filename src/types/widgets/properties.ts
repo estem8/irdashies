@@ -2,9 +2,9 @@ import type { SessionVisibilitySettings } from '../widgetConfigs';
 
 /**
  * Describes one widget setting once: what it is, its limits and how it is
- * labelled. Settings UI picks the control from it (see SettingProp) and saved
- * configs are checked against it, instead of each settings page repeating
- * labels, ranges and hand-written type guards.
+ * labelled. Settings UI picks the control from it (see SettingProp) instead of
+ * each settings page repeating labels and ranges. `isConfigValid` checks a
+ * saved config against it; only some settings pages call it so far.
  */
 interface PropertyBase {
   label: string;

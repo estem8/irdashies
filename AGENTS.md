@@ -158,7 +158,7 @@ ComponentName/
 
 ### Widget Registration
 
-Widgets register themselves. `WIDGET_MAP` (`WidgetIndex.tsx`), the settings menu, `WIDGET_NAMES` and `defaultDashboard` are built from two files per widget:
+Widgets register themselves. `WIDGET_MAP` (`WidgetIndex.tsx`), the settings menu, `WIDGET_NAMES` and `defaultDashboard` are built from the manifest and `widget.ts` of each widget (the full checklist is under [Adding a Widget](#adding-a-widget)):
 
 ```typescript
 // src/types/widgets/mywidget.ts — main-safe data
