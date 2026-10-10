@@ -78,7 +78,7 @@ export const ConfirmDialog = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-50 [-webkit-app-region:no-drag] flex items-center justify-center p-4 transition-opacity duration-200 ${
         isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >

@@ -499,7 +499,7 @@ export const ProfileSettings = () => {
                                   right: dropdownPos.right,
                                   zIndex: 9999,
                                 }}
-                                className="bg-slate-700 border border-slate-600 rounded shadow-lg min-w-[130px]"
+                                className="bg-slate-700 border border-slate-600 rounded shadow-lg min-w-[130px] [-webkit-app-region:no-drag]"
                               >
                                 <button
                                   onClick={() => {
