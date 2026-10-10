@@ -3,19 +3,23 @@ import type { WidgetId } from '@irdashies/types';
 
 export type { WidgetId };
 
-/** Shape of each `components/<Folder>/widget.ts` default export. */
+/**
+ * Default export of each `components/<Folder>/widget.ts`: one module, or an
+ * array when a folder hosts several widgets.
+ */
 export interface WidgetModule {
   id: WidgetId;
   component: ElementType;
 }
 
-const discoveredWidgets = import.meta.glob<{ default: WidgetModule }>(
-  './components/*/widget.ts',
-  { eager: true }
-);
+const discoveredWidgets = import.meta.glob<{
+  default: WidgetModule | readonly WidgetModule[];
+}>('./components/*/widget.ts', { eager: true });
 
 export const WIDGET_MAP = Object.fromEntries(
-  Object.values(discoveredWidgets).map(({ default: m }) => [m.id, m.component])
+  Object.values(discoveredWidgets)
+    .flatMap(({ default: m }) => (Array.isArray(m) ? m : [m]))
+    .map((m: WidgetModule) => [m.id, m.component])
 ) as Record<WidgetId, ElementType>;
 
 /**

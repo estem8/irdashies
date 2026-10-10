@@ -7,7 +7,14 @@ const runtimeModules = import.meta.glob<{ default: { id: string } }>(
   './components/*/widgetRuntimeDefinition.ts',
   { eager: true }
 );
-const widgetModules = import.meta.glob('./components/*/widget.ts');
+const widgetModules = import.meta.glob<{
+  default: { id: string } | readonly { id: string }[];
+}>('./components/*/widget.ts', { eager: true });
+const widgetSources = import.meta.glob<string>('./components/*/widget.ts', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
 
 const sorted = (ids: string[]) => [...ids].sort();
 
@@ -26,11 +33,22 @@ describe('widget registry', () => {
     ).toEqual(manifestIds);
   });
 
-  it('has a widget.ts next to every widgetRuntimeDefinition.ts', () => {
-    for (const path of Object.keys(runtimeModules)) {
-      expect(widgetModules).toHaveProperty([
-        path.replace('widgetRuntimeDefinition.ts', 'widget.ts'),
-      ]);
+  it('declares each widget id exactly once across widget.ts files', () => {
+    const ids = Object.values(widgetModules).flatMap(({ default: m }) =>
+      (Array.isArray(m) ? m : [m]).map((w) => w.id)
+    );
+    expect(sorted(ids)).toEqual(manifestIds);
+  });
+
+  it('keeps widget.ts files from importing other widget folders (N3)', () => {
+    for (const [path, source] of Object.entries(widgetSources)) {
+      const folder = path.split('/')[2];
+      const crossImports = [...source.matchAll(/from '\.\.\/([^']+)'/g)]
+        .map((m) => m[1])
+        .filter((target) => target !== '..' && !target.startsWith('../'))
+        .filter((target) => target.split('/')[0] !== folder);
+      // '../../WidgetIndex' is the only allowed parent import
+      expect(crossImports, path).toEqual([]);
     }
   });
 
