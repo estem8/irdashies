@@ -19,12 +19,22 @@ describe('settings theme', () => {
 
   // App themes only remap slate-* and accent-*; these palettes ignore the
   // selected theme. Use slate-* for neutrals and accent-* for highlights.
-  it('uses only themeable colours in settings components', () => {
-    const sources = import.meta.glob('./**/*.tsx', {
-      eager: true,
-      query: '?raw',
-      import: 'default',
-    }) as Record<string, string>;
+  // Covers the settings window and the edit-layout chrome drawn over overlays.
+  it('uses only themeable colours in settings and edit-mode UI', () => {
+    const sources = import.meta.glob(
+      [
+        './**/*.tsx',
+        '../EditMode/**/*.tsx',
+        '../WidgetContainer/**/*.tsx',
+        '../OverlayContainer/**/*.tsx',
+        '../DashboardView/**/*.tsx',
+      ],
+      {
+        eager: true,
+        query: '?raw',
+        import: 'default',
+      }
+    ) as Record<string, string>;
     const offenders = Object.entries(sources)
       .filter(
         ([path]) => !path.includes('.stories.') && !path.includes('.spec.')

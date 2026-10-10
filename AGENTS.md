@@ -229,15 +229,18 @@ settings window, Gantry and overlays. A theme only remaps two palettes in
 
 - **Neutrals** (backgrounds, borders, secondary text): `slate-*` only — not
   `gray-*`, `zinc-*`, `neutral-*` or `stone-*`.
-- **Highlights** in settings (active state, primary buttons, links, focus
-  rings): `accent-*` only — not `blue-*`, `sky-*`, `cyan-*` or `indigo-*`.
+- **Highlights** of app UI, in any window (active state, primary buttons,
+  links, focus rings, hover/selection, edit-layout frames and handles):
+  `accent-*` only — not `blue-*`, `sky-*`, `cyan-*` or `indigo-*`.
   Text on a solid accent background is `text-on-accent`.
-- Semantic colours (flags, car classes, deltas, warnings) keep their own
-  colours.
+- Semantic and data colours (flags, car classes, incident types, deltas,
+  chart lines, warnings) keep their own colours.
 - New themes add a `.theme-*` block, an `APP_THEMES` entry and title-bar
   colours in `APP_THEME_TITLE_BAR`.
 
-`Settings/settingsTheme.spec.ts` fails on non-themeable colours in settings.
+`Settings/settingsTheme.spec.ts` fails on non-themeable colours in settings
+and the edit-layout chrome (`EditMode`, `WidgetContainer`, `OverlayContainer`,
+`DashboardView`).
 
 ---
 

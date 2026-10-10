@@ -150,7 +150,9 @@ export const WidgetContainer = memo(
 
     // Always use localLayout for display
     const displayedLayout = localLayout;
-    const edgeIndicatorFill = isInteracting ? '#38bdf8' : '#0ea5e9';
+    const edgeIndicatorFill = isInteracting
+      ? 'fill-accent-400'
+      : 'fill-accent-500';
     const edgeDistances = useEdgeDistances(
       displayedLayout,
       editMode && pixelDistances
@@ -188,9 +190,9 @@ export const WidgetContainer = memo(
             <div
               {...dragHandleProps}
               className={[
-                'absolute inset-0 border-2 border-sky-500',
+                'absolute inset-0 border-2 border-accent-500',
                 isDragging || isResizing
-                  ? 'border-sky-400'
+                  ? 'border-accent-400'
                   : 'animate-pulse-border',
               ].join(' ')}
             >
@@ -202,7 +204,7 @@ export const WidgetContainer = memo(
                 height="6"
                 viewBox="0 0 10 6"
               >
-                <polygon points="5,0 0,6 10,6" fill={edgeIndicatorFill} />
+                <polygon points="5,0 0,6 10,6" className={edgeIndicatorFill} />
               </svg>
               <svg
                 aria-hidden="true"
@@ -211,7 +213,7 @@ export const WidgetContainer = memo(
                 height="6"
                 viewBox="0 0 10 6"
               >
-                <polygon points="5,6 0,0 10,0" fill={edgeIndicatorFill} />
+                <polygon points="5,6 0,0 10,0" className={edgeIndicatorFill} />
               </svg>
               <svg
                 aria-hidden="true"
@@ -220,7 +222,7 @@ export const WidgetContainer = memo(
                 height="10"
                 viewBox="0 0 6 10"
               >
-                <polygon points="6,5 0,0 0,10" fill={edgeIndicatorFill} />
+                <polygon points="6,5 0,0 0,10" className={edgeIndicatorFill} />
               </svg>
               <svg
                 aria-hidden="true"
@@ -229,16 +231,16 @@ export const WidgetContainer = memo(
                 height="10"
                 viewBox="0 0 6 10"
               >
-                <polygon points="0,5 6,0 6,10" fill={edgeIndicatorFill} />
+                <polygon points="0,5 6,0 6,10" className={edgeIndicatorFill} />
               </svg>
 
               {/* Label */}
-              <div className="absolute top-0 right-0 py-1 px-2 bg-sky-500 text-white text-sm flex items-center gap-1 cursor-move">
+              <div className="absolute top-0 right-0 py-1 px-2 bg-accent-500 text-on-accent text-sm flex items-center gap-1 cursor-move">
                 <ResizeIcon size={14} />
                 <span>{widgetName}</span>
                 {onOpenSettings && (
                   <button
-                    className="p-0.5 hover:bg-sky-600 rounded"
+                    className="p-0.5 hover:bg-accent-600 rounded"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => onOpenSettings(id)}
                     title={`Open settings for ${widgetName}`}
@@ -249,7 +251,7 @@ export const WidgetContainer = memo(
                 )}
                 {onDisable && (
                   <button
-                    className="p-0.5 hover:bg-sky-600 rounded"
+                    className="p-0.5 hover:bg-accent-600 rounded"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => onDisable(id)}
                     title={`Disable ${widgetName}`}

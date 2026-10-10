@@ -87,7 +87,7 @@ export const LapGraphDriverList = memo(
               : !entry.hasLine
                 ? 'odd:bg-slate-800/70 even:bg-slate-900/70 text-slate-600'
                 : isFocused
-                  ? 'bg-sky-500/20 text-white'
+                  ? 'bg-accent-500/20 text-white'
                   : isShown
                     ? 'odd:bg-slate-800/70 even:bg-slate-900/70 text-slate-100'
                     : 'odd:bg-slate-800/70 even:bg-slate-900/70 text-slate-500';
@@ -117,7 +117,7 @@ export const LapGraphDriverList = memo(
                 }
                 className={[
                   'flex items-center gap-1.5 w-full px-1 py-0.5 rounded-sm text-left',
-                  'focus:outline-none focus:ring-1 focus:ring-sky-400',
+                  'focus:outline-none focus:ring-1 focus:ring-accent-400',
                   rowStateClasses,
                   // Kept out of the chain above: cursor is not a colour
                   // utility, so it has no ordering conflict to resolve.

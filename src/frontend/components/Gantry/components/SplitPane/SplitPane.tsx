@@ -206,7 +206,7 @@ export const SplitPane = memo(
           // Taken out of flex flow so the panes split exactly percent /
           // (100 - percent) of the container, not of container-minus-divider.
           className={[
-            'absolute z-10 touch-none select-none bg-slate-700/50 hover:bg-sky-500/70 focus:outline-none focus:bg-sky-500/70',
+            'absolute z-10 touch-none select-none bg-slate-700/50 hover:bg-accent-500/70 focus:outline-none focus:bg-accent-500/70',
             vertical
               ? 'left-0 right-0 h-1.5 -translate-y-1/2 cursor-row-resize'
               : 'top-0 bottom-0 w-1.5 -translate-x-1/2 cursor-col-resize',

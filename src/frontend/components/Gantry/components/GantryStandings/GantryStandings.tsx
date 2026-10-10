@@ -42,7 +42,7 @@ const HeaderCell = memo(
     <Tooltip content={tip} placement="bottom">
       <span
         tabIndex={0}
-        className={`${className} cursor-help focus:outline-none focus:ring-1 focus:ring-sky-400`}
+        className={`${className} cursor-help focus:outline-none focus:ring-1 focus:ring-accent-400`}
       >
         <span className="text-[10px]">{label}</span>
       </span>
@@ -217,7 +217,7 @@ export const GantryStandings = memo(({ followedCarIdx }: Props) => {
                   >
                     <span
                       tabIndex={0}
-                      className="text-xs font-extrabold uppercase tracking-widest cursor-help focus:outline-none focus:ring-1 focus:ring-sky-400"
+                      className="text-xs font-extrabold uppercase tracking-widest cursor-help focus:outline-none focus:ring-1 focus:ring-accent-400"
                       style={{ color: classColorHex }}
                     >
                       {carClass?.name}
@@ -321,7 +321,7 @@ const GantryDriverRow = memo(
         }
         className={[
           'flex items-center px-1 py-px text-xs border-b border-white/5 transition-opacity duration-150',
-          'cursor-pointer hover:bg-sky-500/20 focus:outline-none focus:ring-1 focus:ring-sky-400',
+          'cursor-pointer hover:bg-accent-500/20 focus:outline-none focus:ring-1 focus:ring-accent-400',
           idx % 2 === 0 ? 'bg-slate-800/70' : 'bg-slate-900/70',
           isPlayer ? 'bg-yellow-500/20 text-amber-300' : '',
           isFollowed ? 'ring-1 relative z-10' : '',

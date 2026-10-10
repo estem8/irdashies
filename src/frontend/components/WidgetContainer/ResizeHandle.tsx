@@ -16,7 +16,7 @@ export const ResizeHandle = memo(
     return (
       <div
         {...props}
-        className="absolute bg-sky-500 opacity-0 hover:opacity-100 transition-opacity"
+        className="absolute bg-accent-500 opacity-0 hover:opacity-100 transition-opacity"
         style={style}
       />
     );

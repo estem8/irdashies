@@ -686,7 +686,7 @@ export const LapGraphCanvas = memo(
             ref={plotRef}
             tabIndex={0}
             aria-label="Lap graph plot"
-            className="relative flex-1 min-h-0 text-slate-400 touch-none cursor-crosshair focus:outline-none focus:ring-1 focus:ring-sky-400 rounded-sm"
+            className="relative flex-1 min-h-0 text-slate-400 touch-none cursor-crosshair focus:outline-none focus:ring-1 focus:ring-accent-400 rounded-sm"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -768,7 +768,7 @@ export const LapGraphCanvas = memo(
               className="absolute inset-0 w-full h-full"
             />
             <div
-              className="absolute inset-y-0 border-x border-sky-400/70 bg-sky-400/10"
+              className="absolute inset-y-0 border-x border-accent-400/70 bg-accent-400/10"
               style={{
                 left: `${brushRect.x}%`,
                 width: `${brushRect.width}%`,
