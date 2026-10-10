@@ -19,7 +19,7 @@ import {
 import { mockDashboardBridge } from '@irdashies/storybook';
 import { generateMockDataFromPath } from '../../../app/bridge/iracingSdk/mock-data/generateMockData';
 import type { DashboardBridge, RelativeWidgetSettings } from '@irdashies/types';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { useState, useMemo } from 'react';
 import { DriverInfoRow } from './components/DriverInfoRow/DriverInfoRow';
 import { SessionBar } from './components/SessionBar/SessionBar';

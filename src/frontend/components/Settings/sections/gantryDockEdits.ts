@@ -1,10 +1,10 @@
 import {
-  getWidgetDefaultConfig,
   sanitizeGantryDock,
   type DashboardLayout,
   type DashboardWidget,
   type GantryDockConfig,
 } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { generateId } from './FuelSettings/utils';
 
 const GANTRY_ID = 'gantry';

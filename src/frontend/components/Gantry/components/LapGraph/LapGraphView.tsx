@@ -424,7 +424,7 @@ export const LapGraphView = memo(
               <Tooltip placement="bottom" content={CLASS_FILTER_TOOLTIP}>
                 <span
                   tabIndex={0}
-                  className="text-xs text-slate-500 font-bold uppercase tracking-wider cursor-help focus:outline-none focus:ring-1 focus:ring-sky-400 rounded"
+                  className="text-xs text-slate-500 font-bold uppercase tracking-wider cursor-help focus:outline-none focus:ring-1 focus:ring-accent-400 rounded"
                 >
                   Class
                 </span>

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { ResizeIcon, GearIcon, XIcon } from '@phosphor-icons/react';
 import { useDashboard, useGeneralSettings } from '@irdashies/context';
+import { overlayThemeClasses } from '@irdashies/types';
 import { WidgetRuntimeProvider } from '../../../src/frontend/widgetRuntime';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import {
@@ -32,7 +33,6 @@ export interface WidgetPosition {
 export function WidgetFrame({ children }: { children: ReactNode }) {
   const generalSettings = useGeneralSettings();
   const fontSize = generalSettings?.fontSize ?? 'sm';
-  const colorPalette = generalSettings?.colorPalette ?? 'default';
   const fontType = generalSettings?.fontType ?? 'lato';
   const fontWeight = generalSettings?.fontWeight ?? 'normal';
 
@@ -41,7 +41,7 @@ export function WidgetFrame({ children }: { children: ReactNode }) {
       className={[
         'overlay-window',
         `overlay-theme-${fontSize}`,
-        `overlay-theme-color-${colorPalette}`,
+        overlayThemeClasses(generalSettings),
         `overlay-theme-font-face-${fontType}`,
         `overlay-theme-font-weight-${fontWeight}`,
         'w-full h-full overflow-hidden',

@@ -33,7 +33,10 @@ import type {
   StandingsConfig,
   StandingsWidgetSettings,
 } from '@irdashies/types';
-import { defaultDashboard, getWidgetDefaultConfig } from '@irdashies/types';
+import {
+  defaultDashboard,
+  getWidgetDefaultConfig,
+} from '@irdashies/types/widgetDefaults';
 import {
   calculateIRatingGain,
   type CalculationResult,

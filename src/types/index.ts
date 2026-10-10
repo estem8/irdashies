@@ -11,7 +11,13 @@ export * from './referenceLaps';
 export * from './raceControl';
 export * from './widgetConfigs';
 export * from './gantryDock';
-export * from './defaultDashboard';
+export * from './mergeConfig';
+export type {
+  PropertySpec,
+  PropertySpecs,
+  WidgetCategory,
+  WidgetManifest,
+} from './widgets';
 export * from './cornerName';
 export * from './lapTrace';
 export * from './logBridge';

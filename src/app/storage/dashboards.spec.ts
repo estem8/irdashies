@@ -5,8 +5,10 @@ import {
   getDashboard,
   saveDashboard,
   updateDashboardWidget,
+  migrateColorPalette,
+  deleteProfile,
 } from './dashboards';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { DashboardLayout } from '@irdashies/types';
 
 const mockReadData = vi.hoisted(() => vi.fn());
@@ -92,6 +94,51 @@ describe('dashboards', () => {
     });
   });
 
+  describe('colour palette migration', () => {
+    it('keeps the Slate (default) palette as Classic slate', () => {
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards'
+          ? {
+              slate: {
+                widgets: [],
+                generalSettings: { colorPalette: 'default' },
+              },
+              black: {
+                widgets: [],
+                generalSettings: { colorPalette: 'black' },
+              },
+            }
+          : null
+      );
+      expect(getDashboard('slate')?.generalSettings).toEqual({
+        appTheme: 'classic',
+        classicPalette: 'slate',
+      });
+      expect(getDashboard('black')?.generalSettings).toEqual({
+        appTheme: 'classic',
+      });
+    });
+  });
+
+  describe('listDashboards migration', () => {
+    it('returns dashboards without the legacy colour palette', () => {
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards'
+          ? {
+              legacy: {
+                widgets: [],
+                generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+              },
+            }
+          : null
+      );
+      expect(listDashboards().legacy.generalSettings).toEqual({
+        fontSize: 'lg',
+        appTheme: 'classic',
+      });
+    });
+  });
+
   describe('getDashboard', () => {
     it('should return null if no dashboards exist', () => {
       // Use default mockImplementation which returns null for 'dashboards' key
@@ -114,6 +161,35 @@ describe('dashboards', () => {
       const dashboard = getDashboard('default');
 
       expect(dashboard).toEqual(defaultDashboard);
+    });
+
+    it('moves dashboards saved with a colour palette to the Classic theme', () => {
+      const saved = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+      };
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards' ? { custom: saved } : null
+      );
+
+      expect(getDashboard('custom')?.generalSettings).toEqual({
+        fontSize: 'lg',
+        appTheme: 'classic',
+      });
+    });
+
+    it('keeps the chosen theme of dashboards saved after the palettes went', () => {
+      const saved = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', appTheme: 'red' },
+      };
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards' ? { custom: saved } : null
+      );
+
+      expect(getDashboard('custom')?.generalSettings).toEqual(
+        saved.generalSettings
+      );
     });
   });
 
@@ -143,7 +219,7 @@ describe('dashboards', () => {
       };
       const updatedDashboard: DashboardLayout = {
         widgets: [],
-        generalSettings: { fontSize: 'lg', colorPalette: 'black' },
+        generalSettings: { fontSize: 'lg', appTheme: 'red' },
       };
       mockReadData.mockImplementation((key: string) => {
         if (key === 'currentProfile') return 'default';
@@ -165,6 +241,43 @@ describe('dashboards', () => {
           },
         },
         custom: customDashboard,
+      });
+    });
+  });
+
+  describe('saveDashboard legacy colour palette', () => {
+    it('writes no colorPalette and moves the dashboard to Classic', () => {
+      const legacy = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+      } as unknown as DashboardLayout;
+      const other = {
+        widgets: [],
+        generalSettings: { colorPalette: 'blue' },
+      } as unknown as DashboardLayout;
+      mockReadData.mockImplementation((key: string) => {
+        if (key === 'currentProfile') return 'default';
+        if (key === 'profiles')
+          return { default: { id: 'default', name: 'Default' } };
+        if (key === 'dashboards') return { default: legacy, other };
+        return null;
+      });
+
+      saveDashboard('default', {
+        widgets: [],
+        generalSettings: { fontSize: 'sm' },
+      });
+
+      const written = mockWriteData.mock.calls.find(
+        ([key]) => key === 'dashboards'
+      )?.[1] as Record<string, DashboardLayout>;
+      expect(JSON.stringify(written)).not.toContain('colorPalette');
+      expect(written.default.generalSettings).toMatchObject({
+        fontSize: 'sm',
+        appTheme: 'classic',
+      });
+      expect(written.other.generalSettings).toMatchObject({
+        appTheme: 'classic',
       });
     });
   });
@@ -477,5 +590,127 @@ describe('dashboards', () => {
       expect(flatMapWidget).toBeDefined();
       expect(flatMapWidget?.config?.showOnlyWhenOnTrack).toBe(false);
     });
+  });
+});
+
+describe('migrateColorPalette', () => {
+  it.each(['default', 'black', 'rose', '', null, undefined])(
+    'removes legacy palette %j while preserving unrelated settings',
+    (colorPalette) => {
+      const saved = Object.freeze({
+        colorPalette,
+        fontSize: 'lg' as const,
+        closeToTray: false,
+      });
+      const migrated = migrateColorPalette(saved);
+      expect(migrated).toEqual({
+        appTheme: 'classic',
+        // "Slate (default)" keeps its look as Classic slate.
+        ...(colorPalette === 'default' && { classicPalette: 'slate' }),
+        fontSize: 'lg',
+        closeToTray: false,
+      });
+      expect(saved).toHaveProperty('colorPalette', colorPalette);
+      expect(migrateColorPalette(migrated)).toEqual(migrated);
+    }
+  );
+
+  it.each(['carbon', 'red', 'classic'] as const)(
+    'preserves the explicit %s theme when a legacy palette is also present',
+    (appTheme) => {
+      expect(
+        migrateColorPalette({ appTheme, ...{ colorPalette: 'rose' } })
+      ).toEqual({ appTheme });
+    }
+  );
+
+  it('leaves absent and modern settings unchanged', () => {
+    expect(migrateColorPalette(undefined)).toBeUndefined();
+    const modern = { fontSize: 'sm' as const, appTheme: 'red' as const };
+    expect(migrateColorPalette(modern)).toBe(modern);
+    expect(migrateColorPalette({})).toEqual({});
+  });
+});
+
+describe('theme migration at storage boundaries', () => {
+  beforeEach(() => {
+    mockReadData.mockReset();
+    mockWriteData.mockReset();
+  });
+
+  it('migrates on read without mutating the stored dashboard or writing it', () => {
+    const generalSettings = Object.freeze({
+      colorPalette: 'rose',
+      fontSize: 'lg' as const,
+    });
+    const saved = Object.freeze({ widgets: [], generalSettings });
+    mockReadData.mockReturnValue({ custom: saved });
+    expect(getDashboard('custom')).toEqual({
+      widgets: [],
+      generalSettings: { appTheme: 'classic', fontSize: 'lg' },
+    });
+    expect(saved.generalSettings).toBe(generalSettings);
+    expect(saved.generalSettings.colorPalette).toBe('rose');
+    expect(mockWriteData).not.toHaveBeenCalled();
+  });
+
+  it('retains dashboards that have no general settings', () => {
+    mockReadData.mockReturnValue({ custom: { widgets: [] } });
+    expect(getDashboard('custom')?.widgets).toEqual([]);
+    expect(getDashboard('custom')?.generalSettings).toBeUndefined();
+    expect(getDashboard('missing')).toBeNull();
+  });
+
+  it('uses a newly selected theme when saving a legacy dashboard', () => {
+    mockReadData.mockImplementation((key: string) => {
+      if (key === 'dashboards')
+        return {
+          custom: {
+            widgets: [],
+            generalSettings: { colorPalette: 'rose', fontSize: 'lg' },
+          },
+        };
+      if (key === 'currentProfile') return 'default';
+      return null;
+    });
+    saveDashboard('custom', {
+      widgets: [],
+      generalSettings: { appTheme: 'red' },
+    });
+    expect(mockWriteData).toHaveBeenCalledWith('dashboards', {
+      custom: {
+        widgets: [],
+        generalSettings: { appTheme: 'red', fontSize: 'lg' },
+      },
+    });
+  });
+
+  it('migrates remaining dashboards when another profile is deleted', () => {
+    const dashboards = {
+      default: {
+        widgets: [],
+        generalSettings: { colorPalette: 'rose', fontSize: 'lg' },
+      },
+      modern: { widgets: [], generalSettings: { appTheme: 'red' } },
+      bare: { widgets: [] },
+      removed: { widgets: [] },
+    };
+    mockReadData.mockImplementation((key: string) => {
+      if (key === 'dashboards') return dashboards;
+      if (key === 'currentProfile') return 'default';
+      if (key === 'profiles')
+        return { default: { id: 'default' }, removed: { id: 'removed' } };
+      return null;
+    });
+    deleteProfile('removed');
+    expect(mockWriteData).toHaveBeenCalledWith('dashboards', {
+      default: {
+        widgets: [],
+        generalSettings: { appTheme: 'classic', fontSize: 'lg' },
+      },
+      modern: dashboards.modern,
+      bare: dashboards.bare,
+    });
+    expect(dashboards.default.generalSettings.colorPalette).toBe('rose');
   });
 });

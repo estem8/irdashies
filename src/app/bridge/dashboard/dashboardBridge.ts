@@ -30,6 +30,7 @@ import {
   getProfile,
   updateProfileTheme,
   getOrCreateDefaultDashboardForProfile,
+  migrateDashboard,
 } from '../../storage/dashboards';
 import { writeData } from '../../storage/storage';
 import { OverlayManager } from '../../overlayManager';
@@ -276,6 +277,7 @@ export async function publishDashboardUpdates(
     const merged = dashboardTransform(
       mergeDriverTagsIntoLayout(dashboard, getDriverTagSettings())
     );
+    overlayManager.setSettingsTitleBarTheme(merged.generalSettings?.appTheme);
     const profileId = getCurrentProfileId();
 
     if (profileId === lastProfileId) {
@@ -317,7 +319,7 @@ export async function publishDashboardUpdates(
       // Save without emitting event to avoid window recreation
       const currentProfileId = getCurrentProfileId();
       const existingDashboards = listDashboards();
-      existingDashboards[currentProfileId] = dashboard;
+      existingDashboards[currentProfileId] = migrateDashboard(dashboard);
       writeData('dashboards', existingDashboards);
       // Create windows for any new displays the widget may have been dragged to
       overlayManager.ensureDisplayWindows(dashboard);

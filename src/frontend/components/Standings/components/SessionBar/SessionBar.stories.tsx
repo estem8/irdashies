@@ -6,7 +6,7 @@ import {
   ChannelSnapshotDecorator,
   TelemetryDecorator,
 } from '@irdashies/storybook';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { SessionTimingStoreUpdater } from '@irdashies/context';
 
 export default {

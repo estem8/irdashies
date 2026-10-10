@@ -583,7 +583,7 @@ A race control window with live standings, an automatic incident feed, and a per
   - Transparent backgrounds: All overlays are designed to look great on top of your game or stream.
   - Reduced GPU usage: Overlay windows are sized to fit only the widgets on each display, rather than covering the full screen.
 - Customization & Themes
-  - Color themes: Choose from built-in themes or create your own custom look.
+  - Themes: Carbon, Red or Classic, applied to overlays, Gantry and the settings window.
   - Highlight color: Pick a custom color that is used across all widgets to match your branding or preference.
   - Font sizes: Multiple font size options (including 2x Small, 3x Small, and Tiny for large or ultra-wide monitors) to ensure readability on any screen.
   - Font weight: Choose between Normal, Bold, or Extra Bold text for improved readability.

@@ -89,7 +89,7 @@ const PanelMessage = ({
       <button
         type="button"
         onClick={action.onClick}
-        className="text-sky-400 hover:text-sky-300 underline"
+        className="text-accent-400 hover:text-accent-300 underline"
       >
         {action.label}
       </button>

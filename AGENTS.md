@@ -158,14 +158,20 @@ ComponentName/
 
 ### Widget Registration
 
-All widgets in `WidgetIndex.tsx`:
+Widgets register themselves. `WIDGET_MAP` (`WidgetIndex.tsx`), the settings menu, `WIDGET_NAMES` and `defaultDashboard` are built from the manifest and `widget.ts` of each widget (the full checklist is under [Adding a Widget](#adding-a-widget)):
 
 ```typescript
-export const WIDGET_MAP = {
-  standings: Standings,
-  relative: Relative,
-  mywidget: MyWidget,
-};
+// src/types/widgets/mywidget.ts — main-safe data
+export default defineWidgetManifest({
+  id: 'mywidget',
+  name: 'My Widget',
+  enabled: false,
+  layout: { x: 0, y: 0, width: 300, height: 100 },
+  config: { background: { opacity: 80 } },
+});
+
+// src/frontend/components/MyWidget/widget.ts — component
+export default { id: 'mywidget', component: MyWidget } satisfies WidgetModule;
 ```
 
 ---
@@ -219,6 +225,28 @@ import { Icon } from '@phosphor-icons/react';
 ```typescript
 import { getTailwindStyle, getColor } from '@irdashies/utils/colors';
 ```
+
+### Themes
+
+The app has three themes (General > Theme, `generalSettings.appTheme`):
+**Carbon**, **Red** and **Classic** (the original look). They cover the
+settings window, Gantry and overlays. A theme only remaps two palettes in
+`theme.css` (`.theme-*`), so components never check the theme:
+
+- **Neutrals** (backgrounds, borders, secondary text): `slate-*` only — not
+  `gray-*`, `zinc-*`, `neutral-*` or `stone-*`.
+- **Highlights** of app UI, in any window (active state, primary buttons,
+  links, focus rings, hover/selection, edit-layout frames and handles):
+  `accent-*` only — not `blue-*`, `sky-*`, `cyan-*` or `indigo-*`.
+  Text on a solid accent background is `text-on-accent`.
+- Semantic and data colours (flags, car classes, incident types, deltas,
+  chart lines, warnings) keep their own colours.
+- New themes add a `.theme-*` block, an `APP_THEMES` entry and title-bar
+  colours in `APP_THEME_TITLE_BAR`.
+
+`Settings/settingsTheme.spec.ts` fails on non-themeable colours in settings
+and the edit-layout chrome (`EditMode`, `WidgetContainer`, `OverlayContainer`,
+`DashboardView`).
 
 ---
 
@@ -310,14 +338,14 @@ npm run storybook  # Port 6006
 
 ### Adding a Widget
 
-1. Create `src/frontend/components/MyWidget/MyWidget.tsx`
-2. Create `Settings/sections/MyWidgetSettings.tsx`
-3. Add settings to `src/frontend/components/Settings/SettingsLoader.tsx`
-4. Add settings menu item to `src/frontend/components/Settings/SettingsMenu.tsx`
-5. Add type to `src/types/widgetConfigs.ts`
-6. Create `.stories.tsx`
-7. Register in `WidgetIndex.tsx`
-8. Add default config in `src/types/defaultDashboard.ts`
+Widgets are auto-discovered from their manifest and `widget.ts`; only the config type and the settings page are listed centrally.
+
+1. Add the config type to `WidgetConfigMap` in `src/types/widgetConfigs.ts`
+2. Create the manifest `src/types/widgets/<id>.ts` (`defineWidgetManifest`: name, menu label, `category` and one-line `description` for the grouped settings menu, enabled, layout, default config)
+3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`
+4. Create `Settings/sections/MyWidgetSettings.tsx` and add one line to `WIDGET_SETTINGS` in `src/frontend/components/Settings/SettingsLoader.tsx`
+
+Removing a widget: delete those pieces; `widgetRegistry.spec.ts` and TypeScript flag any leftovers (the derived maps are only checked by the spec).
 
 ### Adding a Hook
 

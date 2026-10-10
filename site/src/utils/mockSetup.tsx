@@ -7,7 +7,7 @@ import {
 } from '@irdashies/context';
 import { generateMockData } from '../../../src/app/bridge/iracingSdk/mock-data/generateMockData';
 import type { DashboardBridge, IrSdkSourceBridge } from '@irdashies/types';
-import { defaultDashboard } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import type { TypedDashboardWidget } from '@irdashies/types';
 import {
   createPreviewChannelRuntime,

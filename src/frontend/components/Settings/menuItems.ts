@@ -8,12 +8,30 @@ import {
   InfoIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
+import type { WidgetCategory } from '@irdashies/types';
+import {
+  WIDGET_MANIFESTS,
+  getWidgetManifest,
+} from '@irdashies/types/widgetDefaults';
+
+/** Menu groups, in display order. */
+export const WIDGET_CATEGORIES = [
+  { id: 'race', label: 'Timing & Race' },
+  { id: 'car', label: 'Car & Driver' },
+  { id: 'awareness', label: 'Awareness' },
+  { id: 'track', label: 'Track & Conditions' },
+  { id: 'extras', label: 'Extras' },
+] as const satisfies readonly { id: WidgetCategory; label: string }[];
+export type { WidgetCategory };
 
 export interface MenuItem {
   to: string;
   path: string;
   label: string;
   widgetType?: string;
+  category?: WidgetCategory;
+  /** One line under the label in the settings menu. */
+  description?: string;
   icon?: Icon;
 }
 
@@ -50,172 +68,18 @@ export const generalItems: MenuItem[] = [
   },
 ];
 
-export const widgetItems: MenuItem[] = [
-  {
-    to: '/settings/battle',
-    path: '/battle',
-    label: 'Battle',
-    widgetType: 'battle',
-  },
-  {
-    to: '/settings/blindspotmonitor',
-    path: '/blindspotmonitor',
-    label: 'Blind Spot Monitor',
-    widgetType: 'blindspotmonitor',
-  },
-  {
-    to: '/settings/cornername',
-    path: '/cornername',
-    label: 'Corner Names',
-    widgetType: 'cornername',
-  },
-  {
-    to: '/settings/carsystems',
-    path: '/carsystems',
-    label: 'Car Systems',
-    widgetType: 'carsystems',
-  },
-  {
-    to: '/settings/deltaspeed',
-    path: '/deltaspeed',
-    label: 'Delta Speed',
-    widgetType: 'deltaspeed',
-  },
-  {
-    to: '/settings/fastercarsfrombehind',
-    path: '/fastercarsfrombehind',
-    label: 'Faster Cars Behind',
-    widgetType: 'fastercarsfrombehind',
-  },
-  { to: '/settings/flag', path: '/flag', label: 'Flag', widgetType: 'flag' },
-  {
-    to: '/settings/flatmap',
-    path: '/flatmap',
-    label: 'Flat Track Map',
-    widgetType: 'flatmap',
-  },
-  {
-    to: '/settings/fuel',
-    path: '/fuel',
-    label: 'Fuel Calculator',
-    widgetType: 'fuel',
-  },
-  {
-    to: '/settings/gantry',
-    path: '/gantry',
-    label: 'Gantry',
-    widgetType: 'gantry',
-  },
-  {
-    to: '/settings/garagecover',
-    path: '/garagecover',
-    label: 'Garage Cover',
-    widgetType: 'garagecover',
-  },
-  {
-    to: '/settings/heartrate',
-    path: '/heartrate',
-    label: 'Heart Rate',
-    widgetType: 'heartrate',
-  },
-  {
-    to: '/settings/infobar',
-    path: '/infobar',
-    label: 'Information Bar',
-    widgetType: 'infobar',
-  },
-  {
-    to: '/settings/input',
-    path: '/input',
-    label: 'Input',
-    widgetType: 'input',
-  },
-  {
-    to: '/settings/laptimelog',
-    path: '/laptimelog',
-    label: 'Lap Timer',
-    widgetType: 'laptimelog',
-  },
-  {
-    to: '/settings/laptrace',
-    path: '/laptrace',
-    label: 'Lap Trace',
-    widgetType: 'laptrace',
-  },
-  {
-    to: '/settings/pitlanehelper',
-    path: '/pitlanehelper',
-    label: 'Pitlane Helper',
-    widgetType: 'pitlanehelper',
-  },
-  {
-    to: '/settings/radar',
-    path: '/radar',
-    label: 'Radar',
-    widgetType: 'radar',
-  },
-  {
-    to: '/settings/rejoin',
-    path: '/rejoin',
-    label: 'Rejoin Indicator',
-    widgetType: 'rejoin',
-  },
-  {
-    to: '/settings/relative',
-    path: '/relative',
-    label: 'Relative',
-    widgetType: 'relative',
-  },
-  {
-    to: '/settings/sectordelta',
-    path: '/sectordelta',
-    label: 'Sector Delta',
-    widgetType: 'sectordelta',
-  },
-  {
-    to: '/settings/shiftlight',
-    path: '/shiftlight',
-    label: 'Shift Light',
-    widgetType: 'shiftlight',
-  },
-  {
-    to: '/settings/slowcarahead',
-    path: '/slowcarahead',
-    label: 'Slow Car Ahead',
-    widgetType: 'slowcarahead',
-  },
-  {
-    to: '/settings/standings',
-    path: '/standings',
-    label: 'Standings',
-    widgetType: 'standings',
-  },
-  {
-    to: '/settings/tachometer',
-    path: '/tachometer',
-    label: 'Tachometer',
-    widgetType: 'tachometer',
-  },
-  { to: '/settings/map', path: '/map', label: 'Track Map', widgetType: 'map' },
-  {
-    to: '/settings/twitchchat',
-    path: '/twitchchat',
-    label: 'Twitch Chat',
-    widgetType: 'twitchchat',
-  },
-  {
-    to: '/settings/weather',
-    path: '/weather',
-    label: 'Weather',
-    widgetType: 'weather',
-  },
-  {
-    to: '/settings/wind',
-    path: '/wind',
-    label: 'Wind',
-    widgetType: 'wind',
-  },
-];
+export const widgetItems: MenuItem[] = WIDGET_MANIFESTS.filter(
+  (manifest) => manifest.showInMenu !== false
+)
+  .map(({ id, name, menuLabel, category, description }) => ({
+    to: `/settings/${id}`,
+    path: `/${id}`,
+    label: menuLabel ?? name,
+    widgetType: id,
+    category,
+    description,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 export const bottomItems: MenuItem[] = [
   {
@@ -228,12 +92,10 @@ export const bottomItems: MenuItem[] = [
 ];
 
 /**
- * Friendly label for a widget given its type (falls back to the raw type when
- * the widget isn't in the settings menu).
+ * Friendly label for a widget given its type: the menu label, or the manifest
+ * name for widgets not in the menu; the raw type for unknown ids.
  */
 export function widgetLabel(widgetType: string): string {
-  return (
-    widgetItems.find((item) => item.widgetType === widgetType)?.label ??
-    widgetType
-  );
+  const manifest = getWidgetManifest(widgetType);
+  return manifest ? (manifest.menuLabel ?? manifest.name) : widgetType;
 }

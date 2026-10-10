@@ -6,7 +6,7 @@ import {
   ChannelSnapshotDecorator,
   trackStateStorySnapshot,
 } from '@irdashies/storybook';
-import { getWidgetDefaultConfig } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 
 const driverControls = ChannelSnapshotDecorator({
   'track-state.snapshot': trackStateStorySnapshot,

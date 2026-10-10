@@ -2,9 +2,11 @@ import type {
   DashboardLayout,
   DashboardWidget,
   DashboardProfile,
+  GeneralSettingsType,
 } from '@irdashies/types';
 import { emitDashboardUpdated } from './dashboardEvents';
-import { defaultDashboard, deepMergeConfig } from '@irdashies/types';
+import { deepMergeConfig } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 import { readData, writeData } from './storage';
 import { writeFile, mkdir, readFile, readdir, unlink } from 'node:fs/promises';
 import { resolve, basename, sep } from 'node:path';
@@ -59,6 +61,47 @@ const migrateGantryThresholds = (
   }
   return reset;
 };
+
+/**
+ * The 20 overlay colour palettes (`colorPalette`) were replaced by app-wide
+ * themes. Dashboards saved before that move to Classic: the black (default)
+ * and "Slate (default)" palettes keep their look via `classicPalette`; the
+ * coloured palettes have no equivalent and get black. New installs get the
+ * default theme.
+ */
+export const migrateColorPalette = (
+  saved: GeneralSettingsType | undefined
+): GeneralSettingsType | undefined => {
+  if (!saved || !('colorPalette' in saved)) return saved;
+  const rest: Record<string, unknown> = { ...saved };
+  delete rest.colorPalette;
+  return {
+    appTheme: 'classic',
+    ...(saved.colorPalette === 'default' && { classicPalette: 'slate' }),
+    ...rest,
+  };
+};
+
+/** Drops the legacy `colorPalette` key from a dashboard. */
+export const migrateDashboard = (
+  dashboard: DashboardLayout
+): DashboardLayout =>
+  dashboard.generalSettings
+    ? {
+        ...dashboard,
+        generalSettings: migrateColorPalette(dashboard.generalSettings),
+      }
+    : dashboard;
+
+const migrateStored = (
+  dashboards: Record<string, DashboardLayout>
+): Record<string, DashboardLayout> =>
+  Object.fromEntries(
+    Object.entries(dashboards).map(([key, dashboard]) => [
+      key,
+      migrateDashboard(dashboard),
+    ])
+  );
 
 const isDashboardChanged = (
   oldDashboard: DashboardLayout | undefined,
@@ -143,14 +186,20 @@ export const listDashboards = () => {
   const dashboards = readData<Record<string, DashboardLayout>>(DASHBOARDS_KEY);
   if (!dashboards) return {};
 
-  return dashboards;
+  // Profile export/import reads this directly; give it the migrated shape.
+  return migrateStored(dashboards);
 };
 
-export const getDashboard = (id: string) => {
+export const getDashboard = (id: string): DashboardLayout | null => {
   const dashboards = readData<Record<string, DashboardLayout>>(DASHBOARDS_KEY);
   if (!dashboards) return null;
 
-  return dashboards[id] ?? null;
+  const dashboard = dashboards[id];
+  if (!dashboard) return null;
+  return {
+    ...dashboard,
+    generalSettings: migrateColorPalette(dashboard.generalSettings),
+  };
 };
 
 export const updateDashboardWidget = (
@@ -184,10 +233,10 @@ export const saveDashboard = (
     ...existingDashboard,
     ...value,
     widgets: value.widgets || existingDashboard?.widgets || [],
-    generalSettings: {
+    generalSettings: migrateColorPalette({
       ...existingDashboard?.generalSettings,
       ...value.generalSettings,
-    },
+    }),
   };
   // Only save and emit if there are actual changes
   if (isDashboardChanged(existingDashboard, mergedDashboard)) {

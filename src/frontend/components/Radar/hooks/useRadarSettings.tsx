@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { useDashboard, useSessionStore } from '@irdashies/context';
-import {
-  getWidgetDefaultConfig,
-  type RadarWidgetSettings,
-} from '@irdashies/types';
+import { type RadarWidgetSettings } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import {
   activeProfile,
   profileView,

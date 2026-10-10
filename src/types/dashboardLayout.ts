@@ -101,33 +101,48 @@ export type FontSize =
   | '8xl'
   | '9xl';
 
+/** App-wide themes: settings window, Gantry and overlays. */
+export const APP_THEMES = ['carbon', 'red', 'classic'] as const;
+export type AppTheme = (typeof APP_THEMES)[number];
+
+/** Persisted config is untrusted: unknown values get the default theme. */
+export const resolveAppTheme = (value: unknown): AppTheme =>
+  APP_THEMES.includes(value as AppTheme) ? (value as AppTheme) : 'carbon';
+
+/** Native window-control colours of the settings window per theme: its
+ *  slate-700 / slate-300 (theme.css for Carbon and Red, Tailwind defaults for
+ *  Classic). Kept in sync by settingsTheme.spec.ts. */
+export const APP_THEME_TITLE_BAR: Record<
+  AppTheme,
+  { color: string; symbolColor: string }
+> = {
+  carbon: { color: '#17181b', symbolColor: '#a7aab0' },
+  red: { color: '#1b1e23', symbolColor: '#9aa1ab' },
+  classic: { color: '#314158', symbolColor: '#cad5e2' },
+};
+
+/** Theme classes for overlay and Gantry windows. */
+export const overlayThemeClasses = (
+  settings: { appTheme?: unknown; classicPalette?: unknown } | undefined
+): string => {
+  const theme = resolveAppTheme(settings?.appTheme);
+  return theme === 'classic' && settings?.classicPalette === 'slate'
+    ? 'theme-classic classic-slate'
+    : `theme-${theme}`;
+};
+
 export interface GeneralSettingsType {
   fontType?: FontType;
   fontSize?: FontSize;
   fontWeight?:
     'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold';
-  colorPalette?:
-    | 'default'
-    | 'black'
-    | 'red'
-    | 'orange'
-    | 'amber'
-    | 'yellow'
-    | 'lime'
-    | 'green'
-    | 'emerald'
-    | 'teal'
-    | 'cyan'
-    | 'sky'
-    | 'blue'
-    | 'indigo'
-    | 'violet'
-    | 'purple'
-    | 'fuchsia'
-    | 'pink'
-    | 'rose'
-    | 'zinc'
-    | 'stone';
+  /** Colour theme of the whole app. */
+  appTheme?: AppTheme;
+  /**
+   * Overlay background in the Classic theme: 'black' (the old default
+   * palette) or 'slate' (the old "Slate (default)" palette).
+   */
+  classicPalette?: 'black' | 'slate';
   showOnlyWhenOnTrack?: boolean;
   highlightColor?: number;
   skipTaskbar?: boolean;
@@ -174,7 +189,6 @@ export interface DashboardProfile {
   themeSettings?: {
     fontType?: FontType;
     fontSize?: FontSize;
-    colorPalette?: GeneralSettingsType['colorPalette'];
   };
 }
 

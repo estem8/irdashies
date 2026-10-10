@@ -19,6 +19,7 @@
       "@irdashies/domain": ["../src/frontend/domain"],
       "@irdashies/domain/*": ["../src/frontend/domain/*"],
       "@irdashies/types": ["../src/types"],
+      "@irdashies/types/*": ["../src/types/*"],
       "@irdashies/shared": ["../src/shared"]
     }
   },

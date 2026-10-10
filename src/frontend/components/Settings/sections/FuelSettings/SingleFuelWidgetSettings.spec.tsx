@@ -1,10 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  getWidgetDefaultConfig,
-  type DashboardLayout,
-  type DashboardWidget,
-} from '@irdashies/types';
+import { type DashboardLayout, type DashboardWidget } from '@irdashies/types';
+import { getWidgetDefaultConfig } from '@irdashies/types/widgetDefaults';
 import { readGantryDock } from '../gantryDockEdits';
 import { SingleFuelWidgetSettings } from './SingleFuelWidgetSettings';
 

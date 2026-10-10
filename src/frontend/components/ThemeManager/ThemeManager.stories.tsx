@@ -9,10 +9,12 @@ import type {
   FontType,
   FontSize,
   GeneralSettingsType,
+  AppTheme,
 } from '@irdashies/types';
 import { useState } from 'react';
 import { WIDGET_MAP } from '../../WidgetIndex';
-import { defaultDashboard } from '@irdashies/types';
+import { APP_THEMES } from '@irdashies/types';
+import { defaultDashboard } from '@irdashies/types/widgetDefaults';
 
 const meta: Meta<typeof ThemeManager> = {
   component: ThemeManager,
@@ -29,8 +31,8 @@ const createMockBridge = (
   setFontSize: (size: FontSize | undefined) => void,
   fontWeight: GeneralSettingsType['fontWeight'],
   setFontWeight: (weight: GeneralSettingsType['fontWeight']) => void,
-  colorPalette: GeneralSettingsType['colorPalette'],
-  setColorPalette: (palette: GeneralSettingsType['colorPalette']) => void,
+  appTheme: AppTheme | undefined,
+  setAppTheme: (theme: AppTheme | undefined) => void,
   widgets: DashboardLayout['widgets'] = []
 ): DashboardBridge => ({
   reloadDashboard: () => {
@@ -39,14 +41,14 @@ const createMockBridge = (
   saveDashboard: (dashboard: DashboardLayout) => {
     setFontType(dashboard.generalSettings?.fontType || 'lato');
     setFontSize(dashboard.generalSettings?.fontSize || 'sm');
-    setColorPalette(dashboard.generalSettings?.colorPalette || 'default');
+    setAppTheme(dashboard.generalSettings?.appTheme);
     setFontWeight(dashboard.generalSettings?.fontWeight || 'normal');
   },
   dashboardUpdated: (callback) => {
     callback(
       {
         widgets,
-        generalSettings: { fontType, fontSize, colorPalette, fontWeight },
+        generalSettings: { fontType, fontSize, appTheme, fontWeight },
       },
       undefined
     );
@@ -65,7 +67,7 @@ const createMockBridge = (
   resetDashboard: () =>
     Promise.resolve({
       widgets: [],
-      generalSettings: { fontType, fontSize, colorPalette, fontWeight },
+      generalSettings: { fontType, fontSize, appTheme, fontWeight },
     }),
   toggleDemoMode: () => {
     return;
@@ -183,34 +185,10 @@ const FONT_WEIGHTS: NonNullable<GeneralSettingsType['fontWeight']>[] = [
   'extrabold',
 ];
 
-const COLOR_PALETTES: NonNullable<GeneralSettingsType['colorPalette']>[] = [
-  'default',
-  'black',
-  'red',
-  'orange',
-  'amber',
-  'yellow',
-  'lime',
-  'green',
-  'emerald',
-  'teal',
-  'cyan',
-  'sky',
-  'blue',
-  'indigo',
-  'violet',
-  'purple',
-  'fuchsia',
-  'pink',
-  'rose',
-  'zinc',
-  'stone',
-];
-
 const createThemeControls = (
   fontType: FontType | undefined,
   fontSize: FontSize | undefined,
-  colorPalette: GeneralSettingsType['colorPalette'],
+  appTheme: AppTheme | undefined,
   fontWeight: GeneralSettingsType['fontWeight'],
   setFontWeight: (weight: GeneralSettingsType['fontWeight']) => void,
   mockBridge: DashboardBridge
@@ -224,7 +202,7 @@ const createThemeControls = (
       generalSettings: {
         fontType,
         fontSize: newSize,
-        colorPalette,
+        appTheme,
         fontWeight,
       },
     });
@@ -252,31 +230,30 @@ const createThemeControls = (
         </div>
       </div>
 
-      {/* Color Palette */}
+      {/* Theme */}
       <div className="flex items-center gap-2">
-        <label htmlFor="colorPalette" className="text-[12px]">
-          Color Palette:
+        <label htmlFor="appTheme" className="text-[12px]">
+          Theme:
         </label>
         <select
-          id="colorPalette"
-          value={colorPalette}
+          id="appTheme"
+          value={appTheme}
           onChange={(e) =>
             mockBridge.saveDashboard({
               widgets: [],
               generalSettings: {
                 fontType,
                 fontSize,
-                colorPalette: e.target
-                  .value as GeneralSettingsType['colorPalette'],
+                appTheme: e.target.value as AppTheme,
                 fontWeight,
               },
             })
           }
           className="px-2 py-1 rounded border text-[12px]"
         >
-          {COLOR_PALETTES.map((palette) => (
-            <option key={palette} value={palette}>
-              {palette.charAt(0).toUpperCase() + palette.slice(1)}
+          {APP_THEMES.map((theme) => (
+            <option key={theme} value={theme}>
+              {theme.charAt(0).toUpperCase() + theme.slice(1)}
             </option>
           ))}
         </select>
@@ -296,7 +273,7 @@ const createThemeControls = (
               generalSettings: {
                 fontType: e.target.value as GeneralSettingsType['fontType'],
                 fontSize,
-                colorPalette,
+                appTheme,
                 fontWeight,
               },
             })
@@ -328,7 +305,7 @@ const createThemeControls = (
               generalSettings: {
                 fontType,
                 fontSize,
-                colorPalette,
+                appTheme,
                 fontWeight: newWeight,
               },
             });
@@ -433,8 +410,7 @@ export const WithFontSizeControls = {
   render: () => {
     const [fontType, setFontType] = useState<FontType | undefined>('lato');
     const [fontSize, setFontSize] = useState<FontSize | undefined>('sm');
-    const [colorPalette, setColorPalette] =
-      useState<GeneralSettingsType['colorPalette']>('default');
+    const [appTheme, setAppTheme] = useState<AppTheme | undefined>('classic');
     const [fontWeight, setFontWeight] =
       useState<GeneralSettingsType['fontWeight']>('normal');
     const mockBridge = createMockBridge(
@@ -444,8 +420,8 @@ export const WithFontSizeControls = {
       setFontSize,
       fontWeight,
       setFontWeight,
-      colorPalette,
-      setColorPalette
+      appTheme,
+      setAppTheme
     );
 
     return (
@@ -456,7 +432,7 @@ export const WithFontSizeControls = {
               {createThemeControls(
                 fontType,
                 fontSize,
-                colorPalette,
+                appTheme,
                 fontWeight,
                 setFontWeight,
                 mockBridge
@@ -490,8 +466,7 @@ export const WithAllAvailableWidgets = {
   render: () => {
     const [fontType, setFontType] = useState<FontType | undefined>('lato');
     const [fontSize, setFontSize] = useState<FontSize | undefined>('sm');
-    const [colorPalette, setColorPalette] =
-      useState<GeneralSettingsType['colorPalette']>('default');
+    const [appTheme, setAppTheme] = useState<AppTheme | undefined>('classic');
     const [fontWeight, setFontWeight] =
       useState<GeneralSettingsType['fontWeight']>('normal');
     const mockBridge = createMockBridge(
@@ -501,8 +476,8 @@ export const WithAllAvailableWidgets = {
       setFontSize,
       fontWeight,
       setFontWeight,
-      colorPalette,
-      setColorPalette,
+      appTheme,
+      setAppTheme,
       defaultDashboard.widgets as DashboardLayout['widgets']
     );
 
@@ -514,7 +489,7 @@ export const WithAllAvailableWidgets = {
               {createThemeControls(
                 fontType,
                 fontSize,
-                colorPalette,
+                appTheme,
                 fontWeight,
                 setFontWeight,
                 mockBridge
