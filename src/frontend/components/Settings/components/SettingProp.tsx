@@ -95,11 +95,16 @@ export const SettingProp = ({
       <div className="flex items-center justify-between pl-8 mt-2 indent-8">
         <span className="text-sm text-slate-300">{spec.label}</span>
         {spec.type === 'boolean' ? (
-          <ToggleSwitch enabled={value as boolean} onToggle={change} />
+          <ToggleSwitch
+            enabled={value as boolean}
+            onToggle={change}
+            ariaLabel={spec.label}
+          />
         ) : (
           <select
             value={String(value)}
             onChange={(e) => change(fromString(spec.options, e.target.value))}
+            aria-label={spec.label}
             className="bg-slate-700 text-white rounded-md px-2 py-1"
           >
             {spec.options.map((o) => (

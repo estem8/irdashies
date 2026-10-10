@@ -82,21 +82,26 @@ export const migrateColorPalette = (
   };
 };
 
-/** Drops the legacy `colorPalette` key from every stored dashboard on write. */
+/** Drops the legacy `colorPalette` key from a dashboard. */
+export const migrateDashboard = (
+  dashboard: DashboardLayout
+): DashboardLayout =>
+  dashboard.generalSettings
+    ? {
+        ...dashboard,
+        generalSettings: migrateColorPalette(dashboard.generalSettings),
+      }
+    : dashboard;
+
 const migrateStored = (
   dashboards: Record<string, DashboardLayout>
 ): Record<string, DashboardLayout> =>
   Object.fromEntries(
     Object.entries(dashboards).map(([key, dashboard]) => [
       key,
-      dashboard.generalSettings
-        ? {
-            ...dashboard,
-            generalSettings: migrateColorPalette(dashboard.generalSettings),
-          }
-        : dashboard,
+      migrateDashboard(dashboard),
     ])
-  ) as Record<string, DashboardLayout>;
+  );
 
 const isDashboardChanged = (
   oldDashboard: DashboardLayout | undefined,
@@ -237,7 +242,7 @@ export const saveDashboard = (
   if (isDashboardChanged(existingDashboard, mergedDashboard)) {
     dashboards[id] = mergedDashboard;
     logger.info('[saveDashboard] Writing to storage for profile:', id);
-    writeData(DASHBOARDS_KEY, migrateStored(dashboards));
+    writeData(DASHBOARDS_KEY, dashboards);
     logger.info('[saveDashboard] Saved successfully to storage');
 
     // Only emit dashboard updated event if this is the currently active profile
@@ -619,7 +624,7 @@ export const deleteProfile = (profileId: string): void => {
   if (dashboards[profileId]) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [profileId]: removed, ...remainingDashboards } = dashboards;
-    writeData(DASHBOARDS_KEY, migrateStored(remainingDashboards));
+    writeData(DASHBOARDS_KEY, remainingDashboards);
   }
 
   // If this was the current profile, switch to default
