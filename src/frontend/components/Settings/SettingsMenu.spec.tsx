@@ -116,7 +116,7 @@ describe('SettingsMenu', () => {
           layout: { x: 0, y: 100, width: 100, height: 100 },
         },
       ],
-      generalSettings: { appTheme: 'red' },
+      generalSettings: { settingsTheme: 'red' },
     };
     Object.defineProperty(window, 'dashboardBridge', {
       configurable: true,
