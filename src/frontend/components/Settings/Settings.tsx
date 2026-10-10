@@ -5,11 +5,16 @@ import { SettingsLayout } from './SettingsLayout';
 
 export const Settings = () => {
   const { currentDashboard, onDashboardUpdated } = useDashboard();
-  const theme = resolveAppTheme(currentDashboard?.generalSettings?.appTheme);
+  // Unknown until the dashboard loads; resolving undefined would flash the
+  // default theme for users on another one.
+  const theme = currentDashboard
+    ? resolveAppTheme(currentDashboard.generalSettings?.appTheme)
+    : undefined;
 
   // Portaled popups (e.g. the profile Actions menu) render into <body>,
   // outside the wrapper below, so the theme goes on <body> too.
   useEffect(() => {
+    if (!theme) return;
     const classes = ['settings-theme', `theme-${theme}`];
     document.body.classList.add(...classes);
     return () => document.body.classList.remove(...classes);
