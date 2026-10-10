@@ -223,8 +223,9 @@ html {
    remaps those palettes, so components stay theme-agnostic. ThemeManager puts
    theme-* on overlay and Gantry windows, Settings puts it on the settings
    window. Classic is the original look: Tailwind slate and blue accent (the
-   @theme defaults) in settings, and the original black palette on overlays. */
-.overlay-window.theme-classic {
+   @theme defaults) in settings, and on overlays the original black palette, or
+   Tailwind slate with `classic-slate` (generalSettings.classicPalette). */
+.overlay-window.theme-classic:not(.classic-slate) {
   --color-slate-50: oklch(0.98 0 0);
   --color-slate-100: oklch(0.95 0 0);
   --color-slate-200: oklch(0.9 0 0);
@@ -248,6 +249,11 @@ html {
   transform: skewX(var(--ui-skew, 0deg));
 }
 
+/* Settings switches: round pills by default (Classic); Carbon/Red square them. */
+:root {
+  --toggle-radius: 9999px;
+}
+
 /* Settings window chrome. Classic keeps the original fonts and radii. */
 .settings-theme {
   font-family: var(--font-sans);
@@ -259,6 +265,7 @@ html {
   --radius-md: 2px;
   --radius-lg: 2px;
   --radius-xl: 3px;
+  --toggle-radius: var(--radius-sm);
 }
 
 /* Bare `rounded` is a fixed 0.25rem in Tailwind 4, not a radius token. */

@@ -493,7 +493,7 @@ export const DriverTagsSettings = () => {
             <h3 className="text-lg">Custom Groups</h3>
             <button
               onClick={addGroup}
-              className="px-3 py-1 bg-accent-600 rounded"
+              className="px-3 py-1 bg-accent-600 text-on-accent rounded"
             >
               Add Group
             </button>
@@ -685,7 +685,7 @@ export const DriverTagsSettings = () => {
                             setEditingGroupIcon(undefined);
                             setEditingGroupColor(undefined);
                           }}
-                          className="px-2 py-1 bg-accent-600 rounded text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="px-2 py-1 bg-accent-600 text-on-accent rounded text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Save
                         </button>

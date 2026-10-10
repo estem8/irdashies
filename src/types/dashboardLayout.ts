@@ -121,6 +121,16 @@ export const APP_THEME_TITLE_BAR: Record<
   classic: { color: '#314158', symbolColor: '#cad5e2' },
 };
 
+/** Theme classes for overlay and Gantry windows. */
+export const overlayThemeClasses = (
+  settings: { appTheme?: unknown; classicPalette?: unknown } | undefined
+): string => {
+  const theme = resolveAppTheme(settings?.appTheme);
+  return theme === 'classic' && settings?.classicPalette === 'slate'
+    ? 'theme-classic classic-slate'
+    : `theme-${theme}`;
+};
+
 export interface GeneralSettingsType {
   fontType?: FontType;
   fontSize?: FontSize;
@@ -128,6 +138,11 @@ export interface GeneralSettingsType {
     'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold';
   /** Colour theme of the whole app. */
   appTheme?: AppTheme;
+  /**
+   * Overlay background in the Classic theme: 'black' (the old default
+   * palette) or 'slate' (the old "Slate (default)" palette).
+   */
+  classicPalette?: 'black' | 'slate';
   showOnlyWhenOnTrack?: boolean;
   highlightColor?: number;
   skipTaskbar?: boolean;

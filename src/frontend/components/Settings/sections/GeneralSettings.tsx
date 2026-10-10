@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ToggleSwitch } from '../components/ToggleSwitch';
 import { useAvailableSimulators, useDashboard } from '@irdashies/context';
 import { SIMULATOR_IDS, SIMULATOR_LABELS } from '@irdashies/types';
 import type { GeneralSettingsType, AppTheme } from '@irdashies/types';
@@ -79,6 +80,8 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     fontSize: currentDashboard?.generalSettings?.fontSize ?? 'sm',
     fontWeight: currentDashboard?.generalSettings?.fontWeight ?? 'normal',
     appTheme: currentDashboard?.generalSettings?.appTheme ?? 'carbon',
+    classicPalette:
+      currentDashboard?.generalSettings?.classicPalette ?? 'black',
     highlightColor: currentDashboard?.generalSettings?.highlightColor ?? 960745,
     skipTaskbar: currentDashboard?.generalSettings?.skipTaskbar ?? true,
     disableHardwareAcceleration:
@@ -212,6 +215,12 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
 
   const handleAppThemeChange = (newTheme: AppTheme) => {
     const newSettings = { ...settings, appTheme: newTheme };
+    setSettings(newSettings);
+    updateDashboard(newSettings);
+  };
+
+  const handleClassicPaletteChange = (palette: 'black' | 'slate') => {
+    const newSettings = { ...settings, classicPalette: palette };
     setSettings(newSettings);
     updateDashboard(newSettings);
   };
@@ -443,18 +452,13 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 viewport.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.editMode?.pixelDistances ?? false}
-                onChange={(e) =>
-                  handleShowEditModePixelDistancesChange(e.target.checked)
-                }
-                aria-labelledby="show-edit-mode-pixel-distances-label"
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
+            <ToggleSwitch
+              enabled={settings.editMode?.pixelDistances ?? false}
+              onToggle={(checked) =>
+                handleShowEditModePixelDistancesChange(checked)
+              }
+              ariaLabelledBy="show-edit-mode-pixel-distances-label"
+            />
           </div>
 
           <div className="flex items-center justify-between gap-4">
@@ -471,18 +475,13 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 disable snapping.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.editMode?.snapToGrid ?? false}
-                onChange={(e) =>
-                  handleSnapEditModeWidgetsToGridChange(e.target.checked)
-                }
-                aria-labelledby="snap-edit-mode-widgets-to-grid-label"
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
+            <ToggleSwitch
+              enabled={settings.editMode?.snapToGrid ?? false}
+              onToggle={(checked) =>
+                handleSnapEditModeWidgetsToGridChange(checked)
+              }
+              ariaLabelledBy="snap-edit-mode-widgets-to-grid-label"
+            />
           </div>
         </BaseSettingsSection>
 
@@ -497,6 +496,19 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
           ]}
           onChange={handleAppThemeChange}
         />
+
+        {settings.appTheme === 'classic' && (
+          <SettingButtonGroupRow<'black' | 'slate'>
+            title="Classic Overlay Background"
+            description="Neutral colours of overlays and Gantry in the Classic theme."
+            value={settings.classicPalette ?? 'black'}
+            options={[
+              { label: 'Black', value: 'black' },
+              { label: 'Slate', value: 'slate' },
+            ]}
+            onChange={handleClassicPaletteChange}
+          />
+        )}
 
         {/* Highlight Color Settings */}
         <div className="space-y-4">
@@ -557,15 +569,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     (requires restart)
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.skipTaskbar ?? true}
-                    onChange={(e) => handleSkipTaskbarChange(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.skipTaskbar ?? true}
+                  onToggle={(checked) => handleSkipTaskbarChange(checked)}
+                />
               </div>
             </div>
 
@@ -581,17 +588,12 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     other applications. (requires restart)
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.overlayAlwaysOnTop ?? true}
-                    onChange={(e) =>
-                      handleOverlayAlwaysOnTopChange(e.target.checked)
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.overlayAlwaysOnTop ?? true}
+                  onToggle={(checked) =>
+                    handleOverlayAlwaysOnTopChange(checked)
+                  }
+                />
               </div>
             </div>
 
@@ -610,15 +612,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     stream or record. (requires restart)
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.enableWebServer ?? true}
-                    onChange={(e) => handleWebServerChange(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.enableWebServer ?? true}
+                  onToggle={(checked) => handleWebServerChange(checked)}
+                />
               </div>
             </div>
 
@@ -636,17 +633,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     connections are allowed. (requires restart)
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.enableNetworkAccess ?? false}
-                    onChange={(e) =>
-                      handleNetworkAccessChange(e.target.checked)
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.enableNetworkAccess ?? false}
+                  onToggle={(checked) => handleNetworkAccessChange(checked)}
+                />
               </div>
             </div>
 
@@ -663,17 +653,12 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     will significantly impact performance. (requires restart)
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!(settings.disableHardwareAcceleration ?? false)}
-                    onChange={(e) =>
-                      handleDisableHardwareAccelerationChange(!e.target.checked)
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={!(settings.disableHardwareAcceleration ?? false)}
+                  onToggle={(checked) =>
+                    handleDisableHardwareAccelerationChange(!checked)
+                  }
+                />
               </div>
             </div>
 
@@ -689,15 +674,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     start up.
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.enableAutoStart ?? true}
-                    onChange={(e) => handleAutoStartChange(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.enableAutoStart ?? true}
+                  onToggle={(checked) => handleAutoStartChange(checked)}
+                />
               </div>
             </div>
 
@@ -713,17 +693,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     the system tray.
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.startMinimized ?? false}
-                    onChange={(e) =>
-                      handleStartMinimizedChange(e.target.checked)
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.startMinimized ?? false}
+                  onToggle={(checked) => handleStartMinimizedChange(checked)}
+                />
               </div>
             </div>
 
@@ -739,15 +712,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                     rather than quitting.
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.closeToTray ?? true}
-                    onChange={(e) => handleCloseToTrayChange(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-                </label>
+                <ToggleSwitch
+                  enabled={settings.closeToTray ?? true}
+                  onToggle={(checked) => handleCloseToTrayChange(checked)}
+                />
               </div>
             </div>
 

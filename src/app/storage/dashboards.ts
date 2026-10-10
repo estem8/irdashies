@@ -63,8 +63,10 @@ const migrateGantryThresholds = (
 
 /**
  * The 20 overlay colour palettes (`colorPalette`) were replaced by app-wide
- * themes. Dashboards saved before that move to Classic, which keeps the
- * original look; new installs get the default theme.
+ * themes. Dashboards saved before that move to Classic: the black (default)
+ * and "Slate (default)" palettes keep their look via `classicPalette`; the
+ * coloured palettes have no equivalent and get black. New installs get the
+ * default theme.
  */
 export const migrateColorPalette = (
   saved: GeneralSettingsType | undefined
@@ -72,8 +74,28 @@ export const migrateColorPalette = (
   if (!saved || !('colorPalette' in saved)) return saved;
   const rest: Record<string, unknown> = { ...saved };
   delete rest.colorPalette;
-  return { appTheme: 'classic', ...rest };
+  return {
+    appTheme: 'classic',
+    ...(saved.colorPalette === 'default' && { classicPalette: 'slate' }),
+    ...rest,
+  };
 };
+
+/** Drops the legacy `colorPalette` key from every stored dashboard on write. */
+const migrateStored = (
+  dashboards: Record<string, DashboardLayout>
+): Record<string, DashboardLayout> =>
+  Object.fromEntries(
+    Object.entries(dashboards).map(([key, dashboard]) => [
+      key,
+      dashboard.generalSettings
+        ? {
+            ...dashboard,
+            generalSettings: migrateColorPalette(dashboard.generalSettings),
+          }
+        : dashboard,
+    ])
+  ) as Record<string, DashboardLayout>;
 
 const isDashboardChanged = (
   oldDashboard: DashboardLayout | undefined,
@@ -158,7 +180,8 @@ export const listDashboards = () => {
   const dashboards = readData<Record<string, DashboardLayout>>(DASHBOARDS_KEY);
   if (!dashboards) return {};
 
-  return dashboards;
+  // Profile export/import reads this directly; give it the migrated shape.
+  return migrateStored(dashboards);
 };
 
 export const getDashboard = (id: string): DashboardLayout | null => {
@@ -204,16 +227,16 @@ export const saveDashboard = (
     ...existingDashboard,
     ...value,
     widgets: value.widgets || existingDashboard?.widgets || [],
-    generalSettings: {
+    generalSettings: migrateColorPalette({
       ...existingDashboard?.generalSettings,
       ...value.generalSettings,
-    },
+    }),
   };
   // Only save and emit if there are actual changes
   if (isDashboardChanged(existingDashboard, mergedDashboard)) {
     dashboards[id] = mergedDashboard;
     logger.info('[saveDashboard] Writing to storage for profile:', id);
-    writeData(DASHBOARDS_KEY, dashboards);
+    writeData(DASHBOARDS_KEY, migrateStored(dashboards));
     logger.info('[saveDashboard] Saved successfully to storage');
 
     // Only emit dashboard updated event if this is the currently active profile
@@ -595,7 +618,7 @@ export const deleteProfile = (profileId: string): void => {
   if (dashboards[profileId]) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [profileId]: removed, ...remainingDashboards } = dashboards;
-    writeData(DASHBOARDS_KEY, remainingDashboards);
+    writeData(DASHBOARDS_KEY, migrateStored(remainingDashboards));
   }
 
   // If this was the current profile, switch to default

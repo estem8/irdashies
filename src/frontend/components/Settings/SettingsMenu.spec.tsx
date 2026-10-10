@@ -141,7 +141,8 @@ describe('SettingsMenu', () => {
       screen.queryByRole('heading', { name: /Track & Conditions/ })
     ).not.toBeInTheDocument();
     expect(screen.getByText('(1 hidden)')).toBeInTheDocument();
-    expect(screen.getByText('2 on')).toBeInTheDocument();
+    // The header counts what the categories count: visible, supported and on.
+    expect(screen.getByText('1 on')).toBeInTheDocument();
     expect(screen.getByText('Live race order')).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Wind/ })
