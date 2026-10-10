@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { WIDGET_MANIFESTS, getWidgetManifest } from '@irdashies/types';
+import {
+  WIDGET_MANIFESTS,
+  WIDGET_ORDER,
+  getWidgetManifest,
+} from '@irdashies/types';
 import { WIDGET_MAP, getWidget } from './WidgetIndex';
 import { WIDGET_SETTINGS } from './components/Settings/SettingsLoader';
 
@@ -46,13 +50,23 @@ describe('widget registry', () => {
   it('keeps widget.ts files from importing other widget folders (N3)', () => {
     for (const [path, source] of Object.entries(widgetSources)) {
       const folder = path.split('/')[2];
-      const crossImports = [...source.matchAll(/from '\.\.\/([^']+)'/g)]
-        .map((m) => m[1])
-        .filter((target) => target !== '..' && !target.startsWith('../'))
-        .filter((target) => target.split('/')[0] !== folder);
-      // '../../WidgetIndex' is the only allowed parent import
+      // Static and dynamic imports, either quote style.
+      const specifiers = [
+        ...source.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g),
+      ].map((m) => m[1]);
+      const crossImports = specifiers.filter((spec) => {
+        const aliased = spec.match(/^@irdashies\/components\/([^/]+)/);
+        if (aliased) return aliased[1] !== folder;
+        const sibling = spec.match(/^\.\.\/([^./][^/]*)/);
+        return !!sibling && sibling[1] !== folder;
+      });
+      // '../../WidgetIndex' (a parent, not a sibling folder) is allowed.
       expect(crossImports, path).toEqual([]);
     }
+  });
+
+  it('lists only real widget ids in WIDGET_ORDER', () => {
+    expect(WIDGET_ORDER.filter((id) => !manifestIds.includes(id))).toEqual([]);
   });
 
   it('ignores prototype keys', () => {

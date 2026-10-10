@@ -105,12 +105,9 @@ export const SettingsLoader = ({ previewMode }: SettingsLoaderProps = {}) => {
     : undefined;
   if (Settings) return <Settings widgetId={widget?.id} />;
 
-  switch (type) {
-    default:
-      return widget ? (
-        <div className="text-red-400">No settings available for {type}</div>
-      ) : (
-        <div className="text-slate-400">Select a widget to edit</div>
-      );
-  }
+  return widget ? (
+    <div className="text-red-400">No settings available for {type}</div>
+  ) : (
+    <div className="text-slate-400">Select a widget to edit</div>
+  );
 };

@@ -323,7 +323,7 @@ Widgets are auto-discovered from their manifest and `widget.ts`; only the config
 3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`
 4. Create `Settings/sections/MyWidgetSettings.tsx` and add one line to `WIDGET_SETTINGS` in `src/frontend/components/Settings/SettingsLoader.tsx`
 
-Removing a widget: delete those pieces; TypeScript flags any leftovers.
+Removing a widget: delete those pieces; `widgetRegistry.spec.ts` and TypeScript flag any leftovers (the derived maps are only checked by the spec).
 
 ### Adding a Hook
 
