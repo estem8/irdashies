@@ -47,6 +47,36 @@ describe('settings theme', () => {
     expect(offenders).toEqual([]);
   });
 
+  // Solid accent can be light (Carbon's amber): text on it must be
+  // text-on-accent, never text-white.
+  it('uses text-on-accent on solid accent backgrounds', () => {
+    const sources = import.meta.glob(
+      [
+        './**/*.tsx',
+        '../EditMode/**/*.tsx',
+        '../WidgetContainer/**/*.tsx',
+        '../OverlayContainer/**/*.tsx',
+        '../DashboardView/**/*.tsx',
+      ],
+      { eager: true, query: '?raw', import: 'default' }
+    ) as Record<string, string>;
+    const offenders = Object.entries(sources)
+      .filter(
+        ([path]) => !path.includes('.stories.') && !path.includes('.spec.')
+      )
+      .flatMap(([path, source]) =>
+        source
+          .split(/["'`]/)
+          .filter(
+            (literal) =>
+              /\bbg-accent-(?:400|500|600|700)(?![\w/-])/.test(literal) &&
+              /\btext-white\b/.test(literal)
+          )
+          .map((literal) => `${path}: ${literal.trim().slice(0, 80)}`)
+      );
+    expect(offenders).toEqual([]);
+  });
+
   // The main process paints the native window controls itself and can't read
   // theme.css, so its colours are a copy that must follow the theme palette.
   // Classic uses Tailwind's own slate, which doesn't change.

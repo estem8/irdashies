@@ -203,7 +203,7 @@ const RecursiveRenderer = ({
                 {/* Insertion Ghost Indicator */}
                 {isTargetWidget && isReordering && (
                   <div
-                    className={`absolute ${node.direction === 'row' ? '-left-1 top-0 bottom-0 w-0.5' : '-top-1 left-0 right-0 h-0.5'} bg-accent-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] z-20`}
+                    className={`absolute ${node.direction === 'row' ? '-left-1 top-0 bottom-0 w-0.5' : '-top-1 left-0 right-0 h-0.5'} bg-accent-400 shadow-[0_0_8px_var(--color-accent-400)] z-20`}
                   />
                 )}
 
@@ -261,7 +261,7 @@ const RecursiveRenderer = ({
                   idx === node.widgets.length - 1 &&
                   dragState.targetWidgetIdx === node.widgets.length && (
                     <div
-                      className={`absolute ${node.direction === 'row' ? '-right-1 top-0 bottom-0 w-0.5' : '-bottom-1 left-0 right-0 h-0.5'} bg-accent-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] z-20`}
+                      className={`absolute ${node.direction === 'row' ? '-right-1 top-0 bottom-0 w-0.5' : '-bottom-1 left-0 right-0 h-0.5'} bg-accent-400 shadow-[0_0_8px_var(--color-accent-400)] z-20`}
                     />
                   )}
               </div>

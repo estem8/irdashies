@@ -58,15 +58,18 @@ export const ConfirmDialog = ({
 
   const variantStyles = {
     danger: {
-      confirmButton: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+      confirmButton:
+        'bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white',
       icon: '',
     },
     warning: {
-      confirmButton: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
+      confirmButton:
+        'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500 text-white',
       icon: '',
     },
     info: {
-      confirmButton: 'bg-accent-600 hover:bg-accent-700 focus:ring-accent-500',
+      confirmButton:
+        'bg-accent-600 hover:bg-accent-700 focus:ring-accent-500 text-on-accent',
       icon: '',
     },
   };
@@ -118,7 +121,7 @@ export const ConfirmDialog = ({
             <button
               ref={confirmButtonRef}
               onClick={onConfirm}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors ${styles.confirmButton}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors ${styles.confirmButton}`}
             >
               {confirmText}
             </button>

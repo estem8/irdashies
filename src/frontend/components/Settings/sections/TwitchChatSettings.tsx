@@ -51,7 +51,8 @@ export const TwitchChatSettings = () => {
 
             <SettingsSection title="Automatic message disappearance">
               <SettingProp path="autoHide.enabled" />
-              {(settings.config.autoHide?.enabled ?? false) && (
+              {(settings.config.autoHide?.enabled ??
+                defaultConfig.autoHide.enabled) && (
                 <SettingProp path="autoHide.intervalSeconds" />
               )}
             </SettingsSection>

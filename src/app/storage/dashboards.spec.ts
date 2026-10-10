@@ -198,6 +198,43 @@ describe('dashboards', () => {
     });
   });
 
+  describe('saveDashboard legacy colour palette', () => {
+    it('writes no colorPalette and moves the dashboard to Classic', () => {
+      const legacy = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+      } as unknown as DashboardLayout;
+      const other = {
+        widgets: [],
+        generalSettings: { colorPalette: 'blue' },
+      } as unknown as DashboardLayout;
+      mockReadData.mockImplementation((key: string) => {
+        if (key === 'currentProfile') return 'default';
+        if (key === 'profiles')
+          return { default: { id: 'default', name: 'Default' } };
+        if (key === 'dashboards') return { default: legacy, other };
+        return null;
+      });
+
+      saveDashboard('default', {
+        widgets: [],
+        generalSettings: { fontSize: 'sm' },
+      });
+
+      const written = mockWriteData.mock.calls.find(
+        ([key]) => key === 'dashboards'
+      )?.[1] as Record<string, DashboardLayout>;
+      expect(JSON.stringify(written)).not.toContain('colorPalette');
+      expect(written.default.generalSettings).toMatchObject({
+        fontSize: 'sm',
+        appTheme: 'classic',
+      });
+      expect(written.other.generalSettings).toMatchObject({
+        appTheme: 'classic',
+      });
+    });
+  });
+
   describe('updateDashboardWidget', () => {
     it('should throw an error if the default dashboard does not exist', () => {
       // Use default mockImplementation which returns null for 'dashboards' key
