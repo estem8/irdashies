@@ -205,6 +205,8 @@ export const widgetItems: MenuItem[] = [
     path: '/radar',
     label: 'Radar',
     widgetType: 'radar',
+    category: 'awareness',
+    description: 'Top-down view of nearby cars',
   },
   {
     to: '/settings/rejoin',
@@ -235,6 +237,8 @@ export const widgetItems: MenuItem[] = [
     path: '/shiftlight',
     label: 'Shift Light',
     widgetType: 'shiftlight',
+    category: 'car',
+    description: 'Shift point lights',
   },
   {
     to: '/settings/slowcarahead',
