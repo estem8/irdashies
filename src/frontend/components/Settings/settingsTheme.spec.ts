@@ -1,5 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SETTINGS_THEMES, SETTINGS_TITLE_BAR } from '@irdashies/types';
 import { widgetItems } from './menuItems';
+
+const read = (path: string) => readFileSync(join(__dirname, path), 'utf8');
+const themeCss = read('../../theme.css');
+const settingsLayoutSource = read('SettingsLayout.tsx');
 
 describe('settings theme', () => {
   // Uncategorised widgets silently fall into "Extras" in the settings menu.
@@ -28,5 +35,25 @@ describe('settings theme', () => {
         )
       );
     expect(offenders).toEqual([]);
+  });
+
+  // The main process paints the native window controls itself and can't read
+  // theme.css, so its colours are a copy that must follow the theme palette.
+  it.each(SETTINGS_THEMES)('title bar colours match the %s theme', (theme) => {
+    const block = themeCss.match(
+      new RegExp(`\\.settings-theme-${theme} \\{([^}]*)\\}`)
+    )?.[1];
+    const token = (name: string) =>
+      block?.match(new RegExp(`--color-${name}:\\s*([^;]+);`))?.[1];
+    expect(SETTINGS_TITLE_BAR[theme]).toEqual({
+      color: token('slate-700'),
+      symbolColor: token('slate-300'),
+    });
+  });
+
+  // The window uses titleBarStyle 'hidden': without a drag region in the
+  // header it can't be moved.
+  it('keeps a drag region in the settings header', () => {
+    expect(settingsLayoutSource).toContain('[-webkit-app-region:drag]');
   });
 });

@@ -16,6 +16,7 @@ import {
   fitLayoutToDisplay,
   isLayoutOnDisplay,
   isWidgetDisabledForSim,
+  SETTINGS_TITLE_BAR,
 } from '@irdashies/types';
 import { getSimWidgetSupport } from './storage/simWidgetSupport';
 import path from 'node:path';
@@ -1480,16 +1481,6 @@ function loadWindowBounds(): Electron.Rectangle | undefined {
 
   return bounds;
 }
-
-// Mirrors bg-slate-700 / text-slate-300 of each .settings-theme-* in theme.css,
-// so the native window buttons sit on the same colour as the header.
-const SETTINGS_TITLE_BAR: Record<
-  SettingsTheme,
-  { color: string; symbolColor: string }
-> = {
-  carbon: { color: '#17181b', symbolColor: '#a7aab0' },
-  red: { color: '#1b1e23', symbolColor: '#9aa1ab' },
-};
 
 const SETTINGS_TITLE_BAR_HEIGHT = 40;
 
