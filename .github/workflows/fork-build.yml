@@ -1,6 +1,6 @@
 name: Fork build
 
-# Unsigned Windows build of any branch, published as a zip artifact.
+# Unsigned Windows build of any branch, published as a zip on a pre-release.
 # Kept separate from ci.yml so upstream merges don't conflict. The workflow
 # lives only on this branch, so builds are started by hand with the branch to
 # build as input:
@@ -19,7 +19,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write # create the release
 
 concurrency:
   group: fork-build-${{ inputs.ref || github.ref }}
@@ -63,15 +63,25 @@ jobs:
           }
           Get-ChildItem $dir -Filter '*.node' | Select-Object -ExpandProperty Name
 
-      - name: Resolve commit
-        id: sha
-        shell: bash
-        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Zip the package
+        shell: pwsh
+        run: |
+          $short = git rev-parse --short HEAD
+          Compress-Archive -Path out/irdashies-win32-x64/* `
+            -DestinationPath "irdashies-win32-x64-$short.zip"
 
-      # upload-artifact zips the folder itself
-      - uses: actions/upload-artifact@v7
-        with:
-          name: irdashies-win32-x64-${{ steps.sha.outputs.short }}
-          path: out/irdashies-win32-x64
-          if-no-files-found: error
-          retention-days: 14
+      # One pre-release per built commit, tagged build-<ref>-<sha>.
+      - name: Publish pre-release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ inputs.ref || github.ref_name }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          short=$(git rev-parse --short HEAD)
+          tag="build-${REF//\//-}-$short"
+          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" "irdashies-win32-x64-$short.zip" \
+            --target "$sha" --prerelease --latest=false \
+            --title "$REF @ $short" \
+            --notes "Unsigned test build of \`$REF\` at $sha."
