@@ -125,10 +125,13 @@ export const SettingsMenu = () => {
     });
   };
 
+  // The primary widget (id === type) is the one the switch toggles, so show its
+  // state; fall back to an instance only when there is no primary.
   const isWidgetEnabled = (widgetType: string) => {
-    const widget = currentDashboard?.widgets.find(
-      (w) => (w.type ?? w.id) === widgetType
-    );
+    const widgets = currentDashboard?.widgets ?? [];
+    const widget =
+      widgets.find((w) => w.id === widgetType) ??
+      widgets.find((w) => (w.type ?? w.id) === widgetType);
     return widget?.enabled ?? false;
   };
 
