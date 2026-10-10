@@ -64,8 +64,10 @@ const migrateGantryThresholds = (
 
 /**
  * The 20 overlay colour palettes (`colorPalette`) were replaced by app-wide
- * themes. Dashboards saved before that move to Classic, which keeps the
- * original look; new installs get the default theme.
+ * themes. Dashboards saved before that move to Classic: the black (default)
+ * and "Slate (default)" palettes keep their look via `classicPalette`; the
+ * coloured palettes have no equivalent and get black. New installs get the
+ * default theme.
  */
 export const migrateColorPalette = (
   saved: GeneralSettingsType | undefined
@@ -73,7 +75,11 @@ export const migrateColorPalette = (
   if (!saved || !('colorPalette' in saved)) return saved;
   const rest: Record<string, unknown> = { ...saved };
   delete rest.colorPalette;
-  return { appTheme: 'classic', ...rest };
+  return {
+    appTheme: 'classic',
+    ...(saved.colorPalette === 'default' && { classicPalette: 'slate' }),
+    ...rest,
+  };
 };
 
 /** Drops the legacy `colorPalette` key from every stored dashboard on write. */
@@ -175,7 +181,8 @@ export const listDashboards = () => {
   const dashboards = readData<Record<string, DashboardLayout>>(DASHBOARDS_KEY);
   if (!dashboards) return {};
 
-  return dashboards;
+  // Profile export/import reads this directly; give it the migrated shape.
+  return migrateStored(dashboards);
 };
 
 export const getDashboard = (id: string): DashboardLayout | null => {

@@ -150,10 +150,6 @@ export const SettingsMenu = () => {
     });
   };
 
-  const enabledCount = widgetItems.filter(
-    (item) => item.widgetType && isWidgetEnabled(item.widgetType)
-  ).length;
-
   const itemsWithSupport = widgetItems.map((item) => ({
     item,
     disabledReason: widgetDisabledMessage(
@@ -166,6 +162,11 @@ export const SettingsMenu = () => {
     ? itemsWithSupport
     : itemsWithSupport.filter(({ disabledReason }) => !disabledReason);
   const hiddenCount = itemsWithSupport.length - visibleItems.length;
+  // "On" means running: enabled and supported by the current simulator. The
+  // header and the category counts both count the visible rows this way.
+  const isOn = ({ item, disabledReason }: (typeof itemsWithSupport)[number]) =>
+    !disabledReason && !!item.widgetType && isWidgetEnabled(item.widgetType);
+  const enabledCount = visibleItems.filter(isOn).length;
 
   return (
     <div className="w-1/4 bg-slate-800 p-3 rounded-md border border-slate-600/60 flex flex-col gap-0 overflow-y-auto">
@@ -203,9 +204,7 @@ export const SettingsMenu = () => {
           ({ item }) => (item.category ?? 'extras') === category.id
         );
         if (items.length === 0) return null;
-        const onCount = items.filter(
-          ({ item }) => item.widgetType && isWidgetEnabled(item.widgetType)
-        ).length;
+        const onCount = items.filter(isOn).length;
         return (
           <section key={category.id} className="pt-2">
             <h4 className="flex items-center gap-2 px-2 pb-1 text-[11px] font-semibold text-slate-400 settings-heading tracking-widest">

@@ -94,6 +94,51 @@ describe('dashboards', () => {
     });
   });
 
+  describe('colour palette migration', () => {
+    it('keeps the Slate (default) palette as Classic slate', () => {
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards'
+          ? {
+              slate: {
+                widgets: [],
+                generalSettings: { colorPalette: 'default' },
+              },
+              black: {
+                widgets: [],
+                generalSettings: { colorPalette: 'black' },
+              },
+            }
+          : null
+      );
+      expect(getDashboard('slate')?.generalSettings).toEqual({
+        appTheme: 'classic',
+        classicPalette: 'slate',
+      });
+      expect(getDashboard('black')?.generalSettings).toEqual({
+        appTheme: 'classic',
+      });
+    });
+  });
+
+  describe('listDashboards migration', () => {
+    it('returns dashboards without the legacy colour palette', () => {
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards'
+          ? {
+              legacy: {
+                widgets: [],
+                generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+              },
+            }
+          : null
+      );
+      expect(listDashboards().legacy.generalSettings).toEqual({
+        fontSize: 'lg',
+        appTheme: 'classic',
+      });
+    });
+  });
+
   describe('getDashboard', () => {
     it('should return null if no dashboards exist', () => {
       // Use default mockImplementation which returns null for 'dashboards' key
@@ -560,6 +605,8 @@ describe('migrateColorPalette', () => {
       const migrated = migrateColorPalette(saved);
       expect(migrated).toEqual({
         appTheme: 'classic',
+        // "Slate (default)" keeps its look as Classic slate.
+        ...(colorPalette === 'default' && { classicPalette: 'slate' }),
         fontSize: 'lg',
         closeToTray: false,
       });

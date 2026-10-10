@@ -65,8 +65,16 @@ export const SettingsLayout = () => {
   return (
     <div className="flex flex-col gap-4 bg-slate-700 p-4 w-full h-full">
       {/* The window has no native title bar: this row is the drag handle, and
-          the right padding keeps clear of the OS min/max/close buttons. */}
-      <div className="flex flex-row gap-4 items-center justify-between pr-[124px] [-webkit-app-region:drag]">
+          the right padding keeps clear of the OS min/max/close buttons. Their
+          width comes from the window-controls-overlay env() values, so it
+          follows DPI scaling; without an overlay it resolves to 0. */}
+      <div
+        className="flex flex-row gap-4 items-center justify-between [-webkit-app-region:drag]"
+        style={{
+          paddingRight:
+            'max(0px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) - 1rem))',
+        }}
+      >
         <div className="flex flex-row gap-4 items-center">
           <GearIcon size={32} weight="bold" />
           <div>
