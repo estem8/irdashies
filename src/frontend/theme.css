@@ -502,7 +502,6 @@ html {
    palette the settings UI is written in, so components stay theme-agnostic. */
 @utility settings-heading {
   font-family: var(--font-heading);
-  font-style: var(--ui-heading-style, normal);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -527,7 +526,6 @@ html {
 
 .settings-theme :where(h1, h2, h3) {
   font-family: var(--font-heading);
-  font-style: var(--ui-heading-style);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -536,7 +534,6 @@ html {
   --font-sans: 'Barlow', sans-serif;
   --font-heading: 'Barlow Condensed', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --ui-heading-style: normal;
   --ui-skew: 0deg;
   --color-slate-50: #f4f4f2;
   --color-slate-100: #e6e6e3;
@@ -564,7 +561,6 @@ html {
   --font-sans: 'Saira', sans-serif;
   --font-heading: 'Saira Condensed', sans-serif;
   --font-mono: 'Saira', sans-serif;
-  --ui-heading-style: italic;
   --ui-skew: -12deg;
   --color-slate-50: #f4f5f7;
   --color-slate-100: #e9ebee;
