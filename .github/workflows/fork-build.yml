@@ -27,6 +27,8 @@ concurrency:
 
 jobs:
   build:
+    # Personal test builds: never run if this file lands in another repo.
+    if: github.repository == 'estem8/irdashies'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
