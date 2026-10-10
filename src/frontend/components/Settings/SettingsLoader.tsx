@@ -38,10 +38,13 @@ import { CornerNameSettings } from './sections/CornerNameSettings';
 import { LapTraceSettings } from './sections/LapTraceSettings';
 import { BattleSettings } from './sections/BattleSettings';
 import { GantrySettings } from './sections/GantrySettings';
-import { TelemetryInspectorSettings } from './sections/TelemetryInspectorSettings';
 
+/**
+ * Settings page per widget type. Telemetry Inspector has none of its own: its
+ * settings live on the Advanced page.
+ */
 export const WIDGET_SETTINGS: Record<
-  WidgetId,
+  Exclude<WidgetId, 'telemetryinspector'>,
   ComponentType<{ widgetId?: string }>
 > = {
   standings: StandingsSettings,
@@ -73,7 +76,6 @@ export const WIDGET_SETTINGS: Record<
   laptrace: LapTraceSettings,
   battle: BattleSettings,
   gantry: GantrySettings,
-  telemetryinspector: TelemetryInspectorSettings,
 };
 
 interface SettingsLoaderProps {
@@ -99,16 +101,13 @@ export const SettingsLoader = ({ previewMode }: SettingsLoaderProps = {}) => {
   const type = widget ? widget.type || widget.id : widgetId;
 
   const Settings = Object.hasOwn(WIDGET_SETTINGS, type ?? '')
-    ? WIDGET_SETTINGS[type as WidgetId]
+    ? WIDGET_SETTINGS[type as keyof typeof WIDGET_SETTINGS]
     : undefined;
   if (Settings) return <Settings widgetId={widget?.id} />;
 
-  switch (type) {
-    default:
-      return widget ? (
-        <div className="text-red-400">No settings available for {type}</div>
-      ) : (
-        <div className="text-slate-400">Select a widget to edit</div>
-      );
-  }
+  return widget ? (
+    <div className="text-red-400">No settings available for {type}</div>
+  ) : (
+    <div className="text-slate-400">Select a widget to edit</div>
+  );
 };

@@ -59,6 +59,8 @@ const fromString = (
   chosen: string
 ) => options.find((o) => String(o.value) === chosen)?.value;
 
+const warnedPaths = new Set<string>();
+
 /** One setting row; the control is chosen from the property's manifest spec. */
 export const SettingProp = ({
   path,
@@ -71,7 +73,12 @@ export const SettingProp = ({
   const ctx = useContext(SettingPropsContext);
   const spec = ctx?.specs[path];
   if (!ctx || !spec) {
-    logger.warn('SettingProp: no property spec for', path);
+    // Once per path: this runs on every render (e.g. each slider step) and
+    // the frontend logger forwards to the main-process log file.
+    if (!warnedPaths.has(path)) {
+      warnedPaths.add(path);
+      logger.warn('SettingProp: no property spec for', path);
+    }
     return null;
   }
 

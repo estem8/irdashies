@@ -417,14 +417,43 @@ describe('OverlayManager settings title bar themes', () => {
         titleBarStyle: 'hidden',
         titleBarOverlay: { color, symbolColor, height: 40 },
       });
+      // Same theme as the window was created with: nothing to repaint.
       manager.setSettingsTitleBarTheme(theme);
-      expect(settings.setTitleBarOverlay).toHaveBeenCalledExactlyOnceWith({
-        color,
-        symbolColor,
-        height: 40,
-      });
+      expect(settings.setTitleBarOverlay).not.toHaveBeenCalled();
     }
   );
+
+  it('repaints the native controls only when the theme changes', () => {
+    const manager = new OverlayManager();
+    manager.createOverlays(
+      { widgets: [], generalSettings: { appTheme: 'carbon' } },
+      { createSettingsWindow: false }
+    );
+    manager.createSettingsWindow();
+    const settings = createdWindows.find(
+      (win) => win.options.title === 'irDashies - Settings'
+    );
+    assert(settings);
+    manager.setSettingsTitleBarTheme('red');
+    manager.setSettingsTitleBarTheme('red');
+    expect(settings.setTitleBarOverlay).toHaveBeenCalledExactlyOnceWith({
+      color: '#1b1e23',
+      symbolColor: '#9aa1ab',
+      height: 40,
+    });
+  });
+
+  it('keeps the native title bar on macOS', () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    const manager = new OverlayManager();
+    manager.createSettingsWindow();
+    const settings = createdWindows.find(
+      (win) => win.options.title === 'irDashies - Settings'
+    );
+    assert(settings);
+    expect(settings.options).not.toHaveProperty('titleBarStyle');
+    expect(settings.options).not.toHaveProperty('titleBarOverlay');
+  });
 
   it('does nothing before a settings window exists', () => {
     const manager = new OverlayManager();

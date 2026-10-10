@@ -1,5 +1,6 @@
 import type { ElementType } from 'react';
 import type { WidgetId } from '@irdashies/types';
+import { WIDGET_MANIFESTS } from '@irdashies/types/widgetDefaults';
 
 export type { WidgetId };
 
@@ -16,9 +17,18 @@ const discoveredWidgets = import.meta.glob<{
   default: WidgetModule | readonly WidgetModule[];
 }>('./components/*/widget.ts', { eager: true });
 
+const order = new Map(WIDGET_MANIFESTS.map((m, index) => [m.id, index]));
+
+// Completeness (every WidgetId has a component) is checked by
+// widgetRegistry.spec.ts, not by the type: the map is built from a glob.
+// Keys follow the manifest order, which lists such as the site preview use.
 export const WIDGET_MAP = Object.fromEntries(
   Object.values(discoveredWidgets)
     .flatMap(({ default: m }) => (Array.isArray(m) ? m : [m]))
+    .sort(
+      (a, b) =>
+        (order.get(a.id) ?? order.size) - (order.get(b.id) ?? order.size)
+    )
     .map((m: WidgetModule) => [m.id, m.component])
 ) as Record<WidgetId, ElementType>;
 

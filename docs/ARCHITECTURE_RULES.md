@@ -167,7 +167,7 @@ are derived from these. Only the settings section still needs one line in
 
 ## 8. Settings and Migration
 
-- **R8.1** Additive settings changes update the widget type and its entry in `defaultDashboard.ts`; `deepMergeConfig` fills missing fields when dashboards load.
+- **R8.1** Additive settings changes update the widget type and its manifest's default `config` in `src/types/widgets/<id>.ts`; `deepMergeConfig` fills missing fields when dashboards load.
 - **R8.2** Breaking changes (rename, retype, or remove) require an explicit, tested migration at the dashboard-load boundary. Keep a migration close to the storage code unless the project adopts a shared registry later.
 - **R8.3** Treat persisted dashboard data as untrusted. Migrations and merge logic must validate shapes and fall back to typed defaults when values are incompatible.
 - **R8.4** Do not introduce a settings-version or migrator framework as incidental work. That was an unimplemented Phase 2b proposal and requires its own design and migration plan.
@@ -313,9 +313,9 @@ class FuelProjectionProcessor implements TelemetryProcessor<FuelProjectionSnapsh
   // init / onFrame / onLifecycle / snapshot
 }
 
-// REQUIRED — explicit widget registration (plus settings/default files)
-export const WIDGET_MAP = {
-  // existing widgets
-  mywidget: MyWidget,
-};
+// REQUIRED — widget registration: manifest + widget.ts (see AGENTS.md)
+// src/types/widgets/mywidget.ts
+export default defineWidgetManifest({ id: 'mywidget', name: 'My Widget', enabled: false, layout, config });
+// src/frontend/components/MyWidget/widget.ts
+export default { id: 'mywidget', component: MyWidget } satisfies WidgetModule;
 ```

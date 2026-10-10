@@ -158,14 +158,20 @@ ComponentName/
 
 ### Widget Registration
 
-All widgets in `WidgetIndex.tsx`:
+Widgets register themselves. `WIDGET_MAP` (`WidgetIndex.tsx`), the settings menu, `WIDGET_NAMES` and `defaultDashboard` are built from two files per widget:
 
 ```typescript
-export const WIDGET_MAP = {
-  standings: Standings,
-  relative: Relative,
-  mywidget: MyWidget,
-};
+// src/types/widgets/mywidget.ts — main-safe data
+export default defineWidgetManifest({
+  id: 'mywidget',
+  name: 'My Widget',
+  enabled: false,
+  layout: { x: 0, y: 0, width: 300, height: 100 },
+  config: { background: { opacity: 80 } },
+});
+
+// src/frontend/components/MyWidget/widget.ts — component
+export default { id: 'mywidget', component: MyWidget } satisfies WidgetModule;
 ```
 
 ---
@@ -332,14 +338,14 @@ npm run storybook  # Port 6006
 
 ### Adding a Widget
 
-Widgets are auto-discovered; there is no central list to edit.
+Widgets are auto-discovered from their manifest and `widget.ts`; only the config type and the settings page are listed centrally.
 
 1. Add the config type to `WidgetConfigMap` in `src/types/widgetConfigs.ts`
 2. Create the manifest `src/types/widgets/<id>.ts` (`defineWidgetManifest`: name, menu label, `category` and one-line `description` for the grouped settings menu, enabled, layout, default config)
 3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`
 4. Create `Settings/sections/MyWidgetSettings.tsx` and add one line to `WIDGET_SETTINGS` in `src/frontend/components/Settings/SettingsLoader.tsx`
 
-Removing a widget: delete those pieces; TypeScript flags any leftovers.
+Removing a widget: delete those pieces; `widgetRegistry.spec.ts` and TypeScript flag any leftovers (the derived maps are only checked by the spec).
 
 ### Adding a Hook
 

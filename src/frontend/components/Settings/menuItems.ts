@@ -9,7 +9,10 @@ import {
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 import type { WidgetCategory } from '@irdashies/types';
-import { WIDGET_MANIFESTS } from '@irdashies/types/widgetDefaults';
+import {
+  WIDGET_MANIFESTS,
+  getWidgetManifest,
+} from '@irdashies/types/widgetDefaults';
 
 /** Menu groups, in display order. */
 export const WIDGET_CATEGORIES = [
@@ -89,12 +92,10 @@ export const bottomItems: MenuItem[] = [
 ];
 
 /**
- * Friendly label for a widget given its type (falls back to the raw type when
- * the widget isn't in the settings menu).
+ * Friendly label for a widget given its type: the menu label, or the manifest
+ * name for widgets not in the menu; the raw type for unknown ids.
  */
 export function widgetLabel(widgetType: string): string {
-  return (
-    widgetItems.find((item) => item.widgetType === widgetType)?.label ??
-    widgetType
-  );
+  const manifest = getWidgetManifest(widgetType);
+  return manifest ? (manifest.menuLabel ?? manifest.name) : widgetType;
 }

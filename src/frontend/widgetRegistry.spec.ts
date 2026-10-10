@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   WIDGET_MANIFESTS,
+  WIDGET_ORDER,
   getWidgetManifest,
   defaultDashboard,
   getWidgetDefaultConfig,
@@ -38,7 +39,10 @@ describe('widget registry', () => {
 
   it('keeps manifests, components, settings and runtime definitions in sync', () => {
     expect(sorted(Object.keys(WIDGET_MAP))).toEqual(manifestIds);
-    expect(sorted(Object.keys(WIDGET_SETTINGS))).toEqual(manifestIds);
+    // Telemetry Inspector's settings live on the Advanced page.
+    expect(sorted(Object.keys(WIDGET_SETTINGS))).toEqual(
+      manifestIds.filter((id) => id !== 'telemetryinspector')
+    );
     expect(
       sorted(Object.values(runtimeModules).map((m) => m.default.id))
     ).toEqual(manifestIds);
@@ -54,13 +58,23 @@ describe('widget registry', () => {
   it('keeps widget.ts files from importing other widget folders (N3)', () => {
     for (const [path, source] of Object.entries(widgetSources)) {
       const folder = path.split('/')[2];
-      const crossImports = [...source.matchAll(/from '\.\.\/([^']+)'/g)]
-        .map((m) => m[1])
-        .filter((target) => target !== '..' && !target.startsWith('../'))
-        .filter((target) => target.split('/')[0] !== folder);
-      // '../../WidgetIndex' is the only allowed parent import
+      // Static and dynamic imports, either quote style.
+      const specifiers = [
+        ...source.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g),
+      ].map((m) => m[1]);
+      const crossImports = specifiers.filter((spec) => {
+        const aliased = spec.match(/^@irdashies\/components\/([^/]+)/);
+        if (aliased) return aliased[1] !== folder;
+        const sibling = spec.match(/^\.\.\/([^./][^/]*)/);
+        return !!sibling && sibling[1] !== folder;
+      });
+      // '../../WidgetIndex' (a parent, not a sibling folder) is allowed.
       expect(crossImports, path).toEqual([]);
     }
+  });
+
+  it('lists only real widget ids in WIDGET_ORDER', () => {
+    expect(WIDGET_ORDER.filter((id) => !manifestIds.includes(id))).toEqual([]);
   });
 
   it('ignores prototype keys', () => {
@@ -133,7 +147,10 @@ describe('manifest consumers', () => {
     expect(
       widgetItems.some((item) => item.widgetType === 'telemetryinspector')
     ).toBe(false);
-    expect(widgetLabel('telemetryinspector')).toBe('telemetryinspector');
+    // Not in the menu, but still named (e.g. in Key Bindings).
+    expect(widgetLabel('telemetryinspector')).toBe(
+      getWidgetManifest('telemetryinspector')?.name
+    );
   });
 
   it.each([

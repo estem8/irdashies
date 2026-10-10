@@ -1,6 +1,6 @@
 import type { GeneralSettingsType } from './dashboardLayout';
 import type { TypedDashboardWidget, WidgetConfigMap } from './widgetConfigs';
-import { WIDGET_MANIFESTS } from './widgets';
+import { WIDGET_MANIFESTS, getWidgetManifest } from './widgets';
 
 export const defaultDashboard: {
   widgets: TypedDashboardWidget[];
@@ -42,8 +42,7 @@ export const defaultDashboard: {
 export function getWidgetDefaultConfig<K extends keyof WidgetConfigMap>(
   id: K
 ): WidgetConfigMap[K] {
-  const widget = defaultDashboard.widgets.find((w) => w.id === id) as
-    TypedDashboardWidget<K> | undefined;
-  if (!widget) throw new Error(`No default config found for widget: ${id}`);
-  return widget.config;
+  const manifest = getWidgetManifest(id);
+  if (!manifest) throw new Error(`No default config found for widget: ${id}`);
+  return manifest.config as WidgetConfigMap[K];
 }
