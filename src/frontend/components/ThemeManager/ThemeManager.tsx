@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { useGeneralSettings } from '@irdashies/context';
+import { resolveAppTheme } from '@irdashies/types';
 
 /**
  * Check if we're on the settings page by looking at the URL hash.
@@ -10,7 +11,7 @@ const isSettingsPage = () => {
 };
 
 export const ThemeManager = ({ children }: PropsWithChildren) => {
-  const { fontSize, colorPalette, fontType, fontWeight } =
+  const { fontSize, appTheme, fontType, fontWeight } =
     useGeneralSettings() || {};
 
   // Don't apply theme changes to the settings page since
@@ -24,7 +25,7 @@ export const ThemeManager = ({ children }: PropsWithChildren) => {
       className={`
         relative w-full h-full overflow-hidden overlay-window
         overlay-theme-${fontSize ?? 'sm'}
-        overlay-theme-color-${colorPalette ?? 'default'}
+        theme-${resolveAppTheme(appTheme)}
         overlay-theme-font-face-${fontType ?? 'lato'}
         overlay-theme-font-weight-${fontWeight ?? 'normal'}
       `}

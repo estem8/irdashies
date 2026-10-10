@@ -157,7 +157,7 @@ registration flow includes `WidgetIndex.tsx`, the settings loader and menu,
 - **R7.1** Widgets are pure consumers. They subscribe to channel snapshots and selectors from `frontend/domain/`. They do not derive cross-widget data themselves. Register new widgets through the explicit files listed in `AGENTS.md`.
 - **R7.2** Heavy memoised components MUST receive primitive props (string/number/boolean), not freshly-allocated objects. Either flatten props in the parent, or attach a custom `propsAreEqual` to the `memo()` wrapper.
 - **R7.3** UI text is plain strings. **Never use emojis** — use Phosphor icons (`@phosphor-icons/react`).
-- **R7.4** Styling is Tailwind-only. No custom CSS unless theme-level.
+- **R7.4** Styling is Tailwind-only. No custom CSS unless theme-level. Neutrals use `slate-*` and settings highlights use `accent-*`, so the app themes (`.theme-*` in `theme.css`) apply; see Themes in `AGENTS.md`.
 - **R7.5** Every widget has a `.stories.tsx` decorated with `TelemetryDecorator()` or the appropriate channel-snapshot decorator.
 
 ---

@@ -115,6 +115,35 @@ describe('dashboards', () => {
 
       expect(dashboard).toEqual(defaultDashboard);
     });
+
+    it('moves dashboards saved with a colour palette to the Classic theme', () => {
+      const saved = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', colorPalette: 'rose' },
+      };
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards' ? { custom: saved } : null
+      );
+
+      expect(getDashboard('custom')?.generalSettings).toEqual({
+        fontSize: 'lg',
+        appTheme: 'classic',
+      });
+    });
+
+    it('keeps the chosen theme of dashboards saved after the palettes went', () => {
+      const saved = {
+        widgets: [],
+        generalSettings: { fontSize: 'lg', appTheme: 'red' },
+      };
+      mockReadData.mockImplementation((key: string) =>
+        key === 'dashboards' ? { custom: saved } : null
+      );
+
+      expect(getDashboard('custom')?.generalSettings).toEqual(
+        saved.generalSettings
+      );
+    });
   });
 
   describe('saveDashboard', () => {
@@ -143,7 +172,7 @@ describe('dashboards', () => {
       };
       const updatedDashboard: DashboardLayout = {
         widgets: [],
-        generalSettings: { fontSize: 'lg', colorPalette: 'black' },
+        generalSettings: { fontSize: 'lg', appTheme: 'red' },
       };
       mockReadData.mockImplementation((key: string) => {
         if (key === 'currentProfile') return 'default';

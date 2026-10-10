@@ -101,17 +101,24 @@ export type FontSize =
   | '8xl'
   | '9xl';
 
-export const SETTINGS_THEMES = ['carbon', 'red'] as const;
-export type SettingsTheme = (typeof SETTINGS_THEMES)[number];
+/** App-wide themes: settings window, Gantry and overlays. */
+export const APP_THEMES = ['carbon', 'red', 'classic'] as const;
+export type AppTheme = (typeof APP_THEMES)[number];
 
-/** Native window-control colours per settings theme: slate-700 / slate-300
- *  of each .settings-theme-* in theme.css (kept in sync by a spec). */
-export const SETTINGS_TITLE_BAR: Record<
-  SettingsTheme,
+/** Persisted config is untrusted: unknown values get the default theme. */
+export const resolveAppTheme = (value: unknown): AppTheme =>
+  APP_THEMES.includes(value as AppTheme) ? (value as AppTheme) : 'carbon';
+
+/** Native window-control colours of the settings window per theme: its
+ *  slate-700 / slate-300 (theme.css for Carbon and Red, Tailwind defaults for
+ *  Classic). Kept in sync by settingsTheme.spec.ts. */
+export const APP_THEME_TITLE_BAR: Record<
+  AppTheme,
   { color: string; symbolColor: string }
 > = {
   carbon: { color: '#17181b', symbolColor: '#a7aab0' },
   red: { color: '#1b1e23', symbolColor: '#9aa1ab' },
+  classic: { color: '#314158', symbolColor: '#cad5e2' },
 };
 
 export interface GeneralSettingsType {
@@ -119,30 +126,8 @@ export interface GeneralSettingsType {
   fontSize?: FontSize;
   fontWeight?:
     'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold';
-  colorPalette?:
-    | 'default'
-    | 'black'
-    | 'red'
-    | 'orange'
-    | 'amber'
-    | 'yellow'
-    | 'lime'
-    | 'green'
-    | 'emerald'
-    | 'teal'
-    | 'cyan'
-    | 'sky'
-    | 'blue'
-    | 'indigo'
-    | 'violet'
-    | 'purple'
-    | 'fuchsia'
-    | 'pink'
-    | 'rose'
-    | 'zinc'
-    | 'stone';
-  /** Look of the settings window only; overlays use colorPalette. */
-  settingsTheme?: SettingsTheme;
+  /** Colour theme of the whole app. */
+  appTheme?: AppTheme;
   showOnlyWhenOnTrack?: boolean;
   highlightColor?: number;
   skipTaskbar?: boolean;
@@ -189,7 +174,6 @@ export interface DashboardProfile {
   themeSettings?: {
     fontType?: FontType;
     fontSize?: FontSize;
-    colorPalette?: GeneralSettingsType['colorPalette'];
   };
 }
 

@@ -4,11 +4,11 @@ import { DashboardProvider, RunningStateProvider } from '@irdashies/context';
 import type { IrSdkBridge } from '@irdashies/types';
 import { SettingsLayout } from './SettingsLayout';
 import { mockDashboardBridge } from '@irdashies/storybook';
-import type { SettingsTheme } from '@irdashies/types';
+import type { AppTheme } from '@irdashies/types';
 
 interface StoryProps {
   initialPath: string;
-  theme?: SettingsTheme;
+  theme?: AppTheme;
 }
 
 // The header reads the running state to decide whether to name a simulator.
@@ -39,7 +39,7 @@ const meta: Meta<typeof SettingsLayout> = {
                   element={
                     <div
                       style={{ height: '100vh' }}
-                      className={`settings-theme settings-theme-${theme}`}
+                      className={`settings-theme theme-${theme}`}
                     >
                       <Story />
                     </div>
@@ -75,6 +75,13 @@ export const RedTheme: Story = {
   args: {
     initialPath: '/settings/fuel',
     theme: 'red',
+  } as StoryProps,
+};
+
+export const ClassicTheme: Story = {
+  args: {
+    initialPath: '/settings/fuel',
+    theme: 'classic',
   } as StoryProps,
 };
 

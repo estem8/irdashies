@@ -220,6 +220,25 @@ import { Icon } from '@phosphor-icons/react';
 import { getTailwindStyle, getColor } from '@irdashies/utils/colors';
 ```
 
+### Themes
+
+The app has three themes (General > Theme, `generalSettings.appTheme`):
+**Carbon**, **Red** and **Classic** (the original look). They cover the
+settings window, Gantry and overlays. A theme only remaps two palettes in
+`theme.css` (`.theme-*`), so components never check the theme:
+
+- **Neutrals** (backgrounds, borders, secondary text): `slate-*` only — not
+  `gray-*`, `zinc-*`, `neutral-*` or `stone-*`.
+- **Highlights** in settings (active state, primary buttons, links, focus
+  rings): `accent-*` only — not `blue-*`, `sky-*`, `cyan-*` or `indigo-*`.
+  Text on a solid accent background is `text-on-accent`.
+- Semantic colours (flags, car classes, deltas, warnings) keep their own
+  colours.
+- New themes add a `.theme-*` block, an `APP_THEMES` entry and title-bar
+  colours in `APP_THEME_TITLE_BAR`.
+
+`Settings/settingsTheme.spec.ts` fails on non-themeable colours in settings.
+
 ---
 
 ## TypeScript

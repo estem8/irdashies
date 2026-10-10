@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAvailableSimulators, useDashboard } from '@irdashies/context';
 import { SIMULATOR_IDS, SIMULATOR_LABELS } from '@irdashies/types';
-import type { GeneralSettingsType, SettingsTheme } from '@irdashies/types';
+import type { GeneralSettingsType, AppTheme } from '@irdashies/types';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import { SettingButtonGroupRow } from '../components/SettingButtonGroupRow';
 
@@ -67,17 +67,6 @@ export const HIGHLIGHT_COLOR_PRESETS = new Map([
   [7893356, 'Stone'],
 ]);
 
-const COLOR_THEME_PRESETS: Record<string, string> = {
-  default: 'Slate (default)',
-  black: 'Black',
-  ...Object.fromEntries(
-    Array.from(HIGHLIGHT_COLOR_PRESETS.values()).map((name) => [
-      name.toLowerCase(),
-      name,
-    ])
-  ),
-};
-
 interface GeneralSettingsProps {
   previewMode?: boolean;
 }
@@ -89,8 +78,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     fontType: currentDashboard?.generalSettings?.fontType ?? 'lato',
     fontSize: currentDashboard?.generalSettings?.fontSize ?? 'sm',
     fontWeight: currentDashboard?.generalSettings?.fontWeight ?? 'normal',
-    colorPalette: currentDashboard?.generalSettings?.colorPalette ?? 'default',
-    settingsTheme: currentDashboard?.generalSettings?.settingsTheme ?? 'carbon',
+    appTheme: currentDashboard?.generalSettings?.appTheme ?? 'carbon',
     highlightColor: currentDashboard?.generalSettings?.highlightColor ?? 960745,
     skipTaskbar: currentDashboard?.generalSettings?.skipTaskbar ?? true,
     disableHardwareAcceleration:
@@ -222,16 +210,8 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     handleFontSizeChange(newSize);
   };
 
-  const handleColorThemeChange = (
-    newTheme: GeneralSettingsType['colorPalette']
-  ) => {
-    const newSettings = { ...settings, colorPalette: newTheme };
-    setSettings(newSettings);
-    updateDashboard(newSettings);
-  };
-
-  const handleSettingsThemeChange = (newTheme: SettingsTheme) => {
-    const newSettings = { ...settings, settingsTheme: newTheme };
+  const handleAppThemeChange = (newTheme: AppTheme) => {
+    const newSettings = { ...settings, appTheme: newTheme };
     setSettings(newSettings);
     updateDashboard(newSettings);
   };
@@ -506,55 +486,17 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
           </div>
         </BaseSettingsSection>
 
-        <SettingButtonGroupRow<SettingsTheme>
-          title="Settings Window Style"
-          description="Look of this settings window. Overlays are not affected."
-          value={settings.settingsTheme ?? 'carbon'}
+        <SettingButtonGroupRow<AppTheme>
+          title="Theme"
+          description="Colours of the settings window, Gantry and overlays."
+          value={settings.appTheme ?? 'carbon'}
           options={[
             { label: 'Carbon', value: 'carbon' },
             { label: 'Red', value: 'red' },
+            { label: 'Classic', value: 'classic' },
           ]}
-          onChange={handleSettingsThemeChange}
+          onChange={handleAppThemeChange}
         />
-
-        {/* Color Theme Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-slate-200">Color Theme</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-300">
-                {COLOR_THEME_PRESETS[settings.colorPalette ?? 'default']}
-              </span>
-              {settings.colorPalette &&
-                settings.colorPalette !== 'default' &&
-                settings.colorPalette !== 'black' && (
-                  <span
-                    className={`bg-${settings.colorPalette}-800 rounded border-2 border-${settings.colorPalette}-500`}
-                    style={{ width: '20px', height: '20px' }}
-                  ></span>
-                )}
-            </div>
-          </div>
-
-          {/* Color Theme Dropdown */}
-          <div className="mt-4">
-            <select
-              value={settings.colorPalette ?? 'default'}
-              onChange={(e) =>
-                handleColorThemeChange(
-                  e.target.value as GeneralSettingsType['colorPalette']
-                )
-              }
-              className="w-full px-3 py-2 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
-            >
-              {Object.entries(COLOR_THEME_PRESETS).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
         {/* Highlight Color Settings */}
         <div className="space-y-4">
