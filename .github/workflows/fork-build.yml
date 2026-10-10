@@ -5,7 +5,12 @@ name: Fork build
 # lives only on this branch, so builds are started by hand with the branch to
 # build as input:
 #   gh workflow run fork-build.yml --ref ci/fork-zip-build -f ref=feat/widget-registry
+# The push trigger registers the workflow (GitHub only lists workflows outside
+# the default branch after a push event) and builds this branch.
 on:
+  push:
+    branches: [ci/fork-zip-build]
+    paths: [.github/workflows/fork-build.yml]
   workflow_dispatch:
     inputs:
       ref:
@@ -17,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: fork-build-${{ inputs.ref }}
+  group: fork-build-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.ref }}
           persist-credentials: false
 
       - uses: actions/setup-node@v6
