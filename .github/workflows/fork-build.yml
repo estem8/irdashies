@@ -1,0 +1,70 @@
+name: Fork build
+
+# Unsigned Windows build of any branch, published as a zip artifact.
+# Kept separate from ci.yml so upstream merges don't conflict. The workflow
+# lives only on this branch, so builds are started by hand with the branch to
+# build as input:
+#   gh workflow run fork-build.yml --ref ci/fork-zip-build -f ref=feat/widget-registry
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-build-${{ inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build native addons
+        run: npm run irsdk:build
+
+      - run: npx electron-forge package
+
+      # Forge packages without the addons when build/Release is empty, and the
+      # app then can't load the iRacing SDK.
+      - name: Verify packaged native addons
+        shell: pwsh
+        run: |
+          $dir = 'out/irdashies-win32-x64/resources/app.asar.unpacked/.vite/build/Release'
+          $built = @(Get-ChildItem build/Release -Filter '*.node')
+          if ($built.Count -eq 0) { throw 'No native addons were built.' }
+          foreach ($addon in $built) {
+            if (-not (Test-Path -LiteralPath "$dir/$($addon.Name)")) {
+              throw "Native addon missing from the package: $($addon.Name)"
+            }
+          }
+          Get-ChildItem $dir -Filter '*.node' | Select-Object -ExpandProperty Name
+
+      - name: Resolve commit
+        id: sha
+        shell: bash
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      # upload-artifact zips the folder itself
+      - uses: actions/upload-artifact@v7
+        with:
+          name: irdashies-win32-x64-${{ steps.sha.outputs.short }}
+          path: out/irdashies-win32-x64
+          if-no-files-found: error
+          retention-days: 14
