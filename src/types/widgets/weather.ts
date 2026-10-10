@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'weather',
   name: 'Weather',
+  category: 'track',
+  description: 'Temperatures, wind, wetness',
   enabled: true,
   layout: {
     x: 1334,

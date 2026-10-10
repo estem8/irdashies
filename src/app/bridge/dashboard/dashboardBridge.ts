@@ -276,6 +276,7 @@ export async function publishDashboardUpdates(
     const merged = dashboardTransform(
       mergeDriverTagsIntoLayout(dashboard, getDriverTagSettings())
     );
+    overlayManager.setSettingsTitleBarTheme(merged.generalSettings?.appTheme);
     const profileId = getCurrentProfileId();
 
     if (profileId === lastProfileId) {

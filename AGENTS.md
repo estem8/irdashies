@@ -220,6 +220,28 @@ import { Icon } from '@phosphor-icons/react';
 import { getTailwindStyle, getColor } from '@irdashies/utils/colors';
 ```
 
+### Themes
+
+The app has three themes (General > Theme, `generalSettings.appTheme`):
+**Carbon**, **Red** and **Classic** (the original look). They cover the
+settings window, Gantry and overlays. A theme only remaps two palettes in
+`theme.css` (`.theme-*`), so components never check the theme:
+
+- **Neutrals** (backgrounds, borders, secondary text): `slate-*` only — not
+  `gray-*`, `zinc-*`, `neutral-*` or `stone-*`.
+- **Highlights** of app UI, in any window (active state, primary buttons,
+  links, focus rings, hover/selection, edit-layout frames and handles):
+  `accent-*` only — not `blue-*`, `sky-*`, `cyan-*` or `indigo-*`.
+  Text on a solid accent background is `text-on-accent`.
+- Semantic and data colours (flags, car classes, incident types, deltas,
+  chart lines, warnings) keep their own colours.
+- New themes add a `.theme-*` block, an `APP_THEMES` entry and title-bar
+  colours in `APP_THEME_TITLE_BAR`.
+
+`Settings/settingsTheme.spec.ts` fails on non-themeable colours in settings
+and the edit-layout chrome (`EditMode`, `WidgetContainer`, `OverlayContainer`,
+`DashboardView`).
+
 ---
 
 ## TypeScript
@@ -313,7 +335,7 @@ npm run storybook  # Port 6006
 Widgets are auto-discovered; there is no central list to edit.
 
 1. Add the config type to `WidgetConfigMap` in `src/types/widgetConfigs.ts`
-2. Create the manifest `src/types/widgets/<id>.ts` (`defineWidgetManifest`: name, menu label, enabled, layout, default config)
+2. Create the manifest `src/types/widgets/<id>.ts` (`defineWidgetManifest`: name, menu label, `category` and one-line `description` for the grouped settings menu, enabled, layout, default config)
 3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`
 4. Create `Settings/sections/MyWidgetSettings.tsx` and add one line to `WIDGET_SETTINGS` in `src/frontend/components/Settings/SettingsLoader.tsx`
 

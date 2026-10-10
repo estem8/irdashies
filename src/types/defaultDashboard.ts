@@ -20,7 +20,7 @@ export const defaultDashboard: {
     fontType: 'lato',
     fontSize: 'sm',
     fontWeight: 'normal',
-    colorPalette: 'black',
+    appTheme: 'carbon' as const,
     showOnlyWhenOnTrack: true,
     highlightColor: 960745,
     skipTaskbar: true,

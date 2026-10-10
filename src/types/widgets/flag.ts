@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'flag',
   name: 'Flag',
+  category: 'awareness',
+  description: 'Track flags',
   enabled: false,
   layout: {
     x: 100,

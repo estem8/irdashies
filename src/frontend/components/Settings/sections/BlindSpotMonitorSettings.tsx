@@ -119,7 +119,7 @@ export const BlindSpotMonitorSettings = () => {
                                 indicatorColor: parseInt(e.target.value),
                               })
                             }
-                            className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 text-sm"
                           >
                             {Array.from(HIGHLIGHT_COLOR_PRESETS.entries()).map(
                               ([key, value]) => (
@@ -166,7 +166,7 @@ export const BlindSpotMonitorSettings = () => {
                                   indicatorColor: parseInt(e.target.value),
                                 })
                               }
-                              className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                              className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 text-sm"
                             >
                               {Array.from(
                                 HIGHLIGHT_COLOR_PRESETS.entries()
@@ -204,7 +204,7 @@ export const BlindSpotMonitorSettings = () => {
                                     thresholdColor1: parseInt(e.target.value),
                                   })
                                 }
-                                className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 text-sm"
                               >
                                 {Array.from(
                                   HIGHLIGHT_COLOR_PRESETS.entries()
@@ -239,7 +239,7 @@ export const BlindSpotMonitorSettings = () => {
                                     thresholdColor2: parseInt(e.target.value),
                                   })
                                 }
-                                className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                                className="px-3 py-1.5 bg-slate-700 text-slate-300 rounded border border-slate-600 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 text-sm"
                               >
                                 {Array.from(
                                   HIGHLIGHT_COLOR_PRESETS.entries()

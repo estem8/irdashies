@@ -4,6 +4,8 @@ export default defineWidgetManifest({
   id: 'input',
   name: 'Input Traces',
   menuLabel: 'Input',
+  category: 'car',
+  description: 'Throttle, brake and clutch traces',
   enabled: true,
   layout: {
     x: 622,

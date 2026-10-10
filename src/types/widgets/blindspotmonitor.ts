@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'blindspotmonitor',
   name: 'Blind Spot Monitor',
+  category: 'awareness',
+  description: 'Cars alongside, left and right',
   enabled: false,
   layout: {
     x: 378,

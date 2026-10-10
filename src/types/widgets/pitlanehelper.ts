@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'pitlanehelper',
   name: 'Pitlane Helper',
+  category: 'awareness',
+  description: 'Pit entry speed and pitbox',
   enabled: false,
   layout: {
     x: 100,

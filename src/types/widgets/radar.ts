@@ -4,6 +4,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'radar',
   name: 'Radar',
+  category: 'awareness',
+  description: 'Top-down view of nearby cars',
   enabled: false,
   layout: {
     x: 760,

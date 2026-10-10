@@ -126,7 +126,7 @@ export const OverlayContainer = memo(() => {
     <div
       className={[
         'fixed inset-0 overflow-hidden pointer-events-none',
-        editMode ? 'bg-blue-900/20' : '',
+        editMode ? 'bg-accent-900/20' : '',
       ].join(' ')}
     >
       <SectorTimingUpdater
@@ -177,7 +177,7 @@ export const OverlayContainer = memo(() => {
       {editMode && (
         <button
           onClick={handleExitEditMode}
-          className="pointer-events-auto fixed top-12.5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-3 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded shadow-lg transition-colors cursor-pointer"
+          className="pointer-events-auto fixed top-12.5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-3 py-2 bg-accent-500 hover:bg-accent-600 text-on-accent rounded shadow-lg transition-colors cursor-pointer"
         >
           <XIcon size={18} weight="bold" />
           <span className="text-sm font-medium">Exit Edit Mode</span>

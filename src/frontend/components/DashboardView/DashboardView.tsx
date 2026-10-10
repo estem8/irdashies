@@ -139,8 +139,8 @@ const DashboardWidgetItem = memo(
         >
           {/* Border when clicked */}
           {showBorder && (
-            <div className="absolute inset-0 border-dashed border-2 border-sky-500 pointer-events-none z-20 flex items-start justify-end p-2">
-              <div className="flex items-center gap-2 bg-sky-500 text-white text-sm font-semibold px-2 py-1 rounded">
+            <div className="absolute inset-0 border-dashed border-2 border-accent-500 pointer-events-none z-20 flex items-start justify-end p-2">
+              <div className="flex items-center gap-2 bg-accent-500 text-on-accent text-sm font-semibold px-2 py-1 rounded">
                 <ResizeIcon size={16} />
                 <span>{widgetName}</span>
                 <button
@@ -148,7 +148,7 @@ const DashboardWidgetItem = memo(
                     e.stopPropagation();
                     onCloseBorder();
                   }}
-                  className="pointer-events-auto ml-2 hover:bg-sky-600 rounded p-1 transition-colors"
+                  className="pointer-events-auto ml-2 hover:bg-accent-600 rounded p-1 transition-colors"
                   title="Close"
                 >
                   <XIcon size={16} />
@@ -215,7 +215,7 @@ const SoloWidgetView = ({ widgetId, widgets }: SoloWidgetViewProps) => {
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
         <div className="text-center">
           <div className="text-xl mb-2">Unknown widget</div>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-slate-400">
             This profile has no widget called &quot;{widgetId}&quot;
           </div>
         </div>
@@ -465,7 +465,7 @@ export const DashboardView = ({ soloWidgetId }: DashboardViewProps = {}) => {
 
       {enabledWidgets.length === 0 && (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-gray-400">
+          <div className="text-center text-slate-400">
             <div className="text-xl mb-2">No overlays enabled</div>
             <div className="text-sm">
               Enable overlays in Settings to see them here

@@ -28,7 +28,7 @@ export function SettingNumberRow({
 
       <input
         type="number"
-        className="w-24 rounded-md bg-slate-700 text-white px-2 py-1 text-right"
+        className="w-24 rounded-md bg-slate-900 border border-slate-600 focus:border-accent-500 focus:outline-none text-white font-mono px-2 py-1 text-right"
         value={value}
         step={step}
         min={min}

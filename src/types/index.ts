@@ -12,7 +12,12 @@ export * from './raceControl';
 export * from './widgetConfigs';
 export * from './gantryDock';
 export * from './mergeConfig';
-export type { PropertySpec, PropertySpecs, WidgetManifest } from './widgets';
+export type {
+  PropertySpec,
+  PropertySpecs,
+  WidgetCategory,
+  WidgetManifest,
+} from './widgets';
 export * from './cornerName';
 export * from './lapTrace';
 export * from './logBridge';

@@ -5,6 +5,8 @@ export default defineWidgetManifest({
   id: 'gantry',
   name: 'The Gantry',
   menuLabel: 'Gantry',
+  category: 'race',
+  description: 'Race control window',
   enabled: false,
   layout: {
     x: 0,

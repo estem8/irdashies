@@ -2,6 +2,7 @@ import type {
   DashboardLayout,
   DashboardWidget,
   DashboardProfile,
+  GeneralSettingsType,
 } from '@irdashies/types';
 import { emitDashboardUpdated } from './dashboardEvents';
 import { deepMergeConfig } from '@irdashies/types';
@@ -59,6 +60,20 @@ const migrateGantryThresholds = (
     reset[key] = defaults[key];
   }
   return reset;
+};
+
+/**
+ * The 20 overlay colour palettes (`colorPalette`) were replaced by app-wide
+ * themes. Dashboards saved before that move to Classic, which keeps the
+ * original look; new installs get the default theme.
+ */
+export const migrateColorPalette = (
+  saved: GeneralSettingsType | undefined
+): GeneralSettingsType | undefined => {
+  if (!saved || !('colorPalette' in saved)) return saved;
+  const rest: Record<string, unknown> = { ...saved };
+  delete rest.colorPalette;
+  return { appTheme: 'classic', ...rest };
 };
 
 const isDashboardChanged = (
@@ -147,11 +162,16 @@ export const listDashboards = () => {
   return dashboards;
 };
 
-export const getDashboard = (id: string) => {
+export const getDashboard = (id: string): DashboardLayout | null => {
   const dashboards = readData<Record<string, DashboardLayout>>(DASHBOARDS_KEY);
   if (!dashboards) return null;
 
-  return dashboards[id] ?? null;
+  const dashboard = dashboards[id];
+  if (!dashboard) return null;
+  return {
+    ...dashboard,
+    generalSettings: migrateColorPalette(dashboard.generalSettings),
+  };
 };
 
 export const updateDashboardWidget = (

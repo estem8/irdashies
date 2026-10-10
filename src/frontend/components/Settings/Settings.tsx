@@ -1,4 +1,5 @@
 import { useDashboard } from '@irdashies/context';
+import { resolveAppTheme } from '@irdashies/types';
 import { SettingsLayout } from './SettingsLayout';
 
 export const Settings = () => {
@@ -7,7 +8,11 @@ export const Settings = () => {
     return <>Loading...</>;
   }
 
+  const theme = resolveAppTheme(currentDashboard.generalSettings?.appTheme);
+
   return (
-    <SettingsLayout />
+    <div className={`settings-theme theme-${theme} w-full h-full`}>
+      <SettingsLayout />
+    </div>
   );
 };

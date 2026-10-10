@@ -118,7 +118,7 @@ export const IncidentRow = memo(
                   className={[
                     'px-2 py-0.5 rounded text-xs font-bold',
                     canReplay
-                      ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 hover:bg-indigo-500/30'
+                      ? 'bg-accent-500/20 text-accent-400 border border-accent-500/40 hover:bg-accent-500/30'
                       : 'bg-white/5 text-slate-600 border border-slate-700 cursor-not-allowed',
                   ].join(' ')}
                 >

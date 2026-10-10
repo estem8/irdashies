@@ -21,7 +21,7 @@ export const GantrySessionEndedBanner = memo(
         type="button"
         aria-label="Dismiss session ended message"
         onClick={onDismiss}
-        className="p-0.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-400"
+        className="p-0.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-accent-400"
       >
         <X size={14} />
       </button>

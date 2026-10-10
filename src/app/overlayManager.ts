@@ -10,11 +10,14 @@ import type {
   DashboardWidget,
   ContainerBoundsInfo,
   GantryConfig,
+  AppTheme,
 } from '@irdashies/types';
 import {
   fitLayoutToDisplay,
   isLayoutOnDisplay,
   isWidgetDisabledForSim,
+  APP_THEME_TITLE_BAR,
+  resolveAppTheme,
 } from '@irdashies/types';
 import { getSimWidgetSupport } from './storage/simWidgetSupport';
 import path from 'node:path';
@@ -1309,6 +1312,13 @@ export class OverlayManager {
     }
   }
 
+  /** Recolour the settings window's native controls after a theme change. */
+  public setSettingsTitleBarTheme(theme: AppTheme | undefined): void {
+    const win = this.currentSettingsWindow;
+    if (!win || win.isDestroyed() || process.platform === 'darwin') return;
+    win.setTitleBarOverlay(settingsTitleBarOverlay(theme));
+  }
+
   public createSettingsWindow(
     widgetType?: string,
     options?: { startHidden?: boolean }
@@ -1329,6 +1339,12 @@ export class OverlayManager {
     const defaultOptions: BrowserWindowConstructorOptions = {
       title: `irDashies - Settings`,
       frame: true,
+      // The renderer draws its own header (and drag region); the OS keeps
+      // drawing min/max/close, recoloured to match the settings theme.
+      titleBarStyle: 'hidden',
+      titleBarOverlay: settingsTitleBarOverlay(
+        this.currentDashboard?.generalSettings?.appTheme
+      ),
       width: 800,
       height: 700,
       autoHideMenuBar: true,
@@ -1465,4 +1481,15 @@ function loadWindowBounds(): Electron.Rectangle | undefined {
   }
 
   return bounds;
+}
+
+const SETTINGS_TITLE_BAR_HEIGHT = 40;
+
+function settingsTitleBarOverlay(
+  theme: AppTheme | undefined
+): Electron.TitleBarOverlay {
+  return {
+    ...APP_THEME_TITLE_BAR[resolveAppTheme(theme)],
+    height: SETTINGS_TITLE_BAR_HEIGHT,
+  };
 }

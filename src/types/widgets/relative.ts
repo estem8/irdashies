@@ -4,6 +4,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'relative',
   name: 'Relative',
+  category: 'race',
+  description: 'Cars ahead and behind',
   enabled: true,
   layout: {
     x: 7,
