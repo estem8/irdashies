@@ -257,3 +257,36 @@ describe('getWidgetDefaultConfig', () => {
     ).toThrow();
   });
 });
+
+describe('deepMergeConfig regression cases', () => {
+  it('does not erase defaults with undefined saved values at any depth', () => {
+    expect(
+      deepMergeConfig(
+        { enabled: true, background: { opacity: 80, color: 'black' } },
+        { enabled: undefined, background: { opacity: undefined, color: 'red' } }
+      )
+    ).toEqual({ enabled: true, background: { opacity: 80, color: 'red' } });
+  });
+
+  it('inserts defaults into reordered display items without losing custom items or mutating inputs', () => {
+    const defaults = Object.freeze({
+      displayOrder: Object.freeze(['a', 'b', 'c', 'd']),
+    });
+    const saved = Object.freeze({
+      displayOrder: Object.freeze(['c', 'custom', 'a']),
+    });
+    const merged = deepMergeConfig(defaults, saved);
+    expect(merged).toEqual({ displayOrder: ['b', 'c', 'custom', 'a', 'd'] });
+    expect(merged.displayOrder).not.toBe(saved.displayOrder);
+    expect(deepMergeConfig(defaults, merged)).toEqual(merged);
+  });
+
+  it('fills an empty display order while honoring empty ordinary arrays', () => {
+    expect(
+      deepMergeConfig(
+        { displayOrder: ['a', 'b'], colors: ['red'] },
+        { displayOrder: [], colors: [] }
+      )
+    ).toEqual({ displayOrder: ['a', 'b'], colors: [] });
+  });
+});

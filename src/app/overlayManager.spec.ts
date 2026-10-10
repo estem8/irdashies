@@ -1,4 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  assert,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import type { DashboardLayout } from '@irdashies/types';
 import {
   refreshSessionDataForVisibleWindow,
@@ -46,6 +54,7 @@ class FakeBrowserWindow {
   focus = vi.fn();
   close = vi.fn();
   setAlwaysOnTop = vi.fn();
+  setTitleBarOverlay = vi.fn();
   setBounds = vi.fn();
   setPosition = vi.fn();
   setSize = vi.fn();
@@ -370,5 +379,73 @@ describe('settings that are read outside a dashboard update', () => {
     new OverlayManager().setupHardwareAcceleration();
 
     expect(app.disableHardwareAcceleration).toHaveBeenCalled();
+  });
+});
+
+describe('OverlayManager settings title bar themes', () => {
+  const originalPlatform = process.platform;
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createdWindows.length = 0;
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    { theme: 'carbon' as const, color: '#17181b', symbolColor: '#a7aab0' },
+    { theme: 'red' as const, color: '#1b1e23', symbolColor: '#9aa1ab' },
+    { theme: 'classic' as const, color: '#314158', symbolColor: '#cad5e2' },
+    { theme: undefined, color: '#17181b', symbolColor: '#a7aab0' },
+  ])(
+    'uses $theme colours when creating and updating native controls',
+    ({ theme, color, symbolColor }) => {
+      const manager = new OverlayManager();
+      manager.createOverlays(
+        { widgets: [], generalSettings: { appTheme: theme } },
+        { createSettingsWindow: false }
+      );
+      manager.createSettingsWindow();
+      const settings = createdWindows.find(
+        (win) => win.options.title === 'irDashies - Settings'
+      );
+      assert(settings);
+      expect(settings.options).toMatchObject({
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color, symbolColor, height: 40 },
+      });
+      manager.setSettingsTitleBarTheme(theme);
+      expect(settings.setTitleBarOverlay).toHaveBeenCalledExactlyOnceWith({
+        color,
+        symbolColor,
+        height: 40,
+      });
+    }
+  );
+
+  it('does nothing before a settings window exists', () => {
+    const manager = new OverlayManager();
+    expect(() => manager.setSettingsTitleBarTheme('red')).not.toThrow();
+    expect(createdWindows).toHaveLength(0);
+  });
+
+  it('does not update a destroyed settings window', () => {
+    const manager = new OverlayManager();
+    manager.createSettingsWindow();
+    const settings = createdWindows[0];
+    settings.isDestroyed.mockReturnValue(true);
+    manager.setSettingsTitleBarTheme('red');
+    expect(settings.setTitleBarOverlay).not.toHaveBeenCalled();
+  });
+
+  it('does not update native title-bar controls on macOS', () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    const manager = new OverlayManager();
+    manager.createSettingsWindow();
+    manager.setSettingsTitleBarTheme('red');
+    expect(createdWindows[0].setTitleBarOverlay).not.toHaveBeenCalled();
   });
 });
