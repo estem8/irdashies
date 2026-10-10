@@ -560,7 +560,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="skip-taskbar-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Hide Overlays from Taskbar
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -572,6 +575,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.skipTaskbar ?? true}
                   onToggle={(checked) => handleSkipTaskbarChange(checked)}
+                  ariaLabelledBy="skip-taskbar-label"
                 />
               </div>
             </div>
@@ -580,7 +584,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="overlay-always-on-top-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Keep Overlays Always On Top
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -593,6 +600,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   onToggle={(checked) =>
                     handleOverlayAlwaysOnTopChange(checked)
                   }
+                  ariaLabelledBy="overlay-always-on-top-label"
                 />
               </div>
             </div>
@@ -601,7 +609,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="enable-web-server-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Enable Web Server
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -615,6 +626,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.enableWebServer ?? true}
                   onToggle={(checked) => handleWebServerChange(checked)}
+                  ariaLabelledBy="enable-web-server-label"
                 />
               </div>
             </div>
@@ -623,7 +635,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="enable-network-access-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Enable Network Access
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -636,6 +651,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.enableNetworkAccess ?? false}
                   onToggle={(checked) => handleNetworkAccessChange(checked)}
+                  ariaLabelledBy="enable-network-access-label"
                 />
               </div>
             </div>
@@ -644,7 +660,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="hardware-acceleration-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Hardware Acceleration
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -658,6 +677,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                   onToggle={(checked) =>
                     handleDisableHardwareAccelerationChange(!checked)
                   }
+                  ariaLabelledBy="hardware-acceleration-label"
                 />
               </div>
             </div>
@@ -666,7 +686,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="auto-start-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Start on system startup
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -677,6 +700,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.enableAutoStart ?? true}
                   onToggle={(checked) => handleAutoStartChange(checked)}
+                  ariaLabelledBy="auto-start-label"
                 />
               </div>
             </div>
@@ -685,7 +709,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="start-minimized-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Start minimized
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -696,6 +723,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.startMinimized ?? false}
                   onToggle={(checked) => handleStartMinimizedChange(checked)}
+                  ariaLabelledBy="start-minimized-label"
                 />
               </div>
             </div>
@@ -704,7 +732,10 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200">
+                  <h3
+                    id="close-to-tray-label"
+                    className="text-lg font-medium text-slate-200"
+                  >
                     Close to tray
                   </h3>
                   <p className="text-sm text-slate-400">
@@ -715,6 +746,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
                 <ToggleSwitch
                   enabled={settings.closeToTray ?? true}
                   onToggle={(checked) => handleCloseToTrayChange(checked)}
+                  ariaLabelledBy="close-to-tray-label"
                 />
               </div>
             </div>
