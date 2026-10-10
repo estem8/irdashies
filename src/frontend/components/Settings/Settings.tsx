@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useDashboard } from '@irdashies/context';
 import { SETTINGS_THEMES, type SettingsTheme } from '@irdashies/types';
 import { SettingsLayout } from './SettingsLayout';
@@ -11,11 +12,19 @@ const resolveTheme = (value: unknown): SettingsTheme =>
 
 export const Settings = () => {
   const { currentDashboard, onDashboardUpdated } = useDashboard();
+  const theme = resolveTheme(currentDashboard?.generalSettings?.settingsTheme);
+
+  // Portaled popups (e.g. the profile Actions menu) render into <body>,
+  // outside the wrapper below, so the theme goes on <body> too.
+  useEffect(() => {
+    const classes = ['settings-theme', `settings-theme-${theme}`];
+    document.body.classList.add(...classes);
+    return () => document.body.classList.remove(...classes);
+  }, [theme]);
+
   if (!currentDashboard || !onDashboardUpdated) {
     return <>Loading...</>;
   }
-
-  const theme = resolveTheme(currentDashboard.generalSettings?.settingsTheme);
 
   return (
     <div className={`settings-theme settings-theme-${theme} w-full h-full`}>

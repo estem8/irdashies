@@ -95,6 +95,8 @@ export class OverlayManager {
   private displayBoundsInfo = new Map<number, ContainerBoundsInfo>();
   private displayFullBounds = new Map<number, Electron.Rectangle>();
   private currentSettingsWindow: BrowserWindow | undefined;
+  /** Theme the settings window's native controls were last painted with. */
+  private settingsTitleBarTheme: SettingsTheme | undefined;
   private gantryWindow: BrowserWindow | undefined;
   /** Last-applied enabled state, so syncGantryWindow only acts on changes. */
   private gantryEnabled = false;
@@ -1315,6 +1317,9 @@ export class OverlayManager {
   public setSettingsTitleBarTheme(theme: SettingsTheme | undefined): void {
     const win = this.currentSettingsWindow;
     if (!win || win.isDestroyed() || process.platform === 'darwin') return;
+    // Called on every dashboard publish; only repaint when the theme changes.
+    if (this.settingsTitleBarTheme === theme) return;
+    this.settingsTitleBarTheme = theme;
     win.setTitleBarOverlay(settingsTitleBarOverlay(theme));
   }
 
@@ -1338,12 +1343,16 @@ export class OverlayManager {
     const defaultOptions: BrowserWindowConstructorOptions = {
       title: `irDashies - Settings`,
       frame: true,
-      // The renderer draws its own header (and drag region); the OS keeps
-      // drawing min/max/close, recoloured to match the settings theme.
-      titleBarStyle: 'hidden',
-      titleBarOverlay: settingsTitleBarOverlay(
-        this.currentDashboard?.generalSettings?.settingsTheme
-      ),
+      // Windows/Linux: the renderer draws its own header (and drag region);
+      // the OS keeps drawing min/max/close, recoloured to match the theme.
+      // macOS keeps its native title bar so the traffic lights don't cover
+      // the header.
+      ...(process.platform !== 'darwin' && {
+        titleBarStyle: 'hidden' as const,
+        titleBarOverlay: settingsTitleBarOverlay(
+          this.currentDashboard?.generalSettings?.settingsTheme
+        ),
+      }),
       width: 800,
       height: 700,
       autoHideMenuBar: true,
@@ -1366,6 +1375,8 @@ export class OverlayManager {
     );
 
     this.currentSettingsWindow = browserWindow;
+    this.settingsTitleBarTheme =
+      this.currentDashboard?.generalSettings?.settingsTheme;
     applyBaselineSecurity(browserWindow, 'Settings');
 
     // Reveal the window once its content is ready, unless it should start

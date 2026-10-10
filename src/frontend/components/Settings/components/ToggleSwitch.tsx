@@ -13,6 +13,8 @@ interface ToggleSwitchProps {
   small?: boolean;
   /** Accessible name when there is no visible `label`. */
   ariaLabel?: string;
+  /** Id of an element naming the switch, e.g. the row's heading. */
+  ariaLabelledBy?: string;
 }
 
 export const ToggleSwitch = ({
@@ -23,6 +25,7 @@ export const ToggleSwitch = ({
   disabledReason,
   small = false,
   ariaLabel,
+  ariaLabelledBy,
 }: ToggleSwitchProps) => {
   return (
     <div className="flex items-center gap-3">
@@ -32,6 +35,7 @@ export const ToggleSwitch = ({
         role="switch"
         aria-checked={enabled}
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         aria-disabled={disabled}
         disabled={disabled}
         title={disabled ? disabledReason : undefined}
