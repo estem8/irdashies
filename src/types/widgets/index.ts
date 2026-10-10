@@ -1,9 +1,10 @@
 import type { WidgetManifest } from './types';
 
 export * from './types';
+export * from './properties';
 
 const discovered = import.meta.glob<{ default: WidgetManifest }>(
-  ['./*.ts', '!./index.ts', '!./types.ts', '!./*.spec.ts'],
+  ['./*.ts', '!./index.ts', '!./types.ts', '!./properties.ts', '!./*.spec.ts'],
   { eager: true }
 );
 
