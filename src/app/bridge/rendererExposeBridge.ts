@@ -23,6 +23,7 @@ import type {
   LapTraceSource,
   RaceControlBridge,
   LapHistoryBridge,
+  RatingHistoryBridge,
   Incident,
   IncidentThresholds,
   SessionRetention,
@@ -461,5 +462,8 @@ export function exposeBridge() {
   defineBridge<LapHistoryBridge>('lapHistoryBridge', {
     getArchived: (sessionNum: number) =>
       ipcRenderer.invoke('lapHistory:getArchived', sessionNum),
+  });
+  defineBridge<RatingHistoryBridge>('ratingHistoryBridge', {
+    getHistory: () => ipcRenderer.invoke('ratingHistory:get'),
   });
 }

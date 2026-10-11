@@ -30,4 +30,5 @@ export * from './simulators';
 export * from './simWidgetSupport';
 export * from './displayFallback';
 export * from './lapHistoryBridge';
+export * from './ratingHistory';
 export * from './lmuTrackAliases';

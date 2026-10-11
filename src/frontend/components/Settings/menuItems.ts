@@ -6,6 +6,7 @@ import {
   KeyboardIcon,
   WrenchIcon,
   InfoIcon,
+  ChartLineUpIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 
@@ -23,6 +24,12 @@ export const generalItems: MenuItem[] = [
     path: '/general',
     label: 'General',
     icon: SlidersHorizontalIcon,
+  },
+  {
+    to: '/settings/driver',
+    path: '/driver',
+    label: 'Driver',
+    icon: ChartLineUpIcon,
   },
   {
     to: '/settings/profiles',

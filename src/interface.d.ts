@@ -9,6 +9,7 @@ import type {
   ChromiumFlagsBridge,
   RaceControlBridge,
   LapHistoryBridge,
+  RatingHistoryBridge,
   TelemetryInspectorBridge,
   RendererPerfBridge,
 } from '@irdashies/types';
@@ -30,6 +31,8 @@ declare global {
     raceControlBridge: RaceControlBridge;
     /** Absent outside the Electron preload, e.g. the browser server. */
     lapHistoryBridge?: LapHistoryBridge;
+    /** Absent outside the Electron preload, e.g. the browser server. */
+    ratingHistoryBridge?: RatingHistoryBridge;
     rendererPerfBridge?: RendererPerfBridge;
   }
 }

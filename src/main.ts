@@ -79,6 +79,11 @@ import {
 import { ReplayContextRuntime } from './app/processors/replayContextRuntime';
 import type { ArchiveIndex } from './app/processors/ReplayContextProcessor';
 import { createKnownLocalUserIdStore } from './app/storage/knownLocalUserIds';
+import {
+  createRatingHistoryStore,
+  ratingPointFromSession,
+} from './app/storage/ratingHistory';
+import { setupRatingHistoryBridge } from './app/bridge/ratingHistoryBridge';
 import { setupLapHistoryBridge } from './app/bridge/lapHistoryBridge';
 import { onDashboardUpdated } from './app/storage/dashboardEvents';
 import { loadSimWidgetSupport } from './app/storage/simWidgetSupport';
@@ -153,6 +158,8 @@ let incidentRuntime: IncidentRuntime | undefined;
 let disposeLapHistoryRuntime: (() => void) | undefined;
 let disposeReplayContextRuntime: (() => void) | undefined;
 const knownLocalUserIds = createKnownLocalUserIdStore();
+const ratingHistory = createRatingHistoryStore();
+let disposeRatingHistory: (() => void) | undefined;
 let disposeGarage61SearchSession: (() => void) | undefined;
 // Resolved per call: a runtime outlives any single SDK bridge, so it must
 // not hold a reference to a metrics instance that has stopped reporting.
@@ -292,11 +299,7 @@ function setupReplayContextRuntime(
     replayArchiveIndex,
     knownLocalUserIds,
     {
-      isLiveSource: () =>
-        !getIsDemoMode() &&
-        !process.env.IRDASHIES_TELEMETRY_REPLAY &&
-        !process.env.IRDASHIES_LMU_REPLAY &&
-        process.env.IRDASHIES_IRSDK_REPLAY !== '1',
+      isLiveSource,
     }
   );
 
@@ -336,6 +339,37 @@ function setupReplayContextRuntime(
     runtime.dispose();
   };
   return runtime;
+}
+
+/** False for demo mode and recorded telemetry: their sessions are not real. */
+const isLiveSource = () =>
+  !getIsDemoMode() &&
+  !process.env.IRDASHIES_TELEMETRY_REPLAY &&
+  !process.env.IRDASHIES_LMU_REPLAY &&
+  process.env.IRDASHIES_IRSDK_REPLAY !== '1';
+
+/**
+ * Records the player's iRating and safety rating from every live session.
+ * Session publishes are infrequent and a repeated value is dropped in memory,
+ * so this always runs.
+ */
+function setupRatingHistory(): void {
+  let unsubscribeSession: (() => void) | undefined;
+  const wireToTelemetryBridge = () => {
+    unsubscribeSession?.();
+    unsubscribeSession = getCurrentBridge()?.onSessionData((session) => {
+      if (!isLiveSource()) return;
+      const point = ratingPointFromSession(session, Date.now());
+      if (point) ratingHistory.record(point);
+    });
+  };
+  wireToTelemetryBridge();
+  const unsubscribeBridgeChanged = onBridgeChanged(wireToTelemetryBridge);
+  setupRatingHistoryBridge(ratingHistory);
+  disposeRatingHistory = () => {
+    unsubscribeSession?.();
+    unsubscribeBridgeChanged?.();
+  };
 }
 
 /**
@@ -445,6 +479,7 @@ void app.whenReady().then(async () => {
   setupLapTraceBridge(overlayManager);
   setupRadarBridge();
   setupGarage61SearchSession(dashboard);
+  setupRatingHistory();
   setupChromiumFlagsBridge();
   const replayContextRuntime = setupReplayContextRuntime(dashboard);
   const incidents = new IncidentRuntime(
@@ -642,6 +677,7 @@ const handleBeforeQuit = createBeforeQuitHandler({
     disposeLapHistoryRuntime?.();
     disposeReplayContextRuntime?.();
     disposeGarage61SearchSession?.();
+    disposeRatingHistory?.();
     channelBus.dispose();
     // Storage writes are debounced, so drain all pending queues within the
     // coordinator deadline before the process exits.
@@ -652,6 +688,7 @@ const handleBeforeQuit = createBeforeQuitHandler({
       flushIncidentsOnShutdown(),
       flushLapHistoryOnShutdown(),
       knownLocalUserIds.flush(),
+      ratingHistory.flush(),
       flushGarage61SearchSessionOnShutdown(),
     ]);
   },
