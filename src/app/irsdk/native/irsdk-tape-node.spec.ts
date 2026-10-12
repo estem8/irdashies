@@ -224,6 +224,14 @@ const addonPath = path.resolve(
   'irsdk_tape_node.node'
 );
 
+type RowBufferSdk = INativeSDK &
+  Required<
+    Pick<
+      INativeSDK,
+      'copyTelemetryBuffer' | 'getTelemetryLayout' | 'getTelemetryLayoutVersion'
+    >
+  >;
+
 function loadAddon(): { iRacingSdkNode: new () => INativeSDK } {
   const require = createRequire(import.meta.url);
   return require(addonPath) as { iRacingSdkNode: new () => INativeSDK };
@@ -337,6 +345,44 @@ describe('tape-backed native SDK', () => {
       expect(floatValue(sdk.getTelemetryData().Speed.value)).toBeCloseTo(50, 5);
       expect(sdk.waitForData(5)).toBe(false);
       expect(sdk.isRunning()).toBe(true);
+    } finally {
+      sdk.stopSDK();
+    }
+  });
+
+  it('reads the raw row and layout through the row-buffer API', async () => {
+    await writeFile(tapePath, createTapeFixture());
+
+    process.env.IRDASHIES_TELEMETRY_REPLAY = tapePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_LOOP = '1';
+
+    const addon = loadAddon();
+    const sdk = new addon.iRacingSdkNode() as RowBufferSdk;
+
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      expect(sdk.waitForData(20)).toBe(true);
+
+      const firstVersion = sdk.getTelemetryLayoutVersion();
+      const speed = sdk
+        .getTelemetryLayout()
+        .find((entry) => entry.name === 'Speed');
+      expect(speed).toBeDefined();
+      expect(speed?.varType).toBe(4);
+
+      let row = new ArrayBuffer(0);
+      let copied = sdk.copyTelemetryBuffer(row);
+      if (copied < 0) {
+        row = new ArrayBuffer(-copied);
+        copied = sdk.copyTelemetryBuffer(row);
+      }
+      expect(copied).toBeGreaterThan(0);
+
+      const rowSpeed = new DataView(row).getFloat32(speed?.offset ?? 0, true);
+      expect(rowSpeed).toBe(floatValue(sdk.getTelemetryData().Speed.value));
+
+      expect(sdk.waitForData(20)).toBe(true);
+      expect(sdk.getTelemetryLayoutVersion()).toBe(firstVersion);
     } finally {
       sdk.stopSDK();
     }

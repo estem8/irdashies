@@ -2,6 +2,7 @@
 #define IRSDK_NODE_H
 
 #include <napi.h>
+#include <vector>
 #include "./lib/irsdk_defines.h"
 #include "./lib/irsdk_client.h"
 
@@ -28,6 +29,9 @@ private:
     Napi::Value GetSessionVersionNum(const Napi::CallbackInfo &info);
     Napi::Value GetSessionData(const Napi::CallbackInfo &info);
     Napi::Value GetTelemetryData(const Napi::CallbackInfo &info);
+    Napi::Value CopyTelemetryBuffer(const Napi::CallbackInfo &info);
+    Napi::Value GetTelemetryLayout(const Napi::CallbackInfo &info);
+    Napi::Value GetTelemetryLayoutVersion(const Napi::CallbackInfo &info);
     // Helpers
     Napi::Value __GetTelemetryTypes(const Napi::CallbackInfo &info);
     Napi::Value GetTelemetryVar(const Napi::CallbackInfo &info);
@@ -38,6 +42,7 @@ private:
     double GetTelemetryDouble(int entry, int index);
     Napi::Object GetTelemetryVarByIndex(const Napi::Env env, int index);
     Napi::Object GetTelemetryVar(const Napi::Env env, const char *varName);
+    void RefreshTelemetryLayout();
 
     bool _loggingEnabled;
     char* _data;
@@ -45,6 +50,8 @@ private:
     int _sessionStatusID;
     int _lastSessionCt;
     const char* _sessionData;
+    int _layoutVersion;
+    std::vector<irsdk_varHeader> _varHeaderSnapshot;
 };
 
 #endif
