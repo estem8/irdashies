@@ -30,6 +30,9 @@ Napi::Object iRacingSdkNode::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("getSessionVersionNum", &iRacingSdkNode::GetSessionVersionNum),
     InstanceMethod("getSessionData", &iRacingSdkNode::GetSessionData),
     InstanceMethod("getTelemetryData", &iRacingSdkNode::GetTelemetryData),
+    InstanceMethod("copyTelemetryBuffer", &iRacingSdkNode::CopyTelemetryBuffer),
+    InstanceMethod("getTelemetryLayout", &iRacingSdkNode::GetTelemetryLayout),
+    InstanceMethod("getTelemetryLayoutVersion", &iRacingSdkNode::GetTelemetryLayoutVersion),
     InstanceMethod("getTelemetryVariable", &iRacingSdkNode::GetTelemetryVar),
     // Helpers
     InstanceMethod("__getTelemetryTypes", &iRacingSdkNode::__GetTelemetryTypes)
@@ -51,6 +54,7 @@ iRacingSdkNode::iRacingSdkNode(const Napi::CallbackInfo &info)
   , _sessionStatusID(0)
   , _lastSessionCt(-1)
   , _sessionData(NULL)
+  , _layoutVersion(0)
 {
   printf("Initializing cpp class instance...\n");
 }
@@ -486,6 +490,70 @@ Napi::Value iRacingSdkNode::GetTelemetryData(const Napi::CallbackInfo &info)
   return telemVars;
 }
 
+// Row-buffer telemetry read. Copies the whole raw row into a JS-owned
+// ArrayBuffer so JS can decode every variable at cached offsets, instead of
+// building ~340 objects, strings and ArrayBuffers per tick.
+Napi::Value iRacingSdkNode::CopyTelemetryBuffer(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+
+  // S2 hardening: only accept an ArrayBuffer as the copy target.
+  if (info.Length() < 1 || !info[0].IsArrayBuffer()) {
+    Napi::TypeError::New(env, "copyTelemetryBuffer expects an ArrayBuffer").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  // Same null guard as GetTelemetryData: no header or no row yet means no data.
+  if (irsdk_getHeader() == nullptr || this->_data == nullptr || this->_bufLineLen <= 0) {
+    return Napi::Number::New(env, 0);
+  }
+
+  this->RefreshTelemetryLayout();
+
+  // Caller's buffer is too small: report the required size as a negative
+  // number so JS can allocate it and retry.
+  auto target = info[0].As<Napi::ArrayBuffer>();
+  if (target.ByteLength() < static_cast<size_t>(this->_bufLineLen)) {
+    return Napi::Number::New(env, -this->_bufLineLen);
+  }
+
+  memcpy(target.Data(), this->_data, static_cast<size_t>(this->_bufLineLen));
+  return Napi::Number::New(env, this->_bufLineLen);
+}
+
+Napi::Value iRacingSdkNode::GetTelemetryLayout(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+  this->RefreshTelemetryLayout();
+
+  // Only entries that describe bytes inside the current row are exposed, so
+  // JS can read them with DataView without range checks of its own.
+  auto layout = Napi::Array::New(env);
+  uint32_t outIndex = 0;
+  for (size_t i = 0; i < this->_varHeaderSnapshot.size(); i++) {
+    const irsdk_varHeader &entry = this->_varHeaderSnapshot[i];
+    if (entry.type < 0 || entry.type >= irsdk_ETCount) continue;
+    if (entry.count <= 0 || entry.offset < 0) continue;
+    long long end = static_cast<long long>(entry.offset) + static_cast<long long>(entry.count) * irsdk_VarTypeBytes[entry.type];
+    if (end > static_cast<long long>(this->_bufLineLen)) continue;
+
+    auto item = Napi::Object::New(env);
+    size_t nameLen = strnlen(entry.name, IRSDK_MAX_STRING);
+    item.Set("name", Napi::String::New(env, entry.name, nameLen));
+    item.Set("varType", Napi::Number::New(env, entry.type));
+    item.Set("count", Napi::Number::New(env, entry.count));
+    item.Set("offset", Napi::Number::New(env, entry.offset));
+    layout.Set(outIndex++, item);
+  }
+  return layout;
+}
+
+Napi::Value iRacingSdkNode::GetTelemetryLayoutVersion(const Napi::CallbackInfo &info)
+{
+  this->RefreshTelemetryLayout();
+  return Napi::Number::New(info.Env(), this->_layoutVersion);
+}
+
 // Helpers
 Napi::Value iRacingSdkNode::__GetTelemetryTypes(const Napi::CallbackInfo &info)
 {
@@ -555,6 +623,38 @@ Napi::Object iRacingSdkNode::GetTelemetryVar(const Napi::Env env, const char *va
     return Napi::Object::New(env);
   }
   return this->GetTelemetryVarByIndex(env, varIndex);
+}
+
+// Compares the live var headers with the snapshot entry by entry (the headers
+// are not assumed to be contiguous). Any difference bumps _layoutVersion so JS
+// knows to refetch the layout.
+void iRacingSdkNode::RefreshTelemetryLayout()
+{
+  const irsdk_header* header = irsdk_getHeader();
+  if (header == nullptr) return;
+
+  int count = header->numVars;
+  if (count < 0) count = 0;
+
+  bool changed = (int)this->_varHeaderSnapshot.size() != count;
+  for (int i = 0; i < count && !changed; i++) {
+    const irsdk_varHeader* vh = irsdk_getVarHeaderEntry(i);
+    if (vh == nullptr || memcmp(&this->_varHeaderSnapshot[i], vh, sizeof(irsdk_varHeader)) != 0) {
+      changed = true;
+    }
+  }
+  if (!changed) return;
+
+  this->_varHeaderSnapshot.resize(count);
+  for (int i = 0; i < count; i++) {
+    const irsdk_varHeader* vh = irsdk_getVarHeaderEntry(i);
+    if (vh == nullptr) {
+      memset(&this->_varHeaderSnapshot[i], 0, sizeof(irsdk_varHeader));
+    } else {
+      memcpy(&this->_varHeaderSnapshot[i], vh, sizeof(irsdk_varHeader));
+    }
+  }
+  this->_layoutVersion++;
 }
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports)

@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import * as yaml from 'js-yaml';
 import { IRacingSDK } from './irsdk-node';
 import { getSdkOrMock } from './get-sdk';
-import type { INativeSDK } from '../native';
+import type { INativeSDK, TelemetryLayoutEntry } from '../native';
+import type { TelemetryVarList } from '../types';
 
 // Mock the getSdkOrMock module
 vi.mock('./get-sdk', () => ({
@@ -294,5 +295,192 @@ DriverInfo:
     expect(result?.DriverInfo?.Drivers[0]?.UserName).toBe('?');
     expect(result?.DriverInfo?.Drivers[0]?.AbbrevName).toBe('Anonymous');
     expect(result?.DriverInfo?.Drivers[0]?.Initials).toBe('A');
+  });
+
+  describe('row-buffer telemetry read', () => {
+    // Synthetic row with unaligned offsets: bools at 0, int at 3, floats at 7,
+    // double at 23, bitfield at 31 and chars at 39 (row is 44 bytes).
+    const ROW_LENGTH = 44;
+    const ROW_TYPE_BYTES = [1, 1, 4, 4, 4, 8];
+    const ROW_LAYOUT: TelemetryLayoutEntry[] = [
+      { name: 'BoolArray', varType: 1, count: 3, offset: 0 },
+      { name: 'IntValue', varType: 2, count: 1, offset: 3 },
+      { name: 'FloatArray', varType: 4, count: 4, offset: 7 },
+      { name: 'DoubleValue', varType: 5, count: 1, offset: 23 },
+      { name: 'BitField', varType: 3, count: 2, offset: 31 },
+      { name: 'CharText', varType: 0, count: 5, offset: 39 },
+    ];
+
+    interface RowValues {
+      bools: number[];
+      int: number;
+      floats: number[];
+      double: number;
+      bits: number[];
+      chars: string;
+    }
+
+    const ROW_ONE: RowValues = {
+      bools: [1, 0, 2],
+      int: -12345,
+      floats: [0.1, -2.5, 1000000, 0.3],
+      double: Math.PI,
+      bits: [-1, 0x0f0f],
+      chars: 'ABCDE',
+    };
+
+    const ROW_TWO: RowValues = {
+      bools: [0, 1, 0],
+      int: 42,
+      floats: [0.7, 0.2, -0.9, 3.25],
+      double: -0.5,
+      bits: [5, -7],
+      chars: 'VWXYZ',
+    };
+
+    function writeRow(values: RowValues): ArrayBuffer {
+      const row = new ArrayBuffer(ROW_LENGTH);
+      const view = new DataView(row);
+      values.bools.forEach((value, i) => view.setUint8(i, value));
+      view.setInt32(3, values.int, true);
+      values.floats.forEach((value, i) =>
+        view.setFloat32(7 + i * 4, value, true)
+      );
+      view.setFloat64(23, values.double, true);
+      values.bits.forEach((value, i) => view.setInt32(31 + i * 4, value, true));
+      for (let i = 0; i < 5; i++) {
+        view.setUint8(39 + i, values.chars.charCodeAt(i));
+      }
+      return row;
+    }
+
+    // Legacy getTelemetryData shape: one ArrayBuffer slice per variable
+    function legacyTelemetry(row: ArrayBuffer): TelemetryVarList {
+      const telemetry: Record<string, unknown> = {};
+      for (const { name, varType, count, offset } of ROW_LAYOUT) {
+        telemetry[name] = {
+          name,
+          description: '',
+          unit: '',
+          countAsTime: false,
+          length: count,
+          varType,
+          value: row.slice(offset, offset + count * ROW_TYPE_BYTES[varType]),
+        };
+      }
+      return telemetry as unknown as TelemetryVarList;
+    }
+
+    function createFakeNative(rowApi: boolean) {
+      const state = { row: writeRow(ROW_ONE), layoutVersion: 1, hasData: true };
+      const copy = vi.fn((target: ArrayBuffer): number => {
+        if (!state.hasData) return 0;
+        if (target.byteLength < state.row.byteLength)
+          return -state.row.byteLength;
+        new Uint8Array(target).set(new Uint8Array(state.row));
+        return state.row.byteLength;
+      });
+      const base = {
+        startSDK: vi.fn(),
+        stopSDK: vi.fn(),
+        isRunning: vi.fn().mockReturnValue(true),
+        waitForData: vi.fn().mockReturnValue(true),
+        getSessionData: vi.fn(),
+        currDataVersion: 0,
+        enableLogging: false,
+        getTelemetryData: vi.fn(() => legacyTelemetry(state.row)),
+        getTelemetryVariable: vi.fn(),
+        broadcast: vi.fn(),
+      };
+      const native = rowApi
+        ? {
+            ...base,
+            copyTelemetryBuffer: copy,
+            getTelemetryLayout: vi.fn(() =>
+              ROW_LAYOUT.map((entry) => ({ ...entry }))
+            ),
+            getTelemetryLayoutVersion: vi.fn(() => state.layoutVersion),
+          }
+        : base;
+      return { native: native as INativeSDK, copy, state };
+    }
+
+    async function createSdk(native: INativeSDK): Promise<IRacingSDK> {
+      vi.mocked(getSdkOrMock).mockResolvedValueOnce(native);
+      const instance = new IRacingSDK();
+      await instance.ready();
+      return instance;
+    }
+
+    const valueOf = (telemetry: unknown, name: string): unknown =>
+      (telemetry as Record<string, { value: unknown } | undefined>)[name]
+        ?.value;
+
+    it('matches the legacy getTelemetryData path for consecutive rows', async () => {
+      const fast = createFakeNative(true);
+      const legacy = createFakeNative(false);
+      const fastSdk = await createSdk(fast.native);
+      const legacySdk = await createSdk(legacy.native);
+
+      for (const values of [ROW_ONE, ROW_TWO]) {
+        fast.state.row = writeRow(values);
+        legacy.state.row = writeRow(values);
+        const fastTelemetry = fastSdk.getTelemetry();
+        expect(fastTelemetry).toEqual(legacySdk.getTelemetry());
+        expect(
+          Array.from(
+            new Uint8Array(valueOf(fastTelemetry, 'CharText') as ArrayBuffer)
+          )
+        ).toEqual(Array.from(values.chars, (c) => c.charCodeAt(0)));
+      }
+
+      const decoded = fastSdk.getTelemetry();
+      expect(valueOf(decoded, 'BoolArray')).toEqual([false, true, false]);
+      expect(valueOf(decoded, 'IntValue')).toEqual([42]);
+      expect(valueOf(decoded, 'FloatArray')).toEqual(
+        [0.7, 0.2, -0.9, 3.25].map((v) => Math.fround(v))
+      );
+      expect(valueOf(decoded, 'DoubleValue')).toEqual([-0.5]);
+      expect(valueOf(decoded, 'BitField')).toEqual([5, -7]);
+    });
+
+    it('reuses per-variable arrays while the layout version is unchanged', async () => {
+      const fake = createFakeNative(true);
+      const sdk = await createSdk(fake.native);
+
+      const first = sdk.getTelemetry();
+      const firstFloats = valueOf(first, 'FloatArray');
+
+      fake.state.row = writeRow(ROW_TWO);
+      const second = sdk.getTelemetry();
+      expect(valueOf(second, 'FloatArray')).toBe(firstFloats);
+
+      fake.state.layoutVersion = 2;
+      const third = sdk.getTelemetry();
+      expect(valueOf(third, 'FloatArray')).not.toBe(firstFloats);
+      expect(valueOf(third, 'FloatArray')).toEqual(
+        [0.7, 0.2, -0.9, 3.25].map((v) => Math.fround(v))
+      );
+    });
+
+    it('grows the row buffer when native reports a larger size', async () => {
+      const fake = createFakeNative(true);
+      const sdk = await createSdk(fake.native);
+
+      const telemetry = sdk.getTelemetry();
+
+      expect(fake.copy).toHaveBeenCalledTimes(2);
+      expect(fake.copy.mock.results[0]?.value).toBe(-ROW_LENGTH);
+      expect(fake.copy.mock.results[1]?.value).toBe(ROW_LENGTH);
+      expect(valueOf(telemetry, 'IntValue')).toEqual([-12345]);
+    });
+
+    it('returns an empty object when native has no row', async () => {
+      const fake = createFakeNative(true);
+      fake.state.hasData = false;
+      const sdk = await createSdk(fake.native);
+
+      expect(sdk.getTelemetry()).toEqual({});
+    });
   });
 });
