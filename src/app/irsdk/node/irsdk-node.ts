@@ -289,6 +289,17 @@ export class IRacingSDK {
     if (!this._sdk) return null;
 
     try {
+      // Skip the native call when the SDK's session counter still matches the
+      // cached version: native getSessionData() would copy and transcode the
+      // whole session YAML only to have it discarded.
+      if (
+        this._sessionData &&
+        typeof this._sdk.getSessionVersionNum === 'function' &&
+        this._dataVer === this.currDataVersion &&
+        this._sdk.getSessionVersionNum() === this.currDataVersion
+      )
+        return this._sessionData;
+
       const seshString = this._sdk?.getSessionData();
       // currDataVersion is only updated after getSessionData is called
       if (this._sessionData && this._dataVer === this.currDataVersion)

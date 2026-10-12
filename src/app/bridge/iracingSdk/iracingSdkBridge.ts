@@ -130,11 +130,10 @@ function telemetryForRenderer(
 const WAIT_TIMEOUT = 16;
 // How long to sleep between connection retry attempts when iRacing isn't running.
 const RETRY_INTERVAL = 1000;
-// How often to ask the SDK for session data. The native getSessionData() copies
-// and transcodes the whole session YAML on every call even when nothing has
-// changed, and currDataVersion only refreshes as a side effect of that call, so
-// there is no cheap way to check first. Polling at 2 Hz bounds session-change
-// detection latency to about 500 ms while avoiding work on every telemetry tick.
+// How often to ask the SDK for session data. IRacingSDK.getSessionData() checks
+// the SDK's session update counter first and only copies and transcodes the
+// YAML when it has changed. The 2 Hz cadence is kept so session-change timing
+// (about 500 ms) stays as it was.
 const SESSION_POLL_INTERVAL = 500;
 
 export async function publishIRacingSDKEvents(

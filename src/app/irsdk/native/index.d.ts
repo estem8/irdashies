@@ -29,6 +29,8 @@ export interface INativeSDK {
   isRunning(): boolean;
   waitForData(timeout?: number): boolean;
   getSessionData(): string; // full yaml
+  // SDK session-info update counter; cheap, unlike getSessionData
+  getSessionVersionNum?(): number;
   getTelemetryData(): TelemetryVarList;
 
   getTelemetryVariable<T extends boolean | number | string>(
@@ -118,6 +120,8 @@ export class NativeSDK implements INativeSDK {
   public waitForData(timeout?: number): boolean;
 
   public getSessionData(): string; // full yaml
+
+  public getSessionVersionNum(): number;
 
   public getTelemetryData(): TelemetryVarList;
 
