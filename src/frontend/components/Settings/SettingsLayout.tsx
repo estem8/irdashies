@@ -63,8 +63,18 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 bg-slate-700 p-4 rounded-md w-full h-full">
-      <div className="flex flex-row gap-4 items-center justify-between">
+    <div className="flex flex-col gap-4 bg-slate-700 p-4 w-full h-full">
+      {/* The window has no native title bar: this row is the drag handle, and
+          the right padding keeps clear of the OS min/max/close buttons. Their
+          width comes from the window-controls-overlay env() values, so it
+          follows DPI scaling; without an overlay it resolves to 0. */}
+      <div
+        className="flex flex-row gap-4 items-center justify-between [-webkit-app-region:drag]"
+        style={{
+          paddingRight:
+            'max(0px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) - 1rem))',
+        }}
+      >
         <div className="flex flex-row gap-4 items-center">
           <GearIcon size={32} weight="bold" />
           <div>
@@ -83,10 +93,10 @@ export const SettingsLayout = () => {
             )}
           </div>
         </div>
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-2 [-webkit-app-region:no-drag]">
           <button
             onClick={toggleDemoMode}
-            className="flex flex-row gap-1.5 items-center px-3 py-2 rounded bg-slate-800 hover:bg-slate-600 transition-colors"
+            className="flex flex-row gap-1.5 items-center px-3 py-2 rounded skew-ui settings-heading font-semibold border border-slate-600 bg-slate-800 hover:border-accent-500 transition-colors"
           >
             {isDemoMode ? (
               <>
@@ -102,7 +112,7 @@ export const SettingsLayout = () => {
           </button>
           <button
             onClick={handleToggleLock}
-            className="flex flex-row gap-1.5 items-center px-3 py-2 rounded bg-slate-800 hover:bg-slate-600 transition-colors"
+            className="flex flex-row gap-1.5 items-center px-3 py-2 rounded skew-ui settings-heading font-semibold border border-slate-600 bg-slate-800 hover:border-accent-500 transition-colors"
           >
             <LockIcon size={20} weight="bold" />
             <span>Edit Layout</span>
@@ -117,7 +127,7 @@ export const SettingsLayout = () => {
         <SettingsMenu />
 
         {/* Right Column - Widget Settings */}
-        <div className="w-3/4 bg-slate-800 p-4 rounded-md flex flex-col overflow-hidden">
+        <div className="w-3/4 bg-slate-800 p-4 rounded-md border border-slate-600/60 flex flex-col overflow-hidden">
           <Routes>
             <Route
               path="/"

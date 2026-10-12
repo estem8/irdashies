@@ -3,6 +3,9 @@ import type { WidgetConfigMap } from '../widgetConfigs';
 import type { WidgetId } from '../widgetId';
 import type { PropertySpecsOf } from './properties';
 
+/** Settings-menu group a widget is listed under. */
+export type WidgetCategory = 'race' | 'car' | 'awareness' | 'track' | 'extras';
+
 /**
  * Main-safe, pure-data description of a widget. One file per widget in
  * `src/types/widgets/<id>.ts`, auto-discovered by `./index.ts`.
@@ -15,6 +18,10 @@ export interface WidgetManifest<
   name: string;
   /** Settings-menu label when it differs from `name`. */
   menuLabel?: string;
+  /** Settings-menu group. Required for every widget shown in the menu. */
+  category?: WidgetCategory;
+  /** One line under the label in the settings menu. */
+  description?: string;
   /**
    * Not drawn in the settings widget menu; its settings are reached elsewhere
    * (a tab on another item's page, or the Advanced page). It still gets a

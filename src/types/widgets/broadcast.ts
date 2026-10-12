@@ -4,6 +4,8 @@ export default defineWidgetManifest({
   id: 'broadcast',
   name: 'Broadcast Tower',
   menuLabel: 'Broadcast',
+  category: 'extras',
+  description: 'TV-style overlay for OBS streams',
   // One settings page with a tab per broadcast widget.
   groupTypes: [
     'broadcast',

@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'map',
   name: 'Track Map',
+  category: 'track',
+  description: 'Circuit map with cars',
   enabled: true,
   layout: {
     x: 1102,

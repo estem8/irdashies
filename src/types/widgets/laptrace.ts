@@ -8,6 +8,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'laptrace',
   name: 'Lap Trace',
+  category: 'car',
+  description: 'Saved lap inputs along the track',
   enabled: false,
   layout: {
     x: 622,

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ToggleSwitch } from '../components/ToggleSwitch';
 import { createPortal } from 'react-dom';
 import { useDashboard } from '@irdashies/context';
 import type {
@@ -344,12 +345,12 @@ export const ProfileSettings = () => {
               }}
               placeholder="Enter profile name..."
               disabled={isCreating}
-              className="flex-1 bg-slate-900 border border-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              className="flex-1 bg-slate-900 border border-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:border-accent-500 disabled:opacity-50"
             />
             <button
               onClick={handleCreateProfile}
               disabled={isCreating || !newProfileName.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-medium transition-colors"
+              className="bg-accent-600 hover:bg-accent-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-on-accent px-4 py-2 rounded font-medium transition-colors"
             >
               {isCreating ? 'Creating...' : 'Create'}
             </button>
@@ -363,7 +364,7 @@ export const ProfileSettings = () => {
           </div>
           <div className="divide-y divide-slate-700 overflow-y-auto min-h-0">
             {profiles.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-400">
+              <div className="px-4 py-8 text-center text-slate-400">
                 No profiles found. Create your first profile above.
               </div>
             ) : (
@@ -375,13 +376,13 @@ export const ProfileSettings = () => {
                   <div
                     key={profile.id}
                     className={`px-4 py-3 flex items-center justify-between transition-colors ${
-                      isActive ? 'bg-blue-600/20' : 'hover:bg-slate-700/50'
+                      isActive ? 'bg-accent-600/20' : 'hover:bg-slate-700/50'
                     }`}
                   >
                     <div className="flex-1 flex items-center gap-3">
                       {isActive && (
                         <div
-                          className="w-2 h-2 bg-blue-500 rounded-full"
+                          className="w-2 h-2 bg-accent-500 rounded-full"
                           title="Active Profile"
                         />
                       )}
@@ -397,7 +398,7 @@ export const ProfileSettings = () => {
                             if (e.key === 'Escape') handleCancelEdit();
                           }}
                           autoFocus
-                          className="flex-1 bg-slate-900 border border-slate-600 text-white px-2 py-1 rounded text-sm focus:outline-none focus:border-blue-500"
+                          className="flex-1 bg-slate-900 border border-slate-600 text-white px-2 py-1 rounded text-sm focus:outline-none focus:border-accent-500"
                         />
                       ) : (
                         <div className="flex-1">
@@ -405,7 +406,7 @@ export const ProfileSettings = () => {
                             {profile.name}
                           </div>
                           {profile.lastModified && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-slate-500">
                               Modified:{' '}
                               {new Date(profile.lastModified).toLocaleString()}
                             </div>
@@ -425,7 +426,7 @@ export const ProfileSettings = () => {
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                            className="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                           >
                             Cancel
                           </button>
@@ -435,7 +436,7 @@ export const ProfileSettings = () => {
                           {!isActive && (
                             <button
                               onClick={() => handleSwitchProfile(profile.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                              className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-1 rounded text-sm font-medium transition-colors"
                             >
                               Switch
                             </button>
@@ -446,7 +447,7 @@ export const ProfileSettings = () => {
                               const url = `http://${serverIP}:${serverPort}/dashboard?profile=${profile.id}`;
                               navigator.clipboard.writeText(url);
                             }}
-                            className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                            className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-1 rounded text-sm font-medium transition-colors"
                             title="Copy browser URL for this profile"
                           >
                             Copy URL
@@ -498,7 +499,7 @@ export const ProfileSettings = () => {
                                   right: dropdownPos.right,
                                   zIndex: 9999,
                                 }}
-                                className="bg-slate-700 border border-slate-600 rounded shadow-lg min-w-[130px]"
+                                className="bg-slate-700 border border-slate-600 rounded shadow-lg min-w-[130px] [-webkit-app-region:no-drag]"
                               >
                                 <button
                                   onClick={() => {
@@ -560,16 +561,11 @@ export const ProfileSettings = () => {
                 from the last profile back to the first (and vice versa).
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={cycleProfiles}
-                onChange={(e) => handleToggleCycleProfiles(e.target.checked)}
-                aria-labelledby="cycle-profiles-label"
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <ToggleSwitch
+              enabled={cycleProfiles}
+              onToggle={(checked) => handleToggleCycleProfiles(checked)}
+              ariaLabelledBy="cycle-profiles-label"
+            />
           </div>
 
           <div className="flex items-center justify-between gap-4">
@@ -585,18 +581,11 @@ export const ProfileSettings = () => {
                 profiles.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showProfileBanner}
-                onChange={(e) =>
-                  handleToggleShowProfileBanner(e.target.checked)
-                }
-                aria-labelledby="show-profile-banner-label"
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <ToggleSwitch
+              enabled={showProfileBanner}
+              onToggle={(checked) => handleToggleShowProfileBanner(checked)}
+              ariaLabelledBy="show-profile-banner-label"
+            />
           </div>
         </div>
 
@@ -606,7 +595,7 @@ export const ProfileSettings = () => {
             <h3 className="text-lg font-semibold text-white mb-2">
               Switch Profile By Session
             </h3>
-            <p className="text-sm text-gray-400 mb-3">
+            <p className="text-sm text-slate-400 mb-3">
               Set a profile for each session type and it is applied
               automatically as the event moves from practice through to the
               race. A session left on Don&apos;t switch keeps whatever profile
@@ -634,7 +623,7 @@ export const ProfileSettings = () => {
               type="button"
               onClick={handleUseCurrentProfileForAll}
               disabled={!sessionProfileMapLoaded || !currentProfile}
-              className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-accent-400 hover:text-accent-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Use {currentProfile?.name ?? 'current profile'} for all sessions
             </button>
@@ -663,7 +652,7 @@ export const ProfileSettings = () => {
             <h3 className="text-lg font-semibold text-white mb-2">
               OBS Browser Source
             </h3>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-slate-400">
               The built-in web server is turned off, so browser source URLs are
               unavailable. Re-enable it under Settings &rarr; General &rarr;
               Enable Web Server (requires restart).
@@ -677,7 +666,7 @@ export const ProfileSettings = () => {
               <h3 className="text-lg font-semibold text-white mb-2">
                 OBS Browser Source
               </h3>
-              <p className="text-sm text-gray-400 mb-3">
+              <p className="text-sm text-slate-400 mb-3">
                 Use the URL below for OBS browser sources. OBS requires IP
                 addresses instead of localhost.
               </p>
@@ -724,7 +713,7 @@ export const ProfileSettings = () => {
                       `http://${serverIP}:3000/dashboard?profile=${currentProfile.id}`
                     );
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
+                  className="bg-accent-600 hover:bg-accent-700 text-on-accent px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap"
                 >
                   Copy for OBS
                 </button>
@@ -738,9 +727,9 @@ export const ProfileSettings = () => {
         )}
 
         {/* Info Box */}
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-          <h4 className="text-blue-300 font-semibold mb-2">About Profiles</h4>
-          <ul className="text-sm text-blue-200 space-y-1 list-disc list-inside">
+        <div className="bg-accent-500/10 border border-accent-500/30 rounded-lg p-4">
+          <h4 className="text-accent-300 font-semibold mb-2">About Profiles</h4>
+          <ul className="text-sm text-accent-200 space-y-1 list-disc list-inside">
             <li>Each profile has its own widget configurations and layouts</li>
             <li>Switch between profiles to use different dashboard setups</li>
             <li>The Default cannot be deleted</li>

@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'tachometer',
   name: 'Tachometer',
+  category: 'car',
+  description: 'RPM and shift lights',
   enabled: false,
   layout: {
     x: 622,

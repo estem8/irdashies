@@ -8,7 +8,17 @@ import {
   InfoIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
-import { WIDGET_MANIFESTS } from '@irdashies/types';
+import { WIDGET_MANIFESTS, type WidgetCategory } from '@irdashies/types';
+
+/** Menu groups, in display order. */
+export const WIDGET_CATEGORIES = [
+  { id: 'race', label: 'Timing & Race' },
+  { id: 'car', label: 'Car & Driver' },
+  { id: 'awareness', label: 'Awareness' },
+  { id: 'track', label: 'Track & Conditions' },
+  { id: 'extras', label: 'Extras' },
+] as const satisfies readonly { id: WidgetCategory; label: string }[];
+export type { WidgetCategory };
 
 export interface MenuItem {
   to: string;
@@ -17,6 +27,9 @@ export interface MenuItem {
   widgetType?: string;
   /** Widgets that share this item's page; it shows On while any of them is. */
   groupTypes?: string[];
+  category?: WidgetCategory;
+  /** One line under the label in the settings menu. */
+  description?: string;
   icon?: Icon;
   /** Reached through a tab on another item's page rather than the menu. */
   hideInMenu?: boolean;
@@ -56,11 +69,13 @@ export const generalItems: MenuItem[] = [
 ];
 
 export const widgetItems: MenuItem[] = WIDGET_MANIFESTS.map(
-  ({ id, name, menuLabel, hideInMenu, groupTypes }) => ({
+  ({ id, name, menuLabel, category, description, hideInMenu, groupTypes }) => ({
     to: `/settings/${id}`,
     path: `/${id}`,
     label: menuLabel ?? name,
     widgetType: id,
+    ...(category && { category }),
+    ...(description && { description }),
     ...(groupTypes && { groupTypes }),
     ...(hideInMenu && { hideInMenu }),
   })
