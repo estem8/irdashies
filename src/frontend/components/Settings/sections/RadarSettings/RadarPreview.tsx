@@ -77,7 +77,7 @@ export const RadarPreview = ({
   if (!frame) return null;
   return (
     <div
-      className="w-50 h-50 shrink-0 rounded-md"
+      className="overlay-preview w-50 h-50 shrink-0 rounded-md"
       style={{
         background:
           'repeating-linear-gradient(100deg, #3f4a3a 0 24px, #45503f 24px 52px)',

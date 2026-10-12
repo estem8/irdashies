@@ -679,3 +679,51 @@ html {
   --color-accent-900: #4a0f0c;
   --color-on-accent: #fff;
 }
+
+/* Previews inside the settings window render the real overlay components, so
+   they keep the overlay look (the @theme defaults) whatever the settings theme.
+   Mark a preview's root with overlay-preview. */
+.settings-theme .overlay-preview {
+  --font-sans: 'Lato', sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  --ui-skew: 0deg;
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --color-slate-50: oklch(98.4% 0.003 247.858);
+  --color-slate-100: oklch(96.8% 0.007 247.896);
+  --color-slate-200: oklch(92.9% 0.013 255.508);
+  --color-slate-300: oklch(86.9% 0.022 252.894);
+  --color-slate-400: oklch(70.4% 0.04 256.788);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+  --color-slate-600: oklch(44.6% 0.043 257.281);
+  --color-slate-700: oklch(37.2% 0.044 257.287);
+  --color-slate-800: oklch(27.9% 0.041 260.031);
+  --color-slate-900: oklch(20.8% 0.042 265.755);
+  --color-slate-950: oklch(12.9% 0.042 264.695);
+  --color-accent-100: var(--color-blue-100);
+  --color-accent-200: var(--color-blue-200);
+  --color-accent-300: var(--color-blue-300);
+  --color-accent-400: var(--color-blue-400);
+  --color-accent-500: var(--color-blue-500);
+  --color-accent-600: var(--color-blue-600);
+  --color-accent-700: var(--color-blue-700);
+  --color-accent-900: var(--color-blue-900);
+  --color-on-accent: #fff;
+  font-family: var(--font-sans);
+}
+
+.settings-theme .overlay-preview .rounded {
+  border-radius: 0.25rem;
+}
+
+.settings-theme .overlay-preview :where(h1, h2, h3) {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}

@@ -8,6 +8,25 @@ const read = (path: string) => readFileSync(join(__dirname, path), 'utf8');
 const themeCss = read('../../theme.css');
 const settingsLayoutSource = read('SettingsLayout.tsx');
 
+// Settings component sources (no stories or specs), for the colour guards.
+const componentSources = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('./**/*.tsx', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    }) as Record<string, string>
+  ).filter(([path]) => !path.includes('.stories.') && !path.includes('.spec.'))
+);
+
+/** Custom properties a CSS rule block sets, e.g. `--color-slate-700`. */
+const tokensIn = (selector: string) =>
+  [
+    ...(themeCss
+      .match(new RegExp(`${selector.replace(/\./g, '\\.')} \\{([^}]*)\\}`))?.[1]
+      .matchAll(/(--[\w-]+):/g) ?? []),
+  ].map(([, name]) => name);
+
 describe('settings theme', () => {
   // Uncategorised widgets silently fall into "Extras" in the settings menu.
   // Items hidden from the menu (their settings live on another page) need none.
@@ -21,36 +40,20 @@ describe('settings theme', () => {
   // Settings themes only remap slate-* and accent-*; these palettes ignore
   // the selected theme. Use slate-* for neutrals and accent-* for highlights.
   it('uses only themeable colours in settings components', () => {
-    const sources = import.meta.glob('./**/*.tsx', {
-      eager: true,
-      query: '?raw',
-      import: 'default',
-    }) as Record<string, string>;
-    const offenders = Object.entries(sources)
-      .filter(
-        ([path]) => !path.includes('.stories.') && !path.includes('.spec.')
-      )
-      .flatMap(([path, source]) =>
+    const offenders = Object.entries(componentSources).flatMap(
+      ([path, source]) =>
         [...source.matchAll(/\b[a-z]+-(?:gray|blue|sky|cyan|indigo)-\d+/g)].map(
           ([match]) => `${path}: ${match}`
         )
-      );
+    );
     expect(offenders).toEqual([]);
   });
 
   // Solid accent can be light (Carbon's amber): text on it must be
   // text-on-accent, never text-white.
   it('uses text-on-accent on solid accent backgrounds', () => {
-    const sources = import.meta.glob('./**/*.tsx', {
-      eager: true,
-      query: '?raw',
-      import: 'default',
-    }) as Record<string, string>;
-    const offenders = Object.entries(sources)
-      .filter(
-        ([path]) => !path.includes('.stories.') && !path.includes('.spec.')
-      )
-      .flatMap(([path, source]) =>
+    const offenders = Object.entries(componentSources).flatMap(
+      ([path, source]) =>
         source
           .split(/["'`]/)
           .filter(
@@ -59,7 +62,7 @@ describe('settings theme', () => {
               /\btext-white\b/.test(literal)
           )
           .map((literal) => `${path}: ${literal.trim().slice(0, 80)}`)
-      );
+    );
     expect(offenders).toEqual([]);
   });
 
@@ -82,4 +85,19 @@ describe('settings theme', () => {
   it('keeps a drag region in the settings header', () => {
     expect(settingsLayoutSource).toContain('[-webkit-app-region:drag]');
   });
+
+  // Widget previews render real overlay components: every token a theme
+  // changes must be reset there, or the preview stops matching the overlay.
+  it.each(SETTINGS_THEMES)(
+    'overlay previews reset every token the %s theme sets',
+    (theme) => {
+      const reset = tokensIn('.settings-theme .overlay-preview');
+      const themed = [
+        ...tokensIn('.settings-theme'),
+        ...tokensIn(`.settings-theme-${theme}`),
+      ];
+      expect(themed.length).toBeGreaterThan(10);
+      expect(themed.filter((token) => !reset.includes(token))).toEqual([]);
+    }
+  );
 });

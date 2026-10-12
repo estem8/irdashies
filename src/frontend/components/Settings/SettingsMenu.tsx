@@ -125,34 +125,34 @@ export const SettingsMenu = () => {
     });
   };
 
-  // The primary widget (id === type) is the one the switch toggles, so show its
-  // state; fall back to an instance only when there is no primary.
-  const isWidgetEnabled = (widgetType: string) => {
+  // The widget that stands for a type in the menu: the primary (id === type),
+  // the one its settings page edits, or an instance when there is no primary.
+  // The switch writes the same widget it shows, so they never disagree; other
+  // instances keep their own state.
+  const widgetFor = (widgetType: string) => {
     const widgets = currentDashboard?.widgets ?? [];
-    const widget =
+    return (
       widgets.find((w) => w.id === widgetType) ??
-      widgets.find((w) => (w.type ?? w.id) === widgetType);
-    return widget?.enabled ?? false;
+      widgets.find((w) => (w.type ?? w.id) === widgetType)
+    );
   };
+  const isWidgetEnabled = (widgetType: string) =>
+    widgetFor(widgetType)?.enabled ?? false;
 
   // An item's widgets: its own type, or every widget sharing its page (the
-  // broadcast group). The settings page toggles the widget whose id is the
-  // widget type, so the menu does the same; extra instances keep their own
-  // state.
+  // broadcast group).
   const typesOf = (item: MenuItem) =>
     item.groupTypes ?? (item.widgetType ? [item.widgetType] : []);
-  const hasWidget = (item: MenuItem) =>
-    typesOf(item).some(
-      (type) => !!currentDashboard?.widgets.some((w) => w.id === type)
-    );
+  const widgetIdsOf = (item: MenuItem) =>
+    typesOf(item).flatMap((type) => widgetFor(type)?.id ?? []);
 
   const setWidgetEnabled = (item: MenuItem, enabled: boolean) => {
     if (!currentDashboard || !onDashboardUpdated) return;
-    const types = typesOf(item);
+    const ids = widgetIdsOf(item);
     onDashboardUpdated({
       ...currentDashboard,
       widgets: currentDashboard.widgets.map((w) =>
-        types.includes(w.id) ? { ...w, enabled } : w
+        ids.includes(w.id) ? { ...w, enabled } : w
       ),
     });
   };
@@ -236,7 +236,7 @@ export const SettingsMenu = () => {
                       : undefined
                   }
                   onToggle={
-                    hasWidget(item)
+                    widgetIdsOf(item).length > 0
                       ? setWidgetEnabled.bind(null, item)
                       : undefined
                   }

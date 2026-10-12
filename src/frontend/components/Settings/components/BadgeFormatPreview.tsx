@@ -132,7 +132,7 @@ export const BadgeFormatPreview = ({
           : 'border-transparent hover:bg-slate-800'
       }`}
     >
-      {renderPreview()}
+      <span className="overlay-preview contents">{renderPreview()}</span>
     </button>
   );
 };

@@ -270,4 +270,20 @@ describe('SettingsMenu', () => {
       ],
     });
   });
+
+  it('toggles the instance it shows when the dashboard has no primary', () => {
+    assert(state.dashboard);
+    const [, extra, wind] = state.dashboard.widgets;
+    state.dashboard = { ...state.dashboard, widgets: [extra, wind] };
+    renderMenu();
+
+    const toggle = screen.getByRole('switch', { name: 'Enable Standings' });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(toggle);
+
+    expect(state.onDashboardUpdated).toHaveBeenCalledExactlyOnceWith({
+      ...state.dashboard,
+      widgets: [{ ...extra, enabled: false }, wind],
+    });
+  });
 });

@@ -1,21 +1,14 @@
 import { useEffect } from 'react';
 import { useDashboard } from '@irdashies/context';
-import { SETTINGS_THEMES, type SettingsTheme } from '@irdashies/types';
+import { resolveSettingsTheme } from '@irdashies/types';
 import { SettingsLayout } from './SettingsLayout';
-
-// Persisted config is untrusted: an unknown value falls back to the default
-// instead of producing a class with no matching theme.
-const resolveTheme = (value: unknown): SettingsTheme =>
-  SETTINGS_THEMES.includes(value as SettingsTheme)
-    ? (value as SettingsTheme)
-    : 'carbon';
 
 export const Settings = () => {
   const { currentDashboard, onDashboardUpdated } = useDashboard();
   // Unknown until the dashboard loads; resolving undefined would flash the
   // default theme for users on another one.
   const theme = currentDashboard
-    ? resolveTheme(currentDashboard.generalSettings?.settingsTheme)
+    ? resolveSettingsTheme(currentDashboard.generalSettings?.settingsTheme)
     : undefined;
 
   // Portaled popups (e.g. the profile Actions menu) render into <body>,

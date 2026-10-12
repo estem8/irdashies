@@ -104,6 +104,16 @@ export type FontSize =
 export const SETTINGS_THEMES = ['carbon', 'red'] as const;
 export type SettingsTheme = (typeof SETTINGS_THEMES)[number];
 
+/**
+ * The settings theme to use for a stored value. Persisted config is untrusted:
+ * an unknown value falls back to the default. The settings window and its
+ * native title bar both use this, so they always agree.
+ */
+export const resolveSettingsTheme = (value: unknown): SettingsTheme =>
+  SETTINGS_THEMES.includes(value as SettingsTheme)
+    ? (value as SettingsTheme)
+    : 'carbon';
+
 /** Native window-control colours per settings theme: slate-700 / slate-300
  *  of each .settings-theme-* in theme.css (kept in sync by a spec). */
 export const SETTINGS_TITLE_BAR: Record<
