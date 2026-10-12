@@ -52,7 +52,26 @@ vi.mock('../../logger', () => ({
   },
 }));
 
-import { publishIRacingSDKEvents } from './iracingSdkBridge';
+import {
+  parseSdkWaitTimeoutMs,
+  publishIRacingSDKEvents,
+} from './iracingSdkBridge';
+
+describe('parseSdkWaitTimeoutMs', () => {
+  it('falls back to the 16 ms default for unset, empty or non-integer values', () => {
+    expect(parseSdkWaitTimeoutMs(undefined)).toBe(16);
+    expect(parseSdkWaitTimeoutMs('')).toBe(16);
+    expect(parseSdkWaitTimeoutMs('abc')).toBe(16);
+    expect(parseSdkWaitTimeoutMs('1.5')).toBe(16);
+  });
+
+  it('keeps integers in range and clamps the rest to [0, 16]', () => {
+    expect(parseSdkWaitTimeoutMs('0')).toBe(0);
+    expect(parseSdkWaitTimeoutMs('8')).toBe(8);
+    expect(parseSdkWaitTimeoutMs('99')).toBe(16);
+    expect(parseSdkWaitTimeoutMs('-3')).toBe(0);
+  });
+});
 
 describe('publishIRacingSDKEvents session polling', () => {
   beforeEach(() => {

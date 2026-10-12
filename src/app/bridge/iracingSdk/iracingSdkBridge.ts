@@ -124,10 +124,32 @@ function telemetryForRenderer(
   return perfRawTelemetryEnabled ? telemetry : trimTelemetry(telemetry);
 }
 
-// Short timeout for waitForData to avoid blocking the main thread.
-// The native SDK's WaitForSingleObject blocks synchronously, so keep this
-// small to keep the event loop responsive.
-const WAIT_TIMEOUT = 16;
+const DEFAULT_SDK_WAIT_TIMEOUT_MS = 16;
+
+// Parses IRDASHIES_SDK_WAIT_TIMEOUT_MS. Non-integers fall back to the default;
+// integers are clamped to [0, 16] so the timeout can never exceed the default.
+export function parseSdkWaitTimeoutMs(value: string | undefined): number {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^[+-]?\d+$/.test(trimmed)) {
+    return DEFAULT_SDK_WAIT_TIMEOUT_MS;
+  }
+  return Math.min(DEFAULT_SDK_WAIT_TIMEOUT_MS, Math.max(0, Number(trimmed)));
+}
+
+// Timeout for waitForData. The native SDK's WaitForSingleObject blocks the
+// main thread synchronously for up to this long, so 16 ms keeps the event loop
+// responsive. 0 polls without blocking (experiment, see the perf card); set it
+// with IRDASHIES_SDK_WAIT_TIMEOUT_MS.
+const WAIT_TIMEOUT = parseSdkWaitTimeoutMs(
+  process.env.IRDASHIES_SDK_WAIT_TIMEOUT_MS
+);
+if (WAIT_TIMEOUT !== DEFAULT_SDK_WAIT_TIMEOUT_MS) {
+  logger.info(
+    `[iracingSdkBridge] SDK wait timeout set to ${WAIT_TIMEOUT} ms by IRDASHIES_SDK_WAIT_TIMEOUT_MS`
+  );
+}
+// Retry delay after a missed frame when polling without blocking.
+const NON_BLOCKING_RETRY_MS = 2;
 // How long to sleep between connection retry attempts when iRacing isn't running.
 const RETRY_INTERVAL = 1000;
 // How often to ask the SDK for session data. The native getSessionData() copies
@@ -240,6 +262,7 @@ export async function publishIRacingSDKEvents(
       // Negative infinity makes the first tick fetch and publish immediately.
       let lastSessionPollTime = Number.NEGATIVE_INFINITY;
       let wasRunning = false;
+      let lastDataAt = Number.NEGATIVE_INFINITY;
 
       while (!shouldStop) {
         const pollStartedAt = performance.now();
@@ -249,15 +272,21 @@ export async function publishIRacingSDKEvents(
           // telemetry buffer. Keep the current session and channel snapshots
           // until either playback resumes or the SDK actually disconnects.
           if (sdk.sessionStatusOK) {
-            const remainingDelay = Math.max(
-              0,
-              1000 / 25 - (performance.now() - pollStartedAt)
-            );
+            // With a non-blocking poll a missed frame is usually only a few ms
+            // away, so waiting the full 40 ms would drop frames at 60 Hz. The
+            // 250 ms window keeps a paused replay, which stops delivering
+            // data, on the slow path.
+            const sawDataRecently = performance.now() - lastDataAt < 250;
+            const remainingDelay =
+              WAIT_TIMEOUT < DEFAULT_SDK_WAIT_TIMEOUT_MS && sawDataRecently
+                ? NON_BLOCKING_RETRY_MS
+                : Math.max(0, 1000 / 25 - (performance.now() - pollStartedAt));
             await new Promise((resolve) => setTimeout(resolve, remainingDelay));
             continue;
           }
           break;
         }
+        lastDataAt = performance.now();
         if (!wasRunning) {
           logger.info(`[iracingSdkBridge] ${sourceName} is running`);
           wasRunning = true;
