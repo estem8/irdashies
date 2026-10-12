@@ -1,7 +1,7 @@
-import { isValidElement, cloneElement, createElement } from 'react';
+import { isValidElement, cloneElement } from 'react';
 import type { CSSProperties, ReactNode, ReactElement } from 'react';
 import { colorNumToHex } from '@irdashies/utils/colors';
-import { PHOSPHOR_ICON_MAP } from './phosphorIconMap';
+import { PhosphorIconByName } from './PhosphorIconByName';
 
 type IconFactory = (props: {
   size?: number;
@@ -47,32 +47,18 @@ export function renderDriverIcon(
   }
 
   if (typeof icon === 'string' && icon.trim()) {
-    // Look up as a Phosphor icon name (e.g. "Car" or "CarIcon" → CarIcon component).
-    const trimmed = icon.trim();
-    const IconComp =
-      PHOSPHOR_ICON_MAP.get(trimmed) ??
-      PHOSPHOR_ICON_MAP.get(trimmed.replace(/Icon$/, ''));
-    if (IconComp != null) {
-      try {
-        const el = createElement(IconComp as React.ElementType, {
-          size,
-          className,
-          style: { width: size, height: size, ...(style ?? {}) },
-          color: colorHex ?? undefined,
-          weight,
-        });
-        if (isValidElement(el)) return el;
-      } catch {
-        // fall through
-      }
-    }
+    // Resolved lazily so overlays do not load the full Phosphor icon set.
     return (
-      <span
+      <PhosphorIconByName
+        name={icon.trim()}
+        size={size}
         className={className}
-        style={{ color: colorHex ?? undefined, ...(fallbackStyle ?? {}) }}
-      >
-        {icon}
-      </span>
+        style={style}
+        color={colorHex ?? undefined}
+        weight={weight}
+        fallbackStyle={fallbackStyle}
+        fallbackText={icon}
+      />
     );
   }
 
