@@ -27,7 +27,6 @@ describe('performance process memory coverage', () => {
     });
     vi.spyOn(v8, 'getHeapStatistics').mockReturnValue({
       malloced_memory: 5 * MB,
-      peak_malloced_memory: 6 * MB,
     } as ReturnType<typeof v8.getHeapStatistics>);
 
     const report = new TelemetryPerfMetrics(true).report();
@@ -39,7 +38,6 @@ describe('performance process memory coverage', () => {
       externalMB: 12,
       arrayBuffersMB: 8,
       mallocedMB: 5,
-      peakMallocedMB: 6,
     });
   });
 

@@ -68,7 +68,6 @@ export interface PerfReport {
     externalMB: number;
     arrayBuffersMB: number;
     mallocedMB: number;
-    peakMallocedMB: number;
   };
   scenarioMetadata?: Record<string, unknown>;
   channelMetrics?: {
@@ -331,7 +330,6 @@ export class TelemetryPerfMetrics {
         externalMB: toMB(memory.external),
         arrayBuffersMB: toMB(memory.arrayBuffers),
         mallocedMB: toMB(heap.malloced_memory),
-        peakMallocedMB: toMB(heap.peak_malloced_memory),
       };
     } catch {
       return undefined;
@@ -508,7 +506,7 @@ export class TelemetryPerfMetrics {
     if (report.mainMemory) {
       const mem = report.mainMemory;
       lines.push(
-        `  mainMemory: rss=${mem.rssMB.toFixed(0)}MB heap=${mem.heapUsedMB.toFixed(0)}/${mem.heapTotalMB.toFixed(0)}MB external=${mem.externalMB.toFixed(0)}MB arrayBuffers=${mem.arrayBuffersMB.toFixed(0)}MB malloced=${mem.mallocedMB.toFixed(0)}MB (peak ${mem.peakMallocedMB.toFixed(0)}MB)`
+        `  mainMemory: rss=${mem.rssMB.toFixed(0)}MB heap=${mem.heapUsedMB.toFixed(0)}/${mem.heapTotalMB.toFixed(0)}MB external=${mem.externalMB.toFixed(0)}MB arrayBuffers=${mem.arrayBuffersMB.toFixed(0)}MB malloced=${mem.mallocedMB.toFixed(0)}MB`
       );
     }
 

@@ -147,7 +147,6 @@ describe('performance analysis', () => {
         externalMB: 12 - seconds / 60,
         arrayBuffersMB: 8,
         mallocedMB: 5,
-        peakMallocedMB: 6,
       },
     }));
 
