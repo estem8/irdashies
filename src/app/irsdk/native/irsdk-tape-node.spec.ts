@@ -14,7 +14,7 @@ import {
   it,
 } from 'vitest';
 
-import type { INativeSDK } from './index';
+import type { INativeSDK, RowBufferSDK } from './index';
 
 const FILE_HEADER_SIZE = 96;
 const SDK_HEADER_SIZE = 112;
@@ -224,14 +224,6 @@ const addonPath = path.resolve(
   'irsdk_tape_node.node'
 );
 
-type RowBufferSdk = INativeSDK &
-  Required<
-    Pick<
-      INativeSDK,
-      'copyTelemetryBuffer' | 'getTelemetryLayout' | 'getTelemetryLayoutVersion'
-    >
-  >;
-
 function loadAddon(): { iRacingSdkNode: new () => INativeSDK } {
   const require = createRequire(import.meta.url);
   return require(addonPath) as { iRacingSdkNode: new () => INativeSDK };
@@ -357,7 +349,7 @@ describe('tape-backed native SDK', () => {
     process.env.IRDASHIES_TELEMETRY_REPLAY_LOOP = '1';
 
     const addon = loadAddon();
-    const sdk = new addon.iRacingSdkNode() as RowBufferSdk;
+    const sdk = new addon.iRacingSdkNode() as RowBufferSDK;
 
     try {
       expect(sdk.startSDK()).toBe(true);

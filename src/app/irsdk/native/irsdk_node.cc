@@ -55,6 +55,7 @@ iRacingSdkNode::iRacingSdkNode(const Napi::CallbackInfo &info)
   , _lastSessionCt(-1)
   , _sessionData(NULL)
   , _layoutVersion(0)
+  , _layoutBufLen(-1)
 {
   printf("Initializing cpp class instance...\n");
 }
@@ -654,7 +655,9 @@ Napi::Object iRacingSdkNode::GetTelemetryVar(const Napi::Env env, const char *va
 
 // Compares the live var headers with the snapshot entry by entry (the headers
 // are not assumed to be contiguous). Any difference bumps _layoutVersion so JS
-// knows to refetch the layout.
+// knows to refetch the layout. The row length counts too: GetTelemetryLayout
+// drops entries that end past _bufLineLen, so a layout fetched before
+// WaitForData grew the row would otherwise stay truncated.
 void iRacingSdkNode::RefreshTelemetryLayout()
 {
   const irsdk_header* header = irsdk_getHeader();
@@ -663,7 +666,8 @@ void iRacingSdkNode::RefreshTelemetryLayout()
   int count = header->numVars;
   if (count < 0) count = 0;
 
-  bool changed = (int)this->_varHeaderSnapshot.size() != count;
+  bool changed = (int)this->_varHeaderSnapshot.size() != count ||
+      this->_layoutBufLen != this->_bufLineLen;
   for (int i = 0; i < count && !changed; i++) {
     const irsdk_varHeader* vh = irsdk_getVarHeaderEntry(i);
     if (vh == nullptr || memcmp(&this->_varHeaderSnapshot[i], vh, sizeof(irsdk_varHeader)) != 0) {
@@ -681,6 +685,7 @@ void iRacingSdkNode::RefreshTelemetryLayout()
       memcpy(&this->_varHeaderSnapshot[i], vh, sizeof(irsdk_varHeader));
     }
   }
+  this->_layoutBufLen = this->_bufLineLen;
   this->_layoutVersion++;
 }
 

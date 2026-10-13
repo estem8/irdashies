@@ -51,6 +51,7 @@ private:
     int _lastSessionCt;
     const char* _sessionData;
     int _layoutVersion;
+    int _layoutBufLen;
     std::vector<irsdk_varHeader> _varHeaderSnapshot;
 };
 

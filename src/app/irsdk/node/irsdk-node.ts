@@ -22,7 +22,7 @@ import {
   WeekendInfo,
   SessionData,
 } from '../types';
-import type { INativeSDK, TelemetryLayoutEntry } from '../native';
+import type { INativeSDK, RowBufferSDK, TelemetryLayoutEntry } from '../native';
 
 import { getSimStatus } from './utils';
 import { getSdkOrMock } from './get-sdk';
@@ -113,15 +113,6 @@ function copyTelemData<
     }
   }
 }
-
-/** Native SDK that exposes the single-row copy API (optional on INativeSDK). */
-type RowBufferSDK = INativeSDK &
-  Required<
-    Pick<
-      INativeSDK,
-      'copyTelemetryBuffer' | 'getTelemetryLayout' | 'getTelemetryLayoutVersion'
-    >
-  >;
 
 function hasRowBufferApi(sdk: INativeSDK | undefined): sdk is RowBufferSDK {
   return (
@@ -453,8 +444,12 @@ export class IRacingSDK {
     let buffer = this._rowBuffer ?? new ArrayBuffer(0);
     let copied = sdk.copyTelemetryBuffer(buffer);
     if (copied < 0) {
-      // Buffer too small: native reports the required size, so grow and retry
+      // Buffer too small: native reports the required size, so grow and
+      // retry. Keep the grown buffer even if the retry finds no row, so the
+      // next tick doesn't have to grow it again
       buffer = new ArrayBuffer(-copied);
+      this._rowBuffer = buffer;
+      this._rowView = new DataView(buffer);
       copied = sdk.copyTelemetryBuffer(buffer);
     }
     if (copied <= 0) {
