@@ -522,10 +522,13 @@ Napi::Value iRacingSdkNode::CopyTelemetryBuffer(const Napi::CallbackInfo &info)
   return Napi::Number::New(env, this->_bufLineLen);
 }
 
+// The layout and its version describe the snapshot taken by the last
+// copyTelemetryBuffer, so the header scan runs once per tick. They refresh
+// on their own only before the first copy.
 Napi::Value iRacingSdkNode::GetTelemetryLayout(const Napi::CallbackInfo &info)
 {
   Napi::Env env = info.Env();
-  this->RefreshTelemetryLayout();
+  if (this->_layoutVersion == 0) this->RefreshTelemetryLayout();
 
   // Only entries that describe bytes inside the current row are exposed, so
   // JS can read them with DataView without range checks of its own.
@@ -551,7 +554,7 @@ Napi::Value iRacingSdkNode::GetTelemetryLayout(const Napi::CallbackInfo &info)
 
 Napi::Value iRacingSdkNode::GetTelemetryLayoutVersion(const Napi::CallbackInfo &info)
 {
-  this->RefreshTelemetryLayout();
+  if (this->_layoutVersion == 0) this->RefreshTelemetryLayout();
   return Napi::Number::New(info.Env(), this->_layoutVersion);
 }
 
