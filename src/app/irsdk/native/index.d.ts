@@ -40,9 +40,9 @@ export interface INativeSDK {
   getTelemetryData(): TelemetryVarList;
   /** Copies the latest raw row into target. Returns bytes copied, 0 when there is no data, or minus the required size when target is too small. */
   copyTelemetryBuffer?(target: ArrayBuffer): number;
-  /** Variable layout (name, type, count, byte offset) within the copied row. */
+  /** Variable layout (name, type, count, byte offset) within the row copied by the last copyTelemetryBuffer. */
   getTelemetryLayout?(): TelemetryLayoutEntry[];
-  /** Increments whenever the variable layout changes. */
+  /** Increments whenever the variable layout or row length changes, as of the last copyTelemetryBuffer. */
   getTelemetryLayoutVersion?(): number;
 
   getTelemetryVariable<T extends boolean | number | string>(

@@ -497,5 +497,16 @@ DriverInfo:
 
       expect(sdk.getTelemetry()).toEqual({});
     });
+
+    it('allocates no buffer per tick while native has no row', async () => {
+      const fake = createFakeNative(true);
+      fake.state.hasData = false;
+      const sdk = await createSdk(fake.native);
+
+      sdk.getTelemetry();
+      sdk.getTelemetry();
+
+      expect(fake.copy.mock.calls[1]?.[0]).toBe(fake.copy.mock.calls[0]?.[0]);
+    });
   });
 });

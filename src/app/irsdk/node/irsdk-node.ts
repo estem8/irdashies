@@ -114,6 +114,9 @@ function copyTelemData<
   }
 }
 
+/** Shared zero-length target, so ticks without a row allocate nothing. */
+const EMPTY_ROW = new ArrayBuffer(0);
+
 function hasRowBufferApi(sdk: INativeSDK | undefined): sdk is RowBufferSDK {
   return (
     !!sdk &&
@@ -153,9 +156,9 @@ export class IRacingSDK {
   private _telemetryCache: Partial<TelemetryVarList> = {};
 
   // Row-buffer read path state (see readTelemetryRow)
-  private _rowBuffer: ArrayBuffer | null = null;
+  private _rowBuffer: ArrayBuffer = EMPTY_ROW;
 
-  private _rowView: DataView | null = null;
+  private _rowView = new DataView(EMPTY_ROW);
 
   private _layout: TelemetryLayoutEntry[] = [];
 
@@ -441,28 +444,22 @@ export class IRacingSDK {
    * side. Output matches the legacy getTelemetryData path for the same row.
    */
   private readTelemetryRow(sdk: RowBufferSDK): TelemetryVarList {
-    let buffer = this._rowBuffer ?? new ArrayBuffer(0);
-    let copied = sdk.copyTelemetryBuffer(buffer);
+    let copied = sdk.copyTelemetryBuffer(this._rowBuffer);
     if (copied < 0) {
       // Buffer too small: native reports the required size, so grow and
       // retry. Keep the grown buffer even if the retry finds no row, so the
       // next tick doesn't have to grow it again
-      buffer = new ArrayBuffer(-copied);
-      this._rowBuffer = buffer;
-      this._rowView = new DataView(buffer);
-      copied = sdk.copyTelemetryBuffer(buffer);
+      this._rowBuffer = new ArrayBuffer(-copied);
+      this._rowView = new DataView(this._rowBuffer);
+      copied = sdk.copyTelemetryBuffer(this._rowBuffer);
     }
     if (copied <= 0) {
       this._telemetryCache = {};
       return {} as TelemetryVarList;
     }
 
-    let view = this._rowView;
-    if (!view || buffer !== this._rowBuffer) {
-      view = new DataView(buffer);
-      this._rowBuffer = buffer;
-      this._rowView = view;
-    }
+    const buffer = this._rowBuffer;
+    const view = this._rowView;
 
     // A new layout can change keys, types or offsets, so cached arrays are stale
     const version = sdk.getTelemetryLayoutVersion();
