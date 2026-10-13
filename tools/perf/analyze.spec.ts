@@ -169,6 +169,24 @@ describe('performance analysis', () => {
     );
   });
 
+  it('keeps the breakdown when an unused field is missing', () => {
+    const samples = [0, 60].map((seconds) => ({
+      ...mainSample(seconds, 100),
+      mainMemory: {
+        rssMB: 100,
+        heapTotalMB: 60,
+        heapUsedMB: 40,
+        externalMB: 12,
+        arrayBuffersMB: 8,
+        mallocedMB: 5,
+      },
+    }));
+
+    const summary = summarizeCapture(capture(samples), 0);
+
+    expect(summary.mainMemoryBreakdown?.sampleCount).toBe(2);
+  });
+
   it('omits main-process memory breakdown when samples lack it', () => {
     const summary = summarizeCapture(capture(conclusiveSamples()));
 

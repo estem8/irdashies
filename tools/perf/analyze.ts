@@ -323,12 +323,12 @@ const MAIN_MEMORY_FIELDS = [
   'externalMB',
   'arrayBuffersMB',
   'mallocedMB',
-  'peakMallocedMB',
 ] as const;
 
 type MainMemoryBreakdown = Record<(typeof MAIN_MEMORY_FIELDS)[number], number>;
 
-// Older logs lack this field; malformed values are ignored, not fatal.
+// Only the fields the summary uses are required. Older logs lack the whole
+// object; malformed values are ignored, not fatal.
 const parseMainMemory = (value: unknown): MainMemoryBreakdown | undefined => {
   if (typeof value !== 'object' || value === null) return undefined;
   const record = value as Record<string, unknown>;
