@@ -475,6 +475,21 @@ DriverInfo:
       expect(valueOf(telemetry, 'IntValue')).toEqual([-12345]);
     });
 
+    it('keeps the grown buffer when the retry finds no row', async () => {
+      const fake = createFakeNative(true);
+      const sdk = await createSdk(fake.native);
+      fake.copy
+        .mockImplementationOnce(() => -ROW_LENGTH)
+        .mockImplementationOnce(() => 0);
+
+      expect(sdk.getTelemetry()).toEqual({});
+      const telemetry = sdk.getTelemetry();
+
+      expect(fake.copy).toHaveBeenCalledTimes(3);
+      expect(fake.copy.mock.calls[2]?.[0].byteLength).toBe(ROW_LENGTH);
+      expect(valueOf(telemetry, 'IntValue')).toEqual([-12345]);
+    });
+
     it('returns an empty object when native has no row', async () => {
       const fake = createFakeNative(true);
       fake.state.hasData = false;

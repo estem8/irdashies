@@ -113,6 +113,15 @@ export interface INativeSDK {
   ): void;
 }
 
+/** A native SDK that exposes the row-buffer read API (optional on INativeSDK). */
+export type RowBufferSDK = INativeSDK &
+  Required<
+    Pick<
+      INativeSDK,
+      'copyTelemetryBuffer' | 'getTelemetryLayout' | 'getTelemetryLayoutVersion'
+    >
+  >;
+
 export class NativeSDK implements INativeSDK {
   public readonly currDataVersion: number;
 
