@@ -239,6 +239,9 @@ export async function publishIRacingSDKEvents(
       let lastInspectorTelemetryPublishTime = Number.NEGATIVE_INFINITY;
       // Negative infinity makes the first tick fetch and publish immediately.
       let lastSessionPollTime = Number.NEGATIVE_INFINITY;
+      // Absolute schedule so setTimeout rounding is paid back (#804)
+      let nextDeadline = performance.now();
+      let lastDataAt = Number.NEGATIVE_INFINITY;
       let wasRunning = false;
 
       while (!shouldStop) {
@@ -249,6 +252,11 @@ export async function publishIRacingSDKEvents(
           // telemetry buffer. Keep the current session and channel snapshots
           // until either playback resumes or the SDK actually disconnects.
           if (sdk.sessionStatusOK) {
+            // A miss right after data is a stale event signal, not a pause
+            if (performance.now() - lastDataAt < 250) {
+              await new Promise((resolve) => setImmediate(resolve));
+              continue;
+            }
             const remainingDelay = Math.max(
               0,
               1000 / 25 - (performance.now() - pollStartedAt)
@@ -268,6 +276,7 @@ export async function publishIRacingSDKEvents(
           publishRunningState(true);
           lifecycle?._onEnter({ replay: isTapeReplay });
         }
+        lastDataAt = performance.now();
         perfMetrics.markStart('processTelemetry');
         perfMetrics.markStart('sdkTelemetryRead');
         const telemetry = sdk.getTelemetry();
@@ -336,11 +345,15 @@ export async function publishIRacingSDKEvents(
           60,
           Math.max(25, channelBus?.maxActiveRateHz() ?? 25)
         );
-        const remainingDelay = Math.max(
-          0,
-          1000 / targetHz - (performance.now() - pollStartedAt)
+        const period = 1000 / targetHz;
+        const now = performance.now();
+        nextDeadline = Math.max(nextDeadline + period, now - period);
+        const remainingDelay = nextDeadline - now;
+        await new Promise((resolve) =>
+          remainingDelay < 1
+            ? setImmediate(resolve)
+            : setTimeout(resolve, remainingDelay)
         );
-        await new Promise((resolve) => setTimeout(resolve, remainingDelay));
       }
 
       if (wasRunning) {
