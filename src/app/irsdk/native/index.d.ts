@@ -129,9 +129,10 @@ export class NativeSDK implements INativeSDK {
   // Private helpers
   public __getTelemetryTypes(): TelemetryTypesDict;
 
+  public setTimerResolution(periodMs: number): number;
+
   // Broadcast command overloads
   // This is handled in the cpp side so no need to mess with it in js
-  public setTimerResolution(periodMs: number): number;
   public broadcast(
     message:
       BroadcastMessages.CameraSwitchPos | BroadcastMessages.CameraSwitchNum,
