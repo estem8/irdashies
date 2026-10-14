@@ -5,6 +5,7 @@ import {
   tangentAtProgress,
   type TrackPathData,
 } from './trackGeometry';
+import { getTrackPathData } from './trackPaths';
 
 const RADIUS = 500;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -77,6 +78,35 @@ describe('buildTrackGeometry', () => {
 
     expect(a.x).toBeCloseTo(b.x, 6);
     expect(a.y).toBeCloseTo(b.y, 6);
+  });
+});
+
+describe('buildTrackGeometry on a coarse drawing', () => {
+  it('keeps the Nordschleife Döttinger Höhe straight straight', () => {
+    // TrackID 249, 20.64 km: about 5 m of track per pixel of its drawing.
+    const trackLength = 20638;
+    const path = getTrackPathData(249);
+    if (!path) throw new Error('expected the Nordschleife drawing');
+    const geometry = build(path, trackLength);
+    const here = { x: 0, y: 0 };
+    const ahead = { x: 0, y: 0 };
+    const tangent = { x: 0, y: 0 };
+    let widest = 0;
+    // The road 30 m ahead, measured sideways from our heading, as the radar
+    // draws it; the straight runs from about 17.8 km to 19.4 km.
+    for (let metre = 17800; metre <= 19400; metre += 5) {
+      const progress = metre / trackLength;
+      pointAtProgress(geometry, progress, here);
+      tangentAtProgress(geometry, progress, tangent);
+      pointAtProgress(geometry, (metre + 30) / trackLength, ahead);
+      const sideways =
+        ((ahead.x - here.x) * -tangent.y + (ahead.y - here.y) * tangent.x) /
+        geometry.unitsPerMeter;
+      widest = Math.max(widest, Math.abs(sideways));
+    }
+
+    // 16 m of smoothing let it swing 8 m, two lanes either way.
+    expect(widest).toBeLessThan(2.5);
   });
 });
 

@@ -35,12 +35,18 @@ export interface TrackGeometry {
 export interface TrackGeometryOptions {
   /** Metres between samples. */
   sampleSpacing?: number;
-  /** Width of the smoothing window in metres. */
+  /**
+   * Width of the smoothing window in metres. Defaults to 16 m, or
+   * `SMOOTHED_PIXELS` of the drawing where a pixel covers more track.
+   */
   smoothing?: number;
 }
 
 const MIN_SAMPLES = 256;
 const MAX_SAMPLES = 16384;
+// Pixel steps must average out. On the Nordschleife a pixel is ~5 m, and 16 m
+// of smoothing left its straights wavy at radar range.
+const SMOOTHED_PIXELS = 15;
 
 const wrap01 = (value: number) => {
   const wrapped = value % 1;
@@ -90,7 +96,13 @@ const boxSmooth = (values: Float64Array, halfWindow: number) => {
 export const buildTrackGeometry = (
   path: TrackPathData,
   trackLength: number,
-  { sampleSpacing = 2, smoothing = 16 }: TrackGeometryOptions = {}
+  {
+    sampleSpacing = 2,
+    smoothing = Math.max(
+      16,
+      (SMOOTHED_PIXELS * trackLength) / path.totalLength
+    ),
+  }: TrackGeometryOptions = {}
 ): TrackGeometry | null => {
   if (
     path.trackPathPoints.length < 2 ||
