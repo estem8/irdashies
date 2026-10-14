@@ -128,6 +128,20 @@ function telemetryForRenderer(
 // The native SDK's WaitForSingleObject blocks synchronously, so keep this
 // small to keep the event loop responsive.
 const WAIT_TIMEOUT = 16;
+/**
+ * Experiment: IRDASHIES_TIMER_RESOLUTION_MS (integer 1-15) raises the Windows
+ * timer resolution while the sim is publishing. The loop paces itself with
+ * setTimeout, which Windows otherwise rounds up to ~15.6 ms steps, so a 60 Hz
+ * target lands at ~35-40 Hz and 25 Hz at ~21.5 Hz. Anything else: off (0).
+ */
+export function parseTimerResolutionMs(value: string | undefined): number {
+  if (value === undefined || !/^\d+$/.test(value.trim())) return 0;
+  const ms = Number(value);
+  return ms >= 1 && ms <= 15 ? ms : 0;
+}
+const TIMER_RESOLUTION_MS = parseTimerResolutionMs(
+  process.env.IRDASHIES_TIMER_RESOLUTION_MS
+);
 // How long to sleep between connection retry attempts when iRacing isn't running.
 const RETRY_INTERVAL = 1000;
 // How often to ask the SDK for session data. The native getSessionData() copies
@@ -267,6 +281,12 @@ export async function publishIRacingSDKEvents(
           // anything.
           publishRunningState(true);
           lifecycle?._onEnter({ replay: isTapeReplay });
+          if (TIMER_RESOLUTION_MS > 0) {
+            const applied = sdk.setTimerResolution(TIMER_RESOLUTION_MS);
+            logger.info(
+              `[iracingSdkBridge] Timer resolution set to ${applied} ms`
+            );
+          }
         }
         perfMetrics.markStart('processTelemetry');
         perfMetrics.markStart('sdkTelemetryRead');
@@ -354,6 +374,7 @@ export async function publishIRacingSDKEvents(
         latestSession = null;
         overlayManager.clearLatestSessionData?.();
         lifecycle?._onDisconnect();
+        if (TIMER_RESOLUTION_MS > 0) sdk.setTimerResolution(0);
       }
 
       await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL));
@@ -391,6 +412,7 @@ export async function publishIRacingSDKEvents(
       shouldStop = true;
       offOverlayReady();
       overlayManager.clearLatestSessionData?.();
+      if (TIMER_RESOLUTION_MS > 0) sdk.setTimerResolution(0);
       sdk.stopSDK();
       clearInterval(runningStateInterval);
       telemetryCallbacks.clear();

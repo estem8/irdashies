@@ -34,13 +34,14 @@ export interface INativeSDK {
   getTelemetryVariable<T extends boolean | number | string>(
     indexOrName: number | string
   ): TelemetryVariable<T[]>;
+  /** Sets the Windows timer resolution in ms (1-15), or restores the default (0). Returns the period in effect. */
+  setTimerResolution?(periodMs: number): number;
 
   // Broadcast command overloads
   // This is handled in the cpp side so no need to mess with it in js
   broadcast(
     message:
-      | BroadcastMessages.CameraSwitchPos
-      | BroadcastMessages.CameraSwitchNum,
+      BroadcastMessages.CameraSwitchPos | BroadcastMessages.CameraSwitchNum,
     driverOrPos: number,
     group: number,
     camera: number
@@ -130,10 +131,10 @@ export class NativeSDK implements INativeSDK {
 
   // Broadcast command overloads
   // This is handled in the cpp side so no need to mess with it in js
+  public setTimerResolution(periodMs: number): number;
   public broadcast(
     message:
-      | BroadcastMessages.CameraSwitchPos
-      | BroadcastMessages.CameraSwitchNum,
+      BroadcastMessages.CameraSwitchPos | BroadcastMessages.CameraSwitchNum,
     driverOrPos: number,
     group: number,
     camera: number

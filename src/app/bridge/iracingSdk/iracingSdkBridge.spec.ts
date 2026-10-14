@@ -52,7 +52,10 @@ vi.mock('../../logger', () => ({
   },
 }));
 
-import { publishIRacingSDKEvents } from './iracingSdkBridge';
+import {
+  parseTimerResolutionMs,
+  publishIRacingSDKEvents,
+} from './iracingSdkBridge';
 
 describe('publishIRacingSDKEvents session polling', () => {
   beforeEach(() => {
@@ -262,5 +265,18 @@ describe('publishIRacingSDKEvents session polling', () => {
     expect(callback).toHaveBeenCalledOnce();
     expect(callback).toHaveBeenCalledWith(session);
     bridge.stop();
+  });
+});
+
+describe('parseTimerResolutionMs', () => {
+  it('accepts whole milliseconds from 1 to 15', () => {
+    expect(parseTimerResolutionMs('1')).toBe(1);
+    expect(parseTimerResolutionMs(' 15 ')).toBe(15);
+  });
+
+  it('turns everything else off', () => {
+    for (const value of [undefined, '', '0', '16', '-1', '1.5', 'abc']) {
+      expect(parseTimerResolutionMs(value)).toBe(0);
+    }
   });
 });

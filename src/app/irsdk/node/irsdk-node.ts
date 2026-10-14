@@ -269,6 +269,14 @@ export class IRacingSDK {
   }
 
   /**
+   * Sets the Windows timer resolution for this process (1-15 ms), or restores
+   * the default with 0. Returns the period in effect; 0 when the addon can't.
+   */
+  public setTimerResolution(periodMs: number): number {
+    return this._sdk?.setTimerResolution?.(periodMs) ?? 0;
+  }
+
+  /**
    * Wait for new data from the sdk.
    * @param {number} timeout Timeout (in ms). Max is 60fps (1/60)
    */

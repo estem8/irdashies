@@ -5,6 +5,8 @@
 #define _UNICODE
 
 #include <windows.h>
+#include <timeapi.h>
+#pragma comment(lib, "winmm.lib")
 
 #include <algorithm>
 #include <array>
@@ -885,6 +887,10 @@ int playTelemetry(const std::vector<std::wstring>& arguments) {
 
   std::uint64_t publishedFrames = 0;
   do {
+    // Publish frames on their own schedule, like the sim: without this,
+    // sleep_until wakes on the default ~15.6 ms timer tick and frames go out
+    // in bursts, so a reader keeps only the newest one of each burst.
+    timeBeginPeriod(1);
     const auto playbackStart = std::chrono::steady_clock::now();
     replay::TapeRecordHeader record{};
     std::vector<char> payload;

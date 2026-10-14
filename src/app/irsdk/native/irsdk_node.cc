@@ -1,4 +1,9 @@
 #include "./irsdk_node.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <timeapi.h>
+#pragma comment(lib, "winmm.lib")
+#endif
 #include "./lib/yaml_parser.h"
 
 /*
@@ -25,6 +30,7 @@ Napi::Object iRacingSdkNode::Init(Napi::Env env, Napi::Object exports)
     InstanceMethod("stopSDK", &iRacingSdkNode::StopSdk),
     InstanceMethod("waitForData", &iRacingSdkNode::WaitForData),
     InstanceMethod("broadcast", &iRacingSdkNode::BroadcastMessage),
+    InstanceMethod("setTimerResolution", &iRacingSdkNode::SetTimerResolution),
     // Getters
     InstanceMethod("isRunning", &iRacingSdkNode::IsRunning),
     InstanceMethod("getSessionVersionNum", &iRacingSdkNode::GetSessionVersionNum),
@@ -51,6 +57,7 @@ iRacingSdkNode::iRacingSdkNode(const Napi::CallbackInfo &info)
   , _sessionStatusID(0)
   , _lastSessionCt(-1)
   , _sessionData(NULL)
+  , _timerPeriodMs(0)
 {
   printf("Initializing cpp class instance...\n");
 }
@@ -174,6 +181,29 @@ Napi::Value iRacingSdkNode::WaitForData(const Napi::CallbackInfo &info)
 
   if (this->_loggingEnabled) printf("No data available.\n");
   return Napi::Boolean::New(info.Env(), false);
+}
+
+// Raises the Windows timer resolution for this process (timeBeginPeriod) so
+// the JS telemetry loop's setTimeout can wake close to its target instead of
+// on the default ~15.6 ms tick. 1-15 sets the period, anything else restores
+// the default. Returns the period now in effect, 0 when none is set.
+Napi::Value iRacingSdkNode::SetTimerResolution(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+  if (info.Length() < 1 || !info[0].IsNumber()) {
+    Napi::TypeError::New(env, "setTimerResolution expects a number").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  int requested = info[0].As<Napi::Number>().Int32Value();
+  unsigned int period = requested >= 1 && requested <= 15 ? static_cast<unsigned int>(requested) : 0;
+#ifdef _WIN32
+  if (period != this->_timerPeriodMs) {
+    if (this->_timerPeriodMs != 0) timeEndPeriod(this->_timerPeriodMs);
+    this->_timerPeriodMs = 0;
+    if (period != 0 && timeBeginPeriod(period) == TIMERR_NOERROR) this->_timerPeriodMs = period;
+  }
+#endif
+  return Napi::Number::New(env, this->_timerPeriodMs);
 }
 
 Napi::Value iRacingSdkNode::BroadcastMessage(const Napi::CallbackInfo &info)

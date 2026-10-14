@@ -23,6 +23,7 @@ private:
     Napi::Value StopSdk(const Napi::CallbackInfo &info);
     Napi::Value WaitForData(const Napi::CallbackInfo &info);
     Napi::Value BroadcastMessage(const Napi::CallbackInfo &info);
+    Napi::Value SetTimerResolution(const Napi::CallbackInfo &info);
     // Getters
     Napi::Value IsRunning(const Napi::CallbackInfo &info);
     Napi::Value GetSessionVersionNum(const Napi::CallbackInfo &info);
@@ -45,6 +46,7 @@ private:
     int _sessionStatusID;
     int _lastSessionCt;
     const char* _sessionData;
+    unsigned int _timerPeriodMs;
 };
 
 #endif
