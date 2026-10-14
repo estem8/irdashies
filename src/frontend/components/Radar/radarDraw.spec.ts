@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { warningLevel } from './radarDraw';
+import { gapLabelSide, warningLevel } from './radarDraw';
 
 describe('warningLevel', () => {
   // Two 4.6 m cars: bodies overlap while the centres are within 4.6 m.
@@ -21,5 +21,18 @@ describe('warningLevel', () => {
     // A 5.2 m stock car and a 4.0 m MX-5: overlap ends at 4.6 m.
     expect(warningLevel(4.5, 5.2, 4.0, 7)).toBe('alongside');
     expect(warningLevel(4.7, 5.2, 4.0, 7)).toBe('close');
+  });
+});
+
+describe('gapLabelSide', () => {
+  it('keeps a car in our lane on one side, whichever way it drifts', () => {
+    expect(gapLabelSide(0)).toBe(1);
+    expect(gapLabelSide(-0.3)).toBe(1);
+    expect(gapLabelSide(0.3)).toBe(1);
+  });
+
+  it('puts a car in a side lane on its own side', () => {
+    expect(gapLabelSide(-1)).toBe(-1);
+    expect(gapLabelSide(1)).toBe(1);
   });
 });

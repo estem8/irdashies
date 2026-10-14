@@ -437,6 +437,14 @@ const drawOverlapStrip = (
   ctx.restore();
 };
 
+/**
+ * Screen side (1 right, -1 left) for a car's gap label: away from our line,
+ * where the other cars are not. Judged by lane, not by where the car lands on
+ * screen: a car in our lane sits on the centre line, and the road's bends
+ * would flip its label from side to side.
+ */
+export const gapLabelSide = (lane: number): 1 | -1 => (lane <= -0.5 ? -1 : 1);
+
 /** Text with a dark rim so it reads over cars and the road. */
 const drawHintText = (
   ctx: CanvasRenderingContext2D,
@@ -1128,8 +1136,7 @@ export const drawRadar = (ctx: CanvasRenderingContext2D, scene: RadarScene) => {
       !(hazard && style.hazardShowSpeed)
     ) {
       const gap = Math.abs(car.dist) - (car.length + style.carLength) / 2;
-      // On the side away from our line, where the other cars are not.
-      const outward = pose.x >= centre ? 1 : -1;
+      const outward = gapLabelSide(car.lane);
       drawHintText(
         ctx,
         formatDistance(gap, style.metric),
