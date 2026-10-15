@@ -28,6 +28,10 @@ export const useSessionBarSnapshot = () =>
  * from one delivery to the next, and reading all of it re-rendered every
  * session bar item five times a second. Reading any other field is a type
  * error.
+ *
+ * Fields are compared shallowly, so an array-valued field (the competitor car
+ * ids and positions) is a new reference on every delivery and still renders its
+ * reader each time.
  */
 export const useSessionBarFields = <K extends keyof SessionBarSnapshot>(
   ...keys: K[]
