@@ -22,7 +22,7 @@ import {
   WeekendInfo,
   SessionData,
 } from '../types';
-import type { INativeSDK } from '../native';
+import type { INativeSDK, RowBufferSDK, TelemetryLayoutEntry } from '../native';
 
 import { getSimStatus } from './utils';
 import { getSdkOrMock } from './get-sdk';
@@ -114,6 +114,27 @@ function copyTelemData<
   }
 }
 
+/** Shared zero-length target, so ticks without a row allocate nothing. */
+const EMPTY_ROW = new ArrayBuffer(0);
+
+function hasRowBufferApi(sdk: INativeSDK | undefined): sdk is RowBufferSDK {
+  return (
+    !!sdk &&
+    typeof sdk.copyTelemetryBuffer === 'function' &&
+    typeof sdk.getTelemetryLayout === 'function' &&
+    typeof sdk.getTelemetryLayoutVersion === 'function'
+  );
+}
+
+/** Stores a decoded variable under its name without a per-call generic cast. */
+function setRowVariable<K extends keyof TelemetryVarList>(
+  dest: Partial<TelemetryVarList>,
+  key: K,
+  value: { value: unknown }
+): void {
+  dest[key] = value as TelemetryVarList[K];
+}
+
 export class IRacingSDK {
   // Public
   /**
@@ -133,6 +154,15 @@ export class IRacingSDK {
 
   // Cache for telemetry data to avoid repeated array allocations
   private _telemetryCache: Partial<TelemetryVarList> = {};
+
+  // Row-buffer read path state (see readTelemetryRow)
+  private _rowBuffer: ArrayBuffer = EMPTY_ROW;
+
+  private _rowView = new DataView(EMPTY_ROW);
+
+  private _layout: TelemetryLayoutEntry[] = [];
+
+  private _layoutVersion = -1;
 
   constructor() {
     this._sdkReq = this._loadSDK();
@@ -383,6 +413,11 @@ export class IRacingSDK {
    * Get the current value of the telemetry variables.
    */
   public getTelemetry(): TelemetryVarList {
+    const sdk = this._sdk;
+    if (hasRowBufferApi(sdk)) {
+      return this.readTelemetryRow(sdk);
+    }
+
     const rawData = this._sdk?.getTelemetryData();
     const data: Partial<TelemetryVarList> = {};
 
@@ -399,6 +434,83 @@ export class IRacingSDK {
       this._telemetryCache = data;
     }
 
+    return data as TelemetryVarList;
+  }
+
+  /**
+   * Reads one telemetry row by copying the whole raw row into a persistent
+   * ArrayBuffer and decoding each variable at its cached offset. This avoids
+   * building ~340 objects, strings and ArrayBuffers per tick on the native
+   * side. Output matches the legacy getTelemetryData path for the same row.
+   */
+  private readTelemetryRow(sdk: RowBufferSDK): TelemetryVarList {
+    let copied = sdk.copyTelemetryBuffer(this._rowBuffer);
+    if (copied < 0) {
+      // Buffer too small: native reports the required size, so grow and
+      // retry. Keep the grown buffer even if the retry finds no row, so the
+      // next tick doesn't have to grow it again
+      this._rowBuffer = new ArrayBuffer(-copied);
+      this._rowView = new DataView(this._rowBuffer);
+      copied = sdk.copyTelemetryBuffer(this._rowBuffer);
+    }
+    if (copied <= 0) {
+      this._telemetryCache = {};
+      return {} as TelemetryVarList;
+    }
+
+    const buffer = this._rowBuffer;
+    const view = this._rowView;
+
+    // A new layout can change keys, types or offsets, so cached arrays are stale
+    const version = sdk.getTelemetryLayoutVersion();
+    if (version !== this._layoutVersion) {
+      this._layout = sdk.getTelemetryLayout();
+      this._layoutVersion = version;
+      this._telemetryCache = {};
+    }
+
+    const data: Partial<TelemetryVarList> = {};
+    for (const { name, varType, count, offset } of this._layout) {
+      const key = name as keyof TelemetryVarList;
+
+      // char: legacy path exposes the raw bytes, so copy them out
+      if (varType === 0) {
+        setRowVariable(data, key, {
+          value: buffer.slice(offset, offset + count),
+        });
+        continue;
+      }
+      // Unknown types are dropped, as they cannot be decoded safely
+      if (varType < 1 || varType > 5) continue;
+
+      // Reuse the previous tick's object and array in place, as the legacy path does
+      const cached = this._telemetryCache[key];
+      const cachedValue: unknown = cached?.value;
+      const reuse =
+        cached !== undefined &&
+        Array.isArray(cachedValue) &&
+        cachedValue.length === count;
+      const values: (number | boolean)[] = reuse
+        ? cachedValue
+        : new Array<number | boolean>(count);
+
+      for (let i = 0; i < count; i++) {
+        if (varType === 1) {
+          values[i] = view.getUint8(offset + i) !== 0;
+        } else if (varType === 4) {
+          values[i] = view.getFloat32(offset + i * 4, true);
+        } else if (varType === 5) {
+          values[i] = view.getFloat64(offset + i * 8, true);
+        } else {
+          // int (2) and bitfield (3)
+          values[i] = view.getInt32(offset + i * 4, true);
+        }
+      }
+
+      setRowVariable(data, key, reuse ? cached : { value: values });
+    }
+
+    this._telemetryCache = data;
     return data as TelemetryVarList;
   }
 

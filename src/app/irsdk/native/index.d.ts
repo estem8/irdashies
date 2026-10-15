@@ -16,6 +16,14 @@ import {
 
 type TelemetryTypesDict = Record<string, number>;
 
+/** One telemetry variable's location inside the raw row copied by copyTelemetryBuffer. */
+export interface TelemetryLayoutEntry {
+  name: string;
+  varType: number;
+  count: number;
+  offset: number;
+}
+
 export interface INativeSDK {
   readonly currDataVersion: number;
   enableLogging: boolean;
@@ -30,6 +38,12 @@ export interface INativeSDK {
   waitForData(timeout?: number): boolean;
   getSessionData(): string; // full yaml
   getTelemetryData(): TelemetryVarList;
+  /** Copies the latest raw row into target. Returns bytes copied, 0 when there is no data, or minus the required size when target is too small. */
+  copyTelemetryBuffer?(target: ArrayBuffer): number;
+  /** Variable layout (name, type, count, byte offset) within the row copied by the last copyTelemetryBuffer. */
+  getTelemetryLayout?(): TelemetryLayoutEntry[];
+  /** Increments whenever the variable layout or row length changes, as of the last copyTelemetryBuffer. */
+  getTelemetryLayoutVersion?(): number;
 
   getTelemetryVariable<T extends boolean | number | string>(
     indexOrName: number | string
@@ -99,6 +113,15 @@ export interface INativeSDK {
   ): void;
 }
 
+/** A native SDK that exposes the row-buffer read API (optional on INativeSDK). */
+export type RowBufferSDK = INativeSDK &
+  Required<
+    Pick<
+      INativeSDK,
+      'copyTelemetryBuffer' | 'getTelemetryLayout' | 'getTelemetryLayoutVersion'
+    >
+  >;
+
 export class NativeSDK implements INativeSDK {
   public readonly currDataVersion: number;
 
@@ -120,6 +143,12 @@ export class NativeSDK implements INativeSDK {
   public getSessionData(): string; // full yaml
 
   public getTelemetryData(): TelemetryVarList;
+
+  public copyTelemetryBuffer(target: ArrayBuffer): number;
+
+  public getTelemetryLayout(): TelemetryLayoutEntry[];
+
+  public getTelemetryLayoutVersion(): number;
 
   public getTelemetryVariable<T extends number | boolean | string>(
     indexOrName: number | string
