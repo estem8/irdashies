@@ -1,5 +1,5 @@
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 export const useSessionBestLapTime = (): number | undefined => {
-  return useSessionBarSnapshot()?.sessionBestLap;
+  return useSessionBarFields('sessionBestLap')?.sessionBestLap;
 };

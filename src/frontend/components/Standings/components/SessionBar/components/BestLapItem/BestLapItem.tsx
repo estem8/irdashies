@@ -1,12 +1,13 @@
 import { memo } from 'react';
 import { FlagIcon } from '@phosphor-icons/react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { formatTime } from '@irdashies/utils/time';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
 import type { SessionBarItemProps } from '../../sessionBarItemTypes';
 
 export const BestLapItem = memo(({ standalone }: SessionBarItemProps) => {
-  const { bestLapTime, sessionBestLap } = useSessionBarSnapshot() ?? {};
+  const { bestLapTime, sessionBestLap } =
+    useSessionBarFields('bestLapTime', 'sessionBestLap') ?? {};
 
   const pb = bestLapTime ?? 0;
   const color =

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 /**
  * Hook to get the Track Precipitation.
@@ -10,7 +10,8 @@ import { useSessionBarSnapshot } from '@irdashies/context';
 
 export const usePrecipitation = () => {
   // Precipitation is given as a decimal (0.0 to 1.0), convert to percentage
-  const precipitationBase = (useSessionBarSnapshot()?.precipitation ?? 0) * 100;
+  const precipitationBase =
+    (useSessionBarFields('precipitation')?.precipitation ?? 0) * 100;
   const precipitationVal = Math.round(precipitationBase * 10) / 10;
 
   const precipitation = useMemo(() => {

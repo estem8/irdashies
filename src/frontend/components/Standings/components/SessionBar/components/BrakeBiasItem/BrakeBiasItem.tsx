@@ -1,11 +1,11 @@
 import { memo } from 'react';
 import { TireIcon } from '@phosphor-icons/react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
 import type { SessionBarItemProps } from '../../sessionBarItemTypes';
 
 export const BrakeBiasItem = memo(({ standalone }: SessionBarItemProps) => {
-  const snapshot = useSessionBarSnapshot();
+  const snapshot = useSessionBarFields('brakeBias', 'brakeBiasIsClio');
   const brakeBias =
     snapshot?.brakeBias === undefined
       ? undefined

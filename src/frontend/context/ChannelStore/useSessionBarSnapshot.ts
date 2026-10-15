@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { shallow } from 'zustand/shallow';
 import type { SessionBarSnapshot } from '@irdashies/types';
 import {
   useChannelSelector,
@@ -19,3 +21,25 @@ export const useSessionBarSelector = <Selected>(
 
 export const useSessionBarSnapshot = () =>
   useChannelSnapshot('session-bar.snapshot');
+
+/**
+ * Only the named fields of the session bar snapshot. The component renders when
+ * one of them changes, not on every delivery: most of the snapshot is the same
+ * from one delivery to the next, and reading all of it re-rendered every
+ * session bar item five times a second. Reading any other field is a type
+ * error.
+ */
+export const useSessionBarFields = <K extends keyof SessionBarSnapshot>(
+  ...keys: K[]
+): Pick<SessionBarSnapshot, K> | undefined => {
+  const id = keys.join(',');
+  const selector = useMemo(
+    () => (snapshot: SessionBarSnapshot) => {
+      const picked = {} as Pick<SessionBarSnapshot, K>;
+      for (const key of id.split(',') as K[]) picked[key] = snapshot[key];
+      return picked;
+    },
+    [id]
+  );
+  return useSessionBarSelector(selector, { equality: shallow });
+};

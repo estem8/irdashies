@@ -9,7 +9,8 @@ import { TrackCanvas } from './TrackCanvas';
 import { useDriverLivePositions } from '@irdashies/domain';
 import {
   useSessionVisibility,
-  useTrackStateSnapshot,
+  trackStateSelectors,
+  useTrackStateSelector,
   useSessionStore,
   useSectorColors,
   useSectorTimingStore,
@@ -27,7 +28,7 @@ export const TrackMap = ({ embedded = false }: { embedded?: boolean }) => {
   const { drivers: driversTrackData, identities } = useDriverProgress();
   const settings = useTrackMapSettings();
   const highlightColor = useHighlightColor();
-  const isOnTrack = useTrackStateSnapshot()?.isOnTrack;
+  const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const sessionSectorColors = useSectorColors();
   const ghostColors = useGhostSectorColors();
   const sectorColors = ghostColors ?? sessionSectorColors;

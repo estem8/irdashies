@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import { ClockIcon } from '@phosphor-icons/react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
 import type { SessionBarItemProps } from '../../sessionBarItemTypes';
 
 export const SessionClockTimeItem = memo(
   ({ standalone }: SessionBarItemProps) => {
-    const seconds = useSessionBarSnapshot()?.sessionTimeOfDay;
+    const seconds = useSessionBarFields('sessionTimeOfDay')?.sessionTimeOfDay;
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     if (seconds !== undefined) date.setSeconds(seconds);

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { CarManufacturer } from '../../../../../shared/CarManufacturer/CarManufacturer';
 import { CAR_ID_TO_CAR_MANUFACTURER } from '../../../../../shared/CarManufacturer/carManufacturerMapping';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
@@ -7,7 +7,13 @@ import type { SessionBarItemProps } from '../../sessionBarItemTypes';
 
 export const ManufacturerPositionItem = memo(
   ({ settings, standalone }: SessionBarItemProps) => {
-    const snapshot = useSessionBarSnapshot();
+    const snapshot = useSessionBarFields(
+      'playerCarId',
+      'playerClassified',
+      'playerOverallPosition',
+      'competitorCarIds',
+      'competitorPositions'
+    );
     const playerCarId = snapshot?.playerCarId;
     if (
       !playerCarId ||

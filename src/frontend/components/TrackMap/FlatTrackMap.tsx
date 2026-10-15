@@ -7,7 +7,8 @@ import tracks from '@irdashies/domain/track/tracks/tracks.json';
 import { TrackDrawing } from './TrackCanvas';
 import {
   useSessionVisibility,
-  useTrackStateSnapshot,
+  trackStateSelectors,
+  useTrackStateSelector,
 } from '@irdashies/context';
 import { useDriverLivePositions } from '@irdashies/domain';
 
@@ -21,7 +22,7 @@ export const FlatTrackMap = ({ embedded = false }: { embedded?: boolean }) => {
   const { drivers: driversTrackData } = useDriverProgress();
   const settings = useFlatTrackMapSettings();
   const highlightColor = useHighlightColor();
-  const isOnTrack = useTrackStateSnapshot()?.isOnTrack;
+  const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const driverLivePositions = useDriverLivePositions({
     enabled: (settings?.displayMode ?? 'carNumber') === 'livePosition',
   });

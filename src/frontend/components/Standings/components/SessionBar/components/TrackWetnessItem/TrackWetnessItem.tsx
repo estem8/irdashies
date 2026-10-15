@@ -1,11 +1,11 @@
 import { memo } from 'react';
 import { WavesIcon } from '@phosphor-icons/react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
 import type { SessionBarItemProps } from '../../sessionBarItemTypes';
 
 export const TrackWetnessItem = memo(({ standalone }: SessionBarItemProps) => {
-  const level = useSessionBarSnapshot()?.trackWetness ?? 0;
+  const level = useSessionBarFields('trackWetness')?.trackWetness ?? 0;
   const trackWetness =
     [
       '',
