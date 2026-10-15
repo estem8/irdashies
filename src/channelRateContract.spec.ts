@@ -56,12 +56,7 @@ describe('channel rate contract', () => {
         ({ widget, channel, requested }) => `${widget} ${channel} ${requested}`
       );
 
-    expect(found).toEqual([
-      // Battle takes the driverFocused preset (25 Hz) for relative gaps, but
-      // RelativeGapProcessor ticks at 5 Hz, so it gets 5. Before the schedule
-      // fix in #806 the processor ran every frame and Battle got about 21.
-      'battle relative-gaps.snapshot 25',
-    ]);
+    expect(found).toEqual([]);
   });
 
   it('no widget asks for more than the channel can deliver', () => {
