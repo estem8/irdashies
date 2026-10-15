@@ -251,7 +251,6 @@ export const Radar = () => {
           appearance={appearance}
           geometry={isDemoMode ? null : geometry}
           style={style}
-          active={visible || painting}
           extrapolationS={settings.tuning.extrapolationS}
           laneGapM={settings.tuning.laneGapM}
           dive={dive}

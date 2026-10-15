@@ -68,8 +68,6 @@ export interface RadarDisplayProps {
   appearance: ReadonlyMap<number, RadarCarAppearance>;
   geometry: TrackGeometry | null;
   style: RadarStyle;
-  /** Paused while the widget is hidden, so a hidden radar costs nothing. */
-  active?: boolean;
   /**
    * Snapshots arrive at 25 Hz; never extrapolate further than a few missed.
    */
@@ -96,7 +94,6 @@ export const RadarDisplay = memo(
     appearance,
     geometry,
     style,
-    active = true,
     extrapolationS = 0.15,
     laneGapM = 0.7,
     dive = NO_DIVES,
@@ -269,11 +266,11 @@ export const RadarDisplay = memo(
           hazards,
         });
         frameMs = performance.now() - started;
-        if (active) handle = requestAnimationFrame(paint);
+        handle = requestAnimationFrame(paint);
       };
       paint();
       return () => cancelAnimationFrame(handle);
-    }, [size, active]);
+    }, [size]);
 
     return (
       <div
