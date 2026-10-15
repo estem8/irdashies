@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { Fragment, useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useDashboard, useFuelProjectionSnapshot } from '@irdashies/context';
 import { useFuelCalculation } from './useFuelCalculation';
 import {
@@ -307,7 +307,10 @@ export const FuelCalculator = (props: FuelCalculatorProps) => {
     }
   };
 
-  const RecursiveWidgetRenderer = ({ node }: { node: LayoutNode }) => {
+  // A plain function, not a component: a component declared here is a new type on
+  // every render, so React unmounted and remounted the whole layout each time
+  // the fuel data changed (about 5 times a second).
+  const renderLayoutNode = (node: LayoutNode): ReactNode => {
     if (!node || !node.type) return null;
     if (node.type === 'box') {
       const isHorizontalBox = node.direction === 'row';
@@ -338,7 +341,7 @@ export const FuelCalculator = (props: FuelCalculatorProps) => {
           className={`flex flex-1 gap-1 ${node.direction === 'row' ? 'flex-row items-center' : 'flex-col'} h-full`}
         >
           {node.children?.map((child: LayoutNode) => (
-            <RecursiveWidgetRenderer key={child.id} node={child} />
+            <Fragment key={child.id}>{renderLayoutNode(child)}</Fragment>
           ))}
         </div>
       );
@@ -371,7 +374,7 @@ export const FuelCalculator = (props: FuelCalculatorProps) => {
       }}
     >
       {layoutTree ? (
-        <RecursiveWidgetRenderer node={layoutTree} />
+        renderLayoutNode(layoutTree)
       ) : (
         <div className="text-red-500">Layout Error</div>
       )}
