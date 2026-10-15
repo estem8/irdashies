@@ -40,6 +40,21 @@ const DEFAULT_DEFINITION: WidgetRuntimeDefinition = {
   telemetryInspector: false,
 };
 
+export const listWidgetRuntimeDefinitions =
+  (): readonly WidgetRuntimeDefinition[] => [...definitions.values()];
+
+/** The rate a widget asks of a channel, or undefined for the channel default. */
+export const widgetChannelRate = (
+  definition: WidgetRuntimeDefinition | undefined,
+  channel: ChannelName
+): number | undefined => {
+  const override = definition?.channelRates?.[channel];
+  if (override !== undefined) return override;
+  return definition?.ratePreset
+    ? RATE_PRESETS[definition.ratePreset]
+    : undefined;
+};
+
 export const getWidgetRuntimeDefinition = (
   widgetType: string
 ): WidgetRuntimeDefinition => definitions.get(widgetType) ?? DEFAULT_DEFINITION;
@@ -111,11 +126,8 @@ export const useWidgetChannelRate = (
   channel: ChannelName
 ): number | undefined => {
   const definition = useContext(WidgetRuntimeContext);
-  return useMemo(() => {
-    const override = definition?.channelRates?.[channel];
-    if (override !== undefined) return override;
-    return definition?.ratePreset
-      ? RATE_PRESETS[definition.ratePreset]
-      : undefined;
-  }, [channel, definition]);
+  return useMemo(
+    () => widgetChannelRate(definition, channel),
+    [channel, definition]
+  );
 };
