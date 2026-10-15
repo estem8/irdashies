@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   CaretDownIcon,
   CaretUpIcon,
@@ -11,6 +12,7 @@ import { Compound } from '../../shared/Compound/Compound';
 import { CountryFlag } from '../../shared/CountryFlag/CountryFlag';
 import type { BroadcastRow } from '@irdashies/domain/broadcast/broadcastRows';
 import { classColor, driverName } from '../../shared/Broadcast/format';
+import { sameValue } from '../../../utils/sameValue';
 import { PAGE_LABELS, type Page } from '@irdashies/domain/broadcast/towerPages';
 
 /**
@@ -18,7 +20,7 @@ import { PAGE_LABELS, type Page } from '@irdashies/domain/broadcast/towerPages';
  * tower over the gap DriverRow leaves after the position, outside the page
  * flip animation so a page change does not replay it.
  */
-export const PositionArrow = ({ delta }: { delta: number }) => (
+const PositionArrowView = ({ delta }: { delta: number }) => (
   <span
     className={`pointer-events-none absolute inset-y-0 left-7.5 flex animate-broadcast-fade items-center ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}
   >
@@ -29,6 +31,9 @@ export const PositionArrow = ({ delta }: { delta: number }) => (
     )}
   </span>
 );
+
+export const PositionArrow = memo(PositionArrowView);
+PositionArrow.displayName = 'PositionArrow';
 
 const GapCell = ({ standing }: { standing: Standings }) => {
   if (standing.onPitRoad || standing.classPosition === 1) return null;
@@ -52,7 +57,7 @@ const GainedCell = ({ change }: { change?: number }) => {
 };
 
 /** Pit, repair and penalty markers, like the circled P on TV towers. */
-const StatusBadges = ({ standing }: { standing: Standings }) => (
+const StatusBadgesView = ({ standing }: { standing: Standings }) => (
   <>
     {standing.repair && (
       <span
@@ -75,7 +80,17 @@ const StatusBadges = ({ standing }: { standing: Standings }) => (
   </>
 );
 
-export const DriverRow = ({
+const StatusBadges = memo(
+  StatusBadgesView,
+  (previous, next) =>
+    previous.standing.repair === next.standing.repair &&
+    previous.standing.penalty === next.standing.penalty &&
+    previous.standing.slowdown === next.standing.slowdown &&
+    previous.standing.onPitRoad === next.standing.onPitRoad
+);
+StatusBadges.displayName = 'StatusBadges';
+
+const DriverRowView = ({
   standing,
   page,
   nameFormat,
@@ -141,6 +156,19 @@ export const DriverRow = ({
     </div>
   );
 };
+
+// The tower rebuilds every standing on each delivery; render only when what
+// the row shows has changed.
+export const DriverRow = memo(
+  DriverRowView,
+  (previous, next) =>
+    sameValue(previous.page, next.page) &&
+    previous.nameFormat === next.nameFormat &&
+    previous.positionStyle === next.positionStyle &&
+    previous.focused === next.focused &&
+    sameValue(previous.standing, next.standing)
+);
+DriverRow.displayName = 'DriverRow';
 
 export const ClassHeader = ({
   row,
