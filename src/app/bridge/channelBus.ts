@@ -10,17 +10,17 @@ export const CHANNEL_UNSUBSCRIBE = 'channels:unsubscribe';
 export const CHANNEL_DELIVERY = 'channels:delivery';
 
 /**
- * Structural view of a subscriber the bus can deliver to. Electron supplies a
- * `WebContents`-backed implementation; other hosts (the marketing site's
- * in-browser preview) supply their own. Deliberately free of Electron types so
- * this module stays importable outside the main process.
- */
-/**
  * How far before its slot a publish may arrive and still be delivered, as a
  * share of the subscription interval.
  */
 const DUE_TOLERANCE = 0.25;
 
+/**
+ * Structural view of a subscriber the bus can deliver to. Electron supplies a
+ * `WebContents`-backed implementation; other hosts (the marketing site's
+ * in-browser preview) supply their own. Deliberately free of Electron types so
+ * this module stays importable outside the main process.
+ */
 export interface RendererTarget {
   readonly id: number;
   isDestroyed(): boolean;
