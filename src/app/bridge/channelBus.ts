@@ -15,6 +15,12 @@ export const CHANNEL_DELIVERY = 'channels:delivery';
  * in-browser preview) supply their own. Deliberately free of Electron types so
  * this module stays importable outside the main process.
  */
+/**
+ * How far before its slot a publish may arrive and still be delivered, as a
+ * share of the subscription interval.
+ */
+const DUE_TOLERANCE = 0.25;
+
 export interface RendererTarget {
   readonly id: number;
   isDestroyed(): boolean;
@@ -50,6 +56,8 @@ interface Subscription {
   rateHz: number | 'event';
   active: boolean;
   lastDeliveredAt?: number;
+  /** When the next snapshot is due. Advances by one interval per delivery. */
+  nextDueAt?: number;
   pending?: unknown;
   timer?: TimerHandle;
 }
@@ -120,6 +128,7 @@ export class ChannelBus {
     if (existing) {
       existing.target = target;
       existing.rateHz = rateHz;
+      existing.nextDueAt = undefined;
       existing.timer?.cancel();
       existing.timer = undefined;
       const active = isVisibilityGated(definition) ? target.isVisible() : true;
@@ -346,15 +355,23 @@ export class ChannelBus {
     }
     const intervalMs = 1000 / subscription.rateHz;
     const now = this.now();
-    const elapsed =
-      subscription.lastDeliveredAt === undefined
-        ? intervalMs
-        : now - subscription.lastDeliveredAt;
-    if (elapsed >= intervalMs) {
+    const due =
+      subscription.nextDueAt ??
+      (subscription.lastDeliveredAt === undefined
+        ? now
+        : subscription.lastDeliveredAt + intervalMs);
+    // A publish that lands slightly before its slot is delivered rather than
+    // parked behind a catch-up timer: on Windows that timer fires a whole OS
+    // tick (15.6 ms) late, by which time the next publish has arrived, so a
+    // 60 Hz subscription received every other frame. Each delivery moves the
+    // slot on by one interval from the slot, not from the publish, so the
+    // declared average rate holds for any publish cadence.
+    if (now >= due - intervalMs * DUE_TOLERANCE) {
       subscription.timer?.cancel();
       subscription.timer = undefined;
       subscription.pending = undefined;
       this.deliver(channel, subscription, payload);
+      this.advanceDue(subscription, due, intervalMs);
       return;
     }
     subscription.pending = payload;
@@ -375,7 +392,19 @@ export class ChannelBus {
       if (!subscription.active) return;
       subscription.pending = undefined;
       this.deliver(channel, subscription, pending);
-    }, intervalMs - elapsed);
+      this.advanceDue(subscription, due, intervalMs);
+    }, due - now);
+  }
+
+  /** Moves the slot on by one interval, or restarts it after a long gap. */
+  private advanceDue(
+    subscription: Subscription,
+    due: number,
+    intervalMs: number
+  ): void {
+    const now = this.now();
+    subscription.nextDueAt =
+      now - due > intervalMs ? now + intervalMs : due + intervalMs;
   }
 
   private deliver(
@@ -430,6 +459,7 @@ export class ChannelBus {
     subscription.timer = undefined;
     subscription.pending = undefined;
     subscription.lastDeliveredAt = undefined;
+    subscription.nextDueAt = undefined;
     if (!active && this.subscriberCount(channel) === 0) {
       this.clearCachedSnapshot(channel);
     }
