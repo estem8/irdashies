@@ -2,13 +2,11 @@ import type { ReactNode } from 'react';
 import {
   DEFAULT_RADAR_TUNING,
   getWidgetDefaultConfig,
-  getWidgetManifest,
+  RADAR_PROPERTIES,
   type PropertySpec,
-  type PropertySpecs,
   type RadarConfig,
   type RadarTuning,
 } from '@irdashies/types';
-import logger from '@irdashies/utils/logger';
 import { SessionVisibility } from '../../components/SessionVisibility';
 import { SettingButtonGroupRow } from '../../components/SettingButtonGroupRow';
 import { SettingSelectRow } from '../../components/SettingSelectRow';
@@ -81,38 +79,33 @@ type NumberKey = {
   [K in keyof RadarConfig]: RadarConfig[K] extends number ? K : never;
 }[keyof RadarConfig];
 
-/** Keys whose manifest spec is missing or of the wrong kind (a spec test keeps this empty). */
-export const RADAR_MISSING_SPECS: string[] = [];
-
-/**
- * Label, description and range of a config setting live in the manifest.
- * A missing spec hides that one row instead of failing the whole page.
- */
-const specOf = <T extends PropertySpec['type']>(key: string, type: T) => {
-  const specs: PropertySpecs = getWidgetManifest('radar')?.properties ?? {};
-  const spec = specs[key];
-  if (spec?.type === type) return spec as Extract<PropertySpec, { type: T }>;
-  RADAR_MISSING_SPECS.push(key);
-  logger.warn(`radar: no ${type} property ${key}`);
-  return undefined;
-};
-
-const hiddenItem = (key: string): RadarSettingItem => ({
-  id: key,
-  level: 2,
-  title: key,
-  hidden: () => true,
-  render: () => null,
-});
+type BooleanSpec = Extract<PropertySpec, { type: 'boolean' }>;
+type SliderSpec = Exclude<
+  Extract<PropertySpec, { type: 'number' }>,
+  { control: 'input' }
+>;
+type RadarProperties = typeof RADAR_PROPERTIES;
+/** Settings whose manifest spec is a toggle. */
+type ToggleKey = {
+  [K in keyof RadarProperties]: RadarProperties[K] extends { type: 'boolean' }
+    ? K
+    : never;
+}[keyof RadarProperties];
+/** Settings whose manifest spec is a slider (a number without `control: 'input'`). */
+type SliderKey = {
+  [K in keyof RadarProperties]: RadarProperties[K] extends { type: 'number' }
+    ? RadarProperties[K] extends { control: 'input' }
+      ? never
+      : K
+    : never;
+}[keyof RadarProperties];
 
 const toggle = (
   level: SettingsLevel,
-  key: BooleanKey,
+  key: ToggleKey,
   hidden?: RadarSettingItem['hidden']
 ): RadarSettingItem => {
-  const spec = specOf(key, 'boolean');
-  if (!spec) return hiddenItem(key);
-  const { label, description } = spec;
+  const { label, description }: BooleanSpec = RADAR_PROPERTIES[key];
   return {
     id: key,
     level,
@@ -133,16 +126,11 @@ const toggle = (
 
 const slider = (
   level: SettingsLevel,
-  key: NumberKey,
+  key: SliderKey,
   hidden?: RadarSettingItem['hidden']
 ): RadarSettingItem => {
-  const spec = specOf(key, 'number');
-  if (spec?.control === 'input') {
-    RADAR_MISSING_SPECS.push(key);
-    logger.warn(`radar: ${key} is not a slider`);
-  }
-  if (!spec || spec.control === 'input') return hiddenItem(key);
-  const { label, description, min, max, step, units } = spec;
+  const { label, description, min, max, step, units }: SliderSpec =
+    RADAR_PROPERTIES[key];
   return {
     id: key,
     level,
@@ -915,7 +903,6 @@ export const matchesQuery = (
   section: RadarSettingSection,
   query: string
 ) =>
-  !RADAR_MISSING_SPECS.includes(item.id) &&
   `${item.title} ${item.description ?? ''} ${section.title}`
     .toLowerCase()
     .includes(query);

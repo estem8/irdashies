@@ -3,6 +3,7 @@ import type { WidgetManifest } from './types';
 
 export * from './types';
 export * from './properties';
+export { RADAR_PROPERTIES } from './radar';
 
 /**
  * Order of the built-in widgets wherever they are listed: the default
