@@ -37,7 +37,8 @@ The fix keeps a due time per subscription, delivers a publish that lands within 
 quarter of an interval of it, and moves the slot on by one interval from the slot
 rather than from the publish. Six specs reproduce the loss (309 of 598 delivered
 before the change). **Cost:** subscribers now get their declared rate, which is
-more work: about +0.9 points of CPU and +14% commits on the full dashboard.
+more work: about +0.9 points of CPU and +14% commits on the full dashboard (one
+comparison, spread about 0.9, so read it as "around a point").
 
 ### 2. #804 needs no timer change once the bus delivers
 
@@ -53,8 +54,23 @@ adds nothing.
 | native timer + new bus |    59.7 |                             59.3 / 59.6 |             750 |
 
 With the old bus the extra ticks never reached the renderer; JS pacing alone was
-wasted work. 60 Hz for Input and LapTrace costs about +1.2 points of CPU against
-main (Input renders +54%).
+wasted work.
+
+What the 60 Hz path costs, measured on Input and LapTrace alone (two runs per
+side, stable to about 0.05 points), `release/perf-findings` against main:
+
+|                                         |        main | F (pacing + bus + row buffer) | release branch |
+| --------------------------------------- | ----------: | ----------------------------: | -------------: |
+| ticks/s                                 |        37.8 |                          59.4 |           59.4 |
+| `driver-controls` delivered / published | 35.5 / 37.8 |                   58.5 / 59.5 |    58.4 / 59.4 |
+| App CPU %                               |        1.94 |                          2.13 |           2.12 |
+| Main process CPU %                      |        0.32 |                          0.18 |           0.17 |
+| Renders/s                               |         458 |                           747 |            747 |
+
+So 57% more ticks and 65% more deliveries cost about +0.2 points of CPU (about
++10%), and the main process gets cheaper. An earlier comparison on the full
+dashboard showed about +1.2 points; its run-to-run spread was 0.85, so that
+figure is not reliable. The assembled branch behaves like F within noise.
 
 ### 3. What costs CPU
 
