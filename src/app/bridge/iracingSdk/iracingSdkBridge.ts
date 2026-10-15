@@ -128,6 +128,12 @@ function telemetryForRenderer(
 // The native SDK's WaitForSingleObject blocks synchronously, so keep this
 // small to keep the event loop responsive.
 const WAIT_TIMEOUT = 16;
+
+// A miss from waitForData this soon after a frame is the data event firing
+// before the buffer advanced, not a paused replay. Retry at once for this long
+// (each retry blocks for up to WAIT_TIMEOUT, so this is a bounded wait, not a
+// spin); a miss after it takes the 25 Hz paused-replay path.
+const STALE_SIGNAL_WINDOW_MS = 250;
 // How long to sleep between connection retry attempts when iRacing isn't running.
 const RETRY_INTERVAL = 1000;
 // How often to ask the SDK for session data. The native getSessionData() copies
@@ -253,7 +259,7 @@ export async function publishIRacingSDKEvents(
           // until either playback resumes or the SDK actually disconnects.
           if (sdk.sessionStatusOK) {
             // A miss right after data is a stale event signal, not a pause
-            if (performance.now() - lastDataAt < 250) {
+            if (performance.now() - lastDataAt < STALE_SIGNAL_WINDOW_MS) {
               await new Promise((resolve) => setImmediate(resolve));
               continue;
             }
@@ -347,6 +353,8 @@ export async function publishIRacingSDKEvents(
         );
         const period = 1000 / targetHz;
         const now = performance.now();
+        // A tick that ran late is paid back, but by at most one period: past
+        // that the missed slots are dropped rather than run as a burst.
         nextDeadline = Math.max(nextDeadline + period, now - period);
         const remainingDelay = nextDeadline - now;
         await new Promise((resolve) =>
