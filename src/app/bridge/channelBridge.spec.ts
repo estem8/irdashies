@@ -86,6 +86,89 @@ describe('ChannelBus', () => {
     );
   });
 
+  describe('delivery schedule', () => {
+    // Publishes arrive on a fixed cadence; every delivery is counted.
+    const run = (rateHz: number, publishEveryMs: number, seconds: number) => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', rateHz);
+      const publishes = Math.round((seconds * 1000) / publishEveryMs);
+      for (let i = 0; i < publishes; i++) {
+        bus.publish('snapshot', i);
+        clock.advance(publishEveryMs);
+      }
+      return { delivered: target.send.mock.calls.length, publishes, target };
+    };
+
+    it('delivers every publish that lands just before its slot', () => {
+      // 16.2 ms spacing is shorter than the 16.67 ms slot of a 60 Hz
+      // subscription. A catch-up timer used to fire after the next publish and
+      // drop it, which halved the rate on Windows.
+      const { delivered, publishes } = run(60, 16.2, 10);
+      expect(delivered).toBeGreaterThanOrEqual(publishes * 0.97);
+      expect(delivered).toBeLessThanOrEqual(publishes);
+    });
+
+    it('delivers a 60 Hz stream with jitter at the declared rate', () => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 60);
+      // Frames 14 or 19 ms apart average 16.5 ms, as a paced loop produces.
+      for (let i = 0; i < 600; i++) {
+        bus.publish('snapshot', i);
+        clock.advance(i % 2 === 0 ? 14 : 19);
+      }
+      expect(target.send.mock.calls.length).toBeGreaterThanOrEqual(570);
+    });
+
+    it('keeps the declared average when publishes do not divide the interval', () => {
+      // 10 Hz subscription on a 25 Hz stream: slots fall between publishes.
+      const { delivered } = run(10, 40, 20);
+      expect(delivered).toBeGreaterThanOrEqual(198);
+      expect(delivered).toBeLessThanOrEqual(202);
+    });
+
+    it('does not exceed the declared rate on a faster stream', () => {
+      // 25 Hz subscription on a 60 Hz stream.
+      const { delivered } = run(25, 1000 / 60, 20);
+      expect(delivered).toBeGreaterThanOrEqual(495);
+      expect(delivered).toBeLessThanOrEqual(505);
+    });
+
+    it('delivers the newest snapshot once the slot arrives', () => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 10);
+      bus.publish('snapshot', 1);
+      clock.advance(20);
+      bus.publish('snapshot', 2);
+      clock.advance(20);
+      bus.publish('snapshot', 3);
+      expect(target.send).toHaveBeenCalledTimes(1);
+      clock.advance(60);
+      expect(target.send).toHaveBeenCalledTimes(2);
+      expect(target.send).toHaveBeenLastCalledWith(
+        CHANNEL_DELIVERY,
+        'snapshot',
+        3
+      );
+    });
+
+    it('restarts the slot after a long gap', () => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 10);
+      bus.publish('snapshot', 1);
+      clock.advance(5_000);
+      bus.publish('snapshot', 2);
+      expect(target.send).toHaveBeenCalledTimes(2);
+      // The slot after a gap is one interval ahead, not a backlog of slots.
+      clock.advance(10);
+      bus.publish('snapshot', 3);
+      expect(target.send).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it('reports the highest rate any visible subscriber wants', () => {
     const { bus } = createBus();
     expect(bus.maxActiveRateHz()).toBeUndefined();
