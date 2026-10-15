@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useGeneralSettings, useSessionBarSnapshot } from '@irdashies/context';
+import { useGeneralSettings, useSessionBarFields } from '@irdashies/context';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { SessionBar } from './SessionBar';
 import type { SessionBarConfig } from '@irdashies/types';
@@ -11,7 +11,7 @@ vi.mock('@irdashies/context', async () => {
   return {
     ...actual,
     useGeneralSettings: vi.fn(),
-    useSessionBarSnapshot: vi.fn(),
+    useSessionBarFields: vi.fn(),
   };
 });
 vi.mock('../../hooks/useCurrentTime');
@@ -36,7 +36,7 @@ beforeEach(() => {
   vi.mocked(useGeneralSettings).mockReturnValue({
     compactMode: 'normal',
   } as never);
-  vi.mocked(useSessionBarSnapshot).mockReturnValue({
+  vi.mocked(useSessionBarFields).mockReturnValue({
     sessionName: 'Race',
   } as never);
   vi.mocked(useCurrentTime).mockReturnValue('1:23 PM');

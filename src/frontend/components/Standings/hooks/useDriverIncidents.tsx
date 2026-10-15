@@ -1,7 +1,12 @@
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 export const useDriverIncidents = () => {
-  const snapshot = useSessionBarSnapshot();
+  const snapshot = useSessionBarFields(
+    'incidents',
+    'incidentLimit',
+    'incidentWarningInitialLimit',
+    'incidentWarningSubsequentLimit'
+  );
   return {
     incidents: snapshot?.incidents ?? 0,
     incidentLimit: snapshot?.incidentLimit,

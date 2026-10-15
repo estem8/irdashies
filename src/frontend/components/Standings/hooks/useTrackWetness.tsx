@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 const wetnessLevels: Record<number, string> = {
   0: '',
@@ -13,7 +13,7 @@ const wetnessLevels: Record<number, string> = {
 };
 
 export const useTrackWetness = () => {
-  const trackWetnessVal = useSessionBarSnapshot()?.trackWetness;
+  const trackWetnessVal = useSessionBarFields('trackWetness')?.trackWetness;
   const trackWetness = useMemo(() => {
     const wetnessLevel = trackWetnessVal ?? 0;
     return wetnessLevels[wetnessLevel] ?? '';

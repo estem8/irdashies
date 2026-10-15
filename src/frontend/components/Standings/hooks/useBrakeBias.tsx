@@ -1,4 +1,4 @@
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 /**
  * Hook to get the player's dynamic brake bias value.
@@ -9,7 +9,7 @@ import { useSessionBarSnapshot } from '@irdashies/context';
  */
 export const useBrakeBias = ():
   { value: number; isClio: boolean } | undefined => {
-  const snapshot = useSessionBarSnapshot();
+  const snapshot = useSessionBarFields('brakeBias', 'brakeBiasIsClio');
   const brakeBias = snapshot?.brakeBias;
 
   if (brakeBias === undefined) return undefined;

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { GaugeIcon } from '@phosphor-icons/react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { resolveSpeedUnit, speedFromMs } from '@irdashies/utils/units';
 import { sessionBarItemWrapperClass } from '../../sessionBarItemWrapperClass';
 import type { SessionBarItemProps } from '../../sessionBarItemTypes';
@@ -10,7 +10,11 @@ export const TopSpeedItem = memo(({ standalone }: SessionBarItemProps) => {
     displayUnits,
     lastLapTopSpeed: lastLapTopSpeedMs,
     sessionBestTopSpeed: sessionBestTopSpeedMs,
-  } = useSessionBarSnapshot() ?? {
+  } = useSessionBarFields(
+    'displayUnits',
+    'lastLapTopSpeed',
+    'sessionBestTopSpeed'
+  ) ?? {
     displayUnits: 0,
     lastLapTopSpeed: null,
     sessionBestTopSpeed: null,

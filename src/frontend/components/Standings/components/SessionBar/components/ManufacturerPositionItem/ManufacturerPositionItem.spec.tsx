@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 import { ManufacturerPositionItem } from './ManufacturerPositionItem';
 
 vi.mock('@irdashies/context');
@@ -10,7 +10,7 @@ const TOYOTA_CAR_ID = 56;
 
 describe('ManufacturerPositionItem', () => {
   it('excludes pace cars and spectators from the manufacturer total', () => {
-    vi.mocked(useSessionBarSnapshot).mockReturnValue({
+    vi.mocked(useSessionBarFields).mockReturnValue({
       playerCarId: TOYOTA_CAR_ID,
       playerClassified: true,
       playerOverallPosition: 2,
@@ -26,7 +26,7 @@ describe('ManufacturerPositionItem', () => {
   });
 
   it('hides an unclassified player', () => {
-    vi.mocked(useSessionBarSnapshot).mockReturnValue({
+    vi.mocked(useSessionBarFields).mockReturnValue({
       playerCarId: TOYOTA_CAR_ID,
       playerClassified: false,
       playerOverallPosition: 0,

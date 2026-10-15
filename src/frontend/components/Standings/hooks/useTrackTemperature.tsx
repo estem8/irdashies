@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSessionBarSnapshot } from '@irdashies/context';
+import { useSessionBarFields } from '@irdashies/context';
 
 type TemperatureUnit = 'Metric' | 'Imperial';
 
@@ -12,7 +12,7 @@ export const useTrackTemperature = (
   options: UseTrackTemperatureOptions = {}
 ) => {
   const { airTempUnit = 'Metric', trackTempUnit = 'Metric' } = options;
-  const snapshot = useSessionBarSnapshot();
+  const snapshot = useSessionBarFields('trackTemp', 'airTemp');
   const trackTempVal = snapshot?.trackTemp;
   const airTempVal = snapshot?.airTemp;
 
