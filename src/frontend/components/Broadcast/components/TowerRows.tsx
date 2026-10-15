@@ -80,6 +80,8 @@ const StatusBadgesView = ({ standing }: { standing: Standings }) => (
   </>
 );
 
+// Compares exactly the fields StatusBadgesView reads. Add a field here when
+// the view starts to read one, or the badge stops updating for it.
 const StatusBadges = memo(
   StatusBadgesView,
   (previous, next) =>
