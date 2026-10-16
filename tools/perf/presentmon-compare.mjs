@@ -18,6 +18,7 @@ const COLUMN_ALIASES = {
   gpuBusy: ['gpubusy', 'gpuactive'],
   process: ['application', 'processname'],
   dropped: ['dropped'],
+  displayedTime: ['displayedtime'],
 };
 
 const normalizeHeader = (name) =>
@@ -52,6 +53,7 @@ export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
   const cpuCol = columnIndex(header, 'cpuBusy');
   const gpuCol = columnIndex(header, 'gpuBusy');
   const droppedCol = columnIndex(header, 'dropped');
+  const displayedCol = columnIndex(header, 'displayedTime');
 
   let selected = rows;
   let name = processName;
@@ -85,7 +87,14 @@ export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
       frameTime,
       cpuBusy: number(row, cpuCol),
       gpuBusy: number(row, gpuCol),
-      dropped: droppedCol >= 0 ? Number(row[droppedCol]) === 1 : undefined,
+      // 1.x has a Dropped flag; 2.x marks a frame that never reached the
+      // screen with NA in DisplayedTime
+      dropped:
+        droppedCol >= 0
+          ? Number(row[droppedCol]) === 1
+          : displayedCol >= 0
+            ? row[displayedCol]?.trim().toUpperCase() === 'NA'
+            : undefined,
     });
   }
   return { process: name, frames };

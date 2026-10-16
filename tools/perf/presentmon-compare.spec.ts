@@ -47,6 +47,40 @@ describe('presentmon-compare', () => {
     expect(frames).toHaveLength(7);
   });
 
+  it('reads a full 2.x header with NA values and finds dropped frames', () => {
+    const header =
+      'Application,ProcessID,SwapChainAddress,PresentRuntime,SyncInterval,PresentFlags,AllowsTearing,PresentMode,CPUStartTime,FrameTime,CPUBusy,CPUWait,GPULatency,GPUTime,GPUBusy,GPUWait,VideoBusy,DisplayLatency,DisplayedTime';
+    const text = [
+      header,
+      'iRacingSim64DX11.exe,1,0x1,DXGI,0,0,0,Hardware: Independent Flip,0.0,16.6,6.1,0.2,1.0,7.9,7.5,0.4,0,17.0,16.6',
+      'iRacingSim64DX11.exe,1,0x1,DXGI,0,0,0,Hardware: Independent Flip,16.6,16.7,6.0,0.2,1.0,7.8,7.4,0.4,0,NA,NA',
+    ].join('\n');
+    const { frames } = readFrames(text, { skipSeconds: 0 });
+    expect(frames).toHaveLength(2);
+    expect(frames[0]).toMatchObject({
+      frameTime: 16.6,
+      cpuBusy: 6.1,
+      gpuBusy: 7.5,
+      dropped: false,
+    });
+    expect(frames[1].dropped).toBe(true);
+    expect(summarize(frames).droppedPercent).toBe(50);
+  });
+
+  it('reads the 1.x Ms-prefixed names', () => {
+    const text = [
+      'Application,MsBetweenPresents,MsCPUBusy,MsGPUBusy,Dropped',
+      'game.exe,16.6,6,7,0',
+    ].join('\n');
+    const { frames } = readFrames(text, { skipSeconds: 0 });
+    expect(frames[0]).toMatchObject({
+      frameTime: 16.6,
+      cpuBusy: 6,
+      gpuBusy: 7,
+      dropped: false,
+    });
+  });
+
   it('fails clearly without a frame time column', () => {
     expect(() => readFrames('Application,Other\na,1')).toThrow(/frame time/i);
   });

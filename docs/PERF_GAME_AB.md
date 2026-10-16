@@ -37,13 +37,22 @@ to "No cap" afterwards; it is kept across restarts.
 
 ## Capture
 
-PresentMon 2.x (check `PresentMon.exe --help`; flag names changed between 1.x and 2.x):
+PresentMon 2.x console application (flags checked against its
+`README-ConsoleApplication.md`; run `PresentMon.exe --help` to confirm for your
+version):
 
 ```powershell
 .\PresentMon-2.x.x-x64.exe --process_name iRacingSim64DX11.exe `
-  --output_file captures\full-1.csv --timed 95 --terminate_after_timed `
-  --stop_existing_session
+  --output_file captures\full-1.csv --v2_metrics --no_console_stats `
+  --timed 95 --terminate_after_timed --stop_existing_session
 ```
+
+`--v2_metrics` makes the CSV use `FrameTime`, `CPUBusy` and `GPUBusy`;
+`--v1_metrics` gives `MsBetweenPresents` and friends, which the tool also reads.
+If you run the DX12 build of the sim, use its executable name instead (the
+tool itself picks the process with the most frames, so only the capture needs
+the name). The PresentMon Capture GUI writes the same columns to
+`%LOCALAPPDATA%\Intel\PresentMon\Capture\pmcap-*.csv`; the tool reads those too.
 
 Start it when the replay or session is already running, and keep the sim in the
 foreground. The tool drops the first 5 seconds of every capture (warm-up); 95
@@ -67,8 +76,9 @@ Read it like this:
 
 - Compare p50, p95 and p99 frame time first. Average FPS is a secondary number.
 - `spikes` counts frames longer than twice the median, the visible hitches.
-- CPU busy and GPU busy appear when the capture has those columns (PresentMon
-  2.x); dropped frames only when it has a `Dropped` column.
+- CPU busy and GPU busy appear when the capture has those columns. Dropped
+  frames come from the 1.x `Dropped` column, or from `NA` in 2.x `DisplayedTime`
+  (a frame that never reached the screen).
 - A change smaller than the min to max spread of the baseline is noise. Say
   "no measurable difference" then, not a percentage.
 - `empty` against `baseline` is the cost of the transparent window itself;
