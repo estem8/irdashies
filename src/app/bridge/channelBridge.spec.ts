@@ -16,13 +16,20 @@ class FakeClock {
     return { cancel: () => (task.cancelled = true) };
   };
 
+  /** Moves time on, running each task at its own time and in order. */
   advance(ms: number): void {
-    this.now += ms;
-    const due = this.tasks
-      .filter((task) => !task.cancelled && task.at <= this.now)
-      .sort((a, b) => a.at - b.at);
-    this.tasks = this.tasks.filter((task) => !due.includes(task));
-    for (const task of due) task.callback();
+    const target = this.now + ms;
+    for (;;) {
+      const next = this.tasks
+        .filter((task) => !task.cancelled && task.at <= target)
+        .sort((a, b) => a.at - b.at)[0];
+      if (!next) break;
+      this.tasks = this.tasks.filter((task) => task !== next);
+      this.now = Math.max(this.now, next.at);
+      next.callback();
+    }
+    this.now = target;
+    this.tasks = this.tasks.filter((task) => !task.cancelled);
   }
 }
 
@@ -149,10 +156,26 @@ describe('ChannelBus', () => {
       clock.advance(1);
       bus.publish('snapshot', 2);
       clock.advance(100);
-      expect(times.length).toBeGreaterThanOrEqual(3);
-      for (let i = 1; i < times.length; i++) {
-        expect(times[i] - times[i - 1]).toBeGreaterThanOrEqual(30);
+      // The third snapshot waits for the 30 ms floor after the late one
+      expect(times).toEqual([0, 75, 105]);
+    });
+
+    it('treats the declared rate as a ceiling on average, not per pair', () => {
+      // 25 Hz on a 200 Hz stream: no two deliveries closer than 75% of the
+      // 40 ms interval, and the average stays at 25 Hz
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 25);
+      const times: number[] = [];
+      target.send.mockImplementation(() => times.push(clock.now));
+      for (let t = 0; t <= 4000; t += 5) {
+        bus.publish('snapshot', t);
+        clock.advance(5);
       }
+      const gaps = times.slice(1).map((time, i) => time - times[i]);
+      expect(Math.min(...gaps)).toBeGreaterThanOrEqual(30);
+      expect(times.length / 4).toBeGreaterThanOrEqual(24.5);
+      expect(times.length / 4).toBeLessThanOrEqual(25.5);
     });
 
     it('delivers the newest snapshot once the slot arrives', () => {
@@ -180,12 +203,56 @@ describe('ChannelBus', () => {
       bus.subscribe(target, 'snapshot', 10);
       bus.publish('snapshot', 1);
       clock.advance(5_000);
+      const before = target.send.mock.calls.length;
+      // After the gap a steady stream must get one slot per interval; a
+      // backlog of missed slots would deliver every publish in a burst.
+      for (let t = 0; t < 1_000; t += 10) {
+        bus.publish('snapshot', t);
+        clock.advance(10);
+      }
+      const delivered = target.send.mock.calls.length - before;
+      expect(delivered).toBeGreaterThanOrEqual(9);
+      expect(delivered).toBeLessThanOrEqual(11);
+    });
+
+    it('starts a new schedule when a subscription changes rate', () => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 10);
+      bus.publish('snapshot', 1);
+      clock.advance(10);
+      // With the 10 Hz history kept, this 60 Hz publish would wait for a slot
+      bus.subscribe(target, 'snapshot', 60);
       bus.publish('snapshot', 2);
       expect(target.send).toHaveBeenCalledTimes(2);
-      // The slot after a gap is one interval ahead, not a backlog of slots.
+    });
+
+    it('starts a new schedule when a hidden subscription returns', () => {
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 10);
+      bus.publish('snapshot', 1);
       clock.advance(10);
+      target.visible = false;
+      bus.publish('snapshot', 2);
+      clock.advance(10);
+      target.visible = true;
+      bus.subscribe(target, 'snapshot', 10);
       bus.publish('snapshot', 3);
       expect(target.send).toHaveBeenCalledTimes(2);
+      expect(target.send).toHaveBeenLastCalledWith(
+        CHANNEL_DELIVERY,
+        'snapshot',
+        3
+      );
+    });
+
+    it('does not rate limit events', () => {
+      const { bus } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'event');
+      for (let i = 0; i < 5; i++) bus.publish('event', { i });
+      expect(target.send).toHaveBeenCalledTimes(5);
     });
   });
 

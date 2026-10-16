@@ -11,7 +11,9 @@ export const CHANNEL_DELIVERY = 'channels:delivery';
 
 /**
  * How far before its slot a publish may arrive and still be delivered, as a
- * share of the subscription interval.
+ * share of the subscription interval. It also sets the closest two deliveries
+ * may be (1 - DUE_TOLERANCE of an interval), so the declared rate is a ceiling
+ * on average only: a late delivery is followed by one at most that much sooner.
  */
 const DUE_TOLERANCE = 0.25;
 
@@ -128,6 +130,8 @@ export class ChannelBus {
     if (existing) {
       existing.target = target;
       existing.rateHz = rateHz;
+      // A new rate starts a new schedule, as hiding a subscription does
+      existing.lastDeliveredAt = undefined;
       existing.nextDueAt = undefined;
       existing.timer?.cancel();
       existing.timer = undefined;
@@ -368,6 +372,7 @@ export class ChannelBus {
     // declared average rate holds for any publish cadence.
     // Never closer to the previous delivery than the tolerance allows: a late
     // delivery followed by an early one would otherwise land back to back.
+    // The rate is therefore a ceiling on average, not for any two deliveries.
     const earliest = Math.max(
       due - intervalMs * DUE_TOLERANCE,
       (subscription.lastDeliveredAt ?? Number.NEGATIVE_INFINITY) +
