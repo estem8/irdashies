@@ -43,7 +43,7 @@ describe('presentmon-compare', () => {
   it('trims the warm-up by elapsed frame time', () => {
     const rows = Array.from({ length: 10 }, () => 'game.exe,1000,1,1');
     const { frames } = readFrames(csv2(rows), { skipSeconds: 3 });
-    // The first three seconds are dropped, the frame that crosses is dropped too
+    // Frames that start before the three second mark are dropped
     expect(frames).toHaveLength(7);
   });
 

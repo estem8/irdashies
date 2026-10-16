@@ -77,8 +77,10 @@ export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
   for (const row of selected) {
     const frameTime = number(row, frameCol);
     if (frameTime === undefined || frameTime <= 0) continue;
+    // Keep only frames that start after the warm-up
+    const startedAt = elapsedMs;
     elapsedMs += frameTime;
-    if (elapsedMs < skipSeconds * 1000) continue;
+    if (startedAt < skipSeconds * 1000) continue;
     frames.push({
       frameTime,
       cpuBusy: number(row, cpuCol),
