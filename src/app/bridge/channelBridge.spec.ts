@@ -135,6 +135,26 @@ describe('ChannelBus', () => {
       expect(delivered).toBeLessThanOrEqual(505);
     });
 
+    it('keeps deliveries apart after a late one', () => {
+      // 25 Hz subscription (40 ms slots). The delivery for the slot at 40 ms
+      // is late (75 ms); a publish at 76 ms must not follow it back to back.
+      const { bus, clock } = createBus();
+      const target = createTarget();
+      bus.subscribe(target, 'snapshot', 25);
+      const times: number[] = [];
+      target.send.mockImplementation(() => times.push(clock.now));
+      bus.publish('snapshot', 0);
+      clock.advance(75);
+      bus.publish('snapshot', 1);
+      clock.advance(1);
+      bus.publish('snapshot', 2);
+      clock.advance(100);
+      expect(times.length).toBeGreaterThanOrEqual(3);
+      for (let i = 1; i < times.length; i++) {
+        expect(times[i] - times[i - 1]).toBeGreaterThanOrEqual(30);
+      }
+    });
+
     it('delivers the newest snapshot once the slot arrives', () => {
       const { bus, clock } = createBus();
       const target = createTarget();
