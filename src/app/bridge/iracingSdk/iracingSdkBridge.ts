@@ -12,6 +12,10 @@ import {
   type Telemetry,
 } from '@irdashies/types';
 import logger from '../../logger';
+import {
+  applyTelemetryRateCap,
+  getTelemetryRateCapHz,
+} from '../../telemetryRateCap';
 import type { SessionLifecycle } from '../../sessionLifecycle';
 import type { ChannelBus } from '../channelBridge';
 import { createDefaultProcessorHost } from '../../processors/processorRegistry';
@@ -350,9 +354,9 @@ export async function publishIRacingSDKEvents(
         // 60 Hz ones do more work. We sleep AFTER publishing so each frame is
         // sent with minimal latency, and subtract the tick's own duration so
         // the rate holds rather than drifting below target.
-        const targetHz = Math.min(
-          60,
-          Math.max(25, channelBus?.maxActiveRateHz() ?? 25)
+        const targetHz = applyTelemetryRateCap(
+          Math.min(60, Math.max(25, channelBus?.maxActiveRateHz() ?? 25)),
+          getTelemetryRateCapHz()
         );
         const period = 1000 / targetHz;
         const now = performance.now();

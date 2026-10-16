@@ -18,6 +18,8 @@ import type {
   PersonalBestLapBridge,
   ChromiumFlagsBridge,
   ChromiumFlagsType,
+  TelemetryRateBridge,
+  TelemetryRateCapHz,
   LapTraceBridge,
   LapTraceRecord,
   LapTraceSource,
@@ -441,6 +443,12 @@ export function exposeBridge() {
     saveFlags: (flags: ChromiumFlagsType) =>
       ipcRenderer.invoke('chromiumFlags:save', flags),
   } as ChromiumFlagsBridge);
+
+  contextBridge.exposeInMainWorld('telemetryRateBridge', {
+    getCapHz: () => ipcRenderer.invoke('telemetryRate:get'),
+    saveCapHz: (capHz: TelemetryRateCapHz) =>
+      ipcRenderer.invoke('telemetryRate:save', capHz),
+  } as TelemetryRateBridge);
 
   defineBridge<RaceControlBridge>('raceControlBridge', {
     getIncidents: () => ipcRenderer.invoke('raceControl:getIncidents'),
