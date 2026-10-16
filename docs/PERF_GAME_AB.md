@@ -79,8 +79,15 @@ Read it like this:
 - CPU busy and GPU busy appear when the capture has those columns. Dropped
   frames come from the 1.x `Dropped` column, or from `NA` in 2.x `DisplayedTime`
   (a frame that never reached the screen).
-- A change smaller than the min to max spread of the baseline is noise. Say
-  "no measurable difference" then, not a percentage.
+- The first line names the game process the tool picked. It stops with an error
+  if the captures are not all of the same process (pass `--process <exe>`), or
+  if a capture looks damaged.
+- A change inside the baseline's min to max range is marked `≈` and is noise: say
+  "no measurable difference", not a percentage.
+  When the baseline value is 0 (for example no spikes) the change is shown as an
+  absolute number (`+12 abs`), not a percentage.
+- The warm-up is trimmed by the capture's timestamp column (`CPUStartTime` in
+  2.x, `TimeInSeconds` in 1.x); without one, by the summed frame times.
 - `empty` against `baseline` is the cost of the transparent window itself;
   `full` against `empty` is the cost of the widgets.
 

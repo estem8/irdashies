@@ -19,6 +19,7 @@ const COLUMN_ALIASES = {
   process: ['application', 'processname'],
   dropped: ['dropped'],
   displayedTime: ['displayedtime'],
+  time: ['cpustarttime', 'timeinseconds'],
 };
 
 const normalizeHeader = (name) =>
@@ -28,21 +29,68 @@ const normalizeHeader = (name) =>
     .replace(/^ms/, '')
     .replace(/[^a-z0-9]/g, '');
 
-export function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== '');
-  if (lines.length < 2) return { header: [], rows: [] };
-  const split = (line) => line.split(',');
-  return { header: split(lines[0]), rows: lines.slice(1).map(split) };
+/** Splits one CSV line, honouring double quotes and "" escapes. */
+export function splitCsvLine(line) {
+  const cells = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (quoted) {
+      if (char === '"' && line[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        cell += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ',') {
+      cells.push(cell);
+      cell = '';
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell);
+  return cells;
 }
 
+/** Rows whose cell count differs from the header are dropped and counted. */
+export function parseCsv(text) {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== '');
+  if (lines.length < 2) return { header: [], rows: [], malformed: 0 };
+  const header = splitCsvLine(lines[0]);
+  const rows = [];
+  let malformed = 0;
+  for (const line of lines.slice(1)) {
+    const cells = splitCsvLine(line);
+    if (cells.length === header.length) rows.push(cells);
+    else malformed++;
+  }
+  return { header, rows, malformed };
+}
+
+/** First column matching the preferred alias, so FrameTime wins over MsBetweenPresents. */
 function columnIndex(header, key) {
-  const wanted = COLUMN_ALIASES[key];
-  return header.findIndex((name) => wanted.includes(normalizeHeader(name)));
+  const normalized = header.map(normalizeHeader);
+  for (const alias of COLUMN_ALIASES[key]) {
+    const index = normalized.indexOf(alias);
+    if (index >= 0) return index;
+  }
+  return -1;
 }
 
 /** Frames of the game process, with the warm-up trimmed. */
 export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
-  const { header, rows } = parseCsv(text);
+  const { header, rows, malformed } = parseCsv(text);
+  if (malformed > 0 && malformed > rows.length * 0.01) {
+    throw new Error(
+      `${malformed} of ${malformed + rows.length} rows do not match the ${header.length} header columns; the capture looks damaged`
+    );
+  }
   const frameCol = columnIndex(header, 'frameTime');
   if (frameCol < 0) {
     throw new Error(
@@ -54,6 +102,7 @@ export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
   const gpuCol = columnIndex(header, 'gpuBusy');
   const droppedCol = columnIndex(header, 'dropped');
   const displayedCol = columnIndex(header, 'displayedTime');
+  const timeCol = columnIndex(header, 'time');
 
   let selected = rows;
   let name = processName;
@@ -74,16 +123,23 @@ export function readFrames(text, { processName, skipSeconds = 5 } = {}) {
     const value = col >= 0 ? Number(row[col]) : NaN;
     return Number.isFinite(value) ? value : undefined;
   };
+  // The capture clock is the timestamp column (seconds) when it has numbers,
+  // otherwise the running sum of frame times
+  const firstTime =
+    timeCol >= 0 ? number(selected[0] ?? [], timeCol) : undefined;
   const frames = [];
   let elapsedMs = 0;
   for (const row of selected) {
     const frameTime = number(row, frameCol);
     if (frameTime === undefined || frameTime <= 0) continue;
+    const stamp = firstTime === undefined ? undefined : number(row, timeCol);
     // Keep only frames that start after the warm-up
-    const startedAt = elapsedMs;
+    const startedAt =
+      stamp === undefined ? elapsedMs : (stamp - firstTime) * 1000;
     elapsedMs += frameTime;
     if (startedAt < skipSeconds * 1000) continue;
     frames.push({
+      startedAt,
       frameTime,
       cpuBusy: number(row, cpuCol),
       gpuBusy: number(row, gpuCol),
@@ -119,7 +175,18 @@ export function summarize(frames) {
   const cpu = present('cpuBusy');
   const gpu = present('gpuBusy');
   const dropped = present('dropped');
-  const totalMs = times.reduce((a, b) => a + b, 0);
+  const sumMs = times.reduce((a, b) => a + b, 0);
+  // Wall-clock span of the kept frames when the capture has timestamps
+  const first = frames[0];
+  const last = frames[frames.length - 1];
+  const spanMs =
+    first &&
+    last &&
+    first.startedAt !== undefined &&
+    last.startedAt !== undefined
+      ? last.startedAt + last.frameTime - first.startedAt
+      : undefined;
+  const totalMs = spanMs !== undefined && spanMs > 0 ? spanMs : sumMs;
   return {
     frames: frames.length,
     seconds: totalMs / 1000,
@@ -182,14 +249,33 @@ export function renderTable(sets) {
       if (set.aggregate.runs > 1) {
         cell += ` (${value.min.toFixed(digits)}-${value.max.toFixed(digits)})`;
       }
+      if (set === baseline) return cell;
       const base = baseline.aggregate[key];
-      if (set !== baseline && base && base.mean !== 0) {
-        const delta = ((value.mean - base.mean) / base.mean) * 100;
-        cell += ` ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+      if (!base) return `${cell} (no baseline)`;
+      if (base.mean === 0) {
+        // A percentage of zero is undefined: show the absolute change
+        const change = value.mean - base.mean;
+        return `${cell} ${change >= 0 ? '+' : ''}${change.toFixed(digits)} abs`;
+      }
+      const delta = ((value.mean - base.mean) / base.mean) * 100;
+      cell += ` ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+      // Inside the baseline's own run-to-run range is not a measured change
+      if (
+        baseline.aggregate.runs > 1 &&
+        value.mean >= base.min &&
+        value.mean <= base.max
+      ) {
+        cell += ' ≈';
       }
       return cell;
     });
     lines.push(`| ${title} | ${cells.join(' | ')} |`);
+  }
+  if (sets.some((set) => set !== baseline)) {
+    lines.push(
+      '',
+      '≈ the set mean lies inside the baseline min-max range: no measurable difference.'
+    );
   }
   return lines.join('\n');
 }
@@ -223,8 +309,25 @@ export function parseArgs(argv) {
   return options;
 }
 
+/** The selected process of every capture must be the same one. */
+export function checkSameProcess(captures) {
+  const names = new Set(
+    captures.map((capture) => capture.process?.toLowerCase())
+  );
+  if (names.size > 1) {
+    const detail = captures
+      .map((capture) => `${capture.file}: ${capture.process}`)
+      .join('\n');
+    throw new Error(
+      `The captures are not all of the same process; pass --process <exe>:\n${detail}`
+    );
+  }
+  return captures[0]?.process;
+}
+
 export function main(argv) {
   const options = parseArgs(argv);
+  const captures = [];
   const sets = options.groups.map((group) => {
     const summaries = group.files.map((file) => {
       const { process, frames } = readFrames(readFileSync(file, 'utf8'), {
@@ -236,13 +339,21 @@ export function main(argv) {
           `${file}: no frames left for ${process ?? 'any process'}`
         );
       }
+      captures.push({ file, process });
       return summarize(frames);
     });
     return { label: group.label, summaries, aggregate: aggregate(summaries) };
   });
+  const gameProcess = checkSameProcess(captures);
+  console.log(
+    `Process: ${gameProcess ?? 'all (no process column)'} in ${captures.length} captures, first ${options.skipSeconds} s of each skipped\n`
+  );
   console.log(renderTable(sets));
   if (options.json) {
-    writeFileSync(options.json, JSON.stringify(sets, undefined, 2));
+    writeFileSync(
+      options.json,
+      JSON.stringify({ process: gameProcess, sets }, undefined, 2)
+    );
   }
 }
 
