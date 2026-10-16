@@ -247,6 +247,8 @@ export async function publishIRacingSDKEvents(
       let lastSessionPollTime = Number.NEGATIVE_INFINITY;
       // Absolute schedule so setTimeout rounding is paid back (#804)
       let nextDeadline = performance.now();
+      // Set by a paused replay: the first tick after it restarts the schedule
+      let rebaseDeadline = false;
       let lastDataAt = Number.NEGATIVE_INFINITY;
       let wasRunning = false;
 
@@ -263,6 +265,7 @@ export async function publishIRacingSDKEvents(
               await new Promise((resolve) => setImmediate(resolve));
               continue;
             }
+            rebaseDeadline = true;
             const remainingDelay = Math.max(
               0,
               1000 / 25 - (performance.now() - pollStartedAt)
@@ -355,7 +358,10 @@ export async function publishIRacingSDKEvents(
         const now = performance.now();
         // A tick that ran late is paid back, but by at most one period: past
         // that the missed slots are dropped rather than run as a burst.
-        nextDeadline = Math.max(nextDeadline + period, now - period);
+        nextDeadline = rebaseDeadline
+          ? now + period
+          : Math.max(nextDeadline + period, now - period);
+        rebaseDeadline = false;
         const remainingDelay = nextDeadline - now;
         await new Promise((resolve) =>
           remainingDelay < 1
