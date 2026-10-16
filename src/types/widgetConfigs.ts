@@ -1452,6 +1452,7 @@ export type SettingsTabType =
   | 'telemetry'
   | 'dashboard'
   | 'chromium'
+  | 'telemetryRate'
   | 'incidents'
   | 'trace'
   | 'corner'

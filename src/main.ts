@@ -50,6 +50,7 @@ import {
   saveGarage61SearchSession,
 } from './app/storage/garage61SearchSession';
 import { setupChromiumFlagsBridge } from './app/bridge/chromiumFlagsBridge';
+import { setupTelemetryRateBridge } from './app/bridge/telemetryRateBridge';
 import { getHiddenWidgets } from './app/widgetVisibility';
 import { setupRaceControlBridge } from './app/bridge/raceControlBridge';
 import {
@@ -448,6 +449,7 @@ void app.whenReady().then(async () => {
   setupLapTraceBridge(overlayManager);
   setupGarage61SearchSession(dashboard);
   setupChromiumFlagsBridge();
+  setupTelemetryRateBridge();
   ipcMain.handle('widgetVisibility:getHidden', () => getHiddenWidgets());
   const replayContextRuntime = setupReplayContextRuntime(dashboard);
   const incidents = new IncidentRuntime(

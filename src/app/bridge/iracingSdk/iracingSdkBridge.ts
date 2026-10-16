@@ -12,6 +12,10 @@ import {
   type Telemetry,
 } from '@irdashies/types';
 import logger from '../../logger';
+import {
+  applyTelemetryRateCap,
+  getTelemetryRateCapHz,
+} from '../../telemetryRateCap';
 import type { SessionLifecycle } from '../../sessionLifecycle';
 import type { ChannelBus } from '../channelBridge';
 import { createDefaultProcessorHost } from '../../processors/processorRegistry';
@@ -247,6 +251,8 @@ export async function publishIRacingSDKEvents(
       let lastSessionPollTime = Number.NEGATIVE_INFINITY;
       // Absolute schedule so setTimeout rounding is paid back (#804)
       let nextDeadline = performance.now();
+      // Set by a paused replay: the first tick after it restarts the schedule
+      let rebaseDeadline = false;
       let lastDataAt = Number.NEGATIVE_INFINITY;
       let wasRunning = false;
 
@@ -263,6 +269,7 @@ export async function publishIRacingSDKEvents(
               await new Promise((resolve) => setImmediate(resolve));
               continue;
             }
+            rebaseDeadline = true;
             const remainingDelay = Math.max(
               0,
               1000 / 25 - (performance.now() - pollStartedAt)
@@ -347,15 +354,18 @@ export async function publishIRacingSDKEvents(
         // 60 Hz ones do more work. We sleep AFTER publishing so each frame is
         // sent with minimal latency, and subtract the tick's own duration so
         // the rate holds rather than drifting below target.
-        const targetHz = Math.min(
-          60,
-          Math.max(25, channelBus?.maxActiveRateHz() ?? 25)
+        const targetHz = applyTelemetryRateCap(
+          Math.min(60, Math.max(25, channelBus?.maxActiveRateHz() ?? 25)),
+          getTelemetryRateCapHz()
         );
         const period = 1000 / targetHz;
         const now = performance.now();
         // A tick that ran late is paid back, but by at most one period: past
         // that the missed slots are dropped rather than run as a burst.
-        nextDeadline = Math.max(nextDeadline + period, now - period);
+        nextDeadline = rebaseDeadline
+          ? now + period
+          : Math.max(nextDeadline + period, now - period);
+        rebaseDeadline = false;
         const remainingDelay = nextDeadline - now;
         await new Promise((resolve) =>
           remainingDelay < 1

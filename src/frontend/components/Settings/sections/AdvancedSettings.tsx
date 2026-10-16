@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { TelemetryInspectorSettings } from './TelemetryInspectorSettings';
 import { ChromiumFlagsSettings } from './ChromiumFlagsSettings';
+import { TelemetryRateSettings } from './TelemetryRateSettings';
 import { TabButton } from '../components/TabButton';
 import { SettingsTabType } from '@irdashies/types';
 import logger from '@irdashies/utils/logger';
@@ -129,6 +130,13 @@ export const AdvancedSettings = () => {
           >
             Chromium
           </TabButton>
+          <TabButton
+            id="telemetryRate"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          >
+            Telemetry Rate
+          </TabButton>
         </div>
       </div>
 
@@ -234,6 +242,12 @@ export const AdvancedSettings = () => {
       {activeTab === 'chromium' && (
         <div className="flex-1 min-h-0 pt-3">
           <ChromiumFlagsSettings />
+        </div>
+      )}
+
+      {activeTab === 'telemetryRate' && (
+        <div className="flex-1 min-h-0 pt-3">
+          <TelemetryRateSettings />
         </div>
       )}
     </div>

@@ -366,7 +366,14 @@ export class ChannelBus {
     // 60 Hz subscription received every other frame. Each delivery moves the
     // slot on by one interval from the slot, not from the publish, so the
     // declared average rate holds for any publish cadence.
-    if (now >= due - intervalMs * DUE_TOLERANCE) {
+    // Never closer to the previous delivery than the tolerance allows: a late
+    // delivery followed by an early one would otherwise land back to back.
+    const earliest = Math.max(
+      due - intervalMs * DUE_TOLERANCE,
+      (subscription.lastDeliveredAt ?? Number.NEGATIVE_INFINITY) +
+        intervalMs * (1 - DUE_TOLERANCE)
+    );
+    if (now >= earliest) {
       subscription.timer?.cancel();
       subscription.timer = undefined;
       subscription.pending = undefined;
@@ -376,24 +383,27 @@ export class ChannelBus {
     }
     subscription.pending = payload;
     if (subscription.timer) return;
-    subscription.timer = this.schedule(() => {
-      subscription.timer = undefined;
-      const pending = subscription.pending;
-      if (pending === undefined) return;
-      if (subscription.target.isDestroyed()) {
+    subscription.timer = this.schedule(
+      () => {
+        subscription.timer = undefined;
+        const pending = subscription.pending;
+        if (pending === undefined) return;
+        if (subscription.target.isDestroyed()) {
+          subscription.pending = undefined;
+          this.remove(channel, subscription.target.id);
+          return;
+        }
+        if (!subscription.target.isVisible()) {
+          this.setSubscriptionActive(channel, subscription, false);
+          return;
+        }
+        if (!subscription.active) return;
         subscription.pending = undefined;
-        this.remove(channel, subscription.target.id);
-        return;
-      }
-      if (!subscription.target.isVisible()) {
-        this.setSubscriptionActive(channel, subscription, false);
-        return;
-      }
-      if (!subscription.active) return;
-      subscription.pending = undefined;
-      this.deliver(channel, subscription, pending);
-      this.advanceDue(subscription, due, intervalMs);
-    }, due - now);
+        this.deliver(channel, subscription, pending);
+        this.advanceDue(subscription, due, intervalMs);
+      },
+      Math.max(due, earliest) - now
+    );
   }
 
   /** Moves the slot on by one interval, or restarts it after a long gap. */
