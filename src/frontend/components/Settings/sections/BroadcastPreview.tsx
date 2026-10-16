@@ -136,7 +136,9 @@ export const BroadcastPreview = ({ module }: { module: string }) => {
         Preview
       </div>
       {/* Remounts per module so each starts its animations fresh. */}
-      <div key={module}>{preview()}</div>
+      <div key={module} className="overlay-preview">
+        {preview()}
+      </div>
     </div>
   );
 };

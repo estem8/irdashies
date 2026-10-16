@@ -5,6 +5,8 @@ export default defineWidgetManifest({
   id: 'fastercarsfrombehind',
   name: 'Faster Cars From Behind',
   menuLabel: 'Faster Cars Behind',
+  category: 'awareness',
+  description: 'Faster classes closing in',
   enabled: false,
   layout: {
     x: 588,

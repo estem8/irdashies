@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'twitchchat',
   name: 'Twitch Chat',
+  category: 'extras',
+  description: 'Twitch chat feed',
   alwaysEnabled: true,
   enabled: false,
   layout: {

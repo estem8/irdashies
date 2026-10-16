@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'carsystems',
   name: 'Car Systems',
+  category: 'car',
+  description: 'Brake bias, ABS, traction control',
   enabled: false,
   layout: {
     x: 6,

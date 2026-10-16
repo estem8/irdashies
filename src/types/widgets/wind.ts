@@ -4,6 +4,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'wind',
   name: 'Wind',
+  category: 'track',
+  description: 'Wind direction and speed',
   enabled: false,
   layout: {
     x: 1334,

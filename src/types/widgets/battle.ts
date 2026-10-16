@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'battle',
   name: 'Battle',
+  category: 'race',
+  description: 'Gaps to cars ahead and behind',
   enabled: false,
   layout: {
     x: 300,

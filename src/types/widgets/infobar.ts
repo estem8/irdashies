@@ -3,6 +3,8 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'infobar',
   name: 'Information Bar',
+  category: 'race',
+  description: 'Session and timing bar',
   enabled: false,
   layout: {
     x: 0,
