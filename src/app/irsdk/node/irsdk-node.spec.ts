@@ -509,4 +509,88 @@ DriverInfo:
       expect(fake.copy.mock.calls[1]?.[0]).toBe(fake.copy.mock.calls[0]?.[0]);
     });
   });
+
+  describe('session version check', () => {
+    const sessionYaml = `
+WeekendInfo:
+  TrackName: test track
+  TrackID: 123
+`;
+
+    // Mimics native: currDataVersion only advances inside getSessionData() when
+    // it sees a new SDK session counter.
+    function createFakeSdk(withVersionCheck: boolean) {
+      let sdkSessionCt = 1;
+      let lastSessionCt = -1;
+      const getSessionData = vi.fn(() => {
+        lastSessionCt = sdkSessionCt;
+        return sessionYaml;
+      });
+      const fake = {
+        startSDK: vi.fn(),
+        stopSDK: vi.fn(),
+        isRunning: vi.fn().mockReturnValue(true),
+        waitForData: vi.fn().mockReturnValue(true),
+        getTelemetryData: vi.fn().mockReturnValue({}),
+        getTelemetryVariable: vi.fn(),
+        broadcast: vi.fn(),
+        enableLogging: false,
+        get currDataVersion() {
+          return lastSessionCt;
+        },
+        getSessionData,
+        ...(withVersionCheck
+          ? { getSessionVersionNum: vi.fn(() => sdkSessionCt) }
+          : {}),
+      } as INativeSDK;
+      return {
+        fake,
+        getSessionData,
+        setSdkSessionCt: (ct: number) => {
+          sdkSessionCt = ct;
+        },
+      };
+    }
+
+    async function createSdkWith(fake: INativeSDK): Promise<IRacingSDK> {
+      vi.mocked(getSdkOrMock).mockResolvedValueOnce(fake);
+      const instance = new IRacingSDK();
+      await instance.ready();
+      return instance;
+    }
+
+    it('returns the cached session without calling native when the counter matches', async () => {
+      const { fake, getSessionData } = createFakeSdk(true);
+      const instance = await createSdkWith(fake);
+
+      const first = instance.getSessionData();
+      const second = instance.getSessionData();
+
+      expect(second).toBe(first);
+      expect(getSessionData).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls native again when the SDK counter changes', async () => {
+      const { fake, getSessionData, setSdkSessionCt } = createFakeSdk(true);
+      const instance = await createSdkWith(fake);
+
+      const first = instance.getSessionData();
+      setSdkSessionCt(2);
+      const second = instance.getSessionData();
+
+      expect(getSessionData).toHaveBeenCalledTimes(2);
+      expect(second).not.toBe(first);
+      expect(second?.WeekendInfo?.TrackName).toBe('test track');
+    });
+
+    it('calls native on every call when the SDK has no version check', async () => {
+      const { fake, getSessionData } = createFakeSdk(false);
+      const instance = await createSdkWith(fake);
+
+      instance.getSessionData();
+      instance.getSessionData();
+
+      expect(getSessionData).toHaveBeenCalledTimes(2);
+    });
+  });
 });
