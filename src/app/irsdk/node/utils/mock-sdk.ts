@@ -1,4 +1,4 @@
-import type { INativeSDK } from '../../native';
+import type { INativeSDK, TelemetryLayoutEntry } from '../../native';
 import type {
   TelemetryVarList,
   TelemetryVariable,
@@ -21,12 +21,62 @@ import logger from '../../../logger';
 let mockTelemetry: TelemetryVarList | null = null;
 let MOCK_SESSION: string | null = null;
 
+/** Bytes per value for the native variable types 1 to 5 (bool, int, bitfield, float, double). */
+const VAR_TYPE_BYTES: Record<number, number> = { 1: 1, 2: 4, 3: 4, 4: 4, 5: 8 };
+
+interface MockRow {
+  buffer: ArrayBuffer;
+  layout: TelemetryLayoutEntry[];
+}
+
+/**
+ * Lays the mock variables out as one raw row, the way the native module copies
+ * it, so the row-buffer read path runs against the mock as it does against the
+ * SDK. Each variable is aligned to its value size.
+ */
+function buildMockRow(telemetry: TelemetryVarList): MockRow {
+  const layout: TelemetryLayoutEntry[] = [];
+  let end = 0;
+  for (const [name, variable] of Object.entries(telemetry)) {
+    const bytes = VAR_TYPE_BYTES[variable.varType];
+    if (!bytes || !Array.isArray(variable.value)) continue;
+    const offset = Math.ceil(end / bytes) * bytes;
+    layout.push({
+      name,
+      varType: variable.varType,
+      count: variable.value.length,
+      offset,
+    });
+    end = offset + variable.value.length * bytes;
+  }
+
+  const buffer = new ArrayBuffer(end);
+  const view = new DataView(buffer);
+  for (const { name, varType, count, offset } of layout) {
+    const values = telemetry[name as keyof TelemetryVarList].value as ArrayLike<
+      number | boolean
+    >;
+    for (let i = 0; i < count; i++) {
+      const value = Number(values[i]);
+      if (varType === 1) view.setUint8(offset + i, value);
+      else if (varType === 4) view.setFloat32(offset + i * 4, value, true);
+      else if (varType === 5) view.setFloat64(offset + i * 8, value, true);
+      else view.setInt32(offset + i * 4, value, true);
+    }
+  }
+  return { buffer, layout };
+}
+
 export class MockSDK implements INativeSDK {
   public currDataVersion: number;
 
   public enableLogging: boolean;
 
   private _isRunning: boolean;
+
+  private _row: MockRow | null = null;
+
+  private _rowSource: TelemetryVarList | null = null;
 
   constructor() {
     this.currDataVersion = 1;
@@ -75,6 +125,35 @@ export class MockSDK implements INativeSDK {
     return mockTelemetry!;
   }
 
+  /** Row-buffer read, as on the native module: bytes copied, 0 without data, minus the needed size when target is too small. */
+  public copyTelemetryBuffer(target: ArrayBuffer): number {
+    const row = this._mockRow();
+    if (!row) return 0;
+    if (target.byteLength < row.buffer.byteLength) {
+      return -row.buffer.byteLength;
+    }
+    new Uint8Array(target).set(new Uint8Array(row.buffer));
+    return row.buffer.byteLength;
+  }
+
+  public getTelemetryLayout(): TelemetryLayoutEntry[] {
+    return this._mockRow()?.layout ?? [];
+  }
+
+  /** The mock layout never changes once the data is loaded. */
+  public getTelemetryLayoutVersion(): number {
+    return this._mockRow() ? 1 : 0;
+  }
+
+  private _mockRow(): MockRow | null {
+    if (!mockTelemetry) return null;
+    if (this._rowSource !== mockTelemetry) {
+      this._row = buildMockRow(mockTelemetry);
+      this._rowSource = mockTelemetry;
+    }
+    return this._row;
+  }
+
   public getTelemetryVariable<T extends boolean | number | string>(
     name: number | string
   ): TelemetryVariable<T[]> {
@@ -89,8 +168,7 @@ export class MockSDK implements INativeSDK {
 
   public broadcast(
     message:
-      | BroadcastMessages.CameraSwitchPos
-      | BroadcastMessages.CameraSwitchNum,
+      BroadcastMessages.CameraSwitchPos | BroadcastMessages.CameraSwitchNum,
     driverOrPos: number,
     group: number,
     camera: number
