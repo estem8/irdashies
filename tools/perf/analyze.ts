@@ -40,6 +40,7 @@ interface MainPerfSample {
   totalAppCpuPercent?: number;
   totalAppMemoryMB?: number;
   totalAppPrivateMemoryMB?: number;
+  mainMemory?: unknown;
   scenarioMetadata?: Record<string, unknown>;
   channelMetrics?: {
     processorExecutions: Record<string, number>;
@@ -82,6 +83,16 @@ export interface AnalysisWindow {
 }
 
 export interface PerfSummary {
+  mainMemoryBreakdown?: {
+    sampleCount: number;
+    rssSlopeMBPerMinute: number;
+    heapUsedSlopeMBPerMinute: number;
+    heapTotalSlopeMBPerMinute: number;
+    externalSlopeMBPerMinute: number;
+    arrayBuffersSlopeMBPerMinute: number;
+    mallocedSlopeMBPerMinute: number;
+    peakRssMB: number;
+  };
   runId: string;
   scenario: string;
   overlayMode: string;
@@ -304,6 +315,30 @@ function minimum(values: number[]): number {
 function maximum(values: number[]): number {
   return values.length > 0 ? Math.max(...values) : 0;
 }
+
+const MAIN_MEMORY_FIELDS = [
+  'rssMB',
+  'heapTotalMB',
+  'heapUsedMB',
+  'externalMB',
+  'arrayBuffersMB',
+  'mallocedMB',
+] as const;
+
+type MainMemoryBreakdown = Record<(typeof MAIN_MEMORY_FIELDS)[number], number>;
+
+// Only the fields the summary uses are required. Older logs lack the whole
+// object; malformed values are ignored, not fatal.
+const parseMainMemory = (value: unknown): MainMemoryBreakdown | undefined => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  return MAIN_MEMORY_FIELDS.every(
+    (field) =>
+      typeof record[field] === 'number' && Number.isFinite(record[field])
+  )
+    ? (value as MainMemoryBreakdown)
+    : undefined;
+};
 
 function linearSlopePerMinute(
   samples: { timestamp: string; value: number }[]
@@ -557,6 +592,32 @@ export function summarizeCapture(
       effectiveMain.flatMap((sample) => Object.keys(sample.sections ?? {}))
     ),
   ].sort();
+  const mainMemorySamples = effectiveMain.flatMap((sample) => {
+    const memory = parseMainMemory(sample.mainMemory);
+    return memory ? [{ timestamp: sample.timestamp, memory }] : [];
+  });
+  const mainMemorySlope = (field: keyof MainMemoryBreakdown) =>
+    linearSlopePerMinute(
+      mainMemorySamples.map((sample) => ({
+        timestamp: sample.timestamp,
+        value: sample.memory[field],
+      }))
+    );
+  const mainMemoryBreakdown =
+    mainMemorySamples.length >= 2
+      ? {
+          sampleCount: mainMemorySamples.length,
+          rssSlopeMBPerMinute: mainMemorySlope('rssMB'),
+          heapUsedSlopeMBPerMinute: mainMemorySlope('heapUsedMB'),
+          heapTotalSlopeMBPerMinute: mainMemorySlope('heapTotalMB'),
+          externalSlopeMBPerMinute: mainMemorySlope('externalMB'),
+          arrayBuffersSlopeMBPerMinute: mainMemorySlope('arrayBuffersMB'),
+          mallocedSlopeMBPerMinute: mainMemorySlope('mallocedMB'),
+          peakRssMB: maximum(
+            mainMemorySamples.map((sample) => sample.memory.rssMB)
+          ),
+        }
+      : undefined;
   const processGroups = new Map<
     number,
     {
@@ -1134,6 +1195,7 @@ export function summarizeCapture(
     },
     channels,
     widgetInputs,
+    ...(mainMemoryBreakdown ? { mainMemoryBreakdown } : {}),
     evidence: {
       runOriginAvailable,
       privateMemoryAvailable,
@@ -1263,6 +1325,23 @@ export function summaryMarkdown(summary: PerfSummary): string {
         `| ${process.name} | ${format(process.averageCpuPercent)}% | ${format(process.averageMemoryMB)} | ${format(process.memorySlopeMBPerMinute)} | ${format(process.averagePrivateMemoryMB)} | ${format(process.privateMemorySlopeMBPerMinute)} |`
     )
     .join('\n');
+  const breakdown = summary.mainMemoryBreakdown;
+  const mainMemory = breakdown
+    ? `
+## Main-process memory breakdown
+
+| Metric | Result |
+| --- | ---: |
+| Samples with breakdown | ${breakdown.sampleCount} |
+| Peak RSS | ${format(breakdown.peakRssMB)} MB |
+| RSS slope | ${format(breakdown.rssSlopeMBPerMinute)} MB/min |
+| JS heap used slope | ${format(breakdown.heapUsedSlopeMBPerMinute)} MB/min |
+| JS heap total slope | ${format(breakdown.heapTotalSlopeMBPerMinute)} MB/min |
+| External (outside the JS heap) slope | ${format(breakdown.externalSlopeMBPerMinute)} MB/min |
+| ArrayBuffers slope | ${format(breakdown.arrayBuffersSlopeMBPerMinute)} MB/min |
+| V8 malloced slope | ${format(breakdown.mallocedSlopeMBPerMinute)} MB/min |
+`
+    : '';
   const channels = Object.entries(summary.channels)
     .map(
       ([channel, metrics]) =>
@@ -1375,7 +1454,7 @@ ${sections}
 | Process | Average CPU | Average working set MB | Working-set slope MB/min | Average private MB | Private slope MB/min |
 | --- | ---: | ---: | ---: | ---: | ---: |
 ${processes}
-`;
+${mainMemory}`;
 }
 
 export function comparisonMarkdown(comparison: PerfComparison): string {

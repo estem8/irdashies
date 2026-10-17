@@ -137,6 +137,61 @@ describe('performance analysis', () => {
     );
   });
 
+  it('summarizes main-process memory breakdown slopes when reported', () => {
+    const samples = [0, 60, 120].map((seconds) => ({
+      ...mainSample(seconds, 100),
+      mainMemory: {
+        rssMB: 100 + (seconds / 60) * 2,
+        heapTotalMB: 60,
+        heapUsedMB: 40 + seconds / 60,
+        externalMB: 12 - seconds / 60,
+        arrayBuffersMB: 8,
+        mallocedMB: 5,
+      },
+    }));
+
+    const summary = summarizeCapture(capture(samples), 0);
+
+    expect(summary.mainMemoryBreakdown).toMatchObject({
+      sampleCount: 3,
+      peakRssMB: 104,
+    });
+    expect(summary.mainMemoryBreakdown?.rssSlopeMBPerMinute).toBeCloseTo(2);
+    expect(summary.mainMemoryBreakdown?.heapUsedSlopeMBPerMinute).toBeCloseTo(
+      1
+    );
+    expect(summary.mainMemoryBreakdown?.heapTotalSlopeMBPerMinute).toBeCloseTo(
+      0
+    );
+    expect(summary.mainMemoryBreakdown?.externalSlopeMBPerMinute).toBeCloseTo(
+      -1
+    );
+  });
+
+  it('keeps the breakdown when an unused field is missing', () => {
+    const samples = [0, 60].map((seconds) => ({
+      ...mainSample(seconds, 100),
+      mainMemory: {
+        rssMB: 100,
+        heapTotalMB: 60,
+        heapUsedMB: 40,
+        externalMB: 12,
+        arrayBuffersMB: 8,
+        mallocedMB: 5,
+      },
+    }));
+
+    const summary = summarizeCapture(capture(samples), 0);
+
+    expect(summary.mainMemoryBreakdown?.sampleCount).toBe(2);
+  });
+
+  it('omits main-process memory breakdown when samples lack it', () => {
+    const summary = summarizeCapture(capture(conclusiveSamples()));
+
+    expect(summary).not.toHaveProperty('mainMemoryBreakdown');
+  });
+
   it('summarizes renderer telemetry callback cost and rate', () => {
     const input = capture([
       mainSample(5, 100, 100, 100, 5000),

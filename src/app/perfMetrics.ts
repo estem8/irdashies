@@ -9,6 +9,7 @@
  */
 
 import { monitorEventLoopDelay, performance } from 'node:perf_hooks';
+import v8 from 'node:v8';
 import { app, BrowserWindow } from 'electron';
 import type { NumericSampleStats, Telemetry } from '@irdashies/types';
 import type { ChannelBusMetricsSnapshot } from './bridge/channelBridge';
@@ -60,6 +61,14 @@ export interface PerfReport {
   totalAppCpuPercent?: number;
   totalAppMemoryMB?: number;
   totalAppPrivateMemoryMB?: number;
+  mainMemory?: {
+    rssMB: number;
+    heapTotalMB: number;
+    heapUsedMB: number;
+    externalMB: number;
+    arrayBuffersMB: number;
+    mallocedMB: number;
+  };
   scenarioMetadata?: Record<string, unknown>;
   channelMetrics?: {
     processorExecutions: Record<string, number>;
@@ -277,6 +286,7 @@ export class TelemetryPerfMetrics {
       totalAppCpuPercent: totalCpu,
       totalAppMemoryMB: totalMemory,
       totalAppPrivateMemoryMB: totalPrivateMemory,
+      mainMemory: this.getMainMemoryBreakdown(),
       scenarioMetadata: this.scenarioMetadata(),
       channelMetrics: this.channelMetrics(sections),
     };
@@ -304,6 +314,26 @@ export class TelemetryPerfMetrics {
       this.sections.set(label, buf);
     }
     return buf;
+  }
+
+  // Splits main-process memory so a slope can be attributed to JS heap,
+  // ArrayBuffer backing stores or native malloc rather than guessed from RSS.
+  private getMainMemoryBreakdown(): PerfReport['mainMemory'] {
+    try {
+      const memory = process.memoryUsage();
+      const heap = v8.getHeapStatistics();
+      const toMB = (bytes: number): number => bytes / (1024 * 1024);
+      return {
+        rssMB: toMB(memory.rss),
+        heapTotalMB: toMB(memory.heapTotal),
+        heapUsedMB: toMB(memory.heapUsed),
+        externalMB: toMB(memory.external),
+        arrayBuffersMB: toMB(memory.arrayBuffers),
+        mallocedMB: toMB(heap.malloced_memory),
+      };
+    } catch {
+      return undefined;
+    }
   }
 
   private scenarioMetadata(): Record<string, unknown> | undefined {
@@ -472,6 +502,13 @@ export class TelemetryPerfMetrics {
     lines.push(
       `  eventLoop: mean=${report.eventLoopDelayMs.mean.toFixed(3)}ms max=${report.eventLoopDelayMs.max.toFixed(3)}ms p99=${report.eventLoopDelayMs.p99.toFixed(3)}ms`
     );
+
+    if (report.mainMemory) {
+      const mem = report.mainMemory;
+      lines.push(
+        `  mainMemory: rss=${mem.rssMB.toFixed(0)}MB heap=${mem.heapUsedMB.toFixed(0)}/${mem.heapTotalMB.toFixed(0)}MB external=${mem.externalMB.toFixed(0)}MB arrayBuffers=${mem.arrayBuffersMB.toFixed(0)}MB malloced=${mem.mallocedMB.toFixed(0)}MB`
+      );
+    }
 
     for (const [label, stats] of Object.entries(report.sections)) {
       if (stats.count === 0) continue;
