@@ -32,7 +32,9 @@ interface MockRow {
 /**
  * Lays the mock variables out as one raw row, the way the native module copies
  * it, so the row-buffer read path runs against the mock as it does against the
- * SDK. Each variable is aligned to its value size.
+ * SDK. Each variable is aligned to its value size. The fixture only holds
+ * variable types 1 to 5; anything else would be skipped, so extend the layout
+ * here if a char variable is ever added to it.
  */
 function buildMockRow(telemetry: TelemetryVarList): MockRow {
   const layout: TelemetryLayoutEntry[] = [];
@@ -77,6 +79,8 @@ export class MockSDK implements INativeSDK {
   private _row: MockRow | null = null;
 
   private _rowSource: TelemetryVarList | null = null;
+
+  private _layoutVersion = 0;
 
   constructor() {
     this.currDataVersion = 1;
@@ -140,9 +144,9 @@ export class MockSDK implements INativeSDK {
     return this._mockRow()?.layout ?? [];
   }
 
-  /** The mock layout never changes once the data is loaded. */
+  /** 0 before the data is loaded; bumped whenever the row is rebuilt. */
   public getTelemetryLayoutVersion(): number {
-    return this._mockRow() ? 1 : 0;
+    return this._mockRow() ? this._layoutVersion : 0;
   }
 
   private _mockRow(): MockRow | null {
@@ -150,6 +154,7 @@ export class MockSDK implements INativeSDK {
     if (this._rowSource !== mockTelemetry) {
       this._row = buildMockRow(mockTelemetry);
       this._rowSource = mockTelemetry;
+      this._layoutVersion++;
     }
     return this._row;
   }
@@ -168,7 +173,8 @@ export class MockSDK implements INativeSDK {
 
   public broadcast(
     message:
-      BroadcastMessages.CameraSwitchPos | BroadcastMessages.CameraSwitchNum,
+      | BroadcastMessages.CameraSwitchPos
+      | BroadcastMessages.CameraSwitchNum,
     driverOrPos: number,
     group: number,
     camera: number
