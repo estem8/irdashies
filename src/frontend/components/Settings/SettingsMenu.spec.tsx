@@ -168,6 +168,20 @@ describe('SettingsMenu', () => {
     );
   });
 
+  it('keeps the first toggle when a second one is flipped before the dashboard updates', () => {
+    state.simulator = 'iracing';
+    renderMenu();
+    fireEvent.click(screen.getByRole('switch', { name: 'Enable Standings' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Enable Wind' }));
+    expect(state.onDashboardUpdated).toHaveBeenCalledTimes(2);
+    const last = state.onDashboardUpdated.mock.lastCall?.[0] as DashboardLayout;
+    expect(last.widgets.map(({ id, enabled }) => [id, enabled])).toEqual([
+      ['standings', false],
+      ['standings-copy', true],
+      ['wind', false],
+    ]);
+  });
+
   it('offers settings but no toggle for a widget absent from the dashboard', () => {
     renderMenu();
     expect(

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
 import {
@@ -146,15 +146,26 @@ export const SettingsMenu = () => {
   const widgetIdsOf = (item: MenuItem) =>
     typesOf(item).flatMap((type) => widgetFor(type)?.id ?? []);
 
+  // The last dashboard this menu wrote. Two switches flipped before the context
+  // re-renders would otherwise both spread the same snapshot, and the second
+  // write would undo the first.
+  const lastWritten = useRef(currentDashboard);
+  useEffect(() => {
+    lastWritten.current = currentDashboard;
+  }, [currentDashboard]);
+
   const setWidgetEnabled = (item: MenuItem, enabled: boolean) => {
-    if (!currentDashboard || !onDashboardUpdated) return;
+    const base = lastWritten.current;
+    if (!base || !onDashboardUpdated) return;
     const ids = widgetIdsOf(item);
-    onDashboardUpdated({
-      ...currentDashboard,
-      widgets: currentDashboard.widgets.map((w) =>
+    const next = {
+      ...base,
+      widgets: base.widgets.map((w) =>
         ids.includes(w.id) ? { ...w, enabled } : w
       ),
-    });
+    };
+    lastWritten.current = next;
+    onDashboardUpdated(next);
   };
 
   const itemsWithSupport = widgetItems
