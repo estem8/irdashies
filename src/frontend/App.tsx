@@ -1,5 +1,5 @@
 // App.tsx
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import {
@@ -9,7 +9,6 @@ import {
   useRunningState,
   useResetOnDisconnect,
 } from '@irdashies/context';
-import { Settings } from './components/Settings/Settings';
 import { ThemeManager } from './components/ThemeManager/ThemeManager';
 import { HideUIWrapper } from './components/HideUIWrapper/HideUIWrapper';
 import { LapTraceUpdater } from './components/OverlayContainer/LapTraceUpdater';
@@ -24,6 +23,13 @@ import {
   useGantryDock,
 } from './components/GantryDock/GantryDockHost';
 import { GantrySessionHoldProvider } from './components/Gantry/hooks/useGantrySessionHold';
+
+// Lazy: overlay windows share this bundle and never render Settings.
+const Settings = lazy(() =>
+  import('./components/Settings/Settings').then((m) => ({
+    default: m.Settings,
+  }))
+);
 
 /**
  * Check if this window is the settings window based on URL hash
@@ -48,7 +54,14 @@ const SettingsApp = () => {
       <SessionProvider bridge={window.irsdkBridge} />
       <HashRouter>
         <Routes>
-          <Route path="/settings/*" element={<Settings />} />
+          <Route
+            path="/settings/*"
+            element={
+              <Suspense fallback={null}>
+                <Settings />
+              </Suspense>
+            }
+          />
         </Routes>
       </HashRouter>
     </>
