@@ -159,6 +159,30 @@ const DriverRowView = ({
   );
 };
 
+// Compares exactly the standing fields DriverRowView, GapCell and StatusBadges
+// read. Fields the row does not show (delta, interval, lastTime, ...) change on
+// every delivery while a car moves, so comparing the whole standing would
+// re-render nearly every row anyway. Add a field here when the view starts to
+// read one, or the row stops updating for it.
+const sameRowStanding = (a: Standings, b: Standings) =>
+  a.classPosition === b.classPosition &&
+  a.carId === b.carId &&
+  a.dnf === b.dnf &&
+  a.onPitRoad === b.onPitRoad &&
+  a.repair === b.repair &&
+  a.penalty === b.penalty &&
+  a.slowdown === b.slowdown &&
+  a.radioActive === b.radioActive &&
+  a.positionChange === b.positionChange &&
+  a.lastPitLap === b.lastPitLap &&
+  a.tireCompound === b.tireCompound &&
+  a.carClass.id === b.carClass.id &&
+  a.carClass.color === b.carClass.color &&
+  a.driver.name === b.driver.name &&
+  a.driver.carNum === b.driver.carNum &&
+  a.driver.flairId === b.driver.flairId &&
+  sameValue(a.gap, b.gap);
+
 // The tower rebuilds every standing on each delivery; render only when what
 // the row shows has changed.
 export const DriverRow = memo(
@@ -168,7 +192,7 @@ export const DriverRow = memo(
     previous.nameFormat === next.nameFormat &&
     previous.positionStyle === next.positionStyle &&
     previous.focused === next.focused &&
-    sameValue(previous.standing, next.standing)
+    sameRowStanding(previous.standing, next.standing)
 );
 DriverRow.displayName = 'DriverRow';
 

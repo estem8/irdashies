@@ -31,6 +31,16 @@ export const TelemetryRateSettings = () => {
       });
   }, []);
 
+  // Outside the app (e.g. settings in a browser) the cap cannot be read or
+  // saved, so don't offer a control that would look applied but do nothing.
+  if (!window.telemetryRateBridge) {
+    return (
+      <p className="px-4 text-sm text-slate-400">
+        The telemetry rate cap can only be changed in the irDashies app.
+      </p>
+    );
+  }
+
   if (capHz === null) {
     return <div className="px-4 text-sm text-slate-400">Loading...</div>;
   }

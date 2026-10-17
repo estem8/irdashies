@@ -444,11 +444,11 @@ export function exposeBridge() {
       ipcRenderer.invoke('chromiumFlags:save', flags),
   } as ChromiumFlagsBridge);
 
-  contextBridge.exposeInMainWorld('telemetryRateBridge', {
+  defineBridge<TelemetryRateBridge>('telemetryRateBridge', {
     getCapHz: () => ipcRenderer.invoke('telemetryRate:get'),
     saveCapHz: (capHz: TelemetryRateCapHz) =>
       ipcRenderer.invoke('telemetryRate:save', capHz),
-  } as TelemetryRateBridge);
+  });
 
   defineBridge<RaceControlBridge>('raceControlBridge', {
     getIncidents: () => ipcRenderer.invoke('raceControl:getIncidents'),

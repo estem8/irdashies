@@ -1318,10 +1318,12 @@ export class OverlayManager {
   public setSettingsTitleBarTheme(theme: SettingsTheme | undefined): void {
     const win = this.currentSettingsWindow;
     if (!win || win.isDestroyed() || process.platform === 'darwin') return;
-    // Called on every dashboard publish; only repaint when the theme changes.
-    if (this.settingsTitleBarTheme === theme) return;
-    this.settingsTitleBarTheme = theme;
-    win.setTitleBarOverlay(settingsTitleBarOverlay(theme));
+    // Called on every dashboard publish; only repaint when the resolved theme
+    // changes (undefined and an unknown value both paint the default).
+    const resolved = resolveSettingsTheme(theme);
+    if (this.settingsTitleBarTheme === resolved) return;
+    this.settingsTitleBarTheme = resolved;
+    win.setTitleBarOverlay(settingsTitleBarOverlay(resolved));
   }
 
   public createSettingsWindow(
@@ -1376,8 +1378,9 @@ export class OverlayManager {
     );
 
     this.currentSettingsWindow = browserWindow;
-    this.settingsTitleBarTheme =
-      this.currentDashboard?.generalSettings?.settingsTheme;
+    this.settingsTitleBarTheme = resolveSettingsTheme(
+      this.currentDashboard?.generalSettings?.settingsTheme
+    );
     applyBaselineSecurity(browserWindow, 'Settings');
 
     // Reveal the window once its content is ready, unless it should start

@@ -129,10 +129,13 @@ export class ChannelBus {
     const existing = this.subscriptions.get(channel)?.get(target.id);
     if (existing) {
       existing.target = target;
+      // A new rate starts a new schedule, as hiding a subscription does. The
+      // same rate keeps it, so a repeated subscribe cannot jump the slot.
+      if (existing.rateHz !== rateHz) {
+        existing.lastDeliveredAt = undefined;
+        existing.nextDueAt = undefined;
+      }
       existing.rateHz = rateHz;
-      // A new rate starts a new schedule, as hiding a subscription does
-      existing.lastDeliveredAt = undefined;
-      existing.nextDueAt = undefined;
       existing.timer?.cancel();
       existing.timer = undefined;
       const active = isVisibilityGated(definition) ? target.isVisible() : true;

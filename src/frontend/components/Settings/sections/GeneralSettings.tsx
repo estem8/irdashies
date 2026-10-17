@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { ToggleSwitch } from '../components/ToggleSwitch';
 import { useAvailableSimulators, useDashboard } from '@irdashies/context';
-import { SIMULATOR_IDS, SIMULATOR_LABELS } from '@irdashies/types';
+import {
+  SIMULATOR_IDS,
+  SIMULATOR_LABELS,
+  resolveSettingsTheme,
+} from '@irdashies/types';
 import type { GeneralSettingsType, SettingsTheme } from '@irdashies/types';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
 import { SettingButtonGroupRow } from '../components/SettingButtonGroupRow';
@@ -91,7 +95,9 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
     fontSize: currentDashboard?.generalSettings?.fontSize ?? 'sm',
     fontWeight: currentDashboard?.generalSettings?.fontWeight ?? 'normal',
     colorPalette: currentDashboard?.generalSettings?.colorPalette ?? 'default',
-    settingsTheme: currentDashboard?.generalSettings?.settingsTheme ?? 'carbon',
+    settingsTheme: resolveSettingsTheme(
+      currentDashboard?.generalSettings?.settingsTheme
+    ),
     highlightColor: currentDashboard?.generalSettings?.highlightColor ?? 960745,
     skipTaskbar: currentDashboard?.generalSettings?.skipTaskbar ?? true,
     disableHardwareAcceleration:
@@ -500,7 +506,7 @@ export const GeneralSettings = ({ previewMode }: GeneralSettingsProps = {}) => {
         <SettingButtonGroupRow<SettingsTheme>
           title="Settings Window Style"
           description="Look of this settings window. Overlays are not affected."
-          value={settings.settingsTheme ?? 'carbon'}
+          value={resolveSettingsTheme(settings.settingsTheme)}
           options={[
             { label: 'Carbon', value: 'carbon' },
             { label: 'Red', value: 'red' },

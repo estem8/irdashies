@@ -28,7 +28,8 @@ declare global {
     /** Present only in the hidden WebHID host renderer (src/hidHost.ts). */
     gamepadHost?: GamepadHostBridge;
     chromiumFlagsBridge: ChromiumFlagsBridge;
-    telemetryRateBridge: TelemetryRateBridge;
+    /** Absent outside the Electron preload, e.g. the browser server. */
+    telemetryRateBridge?: TelemetryRateBridge;
     raceControlBridge: RaceControlBridge;
     /** Absent outside the Electron preload, e.g. the browser server. */
     lapHistoryBridge?: LapHistoryBridge;
