@@ -1,209 +1,252 @@
+import { memo, useMemo } from 'react';
+import {
+  CloudIcon,
+  CloudRainIcon,
+  CloudSunIcon,
+  DropIcon,
+  SunIcon,
+  ThermometerIcon,
+  WavesIcon,
+  WindIcon,
+  type Icon,
+} from '@phosphor-icons/react';
 import {
   useDashboard,
   sessionBarSelectors,
   trackStateSelectors,
   useSessionBarSelector,
+  useSessionStore,
   useTrackStateSelector,
   useSessionVisibility,
   useThrottledWeather,
 } from '@irdashies/context';
-import { useTrackTemperature } from './hooks/useTrackTemperature';
+import { useStore } from 'zustand';
+import { speedFromMs } from '@irdashies/utils/units';
 import { useWindDemoData } from '../../domain/weather/useWindDemoData';
-import { WeatherTemp } from './WeatherTemp/WeatherTemp';
-import { WeatherTrackWetness } from './WeatherTrackWetness/WeatherTrackWetness';
-import { WeatherTrackRubbered } from './WeatherTrackRubbered/WeatherTrackRubbered';
-import { WindDirection } from './WindDirection/WindDirection';
-import { useTrackRubberedState } from './hooks/useTrackRubberedState';
+import { getWindIntensityClass } from '../../domain/weather/wind';
 import { useWeatherSettings } from './hooks/useWeatherSettings';
-import { WeatherHumidity } from './WeatherHumidity/WeatherHumidity';
-import { WeatherPrecipitation } from './WeatherPrecipitation/WeatherPrecipitation';
-import { useMemo } from 'react';
-import { RoadHorizonIcon, ThermometerIcon } from '@phosphor-icons/react';
+import { useWeatherForecast } from './hooks/useWeatherForecast';
+import type { ForecastHour } from './hooks/forecast';
+import { WeatherCompass } from './WeatherCompass';
 
-type WeatherColumnId =
-  | 'trackTemp'
-  | 'airTemp'
-  | 'wind'
-  | 'humidity'
-  | 'precipitation'
-  | 'wetness'
-  | 'trackState';
+const RAINING = 0.02;
+const WETNESS_LEVELS: Record<number, string> = {
+  1: 'Dry',
+  2: 'Mostly Dry',
+  3: 'Very Lightly Wet',
+  4: 'Lightly Wet',
+  5: 'Moderately Wet',
+  6: 'Very Wet',
+  7: 'Extremely Wet',
+};
 
-export const Weather = () => {
+const skyIcon = (skies: string | undefined, raining: boolean): Icon => {
+  if (raining) return CloudRainIcon;
+  const s = skies?.toLowerCase() ?? '';
+  if (s.includes('overcast') || s.includes('mostly')) return CloudIcon;
+  if (s.includes('partly')) return CloudSunIcon;
+  return SunIcon;
+};
+
+const toDisplayTemp = (c: number, metric: boolean) =>
+  Math.round(metric ? c : (c * 9) / 5 + 32);
+
+const Stat = ({
+  icon: StatIcon,
+  iconClass,
+  label,
+  value,
+  unit,
+}: {
+  icon: Icon;
+  iconClass: string;
+  label: string;
+  value: string | number;
+  unit?: string;
+}) => (
+  <div className="flex-1 min-w-0 px-2">
+    <div className="flex items-center gap-1 text-xs uppercase tracking-wider text-white/50">
+      <StatIcon className={`flex-none ${iconClass}`} size={14} />
+      <span className="truncate">{label}</span>
+    </div>
+    <div className="text-xl font-bold tabular-nums truncate">
+      {value}
+      {unit && (
+        <span className="text-xs font-normal text-white/50">{unit}</span>
+      )}
+    </div>
+  </div>
+);
+
+const ForecastTile = ({
+  hour,
+  metric,
+  skies,
+  first,
+}: {
+  hour: ForecastHour;
+  metric: boolean;
+  skies?: string;
+  first: boolean;
+}) => {
+  const TileIcon = skyIcon(skies, hour.precipitationPct >= RAINING * 100);
+  return (
+    <div
+      className={`flex-1 rounded-sm border px-2 py-1 text-center ${
+        first
+          ? 'border-blue-500/70 bg-blue-950/50'
+          : 'border-white/10 bg-slate-900/50'
+      }`}
+    >
+      <div
+        className={`text-xs tabular-nums ${first ? 'text-blue-400' : 'text-white/50'}`}
+      >
+        {String(hour.hour).padStart(2, '0')}:00
+      </div>
+      <div className="flex items-center justify-center gap-1 text-white/60">
+        <TileIcon size={16} />
+        <DropIcon size={12} className="text-blue-400" />
+        <span className="text-xs tabular-nums">{hour.precipitationPct}%</span>
+      </div>
+      <div className="text-sm font-bold tabular-nums">
+        ~{toDisplayTemp(hour.airTemp, metric)}&deg;
+      </div>
+    </div>
+  );
+};
+
+export const Weather = memo(() => {
   const { isDemoMode } = useDashboard();
   const settings = useWeatherSettings();
   const displayUnits = useSessionBarSelector(sessionBarSelectors.displayUnits);
   const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const isSessionVisible = useSessionVisibility(settings?.sessionVisibility);
+  const skies = useStore(
+    useSessionStore,
+    (state) => state.session?.WeekendInfo?.TrackSkies
+  );
+  const temps = useSessionBarSelector(
+    (s) => [s.airTemp, s.trackTemp] as const,
+    {
+      equality: (a, b) => a?.[0] === b?.[0] && a?.[1] === b?.[1],
+    }
+  );
 
-  // Determine actual unit to use: auto uses iRacing's DisplayUnits setting
   const unitSetting = settings?.units ?? 'auto';
   const isMetric =
     unitSetting === 'auto' ? displayUnits === 1 : unitSetting === 'Metric';
-  const actualUnit = isMetric ? 'Metric' : 'Imperial';
 
-  // Weather telemetry - throttled to ~1 update/sec since weather data
-  // changes slowly and doesn't need 60 FPS updates
   const weather = useThrottledWeather();
+  const forecast = useWeatherForecast(settings?.forecast?.enabled ?? true);
 
-  const { trackTemp, airTemp } = useTrackTemperature({
-    airTempUnit: actualUnit,
-    trackTempUnit: actualUnit,
-  });
-  const trackRubbered = useTrackRubberedState();
-
-  // Derived values
-  const relativeWindDirection =
-    (weather.windDirection ?? 0) - (weather.windYaw ?? 0);
   const demoWind = useWindDemoData(isDemoMode, isMetric);
-  const windSpeedMs = demoWind?.speedMs ?? weather.windVelocity;
-  const windDirection = demoWind?.direction ?? relativeWindDirection;
+  const windMs = demoWind?.speedMs ?? weather.windVelocity;
+  const windDir = demoWind?.direction ?? weather.windDirection;
+  const windRelative =
+    windDir === undefined ? undefined : windDir - (weather.windYaw ?? 0);
+  const windSpeed =
+    windMs === undefined
+      ? undefined
+      : speedFromMs(windMs, isMetric ? 'km/h' : 'mph');
+  const windDeg =
+    windDir === undefined
+      ? undefined
+      : Math.round(((windDir * 180) / Math.PI + 360) % 360);
 
-  // Column ordering: depends ONLY on settings, NOT on telemetry data.
-  // Settings change when the user edits config (very rare during a session).
-  const displayOrder = settings?.displayOrder as string[] | undefined;
-  const layout = settings?.layout ?? 'vertical';
-  const horizontalMode = settings?.horizontalMode ?? 'compact';
-  const componentVariant =
-    layout === 'vertical'
-      ? 'default'
-      : horizontalMode === 'compact'
-        ? 'compact'
-        : 'inline';
+  const raining = (weather.precipitation ?? 0) >= RAINING;
+  const SkyIcon = skyIcon(skies, raining);
+  const [airTemp, trackTemp] = temps ?? [];
+  const surface = WETNESS_LEVELS[weather.trackMoisture ?? 0] ?? '--';
+  const tempUnit = isMetric ? '°C' : '°F';
 
-  const visibleColumnIds = useMemo(() => {
-    const allColumns: { id: WeatherColumnId; enabled: boolean }[] = [
-      { id: 'trackTemp', enabled: settings?.trackTemp?.enabled ?? true },
-      { id: 'airTemp', enabled: settings?.airTemp?.enabled ?? true },
-      { id: 'wind', enabled: settings?.wind?.enabled ?? true },
-      { id: 'humidity', enabled: settings?.humidity?.enabled ?? true },
-      {
-        id: 'precipitation',
-        enabled: settings?.precipitation?.enabled ?? true,
-      },
-      { id: 'wetness', enabled: settings?.wetness?.enabled ?? true },
-      { id: 'trackState', enabled: settings?.trackState?.enabled ?? true },
-    ];
+  const skyLabel = useMemo(
+    () => (raining ? 'Rain' : (skies ?? '--')),
+    [raining, skies]
+  );
 
-    const enabledColumns = allColumns.filter((c) => c.enabled);
-
-    if (!displayOrder) {
-      return enabledColumns.map((c) => c.id);
-    }
-
-    const ordered = displayOrder.filter((id): id is WeatherColumnId =>
-      enabledColumns.some((c) => c.id === id)
-    );
-
-    const remaining = enabledColumns
-      .filter((c) => !displayOrder.includes(c.id))
-      .map((c) => c.id);
-
-    return [...ordered, ...remaining];
-  }, [
-    settings?.trackTemp?.enabled,
-    settings?.airTemp?.enabled,
-    settings?.wind?.enabled,
-    settings?.humidity?.enabled,
-    settings?.precipitation?.enabled,
-    settings?.wetness?.enabled,
-    settings?.trackState?.enabled,
-    displayOrder,
-  ]);
-
-  // Maps column ID to its memoized sub-component.
-  // Sub-components are wrapped in React.memo(), so they bail out of
-  // re-rendering unless their specific primitive props have changed.
-  const renderColumn = (id: WeatherColumnId) => {
-    switch (id) {
-      case 'trackTemp':
-        return (
-          <WeatherTemp
-            key={id}
-            title="Track"
-            value={trackTemp}
-            icon={RoadHorizonIcon}
-            variant={componentVariant}
-          />
-        );
-      case 'airTemp':
-        return (
-          <WeatherTemp
-            key={id}
-            title="Air"
-            value={airTemp}
-            icon={ThermometerIcon}
-            variant={componentVariant}
-          />
-        );
-      case 'wind':
-        return (
-          <WindDirection
-            key={id}
-            speedMs={windSpeedMs}
-            direction={windDirection}
-            metric={isMetric}
-            variant={componentVariant}
-          />
-        );
-      case 'humidity':
-        return (
-          <WeatherHumidity
-            key={id}
-            humidity={weather.humidity}
-            variant={componentVariant}
-          />
-        );
-      case 'precipitation':
-        return (
-          <WeatherPrecipitation
-            key={id}
-            precipitation={weather.precipitation}
-            variant={componentVariant}
-          />
-        );
-      case 'wetness':
-        return (
-          <WeatherTrackWetness
-            key={id}
-            trackMoisture={weather.trackMoisture}
-            variant={componentVariant}
-          />
-        );
-      case 'trackState':
-        return (
-          <WeatherTrackRubbered
-            key={id}
-            trackRubbered={trackRubbered}
-            variant={componentVariant}
-          />
-        );
-    }
-  };
-
-  // Hide if showOnlyWhenOnTrack is enabled and player is not on track
-  if (settings?.showOnlyWhenOnTrack && !isOnTrack) {
-    return null;
-  }
-
+  if (settings?.showOnlyWhenOnTrack && !isOnTrack) return null;
   if (!isSessionVisible) return <></>;
 
   return (
     <div
-      className="@container w-full rounded-sm p-2 bg-slate-800/(--bg-opacity)"
+      className="@container w-full rounded-sm p-3 bg-slate-800/(--bg-opacity) text-white"
       style={{
         ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
       }}
     >
-      <div
-        className={
-          layout === 'horizontal'
-            ? 'flex flex-row flex-wrap w-full gap-1'
-            : 'flex flex-col w-full gap-2'
-        }
-      >
-        {visibleColumnIds.map(renderColumn)}
+      <div className="flex items-center gap-3">
+        <div className="flex-none size-28 @max-[320px]:size-20">
+          <WeatherCompass
+            heading={weather.windYaw}
+            windRelative={windRelative}
+            windClassName={getWindIntensityClass(windSpeed)}
+          />
+        </div>
+        <div className="w-px self-stretch bg-white/10" />
+        <div className="flex-1 min-w-0 text-center">
+          <div className="flex items-center justify-center gap-2 text-xl font-semibold">
+            <SkyIcon className="flex-none" size={32} />
+            <span className="truncate">{skyLabel}</span>
+          </div>
+          <div className="text-5xl font-bold tabular-nums">
+            {airTemp === undefined ? '--' : toDisplayTemp(airTemp, isMetric)}
+            <span className="text-xl font-normal text-white/50">
+              {tempUnit}
+            </span>
+          </div>
+        </div>
       </div>
+
+      <div className="mt-2 flex divide-x divide-white/10 border-t border-white/10 pt-2">
+        <Stat
+          icon={ThermometerIcon}
+          iconClass="text-orange-400"
+          label="Track"
+          value={
+            trackTemp === undefined ? '--' : toDisplayTemp(trackTemp, isMetric)
+          }
+          unit={tempUnit}
+        />
+        <Stat
+          icon={DropIcon}
+          iconClass="text-blue-400"
+          label="Humidity"
+          value={
+            weather.humidity === undefined
+              ? '--'
+              : Math.round(weather.humidity * 100)
+          }
+          unit="%"
+        />
+        <Stat
+          icon={WavesIcon}
+          iconClass="text-amber-400"
+          label="Surface"
+          value={surface}
+        />
+        <Stat
+          icon={WindIcon}
+          iconClass="text-amber-400"
+          label={`Wind ${windDeg ?? '--'}°`}
+          value={windSpeed === undefined ? '--' : Math.round(windSpeed)}
+          unit={isMetric ? ' km/h' : ' mph'}
+        />
+      </div>
+
+      {settings?.forecast?.enabled !== false && forecast.length > 0 && (
+        <div className="mt-2 flex gap-2">
+          {forecast.map((h, i) => (
+            <ForecastTile
+              key={h.hour}
+              hour={h}
+              metric={isMetric}
+              skies={skies}
+              first={i === 0}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
-};
+});
+Weather.displayName = 'Weather';

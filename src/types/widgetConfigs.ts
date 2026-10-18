@@ -240,17 +240,8 @@ export interface RelativeConfig {
 
 export interface WeatherConfig {
   background: { opacity: number };
-  layout?: 'vertical' | 'horizontal';
-  horizontalMode?: 'compact' | 'full';
-  displayOrder: string[];
   showOnlyWhenOnTrack?: boolean;
-  airTemp: { enabled: boolean };
-  trackTemp: { enabled: boolean };
-  humidity: { enabled: boolean };
-  wetness: { enabled: boolean };
-  trackState: { enabled: boolean };
-  precipitation: { enabled: boolean };
-  wind: { enabled: boolean };
+  forecast: { enabled: boolean };
   units: 'auto' | 'Metric' | 'Imperial';
   sessionVisibility: SessionVisibilitySettings;
 }
