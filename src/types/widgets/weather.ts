@@ -8,7 +8,7 @@ export default defineWidgetManifest({
     x: 1334,
     y: 271,
     width: 380,
-    height: 280,
+    height: 130,
   },
   config: {
     background: {
@@ -40,7 +40,7 @@ export default defineWidgetManifest({
       type: 'boolean',
       label: 'Show forecast',
       description:
-        'Hourly estimate extrapolated from this session\u2019s weather trend',
+        'Colour-coded estimate of the next three hours, from the session trend',
     },
     units: {
       type: 'enum',

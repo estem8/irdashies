@@ -35,7 +35,7 @@ export const WeatherSettings = () => {
   return (
     <BaseSettingsSection
       title="Weather"
-      description="Sky, air and track temperature, humidity, surface, wind and a trend-based forecast."
+      description="Track surface state, air and track temperature, wind and a trend-based forecast."
       settings={settings}
       onSettingsChange={(s) => setSettings(s)}
       widgetId={SETTING_ID}
