@@ -4,10 +4,12 @@ import {
   sessionBarSelectors,
   trackStateSelectors,
   useSessionBarSelector,
+  useSessionStore,
   useTrackStateSelector,
   useSessionVisibility,
   useThrottledWeather,
 } from '@irdashies/context';
+import { useStore } from 'zustand';
 import { speedFromMs } from '@irdashies/utils/units';
 import { useWindDemoData } from '../../domain/weather/useWindDemoData';
 import { getWindIntensityClass } from '../../domain/weather/wind';
@@ -32,6 +34,10 @@ export const Weather = memo(() => {
   const displayUnits = useSessionBarSelector(sessionBarSelectors.displayUnits);
   const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const isSessionVisible = useSessionVisibility(settings?.sessionVisibility);
+  const skies = useStore(
+    useSessionStore,
+    (state) => state.session?.WeekendInfo?.TrackSkies
+  );
   const temps = useSessionBarSelector(
     (s) => [s.airTemp, s.trackTemp] as const,
     { equality: (a, b) => a?.[0] === b?.[0] && a?.[1] === b?.[1] }
@@ -65,7 +71,7 @@ export const Weather = memo(() => {
 
   return (
     <div
-      className="@container relative w-full rounded-md p-2.5 bg-slate-900/(--bg-opacity) text-white flex flex-col gap-2"
+      className="@container relative w-full rounded-[10px] p-2.5 bg-[#0f1319]/(--bg-opacity) text-white flex flex-col gap-2 font-[Barlow_Condensed,sans-serif]"
       style={{
         ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
       }}
@@ -77,12 +83,19 @@ export const Weather = memo(() => {
       )}
       <div className="flex items-center gap-3">
         <div
-          className={`rounded-md px-3 py-1.5 text-center text-3xl font-bold leading-none min-w-20 ${surface.className}`}
+          className={`rounded-lg px-3 py-1.5 text-center min-w-[76px] ${surface.className}`}
         >
-          {surface.label}
+          <div className="text-[30px] font-bold leading-none">
+            {surface.label}
+          </div>
+          {skies && (
+            <div className="text-[11px] font-semibold tracking-[.06em] whitespace-nowrap">
+              {skies}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-5xl font-bold leading-none tabular-nums">
+          <div className="text-[46px] font-bold leading-none tabular-nums">
             {airTemp === undefined
               ? '--'
               : `${toDisplayTemp(airTemp, isMetric)}°`}
@@ -91,7 +104,7 @@ export const Weather = memo(() => {
             </span>
           </div>
           {trackTemp !== undefined && (
-            <div className="text-sm text-white/50 tabular-nums">
+            <div className="text-[13px] text-slate-400 tabular-nums">
               track {toDisplayTemp(trackTemp, isMetric)}&deg;
             </div>
           )}
@@ -100,7 +113,7 @@ export const Weather = memo(() => {
           className={`flex flex-col items-center ${getWindIntensityClass(windSpeed)}`}
         >
           <WindArrow relative={windRelative} />
-          <div className="text-base font-semibold leading-none tabular-nums">
+          <div className="text-[15px] font-semibold leading-none tabular-nums">
             {windSpeed === undefined ? '--' : Math.round(windSpeed)}
           </div>
         </div>
@@ -110,7 +123,7 @@ export const Weather = memo(() => {
           {forecast.map((h) => (
             <div
               key={h.hour}
-              className={`flex flex-1 items-baseline justify-between rounded-md px-2 py-1 text-sm ${rainTileClass(h.precipitationPct)}`}
+              className={`flex flex-1 items-baseline justify-between rounded-md px-2 py-1 text-[13px] ${rainTileClass(h.precipitationPct)}`}
             >
               <span className="opacity-80 tabular-nums">
                 {hourLabel(h.hour)}

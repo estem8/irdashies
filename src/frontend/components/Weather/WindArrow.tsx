@@ -27,7 +27,7 @@ export const WindArrow = memo(({ relative, className }: WindArrowProps) => {
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className={`size-8 origin-center transition-transform duration-1000 ease-out ${className ?? ''}`}
+      className={`size-[34px] origin-center transition-transform duration-1000 ease-out ${className ?? ''}`}
       // The wind blows from `relative`, so the arrow points the other way.
       style={{ rotate: `${(turn + Math.PI) * (180 / Math.PI)}deg` }}
     >

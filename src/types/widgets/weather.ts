@@ -12,7 +12,7 @@ export default defineWidgetManifest({
   },
   config: {
     background: {
-      opacity: 25,
+      opacity: 90,
     },
     units: 'auto',
     forecast: {
