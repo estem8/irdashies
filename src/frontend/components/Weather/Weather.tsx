@@ -74,16 +74,11 @@ export const Weather = memo(() => {
 
   return (
     <div
-      className="@container relative w-full rounded-[10px] p-2.5 bg-[#0f1319]/(--bg-opacity) text-white flex flex-col gap-2 font-[Barlow_Condensed,sans-serif]"
+      className="@container w-full rounded-[10px] p-2.5 bg-[#0f1319]/(--bg-opacity) text-white flex flex-col gap-1.5 font-[Barlow_Condensed,sans-serif]"
       style={{
         ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
       }}
     >
-      {alertIn !== undefined && (
-        <div className="absolute -top-2.5 right-3 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold tracking-wider">
-          RAIN IN ~{alertIn}H
-        </div>
-      )}
       <div className="flex items-center gap-3">
         <div
           className={`rounded-lg px-3 py-1.5 text-center min-w-[76px] ${surface.className}`}
@@ -121,6 +116,18 @@ export const Weather = memo(() => {
           </div>
         </div>
       </div>
+      {showForecast && forecast.length > 0 && (
+        <div className="flex items-center justify-between text-xs font-semibold tracking-wider">
+          <span className="text-slate-400">NEXT 3H</span>
+          {alertIn !== undefined ? (
+            <span className="rounded-full bg-blue-600 px-2.5 py-0.5 font-bold">
+              RAIN IN ~{alertIn}H
+            </span>
+          ) : (
+            <span className="text-emerald-400">NO RAIN</span>
+          )}
+        </div>
+      )}
       {showForecast && forecast.length > 0 && (
         <div className="flex gap-1.5">
           {forecast.map((h) => (
