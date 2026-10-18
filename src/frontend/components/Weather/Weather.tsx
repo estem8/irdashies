@@ -16,7 +16,8 @@ import { getWindIntensityClass } from '../../domain/weather/wind';
 import { useWeatherSettings } from './hooks/useWeatherSettings';
 import { useWeatherForecast } from './hooks/useWeatherForecast';
 import {
-  rainAlertHour,
+  rainAlertIn,
+  DEMO_FORECAST,
   rainTileClass,
   surfaceStatus,
   tempTrend,
@@ -34,10 +35,11 @@ export const Weather = memo(() => {
   const displayUnits = useSessionBarSelector(sessionBarSelectors.displayUnits);
   const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const isSessionVisible = useSessionVisibility(settings?.sessionVisibility);
-  const skies = useStore(
+  const sessionSkies = useStore(
     useSessionStore,
     (state) => state.session?.WeekendInfo?.TrackSkies
   );
+  const skies = sessionSkies ?? (isDemoMode ? 'Partly Cloudy' : undefined);
   const temps = useSessionBarSelector(
     (s) => [s.airTemp, s.trackTemp] as const,
     { equality: (a, b) => a?.[0] === b?.[0] && a?.[1] === b?.[1] }
@@ -49,7 +51,8 @@ export const Weather = memo(() => {
 
   const weather = useThrottledWeather();
   const showForecast = settings?.forecast?.enabled !== false;
-  const forecast = useWeatherForecast(showForecast);
+  const liveForecast = useWeatherForecast(showForecast);
+  const forecast = isDemoMode ? DEMO_FORECAST : liveForecast;
 
   const demoWind = useWindDemoData(isDemoMode, isMetric);
   const windMs = demoWind?.speedMs ?? weather.windVelocity;
@@ -64,7 +67,7 @@ export const Weather = memo(() => {
   const [airTemp, trackTemp] = temps ?? [];
   const surface = surfaceStatus(weather.trackMoisture);
   const trend = tempTrend(airTemp, forecast);
-  const alertHour = showForecast ? rainAlertHour(forecast) : undefined;
+  const alertIn = showForecast ? rainAlertIn(forecast) : undefined;
 
   if (settings?.showOnlyWhenOnTrack && !isOnTrack) return null;
   if (!isSessionVisible) return <></>;
@@ -76,9 +79,9 @@ export const Weather = memo(() => {
         ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
       }}
     >
-      {alertHour !== undefined && (
+      {alertIn !== undefined && (
         <div className="absolute -top-2.5 right-3 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold tracking-wider">
-          RAIN BY {hourLabel(alertHour)}
+          RAIN IN ~{alertIn}H
         </div>
       )}
       <div className="flex items-center gap-3">

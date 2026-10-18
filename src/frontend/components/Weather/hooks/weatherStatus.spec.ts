@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  rainAlertHour,
+  rainAlertIn,
   rainTileClass,
   surfaceStatus,
   tempTrend,
@@ -42,13 +42,13 @@ describe('tempTrend', () => {
   });
 });
 
-describe('rainAlertHour', () => {
-  it('is the first hour at or above the threshold', () => {
-    expect(rainAlertHour([h(1, 20, 10), h(2, 20, 30), h(3, 20, 90)])).toBe(2);
+describe('rainAlertIn', () => {
+  it('is the hours until the first tile at or above the threshold', () => {
+    expect(rainAlertIn([h(1, 20, 10), h(2, 20, 30), h(3, 20, 90)])).toBe(2);
   });
 
   it('is undefined when it stays dry', () => {
-    expect(rainAlertHour([h(1, 20, 0), h(2, 20, 29)])).toBeUndefined();
+    expect(rainAlertIn([h(1, 20, 0), h(2, 20, 29)])).toBeUndefined();
   });
 });
 

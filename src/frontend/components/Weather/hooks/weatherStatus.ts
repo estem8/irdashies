@@ -34,11 +34,20 @@ export const tempTrend = (
 
 export const RAIN_ALERT_PCT = 30;
 
-/** Hour of the first forecast tile where rain is likely, if any. */
-export const rainAlertHour = (
+/** Whole hours until the first forecast tile where rain is likely, if any. */
+export const rainAlertIn = (
   forecast: readonly ForecastHour[]
-): number | undefined =>
-  forecast.find((h) => h.precipitationPct >= RAIN_ALERT_PCT)?.hour;
+): number | undefined => {
+  const i = forecast.findIndex((h) => h.precipitationPct >= RAIN_ALERT_PCT);
+  return i < 0 ? undefined : i + 1;
+};
+
+/** Shown in demo mode, where no telemetry history exists to extrapolate. */
+export const DEMO_FORECAST: readonly ForecastHour[] = [
+  { hour: 1, airTemp: 22, precipitationPct: 20 },
+  { hour: 2, airTemp: 20, precipitationPct: 60 },
+  { hour: 3, airTemp: 18, precipitationPct: 85 },
+];
 
 /** Forecast tile colours: the bluer, the more likely rain. */
 export const rainTileClass = (pct: number) => {
