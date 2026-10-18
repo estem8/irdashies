@@ -8,7 +8,7 @@ export default defineWidgetManifest({
     x: 1334,
     y: 271,
     width: 380,
-    height: 150,
+    height: 142,
   },
   config: {
     background: {

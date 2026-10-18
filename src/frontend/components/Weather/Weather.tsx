@@ -73,80 +73,76 @@ export const Weather = memo(() => {
   if (!isSessionVisible) return <></>;
 
   return (
-    <div
-      className="@container w-full rounded-[10px] p-2.5 bg-[#0f1319]/(--bg-opacity) text-white flex flex-col gap-1.5 font-[Barlow_Condensed,sans-serif]"
-      style={{
-        ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className={`rounded-lg px-3 py-1.5 text-center min-w-[76px] ${surface.className}`}
-        >
-          <div className="text-[30px] font-bold leading-none">
-            {surface.label}
+    // pt-3 keeps the badge that overlaps the card's top edge inside the window
+    <div className="@container w-full pt-3">
+      <div
+        className="relative w-full rounded-[10px] p-2.5 bg-[#0f1319]/(--bg-opacity) text-white flex flex-col gap-2 font-[Barlow_Condensed,sans-serif]"
+        style={{
+          ['--bg-opacity' as string]: `${settings?.background?.opacity ?? 80}%`,
+        }}
+      >
+        {alertIn !== undefined && (
+          <div className="absolute -top-2.5 right-3 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold tracking-wider">
+            RAIN IN ~{alertIn}H
           </div>
-          {skies && (
-            <div className="text-[11px] font-semibold tracking-[.06em] whitespace-nowrap">
-              {skies}
+        )}
+        <div className="flex items-center gap-3">
+          <div
+            className={`rounded-lg px-3 py-1.5 text-center min-w-[76px] ${surface.className}`}
+          >
+            <div className="text-[30px] font-bold leading-none">
+              {surface.label}
             </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[46px] font-bold leading-none tabular-nums">
-            {airTemp === undefined
-              ? '--'
-              : `${toDisplayTemp(airTemp, isMetric)}°`}
-            <span className={`ml-1 text-2xl ${trend.className}`}>
-              {trend.arrow}
-            </span>
+            {skies && (
+              <div className="text-[11px] font-semibold tracking-[.06em] whitespace-nowrap">
+                {skies}
+              </div>
+            )}
           </div>
-          {trackTemp !== undefined && (
-            <div className="text-[13px] text-slate-400 tabular-nums">
-              track {toDisplayTemp(trackTemp, isMetric)}&deg;
-            </div>
-          )}
-        </div>
-        <div
-          className={`flex flex-col items-center ${getWindIntensityClass(windSpeed)}`}
-        >
-          <WindArrow relative={windRelative} />
-          <div className="text-[15px] font-semibold leading-none tabular-nums">
-            {windSpeed === undefined ? '--' : Math.round(windSpeed)}
-          </div>
-        </div>
-      </div>
-      {showForecast && forecast.length > 0 && (
-        <div className="flex items-center justify-between text-xs font-semibold tracking-wider">
-          <span className="text-slate-400">NEXT 3H</span>
-          {alertIn !== undefined ? (
-            <span className="rounded-full bg-blue-600 px-2.5 py-0.5 font-bold">
-              RAIN IN ~{alertIn}H
-            </span>
-          ) : (
-            <span className="text-emerald-400">NO RAIN</span>
-          )}
-        </div>
-      )}
-      {showForecast && forecast.length > 0 && (
-        <div className="flex gap-1.5">
-          {forecast.map((h) => (
-            <div
-              key={h.hour}
-              className={`flex flex-1 items-baseline justify-between rounded-md px-2 py-1 text-[13px] ${rainTileClass(h.precipitationPct)}`}
-            >
-              <span className="opacity-80 tabular-nums">
-                {hourLabel(h.hour)}
+          <div className="flex-1 min-w-0">
+            <div className="text-[46px] font-bold leading-none tabular-nums">
+              {airTemp === undefined
+                ? '--'
+                : `${toDisplayTemp(airTemp, isMetric)}°`}
+              <span className={`ml-1 text-2xl ${trend.className}`}>
+                {trend.arrow}
               </span>
-              <b className="tabular-nums">
-                {h.precipitationPct > 0
-                  ? `${h.precipitationPct}%`
-                  : `~${toDisplayTemp(h.airTemp, isMetric)}°`}
-              </b>
             </div>
-          ))}
+            {trackTemp !== undefined && (
+              <div className="text-[13px] text-slate-400 tabular-nums">
+                track {toDisplayTemp(trackTemp, isMetric)}&deg;
+              </div>
+            )}
+          </div>
+          <div
+            className={`flex flex-col items-center ${getWindIntensityClass(windSpeed)}`}
+          >
+            <WindArrow relative={windRelative} />
+            <div className="text-[15px] font-semibold leading-none tabular-nums">
+              {windSpeed === undefined ? '--' : Math.round(windSpeed)}
+            </div>
+          </div>
         </div>
-      )}
+        {showForecast && forecast.length > 0 && (
+          <div className="flex gap-1.5">
+            {forecast.map((h) => (
+              <div
+                key={h.hour}
+                className={`flex flex-1 items-baseline justify-between rounded-md px-2 py-1 text-[13px] ${rainTileClass(h.precipitationPct)}`}
+              >
+                <span className="opacity-80 tabular-nums">
+                  {hourLabel(h.hour)}
+                </span>
+                <b className="tabular-nums">
+                  {h.precipitationPct > 0
+                    ? `${h.precipitationPct}%`
+                    : `~${toDisplayTemp(h.airTemp, isMetric)}°`}
+                </b>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
