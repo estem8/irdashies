@@ -13,7 +13,7 @@ export type StaticKeybindingActionId =
  */
 export type WidgetToggleActionId = `toggle-widget:${string}`;
 
-/** Navigation inputs of the Pie Menu widget; `open` toggles/backs out. */
+/** Navigation inputs of the Pie Menu widget; `open` opens and closes the menu. */
 export type PieMenuInput = 'open' | 'up' | 'right' | 'down' | 'left';
 
 /** Dynamic Pie Menu navigation action, e.g. `pie-menu:up`. Unbound by default. */

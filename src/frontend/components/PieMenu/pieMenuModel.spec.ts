@@ -64,7 +64,7 @@ describe('stepPieMenu', () => {
   it('goes back to the main menu on the opposite side', () => {
     expect(stepPieMenu(tires, 'right', config).state.level).toBe('root');
     expect(stepPieMenu(fuel, 'up', config).state.level).toBe('root');
-    expect(stepPieMenu(tires, 'open', config).state.level).toBe('root');
+    expect(stepPieMenu(tires, 'open', config).state.level).toBe('closed');
   });
 
   it('shows the result of what was picked instead of the menu', () => {

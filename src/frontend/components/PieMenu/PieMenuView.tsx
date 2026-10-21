@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useEffect, useState, type ReactNode } from 'react';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -79,6 +79,31 @@ const arcPath = (r0: number, r1: number, a0: number, a1: number) => {
   const [x2, y2] = polar(r0, a1);
   const [x3, y3] = polar(r0, a0);
   return `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z`;
+};
+
+/** Fades and scales in on mount, quickly; key it to replay on a change. */
+const Appear = ({
+  children,
+  hidden = false,
+}: {
+  children: ReactNode;
+  hidden?: boolean;
+}) => {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  const shown = entered && !hidden;
+  return (
+    <g
+      className={`origin-center transition-[opacity,scale] duration-150 ease-out ${
+        shown ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+      }`}
+    >
+      {children}
+    </g>
+  );
 };
 
 /** Text and icon colour: dark on a highlighted side, light otherwise. */
@@ -657,12 +682,14 @@ export const PieMenuView = memo(
       : state;
     const items = getPieItems(ringState, config);
     const compact = ringState.level === 'root';
+    // A new key replays the quick fade-in when another menu comes up.
+    const ringKey =
+      ringState.level === 'sub' ? `sub-${ringState.entry}` : 'root';
+    const centerKey = pieCenter(state, config).kind;
 
     return (
       <svg viewBox="-150 -150 300 300" className="w-full h-full">
-        <g
-          className={`transition-opacity duration-200 ${result ? 'opacity-0' : 'opacity-100'}`}
-        >
+        <Appear key={ringKey} hidden={Boolean(result)}>
           {PIE_DIRECTIONS.map((direction) => {
             const item = items[direction];
             if (!item && !onSelect) return null;
@@ -734,17 +761,19 @@ export const PieMenuView = memo(
               </g>
             );
           })}
-        </g>
+        </Appear>
         <circle
           r={CENTER}
           className="fill-slate-950 stroke-slate-500"
           strokeWidth={2}
         />
-        {result ? (
-          <ResultBody feedback={result} service={service} />
-        ) : (
-          <CenterBody state={state} config={config} service={service} />
-        )}
+        <Appear key={result ? `result-${result}` : centerKey}>
+          {result ? (
+            <ResultBody feedback={result} service={service} />
+          ) : (
+            <CenterBody state={state} config={config} service={service} />
+          )}
+        </Appear>
       </svg>
     );
   }

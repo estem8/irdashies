@@ -22,8 +22,8 @@ const defaultConfig = getWidgetDefaultConfig('piemenu');
 
 const INPUT_TEXT: Record<PieMenuInput, [string, string]> = {
   open: [
-    'Open / Back',
-    'Show the main menu, go back from a submenu, close from the main menu',
+    'Open / Close',
+    'Show the main menu, and close the menu from anywhere',
   ],
   up: ['Up', 'The up side of the menu showing, or of the main menu if none'],
   right: ['Right', 'The right side of the menu showing, or of the main menu'],

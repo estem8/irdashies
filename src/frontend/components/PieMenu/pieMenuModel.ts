@@ -252,7 +252,7 @@ export const commandsFor = (
  * Applies one navigation input; returns the next state and what to send.
  * A direction pressed while the main menu is not showing acts on it anyway, so
  * a submenu or an action is reached without opening the menu first. `open`
- * toggles the main menu and backs out of a submenu.
+ * opens the main menu and closes whatever is showing.
  */
 export const stepPieMenu = (
   state: PieState,
@@ -262,7 +262,7 @@ export const stepPieMenu = (
 ): { state: PieState; commands: PiePitCommand[] } => {
   const idle = { state, commands: [] };
   if (input === 'open') {
-    const level: PieLevel = state.level === 'root' ? 'closed' : 'root';
+    const level: PieLevel = state.level === 'closed' ? 'root' : 'closed';
     return { state: { level }, commands: [] };
   }
   const showing: PieState =
