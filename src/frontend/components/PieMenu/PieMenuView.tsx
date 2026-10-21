@@ -522,9 +522,11 @@ const CenterBody = ({
   }
 };
 
+const BLINK_MS = 1400;
+
 /**
  * A tire that remembers the colour it showed. When the colour changes it
- * blinks from the old one to the new one with fading swings, so a replacement
+ * flashes between the old one and the new one and settles on the new one, so a replacement
  * going in and one being cancelled both read as a change of tire.
  */
 const TransitionTire = ({
@@ -546,9 +548,14 @@ const TransitionTire = ({
   useEffect(() => {
     const el = overlay.current;
     if (!el || shown.from === shown.to) return;
+    // Hard flashes between the old and the new colour, no fade in between,
+    // ending on the new one.
     const blink = el.animate(
-      { opacity: [0, 1, 0.1, 1, 0.35, 1, 0.65, 1] },
-      { duration: 2000, fill: 'forwards' }
+      [0, 1, 0, 1, 0, 1, 0, 1].map((opacity) => ({
+        opacity,
+        easing: 'step-end',
+      })),
+      { duration: BLINK_MS, fill: 'forwards' }
     );
     return () => blink.cancel();
   }, [shown.from, shown.to]);
