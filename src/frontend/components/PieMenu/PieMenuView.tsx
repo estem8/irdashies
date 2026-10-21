@@ -29,6 +29,7 @@ import {
   type PieModelConfig,
   type PieState,
   type PitServiceView,
+  type TireCorner,
 } from './pieMenuModel';
 
 export const PIE_ICONS: Record<PieIconName, Icon> = {
@@ -66,7 +67,11 @@ const OUTER = 130;
 const CENTER = 62;
 const MID = (INNER + OUTER) / 2;
 const POP = 10;
-const NO_TIRE = '#475569';
+/** A tire that is not being replaced; one checked for a change shows the new compound's colour. */
+const KEEP_TIRE = '#6b7280';
+const KEEP_TIRE_HOT = '#374151';
+const tireColor = (service: PitServiceView, corner: TireCorner, hot = false) =>
+  service.tires[corner].change?.color ?? (hot ? KEEP_TIRE_HOT : KEEP_TIRE);
 
 const polar = (radius: number, degrees: number) => {
   const rad = (degrees * Math.PI) / 180;
@@ -265,6 +270,7 @@ const TireIcons = ({
   gap,
   size,
   grid,
+  hot = false,
 }: {
   service: PitServiceView;
   x: number;
@@ -272,6 +278,7 @@ const TireIcons = ({
   gap: number;
   size: number;
   grid: boolean;
+  hot?: boolean;
 }) => {
   const spots = grid
     ? ([
@@ -288,30 +295,16 @@ const TireIcons = ({
       ] as const);
   return (
     <g className="pointer-events-none">
-      {spots.map(([corner, dx, dy]) => {
-        const change = service.tires[corner].change;
-        return (
-          <g key={corner}>
-            <TireIcon
-              x={x + dx - size / 2}
-              y={y + dy - size / 2}
-              size={size}
-              weight="fill"
-              color={service.current?.color ?? NO_TIRE}
-            />
-            {change && (
-              <rect
-                x={x + dx - size / 3}
-                y={y + dy + size / 2 + 0.5}
-                width={(size * 2) / 3}
-                height={2.2}
-                rx={1.1}
-                fill={change.color}
-              />
-            )}
-          </g>
-        );
-      })}
+      {spots.map(([corner, dx, dy]) => (
+        <TireIcon
+          key={corner}
+          x={x + dx - size / 2}
+          y={y + dy - size / 2}
+          size={size}
+          weight="fill"
+          color={tireColor(service, corner, hot)}
+        />
+      ))}
     </g>
   );
 };
@@ -386,7 +379,15 @@ const SectorBody = ({
   if (compact && item.opensSubmenu && item.icon === 'tires') {
     return (
       <g>
-        <TireIcons service={service} x={x} y={y - 12} gap={9} size={15} grid />
+        <TireIcons
+          service={service}
+          x={x}
+          y={y - 12}
+          gap={9}
+          size={15}
+          grid
+          hot={hot}
+        />
         <TireStatus service={service} x={x} y={y + 17} hot={hot} />
       </g>
     );
@@ -588,11 +589,7 @@ const ResultBody = ({
             x={x}
             y={y}
             size={size}
-            color={
-              service.tires[corner].change?.color ??
-              service.current?.color ??
-              NO_TIRE
-            }
+            color={tireColor(service, corner)}
           />
         ))}
         <TireStatus service={service} x={0} y={46} hot={false} />
