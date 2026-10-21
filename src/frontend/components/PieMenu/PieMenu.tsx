@@ -30,6 +30,14 @@ const selectFuelToAdd = (
   return litres === undefined ? undefined : Math.ceil(litres);
 };
 
+/** Laps the fuel in the tank lasts, to a tenth, so the widget re-renders rarely. */
+const selectFuelLaps = (
+  snapshot: Parameters<typeof fuelToFinish>[0]
+): number | undefined =>
+  snapshot && snapshot.projectedLapUsage > 0
+    ? Math.round((snapshot.fuelLevel / snapshot.projectedLapUsage) * 10) / 10
+    : undefined;
+
 export const PieMenu = () => {
   const { currentDashboard, isDemoMode } = useDashboard();
   const savedConfig = currentDashboard?.widgets.find(
@@ -44,12 +52,13 @@ export const PieMenu = () => {
   const snapshot = usePitServiceSnapshot();
   const sessionTires = useDriverTires();
   const fuelToAdd = useFuelProjectionSelector(selectFuelToAdd);
+  const fuelLaps = useFuelProjectionSelector(selectFuelLaps);
   const service = useMemo(
     () =>
       isDemoMode
         ? DEMO_PIT_SERVICE
-        : describePitService(snapshot, sessionTires),
-    [isDemoMode, snapshot, sessionTires]
+        : describePitService(snapshot, sessionTires, fuelLaps),
+    [isDemoMode, snapshot, sessionTires, fuelLaps]
   );
 
   // Read when a side is pressed, so the handler does not resubscribe.

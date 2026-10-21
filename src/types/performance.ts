@@ -31,9 +31,7 @@ export interface RendererPerfSample {
 }
 
 export type RendererPerfMeasureName =
-  | 'trackMapAnimationFrame'
-  | 'standingsPlayerGaps'
-  | 'standingsFinalTiming';
+  'trackMapAnimationFrame' | 'standingsPlayerGaps' | 'standingsFinalTiming';
 
 export interface RendererPerfBridge {
   recordMeasure: (name: RendererPerfMeasureName, durationMs: number) => void;

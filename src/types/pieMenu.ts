@@ -55,7 +55,6 @@ export interface PieRootSlotConfig extends PieSlotConfig {
   sub?: Record<PieDirection, PieSlotConfig>;
 }
 
-
 /** Pit commands the Pie Menu may send; the same checkboxes as `#lf rf$` chat. */
 export const PIE_PIT_COMMANDS = [
   'clear',

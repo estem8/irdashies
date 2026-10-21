@@ -7,7 +7,6 @@ const QUIET: PitServiceView = {
   ...DEMO_PIT_SERVICE,
   tires: { lf: {}, rf: {}, lr: {}, rr: {} },
   anyTireChange: false,
-  tiresAll: false,
   fuelAdd: undefined,
   fuelOn: false,
   repair: false,

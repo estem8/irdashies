@@ -67,6 +67,7 @@ export const PieMenuEditor = ({
 }: PieMenuEditorProps) => {
   const [submenu, setSubmenu] = useState<PieDirection | null>(null);
   const [selected, setSelected] = useState<PieDirection | null>(null);
+  const [hovered, setHovered] = useState<PieDirection | undefined>();
 
   const slot = selected ? getPieSlot(menu, submenu, selected) : undefined;
   const parent = submenu ? menu[submenu] : undefined;
@@ -117,8 +118,10 @@ export const PieMenuEditor = ({
             }
             config={{ menu, fuelStep }}
             service={DEMO_PIT_SERVICE}
+            highlight={hovered}
             selected={selected ?? undefined}
             onSelect={setSelected}
+            onHighlight={setHovered}
           />
         </div>
 

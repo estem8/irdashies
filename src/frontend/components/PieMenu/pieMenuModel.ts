@@ -207,9 +207,8 @@ export const commandsFor = (
     case 'repair':
       return [{ command: flags & PIT_SV_FLAGS.repair ? 'clearFr' : 'fr' }];
     case 'tiresAll':
-      return (flags & ALL_TIRES) === ALL_TIRES
-        ? [{ command: 'clearTires' }]
-        : FOUR_TIRES;
+      // One press cancels whatever is checked, the next checks all four.
+      return flags & ALL_TIRES ? [{ command: 'clearTires' }] : FOUR_TIRES;
     case 'tiresLeft':
       return [{ command: 'lf' }, { command: 'lr' }];
     case 'tiresRight':
@@ -284,9 +283,32 @@ export const stepPieMenu = (
   const commands = commandsFor(item.action, context, config.fuelStep);
   const feedback = PIE_ACTIONS[item.action].feedback;
   return {
-    state: feedback ? { level: 'result', feedback } : { level: 'closed' },
+    state: feedback
+      ? {
+          level: 'result',
+          feedback,
+          entry: showing.level === 'sub' ? showing.entry : undefined,
+        }
+      : { level: 'closed' },
     commands,
   };
+};
+
+export type PieCenterKind = 'main' | 'tires' | 'fuel' | 'generic';
+
+/** What the centre shows: the menu we are in, or the main menu's logo. */
+export const pieCenter = (
+  state: PieState,
+  config: PieModelConfig
+): { kind: PieCenterKind; icon: PieIconName } => {
+  if (state.level === 'sub' && state.entry) {
+    const icon = config.menu[state.entry]?.icon ?? 'menu';
+    return {
+      kind: icon === 'tires' || icon === 'fuel' ? icon : 'generic',
+      icon,
+    };
+  }
+  return { kind: 'main', icon: 'menu' };
 };
 
 /** Litres to add to reach the finish, with half a lap of margin; undefined when unknown. */
@@ -368,12 +390,12 @@ export interface PitServiceView {
   anyTireChange: boolean;
   fuelLevel?: number;
   fuelPct?: number;
+  /** Laps the fuel in the tank lasts, when known. */
+  fuelLaps?: number;
   /** Litres requested at the stop, when fuel is checked. */
   fuelAdd?: number;
   repair: boolean;
   tearoff: boolean;
-  /** All four corners are checked for a change. */
-  tiresAll: boolean;
   fuelOn: boolean;
   /** Colours of the session's dry and wet compounds, for the compound sectors. */
   styles: { dry?: CompoundStyle; wet?: CompoundStyle };
@@ -381,7 +403,8 @@ export interface PitServiceView {
 
 export const describePitService = (
   snapshot: PitServiceSnapshot | undefined,
-  tires: readonly SessionTire[] | undefined
+  tires: readonly SessionTire[] | undefined,
+  fuelLaps?: number
 ): PitServiceView => {
   const flags = snapshot?.flags ?? 0;
   const current = compoundStyle(snapshot?.currentCompound, tires);
@@ -409,10 +432,10 @@ export const describePitService = (
       0,
     fuelLevel: snapshot?.fuelLevel,
     fuelPct: snapshot?.fuelLevelPct,
+    fuelLaps,
     fuelAdd,
     repair: (flags & PIT_SV_FLAGS.repair) !== 0,
     tearoff: (flags & PIT_SV_FLAGS.tearoff) !== 0,
-    tiresAll: (flags & ALL_TIRES) === ALL_TIRES,
     fuelOn: (flags & PIT_SV_FLAGS.fuel) !== 0,
     styles: {
       dry: compoundStyle(compoundIndexes(tires).dry, tires),
@@ -434,10 +457,10 @@ export const DEMO_PIT_SERVICE: PitServiceView = {
   anyTireChange: true,
   fuelLevel: 31.2,
   fuelPct: 0.52,
+  fuelLaps: 8.2,
   fuelAdd: 20,
   repair: true,
   tearoff: false,
-  tiresAll: false,
   fuelOn: true,
   styles: { dry: SLICK, wet: WET },
 };

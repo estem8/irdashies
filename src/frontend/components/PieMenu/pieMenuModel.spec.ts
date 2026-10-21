@@ -12,6 +12,7 @@ import {
   compoundStyle,
   describePitService,
   fuelToFinish,
+  pieCenter,
   stepPieMenu,
   type PieContext,
   type PieState,
@@ -30,8 +31,6 @@ const context: PieContext = {
 const root: PieState = { level: 'root' };
 const tires: PieState = { level: 'sub', entry: 'left' };
 const fuel: PieState = { level: 'sub', entry: 'down' };
-const commandNames = (result: { commands: { command: string }[] }) =>
-  result.commands.map((c) => c.command);
 
 describe('stepPieMenu', () => {
   it('opens the main menu on open and closes it again', () => {
@@ -70,7 +69,11 @@ describe('stepPieMenu', () => {
 
   it('shows the result of what was picked instead of the menu', () => {
     const { state } = stepPieMenu(tires, 'up', config, context);
-    expect(state).toEqual({ level: 'result', feedback: 'tires' });
+    expect(state).toEqual({
+      level: 'result',
+      feedback: 'tires',
+      entry: 'left',
+    });
     expect(stepPieMenu(root, 'right', config, context).state).toEqual({
       level: 'result',
       feedback: 'repair',
@@ -113,6 +116,41 @@ describe('stepPieMenu', () => {
   });
 });
 
+describe('pieCenter', () => {
+  it('shows the logo in the main menu', () => {
+    expect(pieCenter(root, config).kind).toBe('main');
+  });
+
+  it('shows the menu we are in inside a submenu', () => {
+    expect(pieCenter(tires, config).kind).toBe('tires');
+    expect(pieCenter(fuel, config).kind).toBe('fuel');
+  });
+});
+
+describe('the pilot flows', () => {
+  it('cancels the tires with two presses left, no confirmation', () => {
+    const checked: PieContext = { ...context, flags: PIT_SV_FLAGS.lf };
+    const opened = stepPieMenu(INITIAL_PIE_STATE, 'left', config, checked);
+    expect(opened.commands).toEqual([]);
+    const cancelled = stepPieMenu(opened.state, 'left', config, checked);
+    expect(cancelled.commands).toEqual([{ command: 'clearTires' }]);
+    expect(cancelled.state.level).toBe('result');
+  });
+
+  it('goes wet with left then down, checking all four tires', () => {
+    const opened = stepPieMenu(INITIAL_PIE_STATE, 'left', config, context);
+    const wet = stepPieMenu(opened.state, 'down', config, context);
+    expect(wet.commands.map((c) => c.command)).toEqual([
+      'tc',
+      'lf',
+      'rf',
+      'lr',
+      'rr',
+    ]);
+    expect(wet.commands[0]).toEqual({ command: 'tc', value: 1 });
+  });
+});
+
 describe('commandsFor', () => {
   it('toggles tear-off and repair from the sim checkboxes', () => {
     expect(commandsFor('repair', EMPTY_PIE_CONTEXT, 10)).toEqual([
@@ -126,23 +164,17 @@ describe('commandsFor', () => {
     ).toEqual([{ command: 'clearWs' }]);
   });
 
-  it('turns replace all tires off when all four are checked', () => {
-    const all =
-      PIT_SV_FLAGS.lf | PIT_SV_FLAGS.rf | PIT_SV_FLAGS.lr | PIT_SV_FLAGS.rr;
-    expect(
-      commandNames({
-        commands: commandsFor('tiresAll', { ...context, flags: all }, 10),
-      })
-    ).toEqual(['clearTires']);
-    expect(
-      commandNames({
-        commands: commandsFor(
-          'tiresAll',
-          { ...context, flags: PIT_SV_FLAGS.lf },
-          10
-        ),
-      })
-    ).toEqual(['lf', 'rf', 'lr', 'rr']);
+  it('cancels replace all tires when any tire is checked, else checks all four', () => {
+    const one = { ...context, flags: PIT_SV_FLAGS.rr };
+    expect(commandsFor('tiresAll', one, 10)).toEqual([
+      { command: 'clearTires' },
+    ]);
+    expect(commandsFor('tiresAll', context, 10).map((c) => c.command)).toEqual([
+      'lf',
+      'rf',
+      'lr',
+      'rr',
+    ]);
   });
 
   it('checks all four tires with a compound only when none is checked', () => {

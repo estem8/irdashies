@@ -4,6 +4,7 @@ import {
   ArrowRightIcon,
   ArrowUUpLeftIcon,
   BroomIcon,
+  CheckCircleIcon,
   CloudRainIcon,
   GasPumpIcon,
   LightningIcon,
@@ -21,13 +22,13 @@ import { PieLogo } from './PieLogo';
 import {
   PIE_DIRECTIONS,
   getPieItems,
+  pieCenter,
   type CompoundStyle,
   type PieDirection,
   type PieItem,
   type PieModelConfig,
   type PieState,
   type PitServiceView,
-  type TireCorner,
 } from './pieMenuModel';
 
 export const PIE_ICONS: Record<PieIconName, Icon> = {
@@ -53,10 +54,18 @@ const ANGLE: Record<PieDirection, number> = {
   down: 90,
   left: 180,
 };
+const VECTOR: Record<PieDirection, readonly [number, number]> = {
+  up: [0, -1],
+  right: [1, 0],
+  down: [0, 1],
+  left: [-1, 0],
+};
 
-const INNER = 72;
-const OUTER = 140;
+const INNER = 68;
+const OUTER = 130;
+const CENTER = 62;
 const MID = (INNER + OUTER) / 2;
+const POP = 10;
 const NO_TIRE = '#475569';
 
 const polar = (radius: number, degrees: number) => {
@@ -64,14 +73,68 @@ const polar = (radius: number, degrees: number) => {
   return [radius * Math.cos(rad), radius * Math.sin(rad)] as const;
 };
 
-const sectorPath = (degrees: number) => {
-  const [a0, a1] = [degrees - 42, degrees + 42];
-  const [x0, y0] = polar(OUTER, a0);
-  const [x1, y1] = polar(OUTER, a1);
-  const [x2, y2] = polar(INNER, a1);
-  const [x3, y3] = polar(INNER, a0);
-  return `M${x0} ${y0}A${OUTER} ${OUTER} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${INNER} ${INNER} 0 0 0 ${x3} ${y3}Z`;
+const arcPath = (r0: number, r1: number, a0: number, a1: number) => {
+  const [x0, y0] = polar(r1, a0);
+  const [x1, y1] = polar(r1, a1);
+  const [x2, y2] = polar(r0, a1);
+  const [x3, y3] = polar(r0, a0);
+  return `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z`;
 };
+
+/** Text and icon colour: dark on a highlighted side, light otherwise. */
+const ink = (hot: boolean) => (hot ? 'text-slate-950' : 'text-slate-100');
+const inkFill = (hot: boolean) => (hot ? 'fill-slate-950' : 'fill-slate-100');
+
+const Label = ({
+  x,
+  y,
+  size,
+  hot,
+  children,
+  bold = true,
+}: {
+  x: number;
+  y: number;
+  size: number;
+  hot: boolean;
+  children: ReactNode;
+  bold?: boolean;
+}) => (
+  <text
+    x={x}
+    y={y}
+    fontSize={size}
+    textAnchor="middle"
+    dominantBaseline="middle"
+    className={`${inkFill(hot)} ${bold ? 'font-bold' : 'font-semibold'} pointer-events-none`}
+  >
+    {children}
+  </text>
+);
+
+const Glyph = ({
+  Svg,
+  x,
+  y,
+  size,
+  hot,
+  className,
+}: {
+  Svg: Icon;
+  x: number;
+  y: number;
+  size: number;
+  hot: boolean;
+  className?: string;
+}) => (
+  <Svg
+    x={x - size / 2}
+    y={y - size / 2}
+    size={size}
+    weight="fill"
+    className={`${className ?? ink(hot)} pointer-events-none`}
+  />
+);
 
 const Chip = ({
   x,
@@ -82,7 +145,7 @@ const Chip = ({
   y: number;
   style: CompoundStyle;
 }) => (
-  <g>
+  <g className="pointer-events-none">
     <rect
       x={x - 8}
       y={y - 8}
@@ -103,23 +166,33 @@ const Chip = ({
   </g>
 );
 
-const OnOff = ({ x, y, on }: { x: number; y: number; on: boolean }) =>
+const OnOff = ({
+  x,
+  y,
+  on,
+  hot,
+}: {
+  x: number;
+  y: number;
+  on: boolean;
+  hot: boolean;
+}) =>
   on ? (
-    <g>
+    <g className="pointer-events-none">
       <rect
         x={x - 14}
         y={y - 7}
         width={28}
         height={14}
         rx={7}
-        className="fill-slate-200"
+        className={hot ? 'fill-slate-950' : 'fill-slate-200'}
       />
       <text
         x={x}
         y={y + 0.5}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="fill-slate-900 text-[9px] font-bold"
+        className={`${hot ? 'fill-slate-100' : 'fill-slate-900'} text-[9px] font-bold`}
       >
         ON
       </text>
@@ -130,336 +203,548 @@ const OnOff = ({ x, y, on }: { x: number; y: number; on: boolean }) =>
       y={y + 0.5}
       textAnchor="middle"
       dominantBaseline="middle"
-      className="fill-slate-500 text-[9px] font-bold"
+      className={`${hot ? 'fill-slate-700' : 'fill-slate-500'} text-[9px] font-bold pointer-events-none`}
     >
       off
     </text>
   );
 
-/** Live state under a sector label; null when the sector has none. */
-const sectorStatus = (
-  item: PieItem,
-  service: PitServiceView,
-  x: number,
-  y: number
-): ReactNode => {
-  if (item.opensSubmenu && item.icon === 'tires') {
-    if (!service.current) return null;
-    if (!service.anyTireChange || !service.next) {
-      return <Chip x={x} y={y} style={service.current} />;
-    }
+const Tick = ({
+  x,
+  y,
+  size,
+  on,
+  hot,
+}: {
+  x: number;
+  y: number;
+  size: number;
+  on: boolean;
+  hot: boolean;
+}) => (
+  <Glyph
+    Svg={on ? CheckCircleIcon : XCircleIcon}
+    x={x}
+    y={y}
+    size={size}
+    hot={hot}
+    className={on ? ink(hot) : hot ? 'text-slate-700' : 'text-slate-500'}
+  />
+);
+
+/** The four tires in the current compound's colour; a tire checked for a change carries a bar in the new colour. */
+const TireIcons = ({
+  service,
+  x,
+  y,
+  gap,
+  size,
+  grid,
+}: {
+  service: PitServiceView;
+  x: number;
+  y: number;
+  gap: number;
+  size: number;
+  grid: boolean;
+}) => {
+  const spots = grid
+    ? ([
+        ['lf', -gap, -gap],
+        ['rf', gap, -gap],
+        ['lr', -gap, gap],
+        ['rr', gap, gap],
+      ] as const)
+    : ([
+        ['lf', -gap * 3, 0],
+        ['rf', -gap, 0],
+        ['lr', gap, 0],
+        ['rr', gap * 3, 0],
+      ] as const);
+  return (
+    <g className="pointer-events-none">
+      {spots.map(([corner, dx, dy]) => {
+        const change = service.tires[corner].change;
+        return (
+          <g key={corner}>
+            <TireIcon
+              x={x + dx - size / 2}
+              y={y + dy - size / 2}
+              size={size}
+              weight="fill"
+              color={service.current?.color ?? NO_TIRE}
+            />
+            {change && (
+              <rect
+                x={x + dx - size / 3}
+                y={y + dy + size / 2 + 0.5}
+                width={(size * 2) / 3}
+                height={2.2}
+                rx={1.1}
+                fill={change.color}
+              />
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+};
+
+/** W to S when a replacement is asked for, otherwise an arrow to a cross. */
+const TireStatus = ({
+  service,
+  x,
+  y,
+  hot,
+}: {
+  service: PitServiceView;
+  x: number;
+  y: number;
+  hot: boolean;
+}) => {
+  if (!service.current) return null;
+  if (service.anyTireChange && service.next) {
     return (
       <g>
         <Chip x={x - 17} y={y} style={service.current} />
-        <ArrowRightIcon
-          x={x - 5}
-          y={y - 5}
-          size={10}
-          weight="bold"
-          className="text-slate-200"
-        />
+        <Glyph Svg={ArrowRightIcon} x={x} y={y} size={10} hot={hot} />
         <Chip x={x + 17} y={y} style={service.next} />
       </g>
     );
   }
-  if (item.opensSubmenu && item.icon === 'fuel') {
-    return (
-      <text
-        x={x}
+  return (
+    <g>
+      <Chip x={x - 14} y={y} style={service.current} />
+      <Glyph
+        Svg={ArrowRightIcon}
+        x={x + 2}
         y={y}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="fill-slate-200 text-[10px] font-bold"
-      >
-        {service.fuelLevel === undefined
-          ? '--'
-          : `${service.fuelLevel.toFixed(1)} L`}
-      </text>
+        size={10}
+        hot={hot}
+        className={hot ? 'text-slate-700' : 'text-slate-400'}
+      />
+      <Glyph
+        Svg={XCircleIcon}
+        x={x + 17}
+        y={y}
+        size={13}
+        hot={hot}
+        className={hot ? 'text-slate-700' : 'text-slate-400'}
+      />
+    </g>
+  );
+};
+
+const fuelText = (litres: number | undefined) =>
+  litres === undefined ? '--' : `${litres.toFixed(1)} L`;
+const lapsText = (laps: number | undefined) =>
+  laps === undefined ? '-- laps' : `${laps.toFixed(1)} laps`;
+
+/** What sits inside a side of the ring. */
+const SectorBody = ({
+  item,
+  service,
+  x,
+  y,
+  hot,
+  compact,
+}: {
+  item: PieItem;
+  service: PitServiceView;
+  x: number;
+  y: number;
+  hot: boolean;
+  compact: boolean;
+}) => {
+  const ItemIcon = PIE_ICONS[item.icon];
+  if (compact && item.opensSubmenu && item.icon === 'tires') {
+    return (
+      <g>
+        <TireIcons service={service} x={x} y={y - 12} gap={9} size={15} grid />
+        <TireStatus service={service} x={x} y={y + 17} hot={hot} />
+      </g>
     );
   }
-  switch (item.action) {
-    case 'tearoff':
-      return <OnOff x={x} y={y} on={service.tearoff} />;
-    case 'repair':
-      return <OnOff x={x} y={y} on={service.repair} />;
-    case 'tiresAll':
-      return <OnOff x={x} y={y} on={service.tiresAll} />;
-    case 'fuelAuto':
-      return <OnOff x={x} y={y} on={service.fuelOn} />;
-    case 'compoundDry':
-      return service.styles.dry ? (
-        <Chip x={x} y={y} style={service.styles.dry} />
-      ) : null;
-    case 'compoundWet':
-      return service.styles.wet ? (
-        <Chip x={x} y={y} style={service.styles.wet} />
-      ) : null;
+  if (compact && item.opensSubmenu && item.icon === 'fuel') {
+    return (
+      <g>
+        <Glyph Svg={GasPumpIcon} x={x} y={y - 18} size={18} hot={hot} />
+        <Label x={x} y={y + 1} size={11} hot={hot}>
+          {fuelText(service.fuelLevel)}
+          {service.fuelAdd !== undefined && (
+            <tspan opacity={0.7}>{` +${service.fuelAdd}`}</tspan>
+          )}
+        </Label>
+        <Label x={x} y={y + 15} size={9.5} hot={hot} bold={false}>
+          {lapsText(service.fuelLaps)}
+        </Label>
+      </g>
+    );
+  }
+  if (compact && item.action === 'repair') {
+    return (
+      <g>
+        <Glyph Svg={WrenchIcon} x={x} y={y - 12} size={22} hot={hot} />
+        <Tick x={x} y={y + 14} size={18} on={service.repair} hot={hot} />
+      </g>
+    );
+  }
+  if (compact && item.action === 'tearoff') {
+    return (
+      <g>
+        <Glyph Svg={BroomIcon} x={x} y={y - 12} size={22} hot={hot} />
+        <OnOff x={x} y={y + 14} on={service.tearoff} hot={hot} />
+      </g>
+    );
+  }
+  const status =
+    item.action === 'tiresAll' ? (
+      <OnOff x={x} y={y + 16} on={service.anyTireChange} hot={hot} />
+    ) : item.action === 'fuelAuto' ? (
+      <OnOff x={x} y={y + 16} on={service.fuelOn} hot={hot} />
+    ) : item.action === 'compoundDry' && service.styles.dry ? (
+      <Chip x={x} y={y + 16} style={service.styles.dry} />
+    ) : item.action === 'compoundWet' && service.styles.wet ? (
+      <Chip x={x} y={y + 16} style={service.styles.wet} />
+    ) : null;
+  return (
+    <g>
+      <Glyph
+        Svg={ItemIcon}
+        x={x}
+        y={y - (status ? 20 : 12)}
+        size={20}
+        hot={hot}
+      />
+      <Label x={x} y={y + (status ? 0 : 10)} size={10.5} hot={hot}>
+        {item.label}
+      </Label>
+      {status}
+    </g>
+  );
+};
+
+/** The centre: the menu we are in, or the main menu's logo. */
+const CenterBody = ({
+  state,
+  config,
+  service,
+}: {
+  state: PieState;
+  config: PieModelConfig;
+  service: PitServiceView;
+}) => {
+  const { kind, icon } = pieCenter(state, config);
+  const light = 'text-slate-200';
+  switch (kind) {
+    case 'tires':
+      return (
+        <g>
+          <TireIcons
+            service={service}
+            x={0}
+            y={-8}
+            gap={12}
+            size={24}
+            grid={false}
+          />
+          <TireStatus service={service} x={0} y={24} hot={false} />
+        </g>
+      );
+    case 'fuel':
+      return (
+        <g>
+          <Glyph
+            Svg={GasPumpIcon}
+            x={0}
+            y={-26}
+            size={28}
+            hot={false}
+            className={light}
+          />
+          <text
+            y={4}
+            fontSize={15}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-slate-100 font-bold"
+          >
+            {fuelText(service.fuelLevel)}
+            {service.fuelAdd !== undefined && (
+              <tspan className="fill-slate-400">{` +${service.fuelAdd}`}</tspan>
+            )}
+          </text>
+          <Label x={0} y={24} size={11} hot={false} bold={false}>
+            {lapsText(service.fuelLaps)}
+          </Label>
+        </g>
+      );
+    case 'generic':
+      return (
+        <Glyph
+          Svg={PIE_ICONS[icon]}
+          x={0}
+          y={0}
+          size={44}
+          hot={false}
+          className={light}
+        />
+      );
     default:
-      return null;
+      return <PieLogo x={-31} y={-31} size={62} />;
   }
 };
 
-const TIRE_SPOT: Record<TireCorner, readonly [number, number]> = {
-  lf: [-34, -38],
-  rf: [34, -38],
-  lr: [-34, 38],
-  rr: [34, 38],
-};
-
-/** A tire that blinks from its old colour to the new one, settling on the new. */
-const TireGlyph = ({
-  corner,
-  service,
-}: {
-  corner: TireCorner;
-  service: PitServiceView;
-}) => {
-  const [cx, cy] = TIRE_SPOT[corner];
-  const change = service.tires[corner].change;
-  const shape = { x: cx - 20, y: cy - 30, width: 40, height: 60, rx: 10 };
-  return (
-    <g>
-      <rect {...shape} fill={service.current?.color ?? NO_TIRE} />
-      {change && (
-        <rect
-          key={`${corner}-${change.color}-${service.current?.color}`}
-          {...shape}
-          fill={change.color}
-          opacity={0}
-        >
-          <animate
-            attributeName="opacity"
-            values="0;1;0.1;1;0.35;1;0.65;1"
-            dur="2.4s"
-            fill="freeze"
-          />
-        </rect>
-      )}
-      {[-14, 0, 14].map((offset) => (
-        <line
-          key={offset}
-          x1={cx - 14}
-          x2={cx + 14}
-          y1={cy + offset}
-          y2={cy + offset}
-          stroke="#0b1020"
-          strokeWidth={4}
-          opacity={0.3}
-        />
-      ))}
-    </g>
-  );
-};
-
-const FuelResult = ({ service }: { service: PitServiceView }) => {
-  const { fuelLevel, fuelPct, fuelAdd } = service;
-  const capacity = fuelLevel && fuelPct ? fuelLevel / fuelPct : undefined;
-  const addedPct =
-    capacity && fuelLevel && fuelAdd
-      ? Math.min(1, (fuelLevel + fuelAdd) / capacity)
-      : 0;
-  const width = 150;
-  return (
-    <g>
-      <GasPumpIcon
-        x={-36}
-        y={-76}
-        size={72}
-        weight="fill"
-        className="text-slate-200"
-      />
-      <text
-        x={0}
-        y={22}
-        textAnchor="middle"
-        className="fill-white text-[22px] font-bold"
-      >
-        {fuelLevel === undefined ? '--' : `${fuelLevel.toFixed(1)} L`}
-      </text>
-      <text
-        x={0}
-        y={46}
-        textAnchor="middle"
-        className="fill-slate-300 text-[14px] font-bold"
-      >
-        {fuelAdd !== undefined ? `+${fuelAdd} L` : 'no refuel'}
-      </text>
-      <rect
-        x={-width / 2}
-        y={64}
-        width={width}
-        height={9}
-        rx={4.5}
-        className="fill-slate-700"
-      />
-      <rect
-        x={-width / 2}
-        y={64}
-        width={addedPct * width}
-        height={9}
-        rx={4.5}
-        className="fill-slate-400 animate-pulse"
-      />
-      <rect
-        x={-width / 2}
-        y={64}
-        width={(fuelPct ?? 0) * width}
-        height={9}
-        rx={4.5}
-        className="fill-slate-200"
-      />
-    </g>
-  );
-};
-
-const ToggleResult = ({
-  Glyph,
-  label,
-  on,
-}: {
-  Glyph: Icon;
-  label: string;
-  on: boolean;
-}) => (
-  <g>
-    <Glyph
-      x={-44}
-      y={-70}
-      size={88}
-      weight="fill"
-      className={on ? 'text-slate-200' : 'text-slate-600'}
-    />
-    <text
-      x={0}
-      y={46}
-      textAnchor="middle"
-      className="fill-white text-[16px] font-bold"
-    >
-      {label}
-    </text>
-    <OnOff x={0} y={70} on={on} />
-  </g>
-);
-
-const ResultView = ({
+/** The result of a pick, drawn inside the centre only. */
+const ResultBody = ({
   feedback,
   service,
 }: {
   feedback: NonNullable<PieState['feedback']>;
   service: PitServiceView;
-}) => (
-  <svg viewBox="-145 -145 290 290" className="w-full h-full">
-    <circle
-      r={122}
-      className="fill-slate-950/90 stroke-slate-500"
-      strokeWidth={3}
-    />
-    {feedback === 'tires' && (
+}) => {
+  const light = 'text-slate-200';
+  if (feedback === 'tires') {
+    const size = 40;
+    const spots = [
+      ['lf', -22, -20],
+      ['rf', 22, -20],
+      ['lr', -22, 16],
+      ['rr', 22, 16],
+    ] as const;
+    return (
       <g>
-        {(['lf', 'rf', 'lr', 'rr'] as const).map((corner) => (
-          <TireGlyph key={corner} corner={corner} service={service} />
-        ))}
-        {service.current && service.next && service.anyTireChange && (
-          <g>
-            <Chip x={-19} y={96} style={service.current} />
-            <ArrowRightIcon
-              x={-5}
-              y={91}
-              size={10}
-              weight="bold"
-              className="text-slate-200"
-            />
-            <Chip x={19} y={96} style={service.next} />
-          </g>
-        )}
+        {spots.map(([corner, x, y]) => {
+          const change = service.tires[corner].change;
+          const base = service.current?.color ?? NO_TIRE;
+          return (
+            <g key={corner}>
+              <TireIcon
+                x={x - size / 2}
+                y={y - size / 2}
+                size={size}
+                weight="fill"
+                color={base}
+              />
+              {change && (
+                // Blinks between the old and new colour, settling on the new one.
+                <g key={`${change.color}-${base}`} opacity={0}>
+                  <animate
+                    attributeName="opacity"
+                    values="0;1;0.1;1;0.35;1;0.65;1"
+                    dur="2s"
+                    fill="freeze"
+                  />
+                  <TireIcon
+                    x={x - size / 2}
+                    y={y - size / 2}
+                    size={size}
+                    weight="fill"
+                    color={change.color}
+                  />
+                </g>
+              )}
+            </g>
+          );
+        })}
+        <TireStatus service={service} x={0} y={46} hot={false} />
       </g>
-    )}
-    {feedback === 'fuel' && <FuelResult service={service} />}
-    {feedback === 'repair' && (
-      <ToggleResult
-        Glyph={WrenchIcon}
-        label="Fast repair"
-        on={service.repair}
+    );
+  }
+  if (feedback === 'fuel') {
+    const width = 92;
+    const { fuelLevel, fuelPct, fuelAdd } = service;
+    const capacity = fuelLevel && fuelPct ? fuelLevel / fuelPct : undefined;
+    const added =
+      capacity && fuelLevel !== undefined && fuelAdd
+        ? Math.min(1, (fuelLevel + fuelAdd) / capacity)
+        : 0;
+    return (
+      <g>
+        <Glyph
+          Svg={GasPumpIcon}
+          x={0}
+          y={-30}
+          size={34}
+          hot={false}
+          className={light}
+        />
+        <Label x={0} y={2} size={17} hot={false}>
+          {fuelAdd !== undefined ? `+${fuelAdd} L` : 'no refuel'}
+        </Label>
+        <Label x={0} y={22} size={10.5} hot={false} bold={false}>
+          {fuelText(fuelLevel)}
+        </Label>
+        <rect
+          x={-width / 2}
+          y={36}
+          width={width}
+          height={8}
+          rx={4}
+          className="fill-slate-700"
+        />
+        <rect
+          x={-width / 2}
+          y={36}
+          width={added * width}
+          height={8}
+          rx={4}
+          className="fill-slate-500 animate-pulse"
+        />
+        <rect
+          x={-width / 2}
+          y={36}
+          width={(fuelPct ?? 0) * width}
+          height={8}
+          rx={4}
+          className="fill-slate-200"
+        />
+      </g>
+    );
+  }
+  const repair = feedback === 'repair';
+  return (
+    <g>
+      <Glyph
+        Svg={repair ? WrenchIcon : BroomIcon}
+        x={0}
+        y={-14}
+        size={44}
+        hot={false}
+        className={light}
       />
-    )}
-    {feedback === 'tearoff' && (
-      <ToggleResult Glyph={BroomIcon} label="Tear-off" on={service.tearoff} />
-    )}
-  </svg>
-);
+      {repair ? (
+        <Tick x={0} y={30} size={30} on={service.repair} hot={false} />
+      ) : (
+        <OnOff x={0} y={30} on={service.tearoff} hot={false} />
+      )}
+    </g>
+  );
+};
 
 export interface PieMenuViewProps {
   state: PieState;
   config: PieModelConfig;
   service: PitServiceView;
-  /** Settings editor: the side being edited. */
+  /** A side that is highlighted: it pops out and shows light on dark. */
+  highlight?: PieDirection;
+  /** Settings editor: the side being edited, drawn highlighted. */
   selected?: PieDirection;
   /** Settings editor: makes the sides clickable and draws empty ones. */
   onSelect?: (direction: PieDirection) => void;
+  /** Settings editor: the side the pointer is over. */
+  onHighlight?: (direction: PieDirection | undefined) => void;
 }
 
 export const PieMenuView = memo(
-  ({ state, config, service, selected, onSelect }: PieMenuViewProps) => {
-    if (state.level === 'result' && state.feedback) {
-      return <ResultView feedback={state.feedback} service={service} />;
-    }
-    const items = getPieItems(state, config);
+  ({
+    state,
+    config,
+    service,
+    highlight,
+    selected,
+    onSelect,
+    onHighlight,
+  }: PieMenuViewProps) => {
+    const result = state.level === 'result' && state.feedback;
+    // A result keeps drawing the menu it came from, so the ring fades out
+    // instead of being swapped for another one.
+    const ringState: PieState = result
+      ? state.entry
+        ? { level: 'sub', entry: state.entry }
+        : { level: 'root' }
+      : state;
+    const items = getPieItems(ringState, config);
+    const compact = ringState.level === 'root';
 
     return (
-      <svg viewBox="-145 -145 290 290" className="w-full h-full">
-        {PIE_DIRECTIONS.map((direction) => {
-          const item = items[direction];
-          if (!item && !onSelect) return null;
-          const [x, y] = polar(MID, ANGLE[direction]);
-          const isSelected = selected === direction;
-          const ItemIcon = item ? PIE_ICONS[item.icon] : undefined;
-          const status = item ? sectorStatus(item, service, x, y + 14) : null;
-          return (
-            <g
-              key={direction}
-              onClick={onSelect ? () => onSelect(direction) : undefined}
-              className={onSelect ? 'cursor-pointer' : undefined}
-            >
-              <path
-                d={sectorPath(ANGLE[direction])}
-                strokeWidth={3}
-                strokeLinejoin="round"
-                strokeDasharray={item ? undefined : '5 5'}
-                className={[
-                  isSelected ? 'fill-slate-600' : 'fill-slate-800/90',
-                  item ? 'stroke-slate-500' : 'stroke-slate-600',
-                  onSelect ? 'hover:fill-slate-700' : '',
-                ].join(' ')}
-              />
-              {item && ItemIcon && (
-                <>
-                  <ItemIcon
-                    x={x - 10}
-                    y={y - (status ? 31 : 24)}
-                    size={20}
-                    weight="fill"
-                    className="text-slate-100 pointer-events-none"
-                  />
-                  <text
-                    x={x}
-                    y={y + (status ? 1 : 10)}
-                    textAnchor="middle"
-                    className="fill-slate-100 text-[10px] font-bold pointer-events-none"
-                  >
-                    {item.label}
-                  </text>
-                  {status}
-                </>
-              )}
-            </g>
-          );
-        })}
+      <svg viewBox="-150 -150 300 300" className="w-full h-full">
+        <g
+          className={`transition-opacity duration-200 ${result ? 'opacity-0' : 'opacity-100'}`}
+        >
+          {PIE_DIRECTIONS.map((direction) => {
+            const item = items[direction];
+            if (!item && !onSelect) return null;
+            const hot = highlight === direction || selected === direction;
+            const [vx, vy] = VECTOR[direction];
+            const a = ANGLE[direction];
+            const isBack = item?.action === 'back';
+            const [x, y] = polar(isBack ? 99 : MID, a);
+            return (
+              <g
+                key={direction}
+                onClick={onSelect ? () => onSelect(direction) : undefined}
+                onMouseEnter={
+                  onHighlight ? () => onHighlight(direction) : undefined
+                }
+                onMouseLeave={
+                  onHighlight ? () => onHighlight(undefined) : undefined
+                }
+                className={`transition-transform duration-150 ${onSelect ? 'cursor-pointer' : ''}`}
+                style={{
+                  transform: hot
+                    ? `translate(${vx * (isBack ? 7 : POP)}px, ${vy * (isBack ? 7 : POP)}px)`
+                    : undefined,
+                }}
+              >
+                <path
+                  d={
+                    isBack
+                      ? arcPath(84, 118, a - 26, a + 26)
+                      : arcPath(INNER, OUTER, a - 41, a + 41)
+                  }
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeDasharray={item ? undefined : '5 5'}
+                  className={[
+                    hot
+                      ? 'fill-slate-400 stroke-slate-300'
+                      : isBack
+                        ? 'fill-slate-900 stroke-slate-600'
+                        : 'fill-slate-800/90 stroke-slate-500',
+                    item ? '' : 'stroke-slate-600',
+                    onSelect && !hot ? 'hover:fill-slate-700' : '',
+                  ].join(' ')}
+                />
+                {item &&
+                  (isBack ? (
+                    <g>
+                      <Glyph
+                        Svg={ListIcon}
+                        x={x}
+                        y={y - 6}
+                        size={20}
+                        hot={hot}
+                      />
+                      <Label x={x} y={y + 12} size={9} hot={hot}>
+                        Menu
+                      </Label>
+                    </g>
+                  ) : (
+                    <SectorBody
+                      item={item}
+                      service={service}
+                      x={x}
+                      y={y}
+                      hot={hot}
+                      compact={compact}
+                    />
+                  ))}
+              </g>
+            );
+          })}
+        </g>
         <circle
-          r={64}
-          className="fill-slate-950/90 stroke-slate-500"
-          strokeWidth={3}
+          r={CENTER}
+          className="fill-slate-950 stroke-slate-500"
+          strokeWidth={2}
         />
-        <PieLogo x={-44} y={-44} size={88} />
+        {result ? (
+          <ResultBody feedback={result} service={service} />
+        ) : (
+          <CenterBody state={state} config={config} service={service} />
+        )}
       </svg>
     );
   }
