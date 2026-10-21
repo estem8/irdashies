@@ -11,63 +11,36 @@ export default defineWidgetManifest({
     height: 300,
   },
   config: {
-    sides: { up: 'tearoff', right: 'repair', down: 'fuel', left: 'tires' },
+    menu: {
+      up: { action: 'tearoff' },
+      right: { action: 'repair' },
+      left: {
+        action: 'submenu',
+        label: 'Tires',
+        icon: 'tires',
+        sub: {
+          left: { action: 'tiresAll' },
+          up: { action: 'compoundDry' },
+          down: { action: 'compoundWet' },
+          right: { action: 'back' },
+        },
+      },
+      down: {
+        action: 'submenu',
+        label: 'Fuel',
+        icon: 'fuel',
+        sub: {
+          down: { action: 'fuelAuto' },
+          right: { action: 'fuelAdd' },
+          left: { action: 'fuelClear' },
+          up: { action: 'back' },
+        },
+      },
+    },
     timeoutSeconds: 5,
     fuelStep: 10,
   },
   properties: {
-    'sides.up': {
-      type: 'enum',
-      control: 'select',
-      label: 'Up',
-      description: 'What this side of the main menu does',
-      options: [
-        { value: 'tearoff', label: 'Tear-off' },
-        { value: 'tires', label: 'Tires' },
-        { value: 'fuel', label: 'Fuel' },
-        { value: 'repair', label: 'Fast repair' },
-        { value: 'none', label: 'Nothing' },
-      ],
-    },
-    'sides.right': {
-      type: 'enum',
-      control: 'select',
-      label: 'Right',
-      description: 'What this side of the main menu does',
-      options: [
-        { value: 'tearoff', label: 'Tear-off' },
-        { value: 'tires', label: 'Tires' },
-        { value: 'fuel', label: 'Fuel' },
-        { value: 'repair', label: 'Fast repair' },
-        { value: 'none', label: 'Nothing' },
-      ],
-    },
-    'sides.down': {
-      type: 'enum',
-      control: 'select',
-      label: 'Down',
-      description: 'What this side of the main menu does',
-      options: [
-        { value: 'tearoff', label: 'Tear-off' },
-        { value: 'tires', label: 'Tires' },
-        { value: 'fuel', label: 'Fuel' },
-        { value: 'repair', label: 'Fast repair' },
-        { value: 'none', label: 'Nothing' },
-      ],
-    },
-    'sides.left': {
-      type: 'enum',
-      control: 'select',
-      label: 'Left',
-      description: 'What this side of the main menu does',
-      options: [
-        { value: 'tearoff', label: 'Tear-off' },
-        { value: 'tires', label: 'Tires' },
-        { value: 'fuel', label: 'Fuel' },
-        { value: 'repair', label: 'Fast repair' },
-        { value: 'none', label: 'Nothing' },
-      ],
-    },
     timeoutSeconds: {
       type: 'number',
       control: 'input',
@@ -83,7 +56,7 @@ export default defineWidgetManifest({
       control: 'input',
       label: 'Fuel Step',
       description:
-        'Litres added by the first fuel sector. The second sector adds twice as much',
+        'Litres added by Add fuel. Add double fuel adds twice as much',
       min: 1,
       max: 100,
       step: 1,

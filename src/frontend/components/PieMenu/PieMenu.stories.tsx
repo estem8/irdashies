@@ -1,19 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PieMenuView } from './PieMenu';
-import {
-  DEMO_PIT_SERVICE,
-  INITIAL_PIE_STATE,
-  type PitServiceView,
-} from './pieMenuModel';
+import { getWidgetDefaultConfig } from '@irdashies/types';
+import { PieMenuView } from './PieMenuView';
+import { DEMO_PIT_SERVICE, type PitServiceView } from './pieMenuModel';
 
 const QUIET: PitServiceView = {
+  ...DEMO_PIT_SERVICE,
   tires: { lf: {}, rf: {}, lr: {}, rr: {} },
-  current: { letter: 'W', color: '#2f9bff' },
   anyTireChange: false,
-  fuelLevel: 8.4,
-  fuelPct: 0.14,
+  tiresAll: false,
+  fuelAdd: undefined,
+  fuelOn: false,
   repair: false,
-  tearoff: false,
 };
 
 const meta: Meta<typeof PieMenuView> = {
@@ -21,12 +18,8 @@ const meta: Meta<typeof PieMenuView> = {
   component: PieMenuView,
   parameters: { layout: 'centered' },
   args: {
-    level: 'root',
-    state: INITIAL_PIE_STATE,
-    config: {
-      fuelStep: 10,
-      sides: { up: 'tearoff', right: 'repair', down: 'fuel', left: 'tires' },
-    },
+    state: { level: 'root' },
+    config: getWidgetDefaultConfig('piemenu'),
     service: QUIET,
   },
   decorators: [
@@ -41,21 +34,30 @@ const meta: Meta<typeof PieMenuView> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Wet tires on the car, low fuel, nothing requested. */
 export const Root: Story = {};
-/** W to S on the front left and right, 20 L and a fast repair requested. */
 export const PitStopPlanned: Story = { args: { service: DEMO_PIT_SERVICE } };
-export const Tires: Story = {
+export const TiresMenu: Story = {
+  args: { state: { level: 'sub', entry: 'left' }, service: DEMO_PIT_SERVICE },
+};
+export const FuelMenu: Story = {
+  args: { state: { level: 'sub', entry: 'down' }, service: DEMO_PIT_SERVICE },
+};
+/** After picking a compound: the tires change colour in place of the menu. */
+export const TiresResult: Story = {
   args: {
-    level: 'tires',
-    state: { ...INITIAL_PIE_STATE, level: 'tires', entry: 'left' },
+    state: { level: 'result', feedback: 'tires' },
     service: DEMO_PIT_SERVICE,
   },
 };
-export const Fuel: Story = {
+export const FuelResult: Story = {
   args: {
-    level: 'fuel',
-    state: { ...INITIAL_PIE_STATE, level: 'fuel', entry: 'down' },
+    state: { level: 'result', feedback: 'fuel' },
+    service: DEMO_PIT_SERVICE,
+  },
+};
+export const RepairResult: Story = {
+  args: {
+    state: { level: 'result', feedback: 'repair' },
     service: DEMO_PIT_SERVICE,
   },
 };

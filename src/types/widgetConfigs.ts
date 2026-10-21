@@ -1,5 +1,6 @@
 import type { DashboardWidget } from './dashboardLayout';
 import type { CornerNameOverlayConfig } from './cornerName';
+import type { PieDirection, PieRootSlotConfig } from './pieMenu';
 import type { LapTraceColors, LapTraceSound, LapTraceSource } from './lapTrace';
 
 // ===========================
@@ -772,20 +773,12 @@ export interface RadarTuning {
   gridMaxSpeedMs: number;
 }
 
-/** What a side of the Pie Menu's main ring does. */
-export type PieSideAction = 'tearoff' | 'tires' | 'fuel' | 'repair' | 'none';
-
 export interface PieMenuConfig {
-  /** Action of each side of the main ring. */
-  sides: {
-    up: PieSideAction;
-    right: PieSideAction;
-    down: PieSideAction;
-    left: PieSideAction;
-  };
+  /** The main ring: one slot per side, each optionally opening a submenu. */
+  menu: Record<PieDirection, PieRootSlotConfig>;
   /** Seconds without input before the menu closes. */
   timeoutSeconds: number;
-  /** Litres added by the first fuel sector; the second adds twice as much. */
+  /** Litres added by the fuel add actions; the double one adds twice as much. */
   fuelStep: number;
 }
 

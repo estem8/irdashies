@@ -1,55 +1,45 @@
 import {
   PIT_SV_FLAGS,
+  type FuelProjectionSnapshot,
+  type PieActionId,
+  type PieDirection,
+  type PieIconName,
   type PieMenuConfig,
-  type PieSideAction,
   type PieMenuInput,
   type PiePitCommand,
+  type PieSlotConfig,
   type PitServiceSnapshot,
 } from '@irdashies/types';
 
-export type PieDirection = Exclude<PieMenuInput, 'open'>;
-export type PieLevel = 'closed' | 'root' | 'tires' | 'fuel';
-export type PieIcon =
-  | 'tearoff'
-  | 'tires'
-  | 'fuel'
-  | 'repair'
-  | 'add'
-  | 'clear'
-  | 'cancel'
-  | 'left'
-  | 'right'
-  | 'back';
+export type { PieDirection };
+
+/** `result` replaces the menu with the state of what was just picked. */
+export type PieLevel = 'closed' | 'root' | 'sub' | 'result';
+export type PieFeedback = 'tires' | 'fuel' | 'repair' | 'tearoff';
 
 export interface PieState {
   level: PieLevel;
-  /** Side that opened the open submenu; its opposite side goes back. */
+  /** Side whose slot opened the open submenu. */
   entry?: PieDirection;
-  /** Last sent state of the toggles; assumes the pit menu is only changed here. */
-  repair: boolean;
-  tearoff: boolean;
+  /** What the result view shows. */
+  feedback?: PieFeedback;
 }
 
-export interface PieItem {
-  label: string;
-  icon: PieIcon;
-  /** Returns to the root menu; sits opposite the sector that opened the submenu. */
-  back?: true;
-  /** Opens a submenu. */
-  next?: Exclude<PieLevel, 'closed' | 'root'>;
-  /** Sent to the sim. */
-  commands?: PiePitCommand[];
-  /** Flips the matching toggle in the state when picked. */
-  toggle?: 'repair' | 'tearoff';
+export const INITIAL_PIE_STATE: PieState = { level: 'closed' };
+
+export type PieModelConfig = Pick<PieMenuConfig, 'menu' | 'fuelStep'>;
+
+/** What the actions need to know about the sim when they are picked. */
+export interface PieContext {
+  /** `PitSvFlags`: the pit checkboxes now. */
+  flags: number;
+  /** Compound indexes of the session's dry and wet tires. */
+  compounds: { dry?: number; wet?: number };
+  /** Litres to add to finish, when known. */
+  fuelToAdd?: number;
 }
 
-export type PieModelConfig = Pick<PieMenuConfig, 'fuelStep' | 'sides'>;
-
-export const INITIAL_PIE_STATE: PieState = {
-  level: 'closed',
-  repair: false,
-  tearoff: false,
-};
+export const EMPTY_PIE_CONTEXT: PieContext = { flags: 0, compounds: {} };
 
 export const PIE_DIRECTIONS: readonly PieDirection[] = [
   'up',
@@ -58,148 +48,269 @@ export const PIE_DIRECTIONS: readonly PieDirection[] = [
   'left',
 ];
 
-const OPPOSITE: Record<PieDirection, PieDirection> = {
-  up: 'down',
-  down: 'up',
-  left: 'right',
-  right: 'left',
+interface ActionInfo {
+  /** Full name, for the settings editor. */
+  label: string;
+  /** Fits a side of the ring. */
+  short: string;
+  icon: PieIconName;
+  feedback?: PieFeedback;
+}
+
+export const PIE_ACTIONS: Record<PieActionId, ActionInfo> = {
+  none: { label: 'Nothing', short: '', icon: 'menu' },
+  back: { label: 'Back', short: 'Back', icon: 'back' },
+  submenu: { label: 'Submenu', short: 'Menu', icon: 'menu' },
+  tearoff: {
+    label: 'Tear-off',
+    short: 'Tear-off',
+    icon: 'tearoff',
+    feedback: 'tearoff',
+  },
+  repair: {
+    label: 'Fast repair',
+    short: 'Repair',
+    icon: 'repair',
+    feedback: 'repair',
+  },
+  tiresAll: {
+    label: 'Replace all tires',
+    short: 'All tires',
+    icon: 'tires',
+    feedback: 'tires',
+  },
+  tiresLeft: {
+    label: 'Left side tires',
+    short: 'Left side',
+    icon: 'left',
+    feedback: 'tires',
+  },
+  tiresRight: {
+    label: 'Right side tires',
+    short: 'Right side',
+    icon: 'right',
+    feedback: 'tires',
+  },
+  tiresClear: {
+    label: 'Clear tires',
+    short: 'Clear',
+    icon: 'cancel',
+    feedback: 'tires',
+  },
+  compoundDry: {
+    label: 'Compound Dry',
+    short: 'Dry',
+    icon: 'dry',
+    feedback: 'tires',
+  },
+  compoundWet: {
+    label: 'Compound Wet',
+    short: 'Wet',
+    icon: 'wet',
+    feedback: 'tires',
+  },
+  fuelAuto: {
+    label: 'Auto fuel',
+    short: 'Auto fuel',
+    icon: 'auto',
+    feedback: 'fuel',
+  },
+  fuelAdd: { label: 'Add fuel', short: 'Add', icon: 'add', feedback: 'fuel' },
+  fuelAddDouble: {
+    label: 'Add double fuel',
+    short: 'Add',
+    icon: 'add',
+    feedback: 'fuel',
+  },
+  fuelClear: {
+    label: 'Clear fuel',
+    short: 'Clear',
+    icon: 'clear',
+    feedback: 'fuel',
+  },
 };
 
-const rootItem = (
-  action: PieSideAction,
-  state: PieState
+export interface PieItem {
+  action: PieActionId;
+  label: string;
+  icon: PieIconName;
+  opensSubmenu: boolean;
+}
+
+const slotItem = (
+  slot: PieSlotConfig | undefined,
+  fuelStep: number,
+  allowSubmenu: boolean
 ): PieItem | undefined => {
-  switch (action) {
-    case 'tearoff':
-      return {
-        label: 'Tear-off',
-        icon: 'tearoff',
-        toggle: 'tearoff',
-        commands: [{ command: state.tearoff ? 'clearWs' : 'ws' }],
-      };
-    case 'repair':
-      return {
-        label: 'Repair',
-        icon: 'repair',
-        toggle: 'repair',
-        commands: [{ command: state.repair ? 'clearFr' : 'fr' }],
-      };
-    case 'tires':
-      return { label: 'Tires', icon: 'tires', next: 'tires' };
-    case 'fuel':
-      return { label: 'Fuel', icon: 'fuel', next: 'fuel' };
-    case 'none':
-      return undefined;
+  if (!slot || slot.action === 'none') return undefined;
+  if (slot.action === 'submenu') {
+    if (!allowSubmenu) return undefined;
+    return {
+      action: 'submenu',
+      label: slot.label || 'Menu',
+      icon: slot.icon ?? 'menu',
+      opensSubmenu: true,
+    };
   }
+  const info = PIE_ACTIONS[slot.action];
+  const label =
+    slot.action === 'fuelAdd'
+      ? `+${fuelStep} L`
+      : slot.action === 'fuelAddDouble'
+        ? `+${fuelStep * 2} L`
+        : info.short;
+  return { action: slot.action, label, icon: info.icon, opensSubmenu: false };
 };
 
-const submenuItems = (
-  level: 'tires' | 'fuel',
-  config: PieModelConfig
-): PieItem[] =>
-  level === 'tires'
-    ? [
-        {
-          label: 'Left side',
-          icon: 'left',
-          commands: [{ command: 'lf' }, { command: 'lr' }],
-        },
-        {
-          label: 'All four',
-          icon: 'tires',
-          commands: [
-            { command: 'lf' },
-            { command: 'rf' },
-            { command: 'lr' },
-            { command: 'rr' },
-          ],
-        },
-        {
-          label: 'Clear',
-          icon: 'cancel',
-          commands: [{ command: 'clearTires' }],
-        },
-      ]
-    : [
-        {
-          label: `+${config.fuelStep * 2} L`,
-          icon: 'add',
-          commands: [{ command: 'fuel', value: config.fuelStep * 2 }],
-        },
-        {
-          label: 'Clear',
-          icon: 'clear',
-          commands: [{ command: 'clearFuel' }],
-        },
-        {
-          label: `+${config.fuelStep} L`,
-          icon: 'add',
-          commands: [{ command: 'fuel', value: config.fuelStep }],
-        },
-      ];
-
-const CLOCKWISE: readonly PieDirection[] = ['up', 'right', 'down', 'left'];
-
+/** The items on each side of the menu that is showing. */
 export const getPieItems = (
-  level: Exclude<PieLevel, 'closed'>,
   state: PieState,
   config: PieModelConfig
 ): Partial<Record<PieDirection, PieItem>> => {
-  if (level === 'root') {
-    const items: Partial<Record<PieDirection, PieItem>> = {};
-    for (const direction of PIE_DIRECTIONS) {
-      items[direction] = rootItem(config.sides[direction], state);
-    }
-    return items;
+  const items: Partial<Record<PieDirection, PieItem>> = {};
+  const slots =
+    state.level === 'sub' && state.entry
+      ? config.menu[state.entry]?.sub
+      : config.menu;
+  for (const direction of PIE_DIRECTIONS) {
+    items[direction] = slotItem(
+      slots?.[direction],
+      config.fuelStep,
+      state.level !== 'sub'
+    );
   }
-  // Back sits opposite the side that opened the submenu; the actions fill the
-  // other three sides clockwise, starting at the side that opened it.
-  const entry = state.entry ?? 'left';
-  const start = CLOCKWISE.indexOf(entry);
-  const slots = [0, 1, 2, 3]
-    .map((offset) => CLOCKWISE[(start + offset) % 4])
-    .filter((direction) => direction !== OPPOSITE[entry]);
-  const items: Partial<Record<PieDirection, PieItem>> = {
-    [OPPOSITE[entry]]: { label: 'Back', icon: 'back', back: true },
-  };
-  submenuItems(level, config).forEach((item, index) => {
-    items[slots[index]] = item;
-  });
   return items;
+};
+
+const ALL_TIRES =
+  PIT_SV_FLAGS.lf | PIT_SV_FLAGS.rf | PIT_SV_FLAGS.lr | PIT_SV_FLAGS.rr;
+const FOUR_TIRES: PiePitCommand[] = [
+  { command: 'lf' },
+  { command: 'rf' },
+  { command: 'lr' },
+  { command: 'rr' },
+];
+
+const fuelAmount = (litres: number) =>
+  Math.min(999, Math.max(1, Math.ceil(litres)));
+
+/** The pit commands of an action; toggles read the sim's checkboxes. */
+export const commandsFor = (
+  action: PieActionId,
+  context: PieContext,
+  fuelStep: number
+): PiePitCommand[] => {
+  const { flags, compounds } = context;
+  switch (action) {
+    case 'tearoff':
+      return [{ command: flags & PIT_SV_FLAGS.tearoff ? 'clearWs' : 'ws' }];
+    case 'repair':
+      return [{ command: flags & PIT_SV_FLAGS.repair ? 'clearFr' : 'fr' }];
+    case 'tiresAll':
+      return (flags & ALL_TIRES) === ALL_TIRES
+        ? [{ command: 'clearTires' }]
+        : FOUR_TIRES;
+    case 'tiresLeft':
+      return [{ command: 'lf' }, { command: 'lr' }];
+    case 'tiresRight':
+      return [{ command: 'rf' }, { command: 'rr' }];
+    case 'tiresClear':
+      return [{ command: 'clearTires' }];
+    case 'compoundDry':
+    case 'compoundWet': {
+      const compound = action === 'compoundDry' ? compounds.dry : compounds.wet;
+      if (compound === undefined) return [];
+      // Picking a compound with nothing checked means change all four.
+      return [
+        { command: 'tc', value: compound },
+        ...(flags & ALL_TIRES ? [] : FOUR_TIRES),
+      ];
+    }
+    case 'fuelAuto':
+      return flags & PIT_SV_FLAGS.fuel
+        ? [{ command: 'clearFuel' }]
+        : [
+            {
+              command: 'fuel',
+              value:
+                context.fuelToAdd === undefined
+                  ? 0
+                  : fuelAmount(context.fuelToAdd),
+            },
+          ];
+    case 'fuelAdd':
+      return [{ command: 'fuel', value: fuelAmount(fuelStep) }];
+    case 'fuelAddDouble':
+      return [{ command: 'fuel', value: fuelAmount(fuelStep * 2) }];
+    case 'fuelClear':
+      return [{ command: 'clearFuel' }];
+    default:
+      return [];
+  }
 };
 
 /**
  * Applies one navigation input; returns the next state and what to send.
- * A direction pressed while closed acts on the root menu without showing it,
- * so a submenu opens directly. `open` toggles root and backs out of a submenu.
+ * A direction pressed while the main menu is not showing acts on it anyway, so
+ * a submenu or an action is reached without opening the menu first. `open`
+ * toggles the main menu and backs out of a submenu.
  */
 export const stepPieMenu = (
   state: PieState,
   input: PieMenuInput,
-  config: PieModelConfig
+  config: PieModelConfig,
+  context: PieContext = EMPTY_PIE_CONTEXT
 ): { state: PieState; commands: PiePitCommand[] } => {
   const idle = { state, commands: [] };
   if (input === 'open') {
     const level: PieLevel = state.level === 'root' ? 'closed' : 'root';
-    return { state: { ...state, level, entry: undefined }, commands: [] };
+    return { state: { level }, commands: [] };
   }
-  const level = state.level === 'closed' ? 'root' : state.level;
-  const item = getPieItems(level, state, config)[input];
+  const showing: PieState =
+    state.level === 'closed' || state.level === 'result'
+      ? { level: 'root' }
+      : state;
+  const item = getPieItems(showing, config)[input];
   if (!item) return idle;
-  if (item.next) {
+  if (item.opensSubmenu) {
+    return { state: { level: 'sub', entry: input }, commands: [] };
+  }
+  if (item.action === 'back') {
     return {
-      state: { ...state, level: item.next, entry: input },
+      state: { level: showing.level === 'sub' ? 'root' : 'closed' },
       commands: [],
     };
   }
+  const commands = commandsFor(item.action, context, config.fuelStep);
+  const feedback = PIE_ACTIONS[item.action].feedback;
   return {
-    state: {
-      ...state,
-      level: 'root',
-      entry: undefined,
-      ...(item.toggle ? { [item.toggle]: !state[item.toggle] } : {}),
-    },
-    commands: item.commands ?? [],
+    state: feedback ? { level: 'result', feedback } : { level: 'closed' },
+    commands,
+  };
+};
+
+/** Litres to add to reach the finish, with half a lap of margin; undefined when unknown. */
+export const fuelToFinish = (
+  fuel: FuelProjectionSnapshot | undefined
+): number | undefined => {
+  if (!fuel?.hasValidRaceEstimate || !(fuel.projectedLapUsage > 0)) {
+    return undefined;
+  }
+  const needed =
+    fuel.estimatedLapsRemaining * fuel.projectedLapUsage +
+    fuel.projectedLapUsage / 2 -
+    fuel.fuelLevel;
+  return needed > 0 ? needed : undefined;
+};
+
+/** The session's wet compound and its first dry one. */
+export const compoundIndexes = (
+  tires: readonly SessionTire[] | undefined
+): PieContext['compounds'] => {
+  const sorted = [...(tires ?? [])].sort((a, b) => a.TireIndex - b.TireIndex);
+  return {
+    wet: sorted.find((tire) => tire.TireCompoundType === 'Wet')?.TireIndex,
+    dry: sorted.find((tire) => tire.TireCompoundType !== 'Wet')?.TireIndex,
   };
 };
 
@@ -261,6 +372,11 @@ export interface PitServiceView {
   fuelAdd?: number;
   repair: boolean;
   tearoff: boolean;
+  /** All four corners are checked for a change. */
+  tiresAll: boolean;
+  fuelOn: boolean;
+  /** Colours of the session's dry and wet compounds, for the compound sectors. */
+  styles: { dry?: CompoundStyle; wet?: CompoundStyle };
 }
 
 export const describePitService = (
@@ -296,6 +412,12 @@ export const describePitService = (
     fuelAdd,
     repair: (flags & PIT_SV_FLAGS.repair) !== 0,
     tearoff: (flags & PIT_SV_FLAGS.tearoff) !== 0,
+    tiresAll: (flags & ALL_TIRES) === ALL_TIRES,
+    fuelOn: (flags & PIT_SV_FLAGS.fuel) !== 0,
+    styles: {
+      dry: compoundStyle(compoundIndexes(tires).dry, tires),
+      wet: compoundStyle(compoundIndexes(tires).wet, tires),
+    },
   };
 };
 
@@ -315,4 +437,7 @@ export const DEMO_PIT_SERVICE: PitServiceView = {
   fuelAdd: 20,
   repair: true,
   tearoff: false,
+  tiresAll: false,
+  fuelOn: true,
+  styles: { dry: SLICK, wet: WET },
 };

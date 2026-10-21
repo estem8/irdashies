@@ -4,6 +4,7 @@ import { WidgetScaleSettings } from '../components/WidgetScaleSettings';
 import { SettingsSection } from '../components/SettingSection';
 import { SettingProps, settingPropFor } from '../components/SettingProp';
 import { BindingRow } from './KeybindingsSettings';
+import { PieMenuEditor } from './PieMenuEditor';
 import {
   PieMenuWidgetSettings,
   getWidgetDefaultConfig,
@@ -24,10 +25,10 @@ const INPUT_TEXT: Record<PieMenuInput, [string, string]> = {
     'Open / Back',
     'Show the main menu, go back from a submenu, close from the main menu',
   ],
-  up: ['Up', 'Up side. Pressed with the menu closed it acts without opening'],
-  right: ['Right', 'Right side. In a submenu opened from the left: back'],
-  down: ['Down', 'Down side. In a submenu opened from above: back'],
-  left: ['Left', 'Left side. In a submenu opened from the right: back'],
+  up: ['Up', 'The up side of the menu showing, or of the main menu if none'],
+  right: ['Right', 'The right side of the menu showing, or of the main menu'],
+  down: ['Down', 'The down side of the menu showing, or of the main menu'],
+  left: ['Left', 'The left side of the menu showing, or of the main menu'],
 };
 
 export const PieMenuSettings = () => {
@@ -37,9 +38,11 @@ export const PieMenuSettings = () => {
   ) as PieMenuWidgetSettings | undefined;
   const [settings, setSettings] = useState<PieMenuWidgetSettings>({
     enabled: savedSettings?.enabled ?? false,
-    config:
-      (savedSettings?.config as PieMenuWidgetSettings['config']) ??
-      defaultConfig,
+    // A config saved by an older build may lack newer fields.
+    config: {
+      ...defaultConfig,
+      ...(savedSettings?.config as Partial<PieMenuWidgetSettings['config']>),
+    },
   });
   const [bindings, setBindings] = useState<KeybindingsMap | null>(null);
 
@@ -71,11 +74,12 @@ export const PieMenuSettings = () => {
               <SettingProp path="timeoutSeconds" />
               <SettingProp path="fuelStep" />
             </SettingsSection>
-            <SettingsSection title="Sides">
-              <SettingProp path="sides.up" />
-              <SettingProp path="sides.right" />
-              <SettingProp path="sides.down" />
-              <SettingProp path="sides.left" />
+            <SettingsSection title="Menu">
+              <PieMenuEditor
+                menu={settings.config.menu}
+                fuelStep={settings.config.fuelStep}
+                onChange={(menu) => handleConfigChange({ menu })}
+              />
             </SettingsSection>
             <SettingsSection title="Navigation">
               <div className="flex flex-col gap-1">

@@ -216,6 +216,8 @@ export enum PitCommand {
   ClearFR,
   /** Uncheck add fuel */
   ClearFuel,
+  /** Select the tire compound, passing its index as the parameter */
+  TC,
 }
 
 export enum TelemetryCommand {

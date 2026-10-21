@@ -1,116 +1,207 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PIT_SV_FLAGS,
+  getWidgetDefaultConfig,
+  type FuelProjectionSnapshot,
+} from '@irdashies/types';
+import {
+  EMPTY_PIE_CONTEXT,
   INITIAL_PIE_STATE,
+  commandsFor,
+  compoundIndexes,
   compoundStyle,
   describePitService,
+  fuelToFinish,
   stepPieMenu,
+  type PieContext,
   type PieState,
 } from './pieMenuModel';
 
-const config = {
-  fuelStep: 10,
-  sides: {
-    up: 'tearoff',
-    right: 'repair',
-    down: 'fuel',
-    left: 'tires',
-  },
-} as const;
-const root: PieState = { ...INITIAL_PIE_STATE, level: 'root' };
+const config = getWidgetDefaultConfig('piemenu');
+const tireSession = [
+  { TireIndex: 0, TireCompoundType: 'Hard' },
+  { TireIndex: 1, TireCompoundType: 'Wet' },
+];
+const context: PieContext = {
+  flags: 0,
+  compounds: compoundIndexes(tireSession),
+  fuelToAdd: 23.2,
+};
+const root: PieState = { level: 'root' };
+const tires: PieState = { level: 'sub', entry: 'left' };
+const fuel: PieState = { level: 'sub', entry: 'down' };
+const commandNames = (result: { commands: { command: string }[] }) =>
+  result.commands.map((c) => c.command);
 
 describe('stepPieMenu', () => {
-  it('opens the root on open and closes it again', () => {
+  it('opens the main menu on open and closes it again', () => {
     const opened = stepPieMenu(INITIAL_PIE_STATE, 'open', config).state;
     expect(opened.level).toBe('root');
     expect(stepPieMenu(opened, 'open', config).state.level).toBe('closed');
   });
 
-  it('opens a submenu directly from closed with a direction', () => {
-    expect(stepPieMenu(INITIAL_PIE_STATE, 'left', config).state.level).toBe(
-      'tires'
-    );
-    expect(stepPieMenu(INITIAL_PIE_STATE, 'down', config).state.level).toBe(
-      'fuel'
-    );
-  });
-
-  it('returns from a submenu in the opposite direction', () => {
-    const tires = stepPieMenu(INITIAL_PIE_STATE, 'left', config).state;
-    expect(stepPieMenu(tires, 'right', config)).toMatchObject({
-      state: { level: 'root', entry: undefined },
-      commands: [],
+  it('opens the tires menu on the left, directly from closed too', () => {
+    expect(stepPieMenu(INITIAL_PIE_STATE, 'left', config).state).toEqual({
+      level: 'sub',
+      entry: 'left',
     });
-    const fuel = stepPieMenu(INITIAL_PIE_STATE, 'down', config).state;
-    expect(stepPieMenu(fuel, 'up', config).state.level).toBe('root');
+    expect(stepPieMenu(root, 'left', config).state.entry).toBe('left');
   });
 
-  it('open also backs out of a submenu', () => {
-    const tires = stepPieMenu(root, 'left', config).state;
+  it('puts replace all on the left, Dry above and Wet below', () => {
+    expect(
+      stepPieMenu(tires, 'left', config, context).commands.map((c) => c.command)
+    ).toEqual(['lf', 'rf', 'lr', 'rr']);
+    expect(stepPieMenu(tires, 'up', config, context).commands[0]).toEqual({
+      command: 'tc',
+      value: 0,
+    });
+    expect(stepPieMenu(tires, 'down', config, context).commands[0]).toEqual({
+      command: 'tc',
+      value: 1,
+    });
+  });
+
+  it('goes back to the main menu on the opposite side', () => {
+    expect(stepPieMenu(tires, 'right', config).state.level).toBe('root');
+    expect(stepPieMenu(fuel, 'up', config).state.level).toBe('root');
     expect(stepPieMenu(tires, 'open', config).state.level).toBe('root');
   });
 
-  it('sends all four tires from the tires submenu and returns to root', () => {
-    const tires = stepPieMenu(root, 'left', config).state;
-    const { state, commands } = stepPieMenu(tires, 'up', config);
-    expect(commands.map((c) => c.command)).toEqual(['lf', 'rf', 'lr', 'rr']);
-    expect(state.level).toBe('root');
+  it('shows the result of what was picked instead of the menu', () => {
+    const { state } = stepPieMenu(tires, 'up', config, context);
+    expect(state).toEqual({ level: 'result', feedback: 'tires' });
+    expect(stepPieMenu(root, 'right', config, context).state).toEqual({
+      level: 'result',
+      feedback: 'repair',
+    });
   });
 
-  it('runs a leaf sector pressed while closed', () => {
-    const first = stepPieMenu(INITIAL_PIE_STATE, 'right', config);
-    expect(first.commands).toEqual([{ command: 'fr' }]);
-    expect(first.state.level).toBe('root');
+  it('acts on the main menu from a result without opening it', () => {
+    const result: PieState = { level: 'result', feedback: 'tires' };
+    expect(stepPieMenu(result, 'left', config).state.level).toBe('sub');
   });
 
-  it('toggles repair between fr and clearFr', () => {
-    const first = stepPieMenu(root, 'right', config);
-    const second = stepPieMenu(first.state, 'right', config);
-    expect(second.commands).toEqual([{ command: 'clearFr' }]);
-  });
-
-  it('scales the fuel sectors by fuelStep', () => {
-    const fuel = stepPieMenu(root, 'down', { ...config, fuelStep: 7 }).state;
-    expect(
-      stepPieMenu(fuel, 'down', { ...config, fuelStep: 7 }).commands
-    ).toEqual([{ command: 'fuel', value: 14 }]);
-  });
-});
-
-describe('configurable sides', () => {
-  const swapped = {
-    ...config,
-    sides: { up: 'tires', right: 'none', down: 'repair', left: 'fuel' },
-  } as const;
-
-  it('follows the configured action of each side', () => {
-    expect(stepPieMenu(INITIAL_PIE_STATE, 'up', swapped).state.level).toBe(
-      'tires'
-    );
-    expect(stepPieMenu(INITIAL_PIE_STATE, 'down', swapped).commands).toEqual([
-      { command: 'fr' },
-    ]);
-  });
-
-  it('ignores a side set to nothing', () => {
-    expect(stepPieMenu(INITIAL_PIE_STATE, 'right', swapped)).toEqual({
+  it('ignores a side that has nothing', () => {
+    const empty = {
+      ...config,
+      menu: { ...config.menu, up: { action: 'none' as const } },
+    };
+    expect(stepPieMenu(INITIAL_PIE_STATE, 'up', empty)).toEqual({
       state: INITIAL_PIE_STATE,
       commands: [],
     });
   });
 
-  it('goes back opposite the side that opened the submenu', () => {
-    const tires = stepPieMenu(INITIAL_PIE_STATE, 'up', swapped).state;
-    expect(stepPieMenu(tires, 'down', swapped).state.level).toBe('root');
-    const fuel = stepPieMenu(INITIAL_PIE_STATE, 'left', swapped).state;
-    expect(stepPieMenu(fuel, 'right', swapped).state.level).toBe('root');
+  it('does not open a submenu from inside a submenu', () => {
+    const nested = {
+      ...config,
+      menu: {
+        ...config.menu,
+        left: {
+          ...config.menu.left,
+          sub: {
+            up: { action: 'submenu' as const, label: 'Loop' },
+            right: { action: 'back' as const },
+            down: { action: 'none' as const },
+            left: { action: 'none' as const },
+          },
+        },
+      },
+    };
+    expect(stepPieMenu(tires, 'up', nested).state).toEqual(tires);
+  });
+});
+
+describe('commandsFor', () => {
+  it('toggles tear-off and repair from the sim checkboxes', () => {
+    expect(commandsFor('repair', EMPTY_PIE_CONTEXT, 10)).toEqual([
+      { command: 'fr' },
+    ]);
+    expect(
+      commandsFor('repair', { ...context, flags: PIT_SV_FLAGS.repair }, 10)
+    ).toEqual([{ command: 'clearFr' }]);
+    expect(
+      commandsFor('tearoff', { ...context, flags: PIT_SV_FLAGS.tearoff }, 10)
+    ).toEqual([{ command: 'clearWs' }]);
+  });
+
+  it('turns replace all tires off when all four are checked', () => {
+    const all =
+      PIT_SV_FLAGS.lf | PIT_SV_FLAGS.rf | PIT_SV_FLAGS.lr | PIT_SV_FLAGS.rr;
+    expect(
+      commandNames({
+        commands: commandsFor('tiresAll', { ...context, flags: all }, 10),
+      })
+    ).toEqual(['clearTires']);
+    expect(
+      commandNames({
+        commands: commandsFor(
+          'tiresAll',
+          { ...context, flags: PIT_SV_FLAGS.lf },
+          10
+        ),
+      })
+    ).toEqual(['lf', 'rf', 'lr', 'rr']);
+  });
+
+  it('checks all four tires with a compound only when none is checked', () => {
+    const checked = { ...context, flags: PIT_SV_FLAGS.rf };
+    expect(commandsFor('compoundWet', checked, 10)).toEqual([
+      { command: 'tc', value: 1 },
+    ]);
+    expect(commandsFor('compoundWet', context, 10)).toHaveLength(5);
+  });
+
+  it('sends nothing for a compound the session does not have', () => {
+    expect(commandsFor('compoundWet', EMPTY_PIE_CONTEXT, 10)).toEqual([]);
+  });
+
+  it('toggles auto fuel, using the litres to finish when known', () => {
+    expect(commandsFor('fuelAuto', context, 10)).toEqual([
+      { command: 'fuel', value: 24 },
+    ]);
+    expect(commandsFor('fuelAuto', EMPTY_PIE_CONTEXT, 10)).toEqual([
+      { command: 'fuel', value: 0 },
+    ]);
+    expect(
+      commandsFor('fuelAuto', { ...context, flags: PIT_SV_FLAGS.fuel }, 10)
+    ).toEqual([{ command: 'clearFuel' }]);
+  });
+
+  it('scales the add fuel actions by the step', () => {
+    expect(commandsFor('fuelAdd', context, 7)).toEqual([
+      { command: 'fuel', value: 7 },
+    ]);
+    expect(commandsFor('fuelAddDouble', context, 7)).toEqual([
+      { command: 'fuel', value: 14 },
+    ]);
+  });
+});
+
+describe('fuelToFinish', () => {
+  const fuelSnapshot = {
+    hasValidRaceEstimate: true,
+    projectedLapUsage: 2,
+    estimatedLapsRemaining: 10,
+    fuelLevel: 5,
+  } as FuelProjectionSnapshot;
+
+  it('covers the remaining laps plus half a lap, minus what is in the tank', () => {
+    expect(fuelToFinish(fuelSnapshot)).toBe(16);
+  });
+
+  it('is unknown without a race estimate or when the tank is enough', () => {
+    expect(fuelToFinish(undefined)).toBeUndefined();
+    expect(
+      fuelToFinish({ ...fuelSnapshot, hasValidRaceEstimate: false })
+    ).toBeUndefined();
+    expect(fuelToFinish({ ...fuelSnapshot, fuelLevel: 99 })).toBeUndefined();
   });
 });
 
 describe('describePitService', () => {
-  const tires = [
-    { TireIndex: 0, TireCompoundType: 'Hard' },
-    { TireIndex: 1, TireCompoundType: 'Wet' },
-  ];
+  const tires = tireSession;
 
   it('reads a wet plus one dry set as W blue and S green', () => {
     expect(compoundStyle(1, tires)?.letter).toBe('W');

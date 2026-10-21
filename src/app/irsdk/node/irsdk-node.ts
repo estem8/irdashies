@@ -47,6 +47,7 @@ const PIT_COMMAND_BY_NAME: Record<PiePitCommandName, PitCommand> = {
   clearWs: PitCommand.ClearWS,
   clearFr: PitCommand.ClearFR,
   clearFuel: PitCommand.ClearFuel,
+  tc: PitCommand.TC,
 };
 
 /**
