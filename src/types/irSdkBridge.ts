@@ -1,4 +1,5 @@
 import type { Session, Telemetry } from '@irdashies/types';
+import type { PiePitCommand } from './pieMenu';
 import type { TapeReplayCommand, TapeReplayStatus } from './tapeReplay';
 
 export enum ReplayPositionCommand {
@@ -51,6 +52,8 @@ export interface IrSdkSourceBridge extends IrSdkBridge {
     position: ReplayPositionCommand,
     frame: number
   ) => void;
+  /** Sends pit commands (checkboxes of the pit menu); absent for non-iRacing sources. */
+  sendPitCommands?: (commands: PiePitCommand[]) => void;
   triggerReplaySessionSearch: (
     sessionNum: number,
     sessionTimeMs: number

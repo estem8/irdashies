@@ -361,6 +361,7 @@ export async function publishAutoDetectedSdkEvents(
     changeCameraNumber: (...args) => activeBridge?.changeCameraNumber(...args),
     changeReplayPosition: (...args) =>
       activeBridge?.changeReplayPosition(...args),
+    sendPitCommands: (...args) => activeBridge?.sendPitCommands?.(...args),
     triggerReplaySessionSearch: (...args) =>
       activeBridge?.triggerReplaySessionSearch(...args),
   };

@@ -32,6 +32,7 @@ declare global {
     /** Absent outside the Electron preload, e.g. the browser server. */
     lapHistoryBridge?: LapHistoryBridge;
     rendererPerfBridge?: RendererPerfBridge;
+    pieMenuBridge?: import('./types/pieMenu').PieMenuBridge;
     tapeReplayBridge?: import('./types/tapeReplay').TapeReplayBridge;
   }
 }

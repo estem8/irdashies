@@ -15,6 +15,7 @@ import { ShiftLightSettings } from './sections/ShiftLightSettings';
 import { AboutSettings } from './sections/AboutSettings';
 import { FasterCarsFromBehindSettings } from './sections/FasterCarsFromBehindSettings';
 import { FuelSettings } from './sections/FuelSettings';
+import { PieMenuSettings } from './sections/PieMenuSettings';
 import { RejoinIndicatorSettings } from './sections/RejoinIndicatorSettings';
 import { PitlaneHelperSettings } from './sections/PitlaneHelperSettings';
 import { GeneralSettings } from './sections/GeneralSettings';
@@ -60,6 +61,7 @@ export const WIDGET_SETTINGS: Record<
   tachometer: TachometerSettings,
   shiftlight: ShiftLightSettings,
   pitlanehelper: PitlaneHelperSettings,
+  piemenu: PieMenuSettings,
   rejoin: RejoinIndicatorSettings,
   fastercarsfrombehind: FasterCarsFromBehindSettings,
   blindspotmonitor: BlindSpotMonitorSettings,

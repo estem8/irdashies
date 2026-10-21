@@ -75,6 +75,8 @@ export const LMU_DISABLED_WIDGETS: readonly string[] = [
   'heartrate',
   'laptimelog',
   'map',
+  // Pit commands are sent through iRacing's broadcast API only.
+  'piemenu',
   'radar',
   'rejoin',
   'sectordelta',

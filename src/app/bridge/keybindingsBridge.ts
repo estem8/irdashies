@@ -3,6 +3,7 @@ import type { KeybindingActionId } from '@irdashies/types';
 import { DEFAULT_KEYBINDINGS } from '@irdashies/types';
 import {
   isGamepadBinding,
+  isPieMenuActionId,
   isValidWidgetToggleActionId,
   parseGamepadTokens,
 } from '@irdashies/shared';
@@ -19,7 +20,11 @@ import logger from '../logger';
 /** Throw if `actionId` is not a known static action or a valid widget toggle. */
 function assertSupportedAction(actionId: KeybindingActionId): void {
   const isStatic = Object.hasOwn(DEFAULT_KEYBINDINGS, actionId);
-  if (!isStatic && !isValidWidgetToggleActionId(actionId)) {
+  if (
+    !isStatic &&
+    !isValidWidgetToggleActionId(actionId) &&
+    !isPieMenuActionId(actionId)
+  ) {
     throw new Error(`"${actionId}" is not a supported keybinding action`);
   }
 }

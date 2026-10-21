@@ -13,9 +13,15 @@ export type StaticKeybindingActionId =
  */
 export type WidgetToggleActionId = `toggle-widget:${string}`;
 
+/** Navigation inputs of the Pie Menu widget; `open` toggles/backs out. */
+export type PieMenuInput = 'open' | 'up' | 'right' | 'down' | 'left';
+
+/** Dynamic Pie Menu navigation action, e.g. `pie-menu:up`. Unbound by default. */
+export type PieMenuActionId = `pie-menu:${PieMenuInput}`;
+
 /** Identifiers for every bindable action in the app */
 export type KeybindingActionId =
-  StaticKeybindingActionId | WidgetToggleActionId;
+  StaticKeybindingActionId | WidgetToggleActionId | PieMenuActionId;
 
 export interface KeybindingEntry {
   /**
@@ -35,7 +41,11 @@ export interface KeybindingEntry {
   isDefault?: boolean;
 }
 
-export type KeybindingsMap = Record<KeybindingActionId, KeybindingEntry>;
+export type KeybindingsMap = Record<
+  Exclude<KeybindingActionId, PieMenuActionId>,
+  KeybindingEntry
+> &
+  Partial<Record<PieMenuActionId, KeybindingEntry>>;
 
 /** Bridge methods exposed to the renderer for keybinding management */
 export interface KeybindingsBridge {

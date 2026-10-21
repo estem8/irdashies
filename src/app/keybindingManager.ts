@@ -4,6 +4,8 @@ import path from 'node:path';
 import type { KeybindingActionId, KeybindingsMap } from '@irdashies/types';
 import {
   isGamepadBinding,
+  isPieMenuActionId,
+  pieMenuInputFromActionId,
   isWidgetToggleActionId,
   nextProfileIndex,
   widgetIdFromToggleActionId,
@@ -138,6 +140,13 @@ export class KeybindingManager {
     if (isWidgetToggleActionId(actionId)) {
       const widgetId = widgetIdFromToggleActionId(actionId);
       return () => this.toggleWidgetHide(widgetId);
+    }
+    if (isPieMenuActionId(actionId)) {
+      const input = pieMenuInputFromActionId(actionId);
+      return () =>
+        this.overlayManager.getOverlays().forEach(({ window }) => {
+          window.webContents.send('pieMenu:input', input);
+        });
     }
     return this.actionHandlers.get(actionId);
   }

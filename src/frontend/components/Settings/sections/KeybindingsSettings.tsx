@@ -7,6 +7,7 @@ import type {
 } from '@irdashies/types';
 import {
   isGamepadBinding,
+  isPieMenuActionId,
   isWidgetToggleActionId,
   parseGamepadToken,
   parseGamepadTokens,
@@ -322,7 +323,7 @@ interface BindingRowProps {
   onUpdated: (bindings: KeybindingsMap) => void;
 }
 
-const BindingRow = ({ actionId, entry, onUpdated }: BindingRowProps) => (
+export const BindingRow = ({ actionId, entry, onUpdated }: BindingRowProps) => (
   <div className="flex items-center justify-between px-4 py-3 rounded bg-slate-700/50 hover:bg-slate-700/70 transition-colors">
     <div className="flex flex-col gap-0.5">
       <span className="text-sm font-medium text-white">{entry.label}</span>
@@ -357,7 +358,7 @@ export const KeybindingsSettings = () => {
   // only shows the fixed app-level actions.
   const staticActionIds = (
     Object.keys(bindings) as KeybindingActionId[]
-  ).filter((id) => !isWidgetToggleActionId(id));
+  ).filter((id) => !isWidgetToggleActionId(id) && !isPieMenuActionId(id));
 
   // One bindable show/hide toggle per widget instance in the current dashboard.
   // Derived live, so newly-added widgets automatically appear with no defaults.

@@ -27,7 +27,27 @@ import type { INativeSDK } from '../native';
 import { getSimStatus } from './utils';
 import { getSdkOrMock } from './get-sdk';
 import logger from '../../logger';
-import type { TapeReplayCommand, TapeReplayStatus } from '@irdashies/types';
+import type {
+  PiePitCommand,
+  PiePitCommandName,
+  TapeReplayCommand,
+  TapeReplayStatus,
+} from '@irdashies/types';
+
+const PIT_COMMAND_BY_NAME: Record<PiePitCommandName, PitCommand> = {
+  clear: PitCommand.Clear,
+  ws: PitCommand.WS,
+  fuel: PitCommand.Fuel,
+  lf: PitCommand.LF,
+  rf: PitCommand.RF,
+  lr: PitCommand.LR,
+  rr: PitCommand.RR,
+  clearTires: PitCommand.ClearTires,
+  fr: PitCommand.FR,
+  clearWs: PitCommand.ClearWS,
+  clearFr: PitCommand.ClearFR,
+  clearFuel: PitCommand.ClearFuel,
+};
 
 /**
  * Encodes a car number string for irsdk_BroadcastCamSwitchNum, mirroring the
@@ -485,6 +505,16 @@ export class IRacingSDK {
       group,
       camera
     );
+  }
+
+  public sendPitCommands(commands: PiePitCommand[]): void {
+    for (const { command, value } of commands) {
+      this._sdk?.broadcast(
+        BroadcastMessages.PitCommand,
+        PIT_COMMAND_BY_NAME[command],
+        value ?? 0
+      );
+    }
   }
 
   public changeCameraState(state: CameraState): void {

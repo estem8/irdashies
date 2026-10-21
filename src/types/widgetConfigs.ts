@@ -772,6 +772,13 @@ export interface RadarTuning {
   gridMaxSpeedMs: number;
 }
 
+export interface PieMenuConfig {
+  /** Seconds without input before the menu closes. */
+  timeoutSeconds: number;
+  /** Litres added by the first fuel sector; the second adds twice as much. */
+  fuelStep: number;
+}
+
 export interface RejoinIndicatorConfig {
   showAtSpeed: number;
   careGap: number;
@@ -1404,6 +1411,7 @@ export interface WidgetConfigMap {
   radar: RadarConfig;
   garagecover: GarageCoverConfig;
   rejoin: RejoinIndicatorConfig;
+  piemenu: PieMenuConfig;
   flag: FlagConfig;
   telemetryinspector: TelemetryInspectorConfig;
   fastercarsfrombehind: FasterCarsFromBehindConfig;
@@ -1513,6 +1521,7 @@ export type FuelWidgetSettings = BaseWidgetSettings<FuelConfig>;
 export type BlindSpotMonitorWidgetSettings =
   BaseWidgetSettings<BlindSpotMonitorConfig>;
 export type RadarWidgetSettings = BaseWidgetSettings<RadarConfig>;
+export type PieMenuWidgetSettings = BaseWidgetSettings<PieMenuConfig>;
 export type RejoinIndicatorWidgetSettings =
   BaseWidgetSettings<RejoinIndicatorConfig>;
 export type FlagWidgetSettings = BaseWidgetSettings<FlagConfig> & {

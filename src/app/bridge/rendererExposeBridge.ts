@@ -40,12 +40,25 @@ import {
   type RendererDataStream,
 } from './rendererDataSubscriptions';
 import { createSubscriptionBridgeClient, defineBridge } from './defineBridge';
-import type { TapeReplayBridge } from '@irdashies/types';
+import type {
+  PieMenuBridge,
+  PieMenuInput,
+  TapeReplayBridge,
+} from '@irdashies/types';
 
 export function exposeBridge() {
   defineBridge<TapeReplayBridge>('tapeReplayBridge', {
     getStatus: () => ipcRenderer.invoke('tapeReplay:status'),
     command: (command) => ipcRenderer.invoke('tapeReplay:command', command),
+  });
+  defineBridge<PieMenuBridge>('pieMenuBridge', {
+    onInput: (callback) => {
+      const handler = (_: Electron.IpcRendererEvent, input: PieMenuInput) =>
+        callback(input);
+      ipcRenderer.on('pieMenu:input', handler);
+      return () => ipcRenderer.removeListener('pieMenu:input', handler);
+    },
+    sendPitCommands: (commands) => ipcRenderer.invoke('pieMenu:pit', commands),
   });
   defineBridge<ReleaseNotesBridge>('releaseNotesBridge', {
     getStatus: () => ipcRenderer.invoke('releaseNotes:status'),

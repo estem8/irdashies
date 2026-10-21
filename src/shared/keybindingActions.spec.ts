@@ -6,6 +6,9 @@ import {
   widgetToggleActionId,
   widgetIdFromToggleActionId,
   nextProfileIndex,
+  isPieMenuActionId,
+  pieMenuActionId,
+  pieMenuInputFromActionId,
 } from './keybindingActions';
 
 describe('widget toggle action id helpers', () => {
@@ -58,5 +61,19 @@ describe('nextProfileIndex', () => {
 
   it('treats an unknown current index as the start', () => {
     expect(nextProfileIndex(-1, 3, 1, false)).toBe(1);
+  });
+});
+
+describe('pie menu action ids', () => {
+  it('recognises only known inputs', () => {
+    expect(isPieMenuActionId('pie-menu:up')).toBe(true);
+    expect(isPieMenuActionId('pie-menu:open')).toBe(true);
+    expect(isPieMenuActionId('pie-menu:')).toBe(false);
+    expect(isPieMenuActionId('pie-menu:diagonal')).toBe(false);
+    expect(isPieMenuActionId('toggle-widget:piemenu')).toBe(false);
+  });
+
+  it('round-trips an input through its action id', () => {
+    expect(pieMenuInputFromActionId(pieMenuActionId('left'))).toBe('left');
   });
 });

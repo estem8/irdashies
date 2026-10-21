@@ -1,4 +1,8 @@
-import type { WidgetToggleActionId } from '@irdashies/types';
+import type {
+  PieMenuActionId,
+  PieMenuInput,
+  WidgetToggleActionId,
+} from '@irdashies/types';
 
 /**
  * Prefix marking a keybinding action as a per-widget show/hide toggle. The text
@@ -53,3 +57,35 @@ export const nextProfileIndex = (
   if (next < 0 || next >= length) return -1;
   return next;
 };
+
+export const PIE_MENU_PREFIX = 'pie-menu:';
+
+export const PIE_MENU_INPUTS: readonly PieMenuInput[] = [
+  'open',
+  'up',
+  'right',
+  'down',
+  'left',
+];
+
+/** True when an action id is a known Pie Menu navigation action. */
+export function isPieMenuActionId(
+  actionId: string
+): actionId is PieMenuActionId {
+  return (
+    actionId.startsWith(PIE_MENU_PREFIX) &&
+    (PIE_MENU_INPUTS as readonly string[]).includes(
+      actionId.slice(PIE_MENU_PREFIX.length)
+    )
+  );
+}
+
+export function pieMenuActionId(input: PieMenuInput): PieMenuActionId {
+  return `${PIE_MENU_PREFIX}${input}`;
+}
+
+export function pieMenuInputFromActionId(
+  actionId: PieMenuActionId
+): PieMenuInput {
+  return actionId.slice(PIE_MENU_PREFIX.length) as PieMenuInput;
+}

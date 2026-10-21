@@ -108,6 +108,10 @@ const WIDGET_MENU_META: Partial<
     category: 'car',
     description: 'Saved lap inputs along the track',
   },
+  piemenu: {
+    category: 'car',
+    description: 'Pit stop pie menu on keys or wheel buttons',
+  },
   pitlanehelper: {
     category: 'awareness',
     description: 'Pit entry speed and pitbox',

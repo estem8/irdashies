@@ -80,6 +80,7 @@ import {
 } from './app/storage/lapHistoryStorage';
 import { ReplayContextRuntime } from './app/processors/replayContextRuntime';
 import { setupTapeReplayBridge } from './app/bridge/tapeReplayBridge';
+import { setupPieMenuBridge } from './app/bridge/pieMenuBridge';
 import { createTapeReplayWindow } from './app/tapeReplayWindow';
 import type { ArchiveIndex } from './app/processors/ReplayContextProcessor';
 import { createKnownLocalUserIdStore } from './app/storage/knownLocalUserIds';
@@ -442,6 +443,7 @@ void app.whenReady().then(async () => {
   );
   await iRacingSDKSetup(overlayManager, channelBus);
   setupTapeReplayBridge(getCurrentBridge);
+  setupPieMenuBridge(getCurrentBridge);
   if (process.env.IRDASHIES_TELEMETRY_REPLAY) createTapeReplayWindow();
 
   // Perform one-time cleanup of old reference laps
