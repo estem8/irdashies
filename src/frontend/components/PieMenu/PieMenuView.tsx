@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -540,6 +540,18 @@ const TransitionTire = ({
 }) => {
   const [shown, setShown] = useState({ from: color, to: color });
   if (shown.to !== color) setShown({ from: shown.to, to: color });
+  const overlay = useRef<SVGGElement>(null);
+  // Web Animations rather than SMIL: a SMIL animation counts from when the
+  // whole svg appeared, so one added later would jump straight to its end.
+  useEffect(() => {
+    const el = overlay.current;
+    if (!el || shown.from === shown.to) return;
+    const blink = el.animate(
+      { opacity: [0, 1, 0.1, 1, 0.35, 1, 0.65, 1] },
+      { duration: 2000, fill: 'forwards' }
+    );
+    return () => blink.cancel();
+  }, [shown.from, shown.to]);
   const icon = {
     x: x - size / 2,
     y: y - size / 2,
@@ -550,13 +562,7 @@ const TransitionTire = ({
     <g>
       <TireIcon {...icon} color={shown.from} />
       {shown.from !== shown.to && (
-        <g key={`${shown.from}-${shown.to}`} opacity={0}>
-          <animate
-            attributeName="opacity"
-            values="0;1;0.1;1;0.35;1;0.65;1"
-            dur="2s"
-            fill="freeze"
-          />
+        <g ref={overlay} opacity={0}>
           <TireIcon {...icon} color={shown.to} />
         </g>
       )}
