@@ -1,6 +1,7 @@
 import {
   PIT_SV_FLAGS,
   type PieMenuConfig,
+  type PieSideAction,
   type PieMenuInput,
   type PiePitCommand,
   type PitServiceSnapshot,
@@ -22,6 +23,8 @@ export type PieIcon =
 
 export interface PieState {
   level: PieLevel;
+  /** Side that opened the open submenu; its opposite side goes back. */
+  entry?: PieDirection;
   /** Last sent state of the toggles; assumes the pit menu is only changed here. */
   repair: boolean;
   tearoff: boolean;
@@ -40,6 +43,8 @@ export interface PieItem {
   toggle?: 'repair' | 'tearoff';
 }
 
+export type PieModelConfig = Pick<PieMenuConfig, 'fuelStep' | 'sides'>;
+
 export const INITIAL_PIE_STATE: PieState = {
   level: 'closed',
   repair: false,
@@ -53,32 +58,53 @@ export const PIE_DIRECTIONS: readonly PieDirection[] = [
   'left',
 ];
 
-export const getPieItems = (
-  level: Exclude<PieLevel, 'closed'>,
-  state: PieState,
-  config: Pick<PieMenuConfig, 'fuelStep'>
-): Partial<Record<PieDirection, PieItem>> => {
-  switch (level) {
-    case 'root':
+const OPPOSITE: Record<PieDirection, PieDirection> = {
+  up: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+};
+
+const rootItem = (
+  action: PieSideAction,
+  state: PieState
+): PieItem | undefined => {
+  switch (action) {
+    case 'tearoff':
       return {
-        up: {
-          label: 'Tear-off',
-          icon: 'tearoff',
-          toggle: 'tearoff',
-          commands: [{ command: state.tearoff ? 'clearWs' : 'ws' }],
-        },
-        left: { label: 'Tires', icon: 'tires', next: 'tires' },
-        down: { label: 'Fuel', icon: 'fuel', next: 'fuel' },
-        right: {
-          label: 'Repair',
-          icon: 'repair',
-          toggle: 'repair',
-          commands: [{ command: state.repair ? 'clearFr' : 'fr' }],
-        },
+        label: 'Tear-off',
+        icon: 'tearoff',
+        toggle: 'tearoff',
+        commands: [{ command: state.tearoff ? 'clearWs' : 'ws' }],
+      };
+    case 'repair':
+      return {
+        label: 'Repair',
+        icon: 'repair',
+        toggle: 'repair',
+        commands: [{ command: state.repair ? 'clearFr' : 'fr' }],
       };
     case 'tires':
-      return {
-        up: {
+      return { label: 'Tires', icon: 'tires', next: 'tires' };
+    case 'fuel':
+      return { label: 'Fuel', icon: 'fuel', next: 'fuel' };
+    case 'none':
+      return undefined;
+  }
+};
+
+const submenuItems = (
+  level: 'tires' | 'fuel',
+  config: PieModelConfig
+): PieItem[] =>
+  level === 'tires'
+    ? [
+        {
+          label: 'Left side',
+          icon: 'left',
+          commands: [{ command: 'lf' }, { command: 'lr' }],
+        },
+        {
           label: 'All four',
           icon: 'tires',
           commands: [
@@ -88,40 +114,58 @@ export const getPieItems = (
             { command: 'rr' },
           ],
         },
-        left: {
-          label: 'Left side',
-          icon: 'left',
-          commands: [{ command: 'lf' }, { command: 'lr' }],
-        },
-        down: {
+        {
           label: 'Clear',
           icon: 'cancel',
           commands: [{ command: 'clearTires' }],
         },
-        // Opened with left, so back is the opposite sector.
-        right: { label: 'Back', icon: 'back', back: true },
-      };
-    case 'fuel':
-      return {
-        right: {
-          label: `+${config.fuelStep} L`,
-          icon: 'add',
-          commands: [{ command: 'fuel', value: config.fuelStep }],
-        },
-        down: {
+      ]
+    : [
+        {
           label: `+${config.fuelStep * 2} L`,
           icon: 'add',
           commands: [{ command: 'fuel', value: config.fuelStep * 2 }],
         },
-        left: {
+        {
           label: 'Clear',
           icon: 'clear',
           commands: [{ command: 'clearFuel' }],
         },
-        // Opened with down, so back is the opposite sector.
-        up: { label: 'Back', icon: 'back', back: true },
-      };
+        {
+          label: `+${config.fuelStep} L`,
+          icon: 'add',
+          commands: [{ command: 'fuel', value: config.fuelStep }],
+        },
+      ];
+
+const CLOCKWISE: readonly PieDirection[] = ['up', 'right', 'down', 'left'];
+
+export const getPieItems = (
+  level: Exclude<PieLevel, 'closed'>,
+  state: PieState,
+  config: PieModelConfig
+): Partial<Record<PieDirection, PieItem>> => {
+  if (level === 'root') {
+    const items: Partial<Record<PieDirection, PieItem>> = {};
+    for (const direction of PIE_DIRECTIONS) {
+      items[direction] = rootItem(config.sides[direction], state);
+    }
+    return items;
   }
+  // Back sits opposite the side that opened the submenu; the actions fill the
+  // other three sides clockwise, starting at the side that opened it.
+  const entry = state.entry ?? 'left';
+  const start = CLOCKWISE.indexOf(entry);
+  const slots = [0, 1, 2, 3]
+    .map((offset) => CLOCKWISE[(start + offset) % 4])
+    .filter((direction) => direction !== OPPOSITE[entry]);
+  const items: Partial<Record<PieDirection, PieItem>> = {
+    [OPPOSITE[entry]]: { label: 'Back', icon: 'back', back: true },
+  };
+  submenuItems(level, config).forEach((item, index) => {
+    items[slots[index]] = item;
+  });
+  return items;
 };
 
 /**
@@ -132,26 +176,27 @@ export const getPieItems = (
 export const stepPieMenu = (
   state: PieState,
   input: PieMenuInput,
-  config: Pick<PieMenuConfig, 'fuelStep'>
+  config: PieModelConfig
 ): { state: PieState; commands: PiePitCommand[] } => {
   const idle = { state, commands: [] };
   if (input === 'open') {
-    const level: PieLevel =
-      state.level === 'closed'
-        ? 'root'
-        : state.level === 'root'
-          ? 'closed'
-          : 'root';
-    return { state: { ...state, level }, commands: [] };
+    const level: PieLevel = state.level === 'root' ? 'closed' : 'root';
+    return { state: { ...state, level, entry: undefined }, commands: [] };
   }
   const level = state.level === 'closed' ? 'root' : state.level;
   const item = getPieItems(level, state, config)[input];
   if (!item) return idle;
-  if (item.next) return { state: { ...state, level: item.next }, commands: [] };
+  if (item.next) {
+    return {
+      state: { ...state, level: item.next, entry: input },
+      commands: [],
+    };
+  }
   return {
     state: {
       ...state,
       level: 'root',
+      entry: undefined,
       ...(item.toggle ? { [item.toggle]: !state[item.toggle] } : {}),
     },
     commands: item.commands ?? [],

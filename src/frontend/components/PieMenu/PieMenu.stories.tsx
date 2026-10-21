@@ -23,7 +23,10 @@ const meta: Meta<typeof PieMenuView> = {
   args: {
     level: 'root',
     state: INITIAL_PIE_STATE,
-    fuelStep: 10,
+    config: {
+      fuelStep: 10,
+      sides: { up: 'tearoff', right: 'repair', down: 'fuel', left: 'tires' },
+    },
     service: QUIET,
   },
   decorators: [
@@ -43,8 +46,16 @@ export const Root: Story = {};
 /** W to S on the front left and right, 20 L and a fast repair requested. */
 export const PitStopPlanned: Story = { args: { service: DEMO_PIT_SERVICE } };
 export const Tires: Story = {
-  args: { level: 'tires', service: DEMO_PIT_SERVICE },
+  args: {
+    level: 'tires',
+    state: { ...INITIAL_PIE_STATE, level: 'tires', entry: 'left' },
+    service: DEMO_PIT_SERVICE,
+  },
 };
 export const Fuel: Story = {
-  args: { level: 'fuel', service: DEMO_PIT_SERVICE },
+  args: {
+    level: 'fuel',
+    state: { ...INITIAL_PIE_STATE, level: 'fuel', entry: 'down' },
+    service: DEMO_PIT_SERVICE,
+  },
 };

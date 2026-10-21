@@ -7,7 +7,15 @@ import {
   type PieState,
 } from './pieMenuModel';
 
-const config = { fuelStep: 10 };
+const config = {
+  fuelStep: 10,
+  sides: {
+    up: 'tearoff',
+    right: 'repair',
+    down: 'fuel',
+    left: 'tires',
+  },
+} as const;
 const root: PieState = { ...INITIAL_PIE_STATE, level: 'root' };
 
 describe('stepPieMenu', () => {
@@ -28,8 +36,8 @@ describe('stepPieMenu', () => {
 
   it('returns from a submenu in the opposite direction', () => {
     const tires = stepPieMenu(INITIAL_PIE_STATE, 'left', config).state;
-    expect(stepPieMenu(tires, 'right', config)).toEqual({
-      state: { ...tires, level: 'root' },
+    expect(stepPieMenu(tires, 'right', config)).toMatchObject({
+      state: { level: 'root', entry: undefined },
       commands: [],
     });
     const fuel = stepPieMenu(INITIAL_PIE_STATE, 'down', config).state;
@@ -61,10 +69,40 @@ describe('stepPieMenu', () => {
   });
 
   it('scales the fuel sectors by fuelStep', () => {
-    const fuel = stepPieMenu(root, 'down', { fuelStep: 7 }).state;
-    expect(stepPieMenu(fuel, 'down', { fuelStep: 7 }).commands).toEqual([
-      { command: 'fuel', value: 14 },
+    const fuel = stepPieMenu(root, 'down', { ...config, fuelStep: 7 }).state;
+    expect(
+      stepPieMenu(fuel, 'down', { ...config, fuelStep: 7 }).commands
+    ).toEqual([{ command: 'fuel', value: 14 }]);
+  });
+});
+
+describe('configurable sides', () => {
+  const swapped = {
+    ...config,
+    sides: { up: 'tires', right: 'none', down: 'repair', left: 'fuel' },
+  } as const;
+
+  it('follows the configured action of each side', () => {
+    expect(stepPieMenu(INITIAL_PIE_STATE, 'up', swapped).state.level).toBe(
+      'tires'
+    );
+    expect(stepPieMenu(INITIAL_PIE_STATE, 'down', swapped).commands).toEqual([
+      { command: 'fr' },
     ]);
+  });
+
+  it('ignores a side set to nothing', () => {
+    expect(stepPieMenu(INITIAL_PIE_STATE, 'right', swapped)).toEqual({
+      state: INITIAL_PIE_STATE,
+      commands: [],
+    });
+  });
+
+  it('goes back opposite the side that opened the submenu', () => {
+    const tires = stepPieMenu(INITIAL_PIE_STATE, 'up', swapped).state;
+    expect(stepPieMenu(tires, 'down', swapped).state.level).toBe('root');
+    const fuel = stepPieMenu(INITIAL_PIE_STATE, 'left', swapped).state;
+    expect(stepPieMenu(fuel, 'right', swapped).state.level).toBe('root');
   });
 });
 

@@ -32,6 +32,7 @@ import {
   type PieIcon,
   type PieItem,
   type PieLevel,
+  type PieModelConfig,
   type PieState,
   type PitServiceView,
   type TireCorner,
@@ -60,7 +61,11 @@ const ANGLE: Record<PieDirection, number> = {
 const INNER = 68;
 const OUTER = 138;
 const MID = (INNER + OUTER) / 2;
-const DEFAULT_CONFIG: PieMenuConfig = { timeoutSeconds: 5, fuelStep: 10 };
+const DEFAULT_CONFIG: PieMenuConfig = {
+  timeoutSeconds: 5,
+  fuelStep: 10,
+  sides: { up: 'tearoff', right: 'repair', down: 'fuel', left: 'tires' },
+};
 const MAX_FADE_MS = 1000;
 const NO_TIRE = '#475569';
 
@@ -306,13 +311,13 @@ const SectorStatus = ({
 export interface PieMenuViewProps {
   level: Exclude<PieLevel, 'closed'>;
   state: PieState;
-  fuelStep: number;
+  config: PieModelConfig;
   service: PitServiceView;
 }
 
 export const PieMenuView = memo(
-  ({ level, state, fuelStep, service }: PieMenuViewProps) => {
-    const items = getPieItems(level, state, { fuelStep });
+  ({ level, state, config, service }: PieMenuViewProps) => {
+    const items = getPieItems(level, state, config);
 
     return (
       <svg viewBox="-145 -145 290 290" className="w-full h-full">
@@ -362,7 +367,17 @@ export const PieMenu = () => {
   const savedConfig = currentDashboard?.widgets.find(
     (widget) => widget.id === 'piemenu'
   )?.config as Partial<PieMenuConfig> | undefined;
-  const { timeoutSeconds, fuelStep } = { ...DEFAULT_CONFIG, ...savedConfig };
+  const timeoutSeconds =
+    savedConfig?.timeoutSeconds ?? DEFAULT_CONFIG.timeoutSeconds;
+  const fuelStep = savedConfig?.fuelStep ?? DEFAULT_CONFIG.fuelStep;
+  const { up, right, down, left } = {
+    ...DEFAULT_CONFIG.sides,
+    ...savedConfig?.sides,
+  };
+  const modelConfig = useMemo<PieModelConfig>(
+    () => ({ fuelStep, sides: { up, right, down, left } }),
+    [fuelStep, up, right, down, left]
+  );
 
   const snapshot = usePitServiceSnapshot();
   const sessionTires = useDriverTires();
@@ -378,8 +393,8 @@ export const PieMenu = () => {
   const [activity, setActivity] = useState(0);
   const [fading, setFading] = useState(false);
   const stateRef = useRef(state);
-  const fuelStepRef = useRef(fuelStep);
-  fuelStepRef.current = fuelStep;
+  const configRef = useRef(modelConfig);
+  configRef.current = modelConfig;
 
   const timeoutMs = timeoutSeconds * 1000;
   const fadeMs = Math.min(MAX_FADE_MS, timeoutMs / 2);
@@ -407,9 +422,11 @@ export const PieMenu = () => {
 
   useEffect(() => {
     return window.pieMenuBridge?.onInput((input) => {
-      const { state: next, commands } = stepPieMenu(stateRef.current, input, {
-        fuelStep: fuelStepRef.current,
-      });
+      const { state: next, commands } = stepPieMenu(
+        stateRef.current,
+        input,
+        configRef.current
+      );
       apply(next);
       if (commands.length > 0) {
         window.pieMenuBridge?.sendPitCommands(commands).catch((err) => {
@@ -445,7 +462,7 @@ export const PieMenu = () => {
       <PieMenuView
         level={level}
         state={state}
-        fuelStep={fuelStep}
+        config={modelConfig}
         service={service}
       />
     </div>

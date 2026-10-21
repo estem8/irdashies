@@ -24,10 +24,10 @@ const INPUT_TEXT: Record<PieMenuInput, [string, string]> = {
     'Open / Back',
     'Show the main menu, go back from a submenu, close from the main menu',
   ],
-  up: ['Up', 'Tear-off. In the fuel menu: back'],
-  right: ['Right', 'Repair. In the tires menu: back'],
-  down: ['Down', 'Fuel menu. Pressed with the menu closed it opens directly'],
-  left: ['Left', 'Tires menu. Pressed with the menu closed it opens directly'],
+  up: ['Up', 'Up side. Pressed with the menu closed it acts without opening'],
+  right: ['Right', 'Right side. In a submenu opened from the left: back'],
+  down: ['Down', 'Down side. In a submenu opened from above: back'],
+  left: ['Left', 'Left side. In a submenu opened from the right: back'],
 };
 
 export const PieMenuSettings = () => {
@@ -70,6 +70,12 @@ export const PieMenuSettings = () => {
             <SettingsSection title="Options">
               <SettingProp path="timeoutSeconds" />
               <SettingProp path="fuelStep" />
+            </SettingsSection>
+            <SettingsSection title="Sides">
+              <SettingProp path="sides.up" />
+              <SettingProp path="sides.right" />
+              <SettingProp path="sides.down" />
+              <SettingProp path="sides.left" />
             </SettingsSection>
             <SettingsSection title="Navigation">
               <div className="flex flex-col gap-1">
