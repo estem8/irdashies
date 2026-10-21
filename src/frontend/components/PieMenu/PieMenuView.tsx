@@ -521,6 +521,48 @@ const CenterBody = ({
   }
 };
 
+/**
+ * A tire that remembers the colour it showed. When the colour changes it
+ * blinks from the old one to the new one with fading swings, so a replacement
+ * going in and one being cancelled both read as a change of tire.
+ */
+const TransitionTire = ({
+  x,
+  y,
+  size,
+  color,
+}: {
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+}) => {
+  const [shown, setShown] = useState({ from: color, to: color });
+  if (shown.to !== color) setShown({ from: shown.to, to: color });
+  const icon = {
+    x: x - size / 2,
+    y: y - size / 2,
+    size,
+    weight: 'fill',
+  } as const;
+  return (
+    <g>
+      <TireIcon {...icon} color={shown.from} />
+      {shown.from !== shown.to && (
+        <g key={`${shown.from}-${shown.to}`} opacity={0}>
+          <animate
+            attributeName="opacity"
+            values="0;1;0.1;1;0.35;1;0.65;1"
+            dur="2s"
+            fill="freeze"
+          />
+          <TireIcon {...icon} color={shown.to} />
+        </g>
+      )}
+    </g>
+  );
+};
+
 /** The result of a pick, drawn inside the centre only. */
 const ResultBody = ({
   feedback,
@@ -540,39 +582,19 @@ const ResultBody = ({
     ] as const;
     return (
       <g>
-        {spots.map(([corner, x, y]) => {
-          const change = service.tires[corner].change;
-          const base = service.current?.color ?? NO_TIRE;
-          return (
-            <g key={corner}>
-              <TireIcon
-                x={x - size / 2}
-                y={y - size / 2}
-                size={size}
-                weight="fill"
-                color={base}
-              />
-              {change && (
-                // Blinks between the old and new colour, settling on the new one.
-                <g key={`${change.color}-${base}`} opacity={0}>
-                  <animate
-                    attributeName="opacity"
-                    values="0;1;0.1;1;0.35;1;0.65;1"
-                    dur="2s"
-                    fill="freeze"
-                  />
-                  <TireIcon
-                    x={x - size / 2}
-                    y={y - size / 2}
-                    size={size}
-                    weight="fill"
-                    color={change.color}
-                  />
-                </g>
-              )}
-            </g>
-          );
-        })}
+        {spots.map(([corner, x, y]) => (
+          <TransitionTire
+            key={corner}
+            x={x}
+            y={y}
+            size={size}
+            color={
+              service.tires[corner].change?.color ??
+              service.current?.color ??
+              NO_TIRE
+            }
+          />
+        ))}
         <TireStatus service={service} x={0} y={46} hot={false} />
       </g>
     );
