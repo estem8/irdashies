@@ -15,7 +15,8 @@ export type PieIcon =
   | 'clear'
   | 'cancel'
   | 'left'
-  | 'right';
+  | 'right'
+  | 'back';
 
 export interface PieState {
   level: PieLevel;
@@ -27,6 +28,8 @@ export interface PieState {
 export interface PieItem {
   label: string;
   icon: PieIcon;
+  /** Returns to the root menu; sits opposite the sector that opened the submenu. */
+  back?: true;
   /** Opens a submenu. */
   next?: Exclude<PieLevel, 'closed' | 'root'>;
   /** Sent to the sim. */
@@ -88,62 +91,59 @@ export const getPieItems = (
           icon: 'left',
           commands: [{ command: 'lf' }, { command: 'lr' }],
         },
-        right: {
-          label: 'Right side',
-          icon: 'right',
-          commands: [{ command: 'rf' }, { command: 'rr' }],
-        },
         down: {
           label: 'Clear',
           icon: 'cancel',
           commands: [{ command: 'clearTires' }],
         },
+        // Opened with left, so back is the opposite sector.
+        right: { label: 'Back', icon: 'back', back: true },
       };
     case 'fuel':
       return {
-        up: {
+        right: {
           label: `+${config.fuelStep} L`,
           icon: 'add',
           commands: [{ command: 'fuel', value: config.fuelStep }],
         },
-        right: {
+        down: {
           label: `+${config.fuelStep * 2} L`,
           icon: 'add',
           commands: [{ command: 'fuel', value: config.fuelStep * 2 }],
-        },
-        down: {
-          label: 'Pit menu',
-          icon: 'fuel',
-          commands: [{ command: 'fuel', value: 0 }],
         },
         left: {
           label: 'Clear',
           icon: 'clear',
           commands: [{ command: 'clearFuel' }],
         },
+        // Opened with down, so back is the opposite sector.
+        up: { label: 'Back', icon: 'back', back: true },
       };
   }
 };
 
-/** Applies one navigation input; returns the next state and what to send. */
+/**
+ * Applies one navigation input; returns the next state and what to send.
+ * A direction pressed while closed acts on the root menu without showing it,
+ * so a submenu opens directly. `open` toggles root and backs out of a submenu.
+ */
 export const stepPieMenu = (
   state: PieState,
   input: PieMenuInput,
   config: Pick<PieMenuConfig, 'fuelStep'>
 ): { state: PieState; commands: PiePitCommand[] } => {
   const idle = { state, commands: [] };
-  if (state.level === 'closed') {
-    return input === 'open'
-      ? { state: { ...state, level: 'root' }, commands: [] }
-      : idle;
-  }
   if (input === 'open') {
-    return {
-      state: { ...state, level: state.level === 'root' ? 'closed' : 'root' },
-      commands: [],
-    };
+    const level: PieLevel =
+      state.level === 'closed'
+        ? 'root'
+        : state.level === 'root'
+          ? 'closed'
+          : 'root';
+    return { state: { ...state, level }, commands: [] };
   }
-  const item = getPieItems(state.level, state, config)[input];
+  const level = state.level === 'closed' ? 'root' : state.level;
+  const item = getPieItems(level, state, config)[input];
   if (!item) return idle;
   if (item.next) return { state: { ...state, level: item.next }, commands: [] };
   return {

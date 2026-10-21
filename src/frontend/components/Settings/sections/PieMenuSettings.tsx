@@ -22,15 +22,12 @@ const defaultConfig = getWidgetDefaultConfig('piemenu');
 const INPUT_TEXT: Record<PieMenuInput, [string, string]> = {
   open: [
     'Open / Back',
-    'Open the menu, go back from a submenu, close from root',
+    'Show the main menu, go back from a submenu, close from the main menu',
   ],
-  up: ['Up', 'Tear-off (root), all four tires (tires), fuel step (fuel)'],
-  right: [
-    'Right',
-    'Repair (root), right side (tires), double fuel step (fuel)',
-  ],
-  down: ['Down', 'Fuel (root), clear tires (tires), pit menu amount (fuel)'],
-  left: ['Left', 'Tires (root), left side (tires), clear fuel (fuel)'],
+  up: ['Up', 'Tear-off. In the fuel menu: back'],
+  right: ['Right', 'Repair. In the tires menu: back'],
+  down: ['Down', 'Fuel menu. Pressed with the menu closed it opens directly'],
+  left: ['Left', 'Tires menu. Pressed with the menu closed it opens directly'],
 };
 
 export const PieMenuSettings = () => {

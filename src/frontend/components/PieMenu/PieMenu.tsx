@@ -37,6 +37,7 @@ const ICONS: Record<PieIcon, Icon> = {
   cancel: ProhibitIcon,
   left: ArrowLeftIcon,
   right: ArrowRightIcon,
+  back: ArrowUUpLeftIcon,
 };
 
 const ANGLE: Record<PieDirection, number> = {
@@ -48,8 +49,8 @@ const ANGLE: Record<PieDirection, number> = {
 
 const INNER = 46;
 const OUTER = 112;
-const RING = 126;
 const DEFAULT_CONFIG: PieMenuConfig = { timeoutSeconds: 5, fuelStep: 10 };
+const MAX_FADE_MS = 1000;
 
 const polar = (radius: number, degrees: number) => {
   const rad = (degrees * Math.PI) / 180;
@@ -69,41 +70,15 @@ export interface PieMenuViewProps {
   level: Exclude<PieLevel, 'closed'>;
   state: PieState;
   fuelStep: number;
-  timeoutSeconds: number;
-  /** Changes on every input so the countdown ring restarts. */
-  activity: number;
 }
 
 export const PieMenuView = memo(
-  ({ level, state, fuelStep, timeoutSeconds, activity }: PieMenuViewProps) => {
+  ({ level, state, fuelStep }: PieMenuViewProps) => {
     const items = getPieItems(level, state, { fuelStep });
-    const circumference = 2 * Math.PI * RING;
     const CenterIcon = level === 'root' ? XIcon : ArrowUUpLeftIcon;
 
     return (
       <svg viewBox="-130 -130 260 260" className="w-full h-full">
-        <circle
-          r={RING}
-          className="fill-none stroke-slate-700"
-          strokeWidth={4}
-        />
-        <circle
-          key={activity}
-          r={RING}
-          className="fill-none stroke-amber-500"
-          strokeWidth={4}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          transform="rotate(-90)"
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            from={0}
-            to={circumference}
-            dur={`${timeoutSeconds}s`}
-            fill="freeze"
-          />
-        </circle>
         {PIE_DIRECTIONS.map((direction) => {
           const item = items[direction];
           if (!item) return null;
@@ -156,13 +131,18 @@ export const PieMenu = () => {
 
   const [state, setState] = useState<PieState>(INITIAL_PIE_STATE);
   const [activity, setActivity] = useState(0);
+  const [fading, setFading] = useState(false);
   const stateRef = useRef(state);
   const fuelStepRef = useRef(fuelStep);
   fuelStepRef.current = fuelStep;
 
+  const timeoutMs = timeoutSeconds * 1000;
+  const fadeMs = Math.min(MAX_FADE_MS, timeoutMs / 2);
+
   const apply = useCallback((next: PieState) => {
     stateRef.current = next;
     setState(next);
+    setFading(false);
     setActivity((n) => n + 1);
   }, []);
 
@@ -180,28 +160,30 @@ export const PieMenu = () => {
     });
   }, [apply]);
 
+  // Fade out over the last stretch of the timeout, then close.
   useEffect(() => {
     if (state.level === 'closed') return;
-    const timer = setTimeout(
+    const fade = setTimeout(() => setFading(true), timeoutMs - fadeMs);
+    const close = setTimeout(
       () => apply({ ...stateRef.current, level: 'closed' }),
-      timeoutSeconds * 1000
+      timeoutMs
     );
-    return () => clearTimeout(timer);
-  }, [state.level, activity, timeoutSeconds, apply]);
+    return () => {
+      clearTimeout(fade);
+      clearTimeout(close);
+    };
+  }, [state.level, activity, timeoutMs, fadeMs, apply]);
 
   // Settings preview: show the menu open so it can be positioned.
   const level = isDemoMode ? 'root' : state.level;
   if (level === 'closed') return null;
 
   return (
-    <div className="w-full h-full">
-      <PieMenuView
-        level={level}
-        state={state}
-        fuelStep={fuelStep}
-        timeoutSeconds={timeoutSeconds}
-        activity={activity}
-      />
+    <div
+      className={`w-full h-full transition-opacity ${fading ? 'opacity-0' : 'opacity-100'}`}
+      style={{ transitionDuration: `${fading ? fadeMs : 0}ms` }}
+    >
+      <PieMenuView level={level} state={state} fuelStep={fuelStep} />
     </div>
   );
 };

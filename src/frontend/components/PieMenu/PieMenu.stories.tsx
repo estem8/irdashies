@@ -10,8 +10,6 @@ const meta: Meta<typeof PieMenuView> = {
     level: 'root',
     state: INITIAL_PIE_STATE,
     fuelStep: 10,
-    timeoutSeconds: 5,
-    activity: 0,
   },
   decorators: [
     (Story) => (
