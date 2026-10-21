@@ -17,6 +17,7 @@ export interface ChannelPayloads {
   'car-systems.snapshot': CarSystemsSnapshot;
   'driver-controls.snapshot': DriverControlsSnapshot;
   'fuel.projection': FuelProjectionSnapshot;
+  'pit-service.snapshot': PitServiceSnapshot;
   'lap-times.snapshot': LapTimesSnapshot;
   'lap-log.snapshot': LapLogSnapshot;
   'lap-history.snapshot': LapHistorySnapshot;
@@ -266,6 +267,23 @@ export interface CarSystemsSnapshot {
   discovered: boolean;
   sessionNum: number | null;
   version: number;
+}
+
+/** Pit-stop services requested for the next stop, plus the fuel and tires now. */
+export interface PitServiceSnapshot {
+  version: number;
+  /** PitSvFlags bitmask of the requested services. */
+  flags?: number;
+  /** Litres requested at the stop. */
+  plannedFuel?: number;
+  /** Compound index requested for the new tires. */
+  plannedCompound?: number;
+  /** Compound index of the tires on the car. */
+  currentCompound?: number;
+  /** Litres, rounded to 0.1 for display; not for fuel calculations. */
+  fuelLevel?: number;
+  /** 0 to 1, rounded to 0.01. */
+  fuelLevelPct?: number;
 }
 
 export interface DriverControlsSnapshot {
@@ -575,6 +593,12 @@ export const channelRegistry = {
     kind: 'snapshot',
     defaultRateHz: 25,
     maxRateHz: 60,
+  },
+  // Pit requests and fuel change by hand or by the lap, never per frame.
+  'pit-service.snapshot': {
+    kind: 'snapshot',
+    defaultRateHz: 5,
+    maxRateHz: 10,
   },
   'fuel.projection': {
     kind: 'snapshot',

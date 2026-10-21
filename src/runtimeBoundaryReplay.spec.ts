@@ -41,6 +41,7 @@ const SNAPSHOT_CHANNELS = [
   'car-systems.snapshot',
   'driver-controls.snapshot',
   'fuel.projection',
+  'pit-service.snapshot',
   'lap-times.snapshot',
   'lap-log.snapshot',
   'reference-laps.snapshot',
@@ -497,6 +498,10 @@ const summarize = (snapshots: SnapshotRecord) => ({
     sessionNum: snapshots['fuel.projection'].sessionNum,
     sessionType: snapshots['fuel.projection'].sessionType,
   },
+  'pit-service.snapshot': {
+    fuelLevel: snapshots['pit-service.snapshot'].fuelLevel,
+    version: snapshots['pit-service.snapshot'].version,
+  },
   'lap-times.snapshot': {
     lapTimes: snapshots['lap-times.snapshot'].lapTimes,
     sessionNum: snapshots['lap-times.snapshot'].sessionNum,
@@ -732,6 +737,10 @@ const FIXED_GOLDEN = {
     currentLap: 1,
     sessionNum: 1,
     sessionType: 'Race',
+  },
+  'pit-service.snapshot': {
+    fuelLevel: 39.2,
+    version: 5,
   },
   'lap-times.snapshot': {
     lapTimes: [0, 0],

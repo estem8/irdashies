@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_PIE_STATE, stepPieMenu, type PieState } from './pieMenuModel';
+import {
+  INITIAL_PIE_STATE,
+  compoundStyle,
+  describePitService,
+  stepPieMenu,
+  type PieState,
+} from './pieMenuModel';
 
 const config = { fuelStep: 10 };
 const root: PieState = { ...INITIAL_PIE_STATE, level: 'root' };
@@ -59,5 +65,44 @@ describe('stepPieMenu', () => {
     expect(stepPieMenu(fuel, 'down', { fuelStep: 7 }).commands).toEqual([
       { command: 'fuel', value: 14 },
     ]);
+  });
+});
+
+describe('describePitService', () => {
+  const tires = [
+    { TireIndex: 0, TireCompoundType: 'Hard' },
+    { TireIndex: 1, TireCompoundType: 'Wet' },
+  ];
+
+  it('reads a wet plus one dry set as W blue and S green', () => {
+    expect(compoundStyle(1, tires)?.letter).toBe('W');
+    expect(compoundStyle(0, tires)).toMatchObject({ letter: 'S' });
+    expect(compoundStyle(0, tires)?.color).not.toBe(
+      compoundStyle(1, tires)?.color
+    );
+  });
+
+  it('marks only the checked corners and moves them to the new compound', () => {
+    const view = describePitService(
+      {
+        version: 1,
+        flags: 0x01 | 0x08 | 0x10 | 0x40,
+        plannedCompound: 0,
+        currentCompound: 1,
+        plannedFuel: 20,
+      },
+      tires
+    );
+    expect(view.tires.lf.change?.letter).toBe('S');
+    expect(view.tires.rr.change?.letter).toBe('S');
+    expect(view.tires.rf.change).toBeUndefined();
+    expect(view.current?.letter).toBe('W');
+    expect(view.fuelAdd).toBe(20);
+    expect(view.repair).toBe(true);
+    expect(view.tearoff).toBe(false);
+  });
+
+  it('has no changes without a snapshot', () => {
+    expect(describePitService(undefined, undefined).anyTireChange).toBe(false);
   });
 });

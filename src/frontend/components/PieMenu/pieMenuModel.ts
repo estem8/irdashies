@@ -1,7 +1,9 @@
-import type {
-  PieMenuConfig,
-  PieMenuInput,
-  PiePitCommand,
+import {
+  PIT_SV_FLAGS,
+  type PieMenuConfig,
+  type PieMenuInput,
+  type PiePitCommand,
+  type PitServiceSnapshot,
 } from '@irdashies/types';
 
 export type PieDirection = Exclude<PieMenuInput, 'open'>;
@@ -60,7 +62,7 @@ export const getPieItems = (
     case 'root':
       return {
         up: {
-          label: state.tearoff ? 'Tear-off ON' : 'Tear-off',
+          label: 'Tear-off',
           icon: 'tearoff',
           toggle: 'tearoff',
           commands: [{ command: state.tearoff ? 'clearWs' : 'ws' }],
@@ -68,7 +70,7 @@ export const getPieItems = (
         left: { label: 'Tires', icon: 'tires', next: 'tires' },
         down: { label: 'Fuel', icon: 'fuel', next: 'fuel' },
         right: {
-          label: state.repair ? 'Repair ON' : 'Repair',
+          label: 'Repair',
           icon: 'repair',
           toggle: 'repair',
           commands: [{ command: state.repair ? 'clearFr' : 'fr' }],
@@ -154,4 +156,118 @@ export const stepPieMenu = (
     },
     commands: item.commands ?? [],
   };
+};
+
+export interface CompoundStyle {
+  letter: string;
+  color: string;
+}
+
+export interface SessionTire {
+  TireIndex: number;
+  TireCompoundType: string;
+}
+
+const WET: CompoundStyle = { letter: 'W', color: '#2f9bff' };
+const SLICK: CompoundStyle = { letter: 'S', color: '#22c55e' };
+const NAMED: Record<string, CompoundStyle> = {
+  Wet: WET,
+  Dry: SLICK,
+  Soft: { letter: 'S', color: '#ef4444' },
+  Medium: { letter: 'M', color: '#facc15' },
+  Hard: { letter: 'H', color: '#f8fafc' },
+  Primary: { letter: 'H', color: '#f8fafc' },
+  Alternate: { letter: 'A', color: '#ef4444' },
+};
+
+/** Letter and colour of a compound index; a wet plus one dry set reads W and S. */
+export const compoundStyle = (
+  index: number | undefined,
+  tires: readonly SessionTire[] | undefined
+): CompoundStyle | undefined => {
+  if (index === undefined || index < 0 || !tires) return undefined;
+  const name = tires.find((tire) => tire.TireIndex === index)?.TireCompoundType;
+  if (!name) return undefined;
+  if (
+    name !== 'Wet' &&
+    tires.length === 2 &&
+    tires.some((t) => t.TireCompoundType === 'Wet')
+  ) {
+    return SLICK;
+  }
+  return (
+    NAMED[name] ?? { letter: name.charAt(0).toUpperCase(), color: '#94a3b8' }
+  );
+};
+
+export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
+export const TIRE_CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
+
+export interface PitServiceView {
+  /** `change` is the new compound for a corner that is checked for a change. */
+  tires: Record<TireCorner, { change?: CompoundStyle }>;
+  current?: CompoundStyle;
+  /** Compound that the checked corners switch to. */
+  next?: CompoundStyle;
+  anyTireChange: boolean;
+  fuelLevel?: number;
+  fuelPct?: number;
+  /** Litres requested at the stop, when fuel is checked. */
+  fuelAdd?: number;
+  repair: boolean;
+  tearoff: boolean;
+}
+
+export const describePitService = (
+  snapshot: PitServiceSnapshot | undefined,
+  tires: readonly SessionTire[] | undefined
+): PitServiceView => {
+  const flags = snapshot?.flags ?? 0;
+  const current = compoundStyle(snapshot?.currentCompound, tires);
+  const next = compoundStyle(snapshot?.plannedCompound, tires) ?? current;
+  const corner = (bit: number) => (flags & bit && next ? { change: next } : {});
+  const fuelAdd =
+    flags & PIT_SV_FLAGS.fuel && snapshot?.plannedFuel
+      ? snapshot.plannedFuel
+      : undefined;
+  return {
+    tires: {
+      lf: corner(PIT_SV_FLAGS.lf),
+      rf: corner(PIT_SV_FLAGS.rf),
+      lr: corner(PIT_SV_FLAGS.lr),
+      rr: corner(PIT_SV_FLAGS.rr),
+    },
+    current,
+    next,
+    anyTireChange:
+      (flags &
+        (PIT_SV_FLAGS.lf |
+          PIT_SV_FLAGS.rf |
+          PIT_SV_FLAGS.lr |
+          PIT_SV_FLAGS.rr)) !==
+      0,
+    fuelLevel: snapshot?.fuelLevel,
+    fuelPct: snapshot?.fuelLevelPct,
+    fuelAdd,
+    repair: (flags & PIT_SV_FLAGS.repair) !== 0,
+    tearoff: (flags & PIT_SV_FLAGS.tearoff) !== 0,
+  };
+};
+
+/** Shown in the settings preview so the indicators can be positioned. */
+export const DEMO_PIT_SERVICE: PitServiceView = {
+  tires: {
+    lf: { change: SLICK },
+    rf: { change: SLICK },
+    lr: {},
+    rr: {},
+  },
+  current: WET,
+  next: SLICK,
+  anyTireChange: true,
+  fuelLevel: 31.2,
+  fuelPct: 0.52,
+  fuelAdd: 20,
+  repair: true,
+  tearoff: false,
 };

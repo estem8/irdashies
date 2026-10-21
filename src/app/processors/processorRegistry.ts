@@ -20,6 +20,7 @@ import type {
 import { ProcessorHost } from './ProcessorHost';
 import type { ChannelBus } from '../bridge/channelBus';
 import type { SessionLifecycle } from '../sessionLifecycle';
+import { PitServiceProcessor } from './PitServiceProcessor';
 import { RadarProcessor } from './RadarProcessor';
 import { RadioProcessor } from './RadioProcessor';
 import { ReferenceLapProcessor } from './ReferenceLapProcessor';
@@ -155,6 +156,11 @@ export const createProcessorDefinitions = ({
     channel: 'driver-controls.snapshot',
     metricsPrefix: 'driverControls',
     create: () => new DriverControlsProcessor(),
+  }),
+  defineProcessor({
+    channel: 'pit-service.snapshot',
+    metricsPrefix: 'pitService',
+    create: () => new PitServiceProcessor(),
   }),
   defineProcessor({
     channel: 'track-state.snapshot',

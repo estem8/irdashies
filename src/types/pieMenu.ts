@@ -29,3 +29,14 @@ export interface PieMenuBridge {
   onInput: (callback: (input: PieMenuInput) => void) => () => void;
   sendPitCommands: (commands: PiePitCommand[]) => Promise<void>;
 }
+
+/** Bits of the `PitSvFlags` telemetry value (the pit-stop checkboxes). */
+export const PIT_SV_FLAGS = {
+  lf: 0x01,
+  rf: 0x02,
+  lr: 0x04,
+  rr: 0x08,
+  fuel: 0x10,
+  tearoff: 0x20,
+  repair: 0x40,
+} as const;
