@@ -18,6 +18,7 @@ export const PIE_ACTION_IDS = [
   'fuelAuto',
   'fuelAdd',
   'fuelAddDouble',
+  'fuelSub',
   'fuelClear',
 ] as const;
 
@@ -38,6 +39,7 @@ export const PIE_ICON_NAMES = [
   'right',
   'back',
   'menu',
+  'remove',
 ] as const;
 
 export type PieIconName = (typeof PIE_ICON_NAMES)[number];

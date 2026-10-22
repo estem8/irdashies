@@ -37,6 +37,11 @@ export interface PieContext {
   compounds: { dry?: number; wet?: number };
   /** Litres to add to finish, when known. */
   fuelToAdd?: number;
+  /** Litres already requested (`PitSvFuel`), so the add actions add to it. */
+  plannedFuel?: number;
+  /** Compound requested for the new tires and the one on the car. */
+  plannedCompound?: number;
+  currentCompound?: number;
 }
 
 export const EMPTY_PIE_CONTEXT: PieContext = { flags: 0, compounds: {} };
@@ -122,6 +127,12 @@ export const PIE_ACTIONS: Record<PieActionId, ActionInfo> = {
     icon: 'add',
     feedback: 'fuel',
   },
+  fuelSub: {
+    label: 'Remove fuel',
+    short: 'Remove',
+    icon: 'remove',
+    feedback: 'fuel',
+  },
   fuelClear: {
     label: 'Clear fuel',
     short: 'Clear',
@@ -158,7 +169,9 @@ const slotItem = (
       ? `+${fuelStep} L`
       : slot.action === 'fuelAddDouble'
         ? `+${fuelStep * 2} L`
-        : info.short;
+        : slot.action === 'fuelSub'
+          ? `-${fuelStep} L`
+          : info.short;
   return { action: slot.action, label, icon: info.icon, opensSubmenu: false };
 };
 
@@ -201,6 +214,8 @@ export const commandsFor = (
   fuelStep: number
 ): PiePitCommand[] => {
   const { flags, compounds } = context;
+  // The add actions add to what is already requested, not replace it.
+  const requested = flags & PIT_SV_FLAGS.fuel ? (context.plannedFuel ?? 0) : 0;
   switch (action) {
     case 'tearoff':
       return [{ command: flags & PIT_SV_FLAGS.tearoff ? 'clearWs' : 'ws' }];
@@ -219,6 +234,15 @@ export const commandsFor = (
     case 'compoundWet': {
       const compound = action === 'compoundDry' ? compounds.dry : compounds.wet;
       if (compound === undefined) return [];
+      // The same compound again takes the change back.
+      if (flags & ALL_TIRES && context.plannedCompound === compound) {
+        return [
+          ...(context.currentCompound === undefined
+            ? []
+            : [{ command: 'tc' as const, value: context.currentCompound }]),
+          { command: 'clearTires' },
+        ];
+      }
       // Picking a compound with nothing checked means change all four.
       return [
         { command: 'tc', value: compound },
@@ -238,9 +262,13 @@ export const commandsFor = (
             },
           ];
     case 'fuelAdd':
-      return [{ command: 'fuel', value: fuelAmount(fuelStep) }];
+      return [{ command: 'fuel', value: fuelAmount(requested + fuelStep) }];
     case 'fuelAddDouble':
-      return [{ command: 'fuel', value: fuelAmount(fuelStep * 2) }];
+      return [{ command: 'fuel', value: fuelAmount(requested + fuelStep * 2) }];
+    case 'fuelSub':
+      return requested - fuelStep > 0
+        ? [{ command: 'fuel', value: fuelAmount(requested - fuelStep) }]
+        : [{ command: 'clearFuel' }];
     case 'fuelClear':
       return [{ command: 'clearFuel' }];
     default:
@@ -400,6 +428,10 @@ export interface PitServiceView {
   wetness?: number;
   /** Precipitation, 0 to 1. */
   precipitation?: number;
+  /** Litres to add to reach the finish (0 when the tank is enough), when known. */
+  fuelToFinish?: number;
+  /** The crew is working on the car. */
+  stopInProgress: boolean;
   /** Litres requested at the stop, when fuel is checked. */
   fuelAdd?: number;
   repair: boolean;
@@ -412,7 +444,12 @@ export interface PitServiceView {
 export const describePitService = (
   snapshot: PitServiceSnapshot | undefined,
   tires: readonly SessionTire[] | undefined,
-  fuel: { laps?: number; marginLaps?: number; lapUsage?: number } = {}
+  fuel: {
+    laps?: number;
+    marginLaps?: number;
+    lapUsage?: number;
+    toFinish?: number;
+  } = {}
 ): PitServiceView => {
   const flags = snapshot?.flags ?? 0;
   const current = compoundStyle(snapshot?.currentCompound, tires);
@@ -445,6 +482,9 @@ export const describePitService = (
     lapUsage: fuel.lapUsage,
     wetness: snapshot?.trackWetness,
     precipitation: snapshot?.precipitation,
+    fuelToFinish: fuel.toFinish,
+    // PlayerCarPitSvStatus 1 is irsdk_PitSvInProgress.
+    stopInProgress: snapshot?.pitStatus === 1,
     fuelAdd,
     repair: (flags & PIT_SV_FLAGS.repair) !== 0,
     tearoff: (flags & PIT_SV_FLAGS.tearoff) !== 0,
@@ -474,6 +514,8 @@ export const DEMO_PIT_SERVICE: PitServiceView = {
   lapUsage: 3.8,
   wetness: 3,
   precipitation: 0.2,
+  fuelToFinish: 12,
+  stopInProgress: false,
   fuelAdd: 20,
   repair: true,
   tearoff: false,

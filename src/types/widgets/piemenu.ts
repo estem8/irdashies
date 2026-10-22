@@ -32,7 +32,7 @@ export default defineWidgetManifest({
         sub: {
           down: { action: 'fuelAuto' },
           right: { action: 'fuelAdd' },
-          left: { action: 'fuelClear' },
+          left: { action: 'fuelSub' },
           up: { action: 'back' },
         },
       },

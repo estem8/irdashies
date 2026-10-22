@@ -151,6 +151,64 @@ describe('the pilot flows', () => {
   });
 });
 
+describe('fuel steps and taking a compound back', () => {
+  const fuelOn = (plannedFuel: number): PieContext => ({
+    ...context,
+    flags: PIT_SV_FLAGS.fuel,
+    plannedFuel,
+  });
+
+  it('adds the step to the fuel already requested', () => {
+    expect(commandsFor('fuelAdd', fuelOn(20), 10)).toEqual([
+      { command: 'fuel', value: 30 },
+    ]);
+    expect(commandsFor('fuelAddDouble', fuelOn(20), 10)).toEqual([
+      { command: 'fuel', value: 40 },
+    ]);
+  });
+
+  it('starts from nothing when fuel is not checked', () => {
+    const unchecked = { ...context, plannedFuel: 50 };
+    expect(commandsFor('fuelAdd', unchecked, 10)).toEqual([
+      { command: 'fuel', value: 10 },
+    ]);
+  });
+
+  it('takes the step off and unchecks fuel at zero', () => {
+    expect(commandsFor('fuelSub', fuelOn(25), 10)).toEqual([
+      { command: 'fuel', value: 15 },
+    ]);
+    expect(commandsFor('fuelSub', fuelOn(10), 10)).toEqual([
+      { command: 'clearFuel' },
+    ]);
+    expect(commandsFor('fuelSub', context, 10)).toEqual([
+      { command: 'clearFuel' },
+    ]);
+  });
+
+  it('takes the change back when the same compound is picked again', () => {
+    const wetPlanned: PieContext = {
+      ...context,
+      flags: PIT_SV_FLAGS.lf | PIT_SV_FLAGS.rf,
+      plannedCompound: 1,
+      currentCompound: 0,
+    };
+    expect(commandsFor('compoundWet', wetPlanned, 10)).toEqual([
+      { command: 'tc', value: 0 },
+      { command: 'clearTires' },
+    ]);
+    expect(commandsFor('compoundDry', wetPlanned, 10)).toEqual([
+      { command: 'tc', value: 0 },
+    ]);
+  });
+
+  it('puts Remove fuel on the left of the default fuel menu', () => {
+    expect(stepPieMenu(fuel, 'left', config, fuelOn(25)).commands).toEqual([
+      { command: 'fuel', value: 15 },
+    ]);
+  });
+});
+
 describe('commandsFor', () => {
   it('toggles tear-off and repair from the sim checkboxes', () => {
     expect(commandsFor('repair', EMPTY_PIE_CONTEXT, 10)).toEqual([

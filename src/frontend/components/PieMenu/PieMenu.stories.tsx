@@ -60,3 +60,14 @@ export const RepairResult: Story = {
     service: DEMO_PIT_SERVICE,
   },
 };
+/** The sim did not take the pick, e.g. outside the car. */
+export const NotApplied: Story = {
+  args: {
+    state: { level: 'result', feedback: 'repair' },
+    service: DEMO_PIT_SERVICE,
+    unapplied: true,
+  },
+};
+export const StopInProgress: Story = {
+  args: { service: { ...DEMO_PIT_SERVICE, stopInProgress: true } },
+};

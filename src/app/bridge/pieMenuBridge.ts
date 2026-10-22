@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { PIE_PIT_COMMANDS } from '@irdashies/types';
 import type { IrSdkSourceBridge, PiePitCommand } from '@irdashies/types';
+import logger from '../logger';
 
 const MAX_COMMANDS = 8;
 const MAX_FUEL_LITRES = 999;
@@ -29,6 +30,8 @@ export function setupPieMenuBridge(
     if (!isPiePitCommands(commands)) {
       throw new Error('Invalid pit commands');
     }
+    // Logged so a command the sim ignores (e.g. tc) can be traced in main.log.
+    logger.info('[PieMenu] pit commands', JSON.stringify(commands));
     getBridge()?.sendPitCommands?.(commands);
   });
 }

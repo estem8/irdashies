@@ -18,6 +18,9 @@ describe('PitServiceProcessor', () => {
         PlayerTireCompound: 0,
         FuelLevel: 31.2349,
         FuelLevelPct: 0.62468,
+        PlayerCarPitSvStatus: 1,
+        TrackWetness: 5,
+        Precipitation: 0.6049,
       })
     );
     expect(processor.snapshot()).toMatchObject({
@@ -27,6 +30,9 @@ describe('PitServiceProcessor', () => {
       currentCompound: 0,
       fuelLevel: 31.2,
       fuelLevelPct: 0.62,
+      pitStatus: 1,
+      trackWetness: 5,
+      precipitation: 0.6,
     });
   });
 

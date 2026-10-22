@@ -10,6 +10,7 @@ import {
   GasPumpIcon,
   LightningIcon,
   ListIcon,
+  MinusCircleIcon,
   PlusCircleIcon,
   ProhibitIcon,
   SunIcon,
@@ -47,6 +48,7 @@ export const PIE_ICONS: Record<PieIconName, Icon> = {
   right: ArrowRightIcon,
   back: ArrowUUpLeftIcon,
   menu: ListIcon,
+  remove: MinusCircleIcon,
 };
 
 const ANGLE: Record<PieDirection, number> = {
@@ -70,9 +72,8 @@ const MID = (INNER + OUTER) / 2;
 const POP = 8;
 /** A tire that is not being replaced; one checked for a change shows the new compound's colour. */
 const KEEP_TIRE = '#6b7280';
-const KEEP_TIRE_HOT = '#374151';
-const tireColor = (service: PitServiceView, corner: TireCorner, hot = false) =>
-  service.tires[corner].change?.color ?? (hot ? KEEP_TIRE_HOT : KEEP_TIRE);
+const tireColor = (service: PitServiceView, corner: TireCorner) =>
+  service.tires[corner].change?.color ?? KEEP_TIRE;
 
 const polar = (radius: number, degrees: number) => {
   const rad = (degrees * Math.PI) / 180;
@@ -113,21 +114,19 @@ const Appear = ({
 };
 
 /** Text and icon colour: dark on a highlighted side, light otherwise. */
-const ink = (hot: boolean) => (hot ? 'text-slate-950' : 'text-slate-100');
-const inkFill = (hot: boolean) => (hot ? 'fill-slate-950' : 'fill-slate-100');
+const INK = 'text-slate-100';
+const INK_FILL = 'fill-slate-100';
 
 const Label = ({
   x,
   y,
   size,
-  hot,
   children,
   bold = true,
 }: {
   x: number;
   y: number;
   size: number;
-  hot: boolean;
   children: ReactNode;
   bold?: boolean;
 }) => (
@@ -137,7 +136,7 @@ const Label = ({
     fontSize={size}
     textAnchor="middle"
     dominantBaseline="middle"
-    className={`${inkFill(hot)} ${bold ? 'font-bold' : 'font-semibold'} pointer-events-none`}
+    className={`${INK_FILL} ${bold ? 'font-bold' : 'font-semibold'} pointer-events-none`}
   >
     {children}
   </text>
@@ -148,14 +147,12 @@ const Glyph = ({
   x,
   y,
   size,
-  hot,
   className,
 }: {
   Svg: Icon;
   x: number;
   y: number;
   size: number;
-  hot: boolean;
   className?: string;
 }) => (
   <Svg
@@ -163,7 +160,7 @@ const Glyph = ({
     y={y - size / 2}
     size={size}
     weight="fill"
-    className={`${className ?? ink(hot)} pointer-events-none`}
+    className={`${className ?? INK} pointer-events-none`}
   />
 );
 
@@ -197,17 +194,7 @@ const Chip = ({
   </g>
 );
 
-const OnOff = ({
-  x,
-  y,
-  on,
-  hot,
-}: {
-  x: number;
-  y: number;
-  on: boolean;
-  hot: boolean;
-}) =>
+const OnOff = ({ x, y, on }: { x: number; y: number; on: boolean }) =>
   on ? (
     <g className="pointer-events-none">
       <rect
@@ -216,14 +203,14 @@ const OnOff = ({
         width={28}
         height={14}
         rx={7}
-        className={hot ? 'fill-slate-950' : 'fill-slate-200'}
+        className="fill-slate-200"
       />
       <text
         x={x}
         y={y + 0.5}
         textAnchor="middle"
         dominantBaseline="middle"
-        className={`${hot ? 'fill-slate-100' : 'fill-slate-900'} text-[9px] font-bold`}
+        className="fill-slate-900 text-[9px] font-bold"
       >
         ON
       </text>
@@ -234,7 +221,7 @@ const OnOff = ({
       y={y + 0.5}
       textAnchor="middle"
       dominantBaseline="middle"
-      className={`${hot ? 'fill-slate-700' : 'fill-slate-500'} text-[9px] font-bold pointer-events-none`}
+      className="fill-slate-500 text-[9px] font-bold pointer-events-none"
     >
       off
     </text>
@@ -245,21 +232,18 @@ const Tick = ({
   y,
   size,
   on,
-  hot,
 }: {
   x: number;
   y: number;
   size: number;
   on: boolean;
-  hot: boolean;
 }) => (
   <Glyph
     Svg={on ? CheckCircleIcon : XCircleIcon}
     x={x}
     y={y}
     size={size}
-    hot={hot}
-    className={on ? ink(hot) : hot ? 'text-slate-700' : 'text-slate-500'}
+    className={on ? INK : 'text-slate-500'}
   />
 );
 
@@ -271,7 +255,6 @@ const TireIcons = ({
   gap,
   size,
   grid,
-  hot = false,
 }: {
   service: PitServiceView;
   x: number;
@@ -279,7 +262,6 @@ const TireIcons = ({
   gap: number;
   size: number;
   grid: boolean;
-  hot?: boolean;
 }) => {
   const spots = grid
     ? ([
@@ -303,7 +285,7 @@ const TireIcons = ({
           y={y + dy - size / 2}
           size={size}
           weight="fill"
-          color={tireColor(service, corner, hot)}
+          color={tireColor(service, corner)}
         />
       ))}
     </g>
@@ -315,19 +297,17 @@ const TireStatus = ({
   service,
   x,
   y,
-  hot,
 }: {
   service: PitServiceView;
   x: number;
   y: number;
-  hot: boolean;
 }) => {
   if (!service.current) return null;
   if (service.anyTireChange && service.next) {
     return (
       <g>
         <Chip x={x - 17} y={y} style={service.current} />
-        <Glyph Svg={ArrowRightIcon} x={x} y={y} size={10} hot={hot} />
+        <Glyph Svg={ArrowRightIcon} x={x} y={y} size={10} />
         <Chip x={x + 17} y={y} style={service.next} />
       </g>
     );
@@ -340,16 +320,14 @@ const TireStatus = ({
         x={x + 2}
         y={y}
         size={10}
-        hot={hot}
-        className={hot ? 'text-slate-700' : 'text-slate-400'}
+        className="text-slate-400"
       />
       <Glyph
         Svg={XCircleIcon}
         x={x + 17}
         y={y}
         size={13}
-        hot={hot}
-        className={hot ? 'text-slate-700' : 'text-slate-400'}
+        className="text-slate-400"
       />
     </g>
   );
@@ -366,44 +344,34 @@ const SectorBody = ({
   service,
   x,
   y,
-  hot,
   compact,
 }: {
   item: PieItem;
   service: PitServiceView;
   x: number;
   y: number;
-  hot: boolean;
   compact: boolean;
 }) => {
   const ItemIcon = PIE_ICONS[item.icon];
   if (compact && item.opensSubmenu && item.icon === 'tires') {
     return (
       <g>
-        <TireIcons
-          service={service}
-          x={x}
-          y={y - 12}
-          gap={9}
-          size={15}
-          grid
-          hot={hot}
-        />
-        <TireStatus service={service} x={x} y={y + 17} hot={hot} />
+        <TireIcons service={service} x={x} y={y - 12} gap={9} size={15} grid />
+        <TireStatus service={service} x={x} y={y + 17} />
       </g>
     );
   }
   if (compact && item.opensSubmenu && item.icon === 'fuel') {
     return (
       <g>
-        <Glyph Svg={GasPumpIcon} x={x} y={y - 18} size={18} hot={hot} />
-        <Label x={x} y={y + 1} size={11} hot={hot}>
+        <Glyph Svg={GasPumpIcon} x={x} y={y - 18} size={18} />
+        <Label x={x} y={y + 1} size={11}>
           {fuelText(service.fuelLevel)}
           {service.fuelAdd !== undefined && (
             <tspan opacity={0.7}>{` +${service.fuelAdd}`}</tspan>
           )}
         </Label>
-        <Label x={x} y={y + 15} size={9.5} hot={hot} bold={false}>
+        <Label x={x} y={y + 15} size={9.5} bold={false}>
           {lapsText(service.fuelLaps)}
         </Label>
       </g>
@@ -412,24 +380,24 @@ const SectorBody = ({
   if (compact && item.action === 'repair') {
     return (
       <g>
-        <Glyph Svg={WrenchIcon} x={x} y={y - 12} size={22} hot={hot} />
-        <Tick x={x} y={y + 14} size={18} on={service.repair} hot={hot} />
+        <Glyph Svg={WrenchIcon} x={x} y={y - 12} size={22} />
+        <Tick x={x} y={y + 14} size={18} on={service.repair} />
       </g>
     );
   }
   if (compact && item.action === 'tearoff') {
     return (
       <g>
-        <Glyph Svg={BroomIcon} x={x} y={y - 12} size={22} hot={hot} />
-        <OnOff x={x} y={y + 14} on={service.tearoff} hot={hot} />
+        <Glyph Svg={BroomIcon} x={x} y={y - 12} size={22} />
+        <OnOff x={x} y={y + 14} on={service.tearoff} />
       </g>
     );
   }
   const status =
     item.action === 'tiresAll' ? (
-      <OnOff x={x} y={y + 16} on={service.anyTireChange} hot={hot} />
+      <OnOff x={x} y={y + 16} on={service.anyTireChange} />
     ) : item.action === 'fuelAuto' ? (
-      <OnOff x={x} y={y + 16} on={service.fuelOn} hot={hot} />
+      <OnOff x={x} y={y + 16} on={service.fuelOn} />
     ) : item.action === 'compoundDry' && service.styles.dry ? (
       <Chip x={x} y={y + 16} style={service.styles.dry} />
     ) : item.action === 'compoundWet' && service.styles.wet ? (
@@ -437,14 +405,8 @@ const SectorBody = ({
     ) : null;
   return (
     <g>
-      <Glyph
-        Svg={ItemIcon}
-        x={x}
-        y={y - (status ? 20 : 12)}
-        size={20}
-        hot={hot}
-      />
-      <Label x={x} y={y + (status ? 0 : 10)} size={10.5} hot={hot}>
+      <Glyph Svg={ItemIcon} x={x} y={y - (status ? 20 : 12)} size={20} />
+      <Label x={x} y={y + (status ? 0 : 10)} size={10.5}>
         {item.label}
       </Label>
       {status}
@@ -533,26 +495,51 @@ const MainCenter = ({ service }: { service: PitServiceView }) => {
         className="stroke-slate-600"
         strokeWidth={1.5}
       />
-      <text
-        y={19}
-        fontSize={fuelMargin === undefined ? 20 : 21}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className={`${verdictColour} font-extrabold`}
-      >
-        {fuelMargin === undefined
-          ? '--'
-          : `${fuelMargin >= 0 ? '+' : ''}${fuelMargin.toFixed(1)}`}
-      </text>
-      <text
-        y={38}
-        fontSize={9}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="fill-slate-300 font-semibold"
-      >
-        {fuelMargin === undefined ? 'finish unknown' : short}
-      </text>
+      {service.stopInProgress ? (
+        <g>
+          <text
+            y={17}
+            fontSize={14}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-amber-400 font-extrabold"
+          >
+            Pit stop
+          </text>
+          <text
+            y={34}
+            fontSize={9}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-slate-300 font-semibold"
+          >
+            in progress
+          </text>
+        </g>
+      ) : (
+        <g>
+          <text
+            y={19}
+            fontSize={fuelMargin === undefined ? 20 : 21}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className={`${verdictColour} font-extrabold`}
+          >
+            {fuelMargin === undefined
+              ? '--'
+              : `${fuelMargin >= 0 ? '+' : ''}${fuelMargin.toFixed(1)}`}
+          </text>
+          <text
+            y={38}
+            fontSize={9}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-slate-300 font-semibold"
+          >
+            {fuelMargin === undefined ? 'finish unknown' : short}
+          </text>
+        </g>
+      )}
     </g>
   );
 };
@@ -581,22 +568,15 @@ const CenterBody = ({
             size={24}
             grid={false}
           />
-          <TireStatus service={service} x={0} y={24} hot={false} />
+          <TireStatus service={service} x={0} y={24} />
         </g>
       );
     case 'fuel':
       return (
         <g>
-          <Glyph
-            Svg={GasPumpIcon}
-            x={0}
-            y={-26}
-            size={28}
-            hot={false}
-            className={light}
-          />
+          <Glyph Svg={GasPumpIcon} x={0} y={-30} size={26} className={light} />
           <text
-            y={4}
+            y={-1}
             fontSize={15}
             textAnchor="middle"
             dominantBaseline="middle"
@@ -607,21 +587,27 @@ const CenterBody = ({
               <tspan className="fill-slate-400">{` +${service.fuelAdd}`}</tspan>
             )}
           </text>
-          <Label x={0} y={24} size={11} hot={false} bold={false}>
+          <Label x={0} y={17} size={11} bold={false}>
             {lapsText(service.fuelLaps)}
           </Label>
+          {service.fuelToFinish !== undefined && (
+            <text
+              y={36}
+              fontSize={10}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className={`${service.fuelToFinish > 0 ? 'fill-amber-400' : 'fill-green-500'} font-bold`}
+            >
+              {service.fuelToFinish > 0
+                ? `finish +${service.fuelToFinish} L`
+                : 'finish: enough'}
+            </text>
+          )}
         </g>
       );
     case 'generic':
       return (
-        <Glyph
-          Svg={PIE_ICONS[icon]}
-          x={0}
-          y={0}
-          size={44}
-          hot={false}
-          className={light}
-        />
+        <Glyph Svg={PIE_ICONS[icon]} x={0} y={0} size={44} className={light} />
       );
     default:
       return <MainCenter service={service} />;
@@ -684,6 +670,29 @@ const TransitionTire = ({
 };
 
 /** The result of a pick, drawn inside the centre only. */
+/** Laid over a result the sim did not take, e.g. outside the car. */
+const NotApplied = () => (
+  <g className="pointer-events-none">
+    <circle r={INNER - 4} className="fill-slate-950/75" />
+    <XCircleIcon
+      x={-20}
+      y={-34}
+      size={40}
+      weight="fill"
+      className="text-red-500"
+    />
+    <text
+      y={24}
+      fontSize={12}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      className="fill-red-400 font-bold"
+    >
+      not applied
+    </text>
+  </g>
+);
+
 const ResultBody = ({
   feedback,
   service,
@@ -711,7 +720,7 @@ const ResultBody = ({
             color={tireColor(service, corner)}
           />
         ))}
-        <TireStatus service={service} x={0} y={46} hot={false} />
+        <TireStatus service={service} x={0} y={46} />
       </g>
     );
   }
@@ -725,18 +734,11 @@ const ResultBody = ({
         : 0;
     return (
       <g>
-        <Glyph
-          Svg={GasPumpIcon}
-          x={0}
-          y={-30}
-          size={34}
-          hot={false}
-          className={light}
-        />
-        <Label x={0} y={2} size={17} hot={false}>
+        <Glyph Svg={GasPumpIcon} x={0} y={-30} size={34} className={light} />
+        <Label x={0} y={2} size={17}>
           {fuelAdd !== undefined ? `+${fuelAdd} L` : 'no refuel'}
         </Label>
-        <Label x={0} y={22} size={10.5} hot={false} bold={false}>
+        <Label x={0} y={22} size={10.5} bold={false}>
           {fuelText(fuelLevel)}
         </Label>
         <rect
@@ -774,13 +776,12 @@ const ResultBody = ({
         x={0}
         y={-14}
         size={44}
-        hot={false}
         className={light}
       />
       {repair ? (
-        <Tick x={0} y={30} size={30} on={service.repair} hot={false} />
+        <Tick x={0} y={30} size={30} on={service.repair} />
       ) : (
-        <OnOff x={0} y={30} on={service.tearoff} hot={false} />
+        <OnOff x={0} y={30} on={service.tearoff} />
       )}
     </g>
   );
@@ -798,6 +799,8 @@ export interface PieMenuViewProps {
   onSelect?: (direction: PieDirection) => void;
   /** Settings editor: the side the pointer is over. */
   onHighlight?: (direction: PieDirection | undefined) => void;
+  /** The sim did not take the last pick. */
+  unapplied?: boolean;
 }
 
 export const PieMenuView = memo(
@@ -809,6 +812,7 @@ export const PieMenuView = memo(
     selected,
     onSelect,
     onHighlight,
+    unapplied = false,
   }: PieMenuViewProps) => {
     const result = state.level === 'result' && state.feedback;
     // A result keeps drawing the menu it came from, so the ring fades out
@@ -896,7 +900,6 @@ export const PieMenuView = memo(
                         x={x}
                         y={y - 6}
                         size={20}
-                        hot={hot}
                         className={hot ? 'text-slate-300' : 'text-slate-400'}
                       />
                       <text
@@ -916,7 +919,6 @@ export const PieMenuView = memo(
                       service={service}
                       x={x}
                       y={y}
-                      hot={false}
                       compact={compact}
                     />
                   ))}
@@ -927,7 +929,10 @@ export const PieMenuView = memo(
         <circle r={INNER} className="fill-slate-900/95" />
         <Appear key={result ? `result-${result}` : centerKey}>
           {result ? (
-            <ResultBody feedback={result} service={service} />
+            <g>
+              <ResultBody feedback={result} service={service} />
+              {unapplied && <NotApplied />}
+            </g>
           ) : (
             <CenterBody state={state} config={config} service={service} />
           )}

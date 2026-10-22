@@ -39,18 +39,22 @@ const ICON_LABEL: Record<PieIconName, string> = {
   right: 'Arrow right',
   back: 'Arrow back',
   menu: 'List',
+  remove: 'Minus',
 };
 
 const ACTION_HINT: Partial<Record<PieActionId, string>> = {
   tiresAll: 'Checks all four tires for a change, or unchecks them.',
   compoundDry:
-    'Picks the dry compound; checks all four tires if none is checked.',
+    'Picks the dry compound and checks all four tires if none is checked. Again takes the change back.',
   compoundWet:
-    'Picks the wet compound; checks all four tires if none is checked.',
+    'Picks the wet compound and checks all four tires if none is checked. Again takes the change back.',
   fuelAuto:
     'Adds the fuel needed to finish when the race length is known, otherwise checks fuel with the amount already in the pit menu. Again to uncheck.',
-  fuelAdd: 'Adds the Fuel Step litres.',
-  fuelAddDouble: 'Adds twice the Fuel Step litres.',
+  fuelAdd: 'Adds the Fuel Step litres to the fuel already requested.',
+  fuelAddDouble:
+    'Adds twice the Fuel Step litres to the fuel already requested.',
+  fuelSub:
+    'Takes the Fuel Step litres off the fuel requested, and unchecks fuel at zero.',
 };
 
 interface PieMenuEditorProps {

@@ -280,6 +280,8 @@ export interface PitServiceSnapshot {
   plannedCompound?: number;
   /** Compound index of the tires on the car. */
   currentCompound?: number;
+  /** `PlayerCarPitSvStatus`: 1 while the crew is working. */
+  pitStatus?: number;
   /** `TrackWetness`: 1 dry to 7 extremely wet, 0 unknown. */
   trackWetness?: number;
   /** `Precipitation` as a 0 to 1 fraction, to 0.01. */
