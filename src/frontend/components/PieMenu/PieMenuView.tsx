@@ -62,10 +62,12 @@ const VECTOR: Record<PieDirection, readonly [number, number]> = {
   left: [-1, 0],
 };
 
-const INNER = 68;
-const OUTER = 130;
+const INNER = 66;
+const OUTER = 134;
+/** Half the angle of a side; the sides meet and are told apart by a hairline. */
+const HALF = 45;
 const MID = (INNER + OUTER) / 2;
-const POP = 10;
+const POP = 8;
 /** A tire that is not being replaced; one checked for a change shows the new compound's colour. */
 const KEEP_TIRE = '#6b7280';
 const KEEP_TIRE_HOT = '#374151';
@@ -850,7 +852,7 @@ export const PieMenuView = memo(
                 onMouseLeave={
                   onHighlight ? () => onHighlight(undefined) : undefined
                 }
-                className={`transition-transform duration-150 ${onSelect ? 'cursor-pointer' : ''} ${isBack ? '' : 'drop-shadow-[0_0_7px_rgba(0,0,0,0.65)]'}`}
+                className={`transition-transform duration-150 ${onSelect ? 'cursor-pointer' : ''}`}
                 style={{
                   transform: hot
                     ? `translate(${vx * (isBack ? 5 : POP)}px, ${vy * (isBack ? 5 : POP)}px)`
@@ -858,22 +860,34 @@ export const PieMenuView = memo(
                 }}
               >
                 <path
-                  d={arcPath(INNER, OUTER, a - 41, a + 41)}
-                  strokeWidth={2}
+                  d={arcPath(INNER, OUTER, a - HALF, a + HALF)}
+                  strokeWidth={1}
                   strokeLinejoin="round"
                   strokeDasharray={item ? undefined : '5 5'}
                   className={[
-                    isBack
-                      ? hot
-                        ? 'fill-slate-700 stroke-slate-500'
-                        : 'fill-slate-900/60 stroke-slate-700'
-                      : hot
-                        ? 'fill-slate-400 stroke-slate-300'
-                        : 'fill-slate-800/90 stroke-slate-500',
-                    item ? '' : 'stroke-slate-600',
-                    onSelect && !hot ? 'hover:fill-slate-700' : '',
+                    !item
+                      ? 'fill-slate-950/40 stroke-slate-600'
+                      : isBack
+                        ? hot
+                          ? 'fill-slate-700/70 stroke-slate-600'
+                          : 'fill-slate-950/55 stroke-slate-700/50'
+                        : hot
+                          ? 'fill-slate-700/95 stroke-slate-500'
+                          : 'fill-slate-950/90 stroke-slate-600/85',
+                    onSelect && !hot ? 'hover:fill-slate-800/90' : '',
                   ].join(' ')}
                 />
+                {hot && item && !isBack && (
+                  <path
+                    d={arcPath(
+                      OUTER + 3,
+                      OUTER + 5.5,
+                      a - HALF + 3,
+                      a + HALF - 3
+                    )}
+                    className="fill-slate-200 pointer-events-none"
+                  />
+                )}
                 {item &&
                   (isBack ? (
                     <g>
@@ -883,7 +897,7 @@ export const PieMenuView = memo(
                         y={y - 6}
                         size={20}
                         hot={hot}
-                        className={hot ? 'text-slate-300' : 'text-slate-500'}
+                        className={hot ? 'text-slate-300' : 'text-slate-400'}
                       />
                       <text
                         x={x}
@@ -891,7 +905,7 @@ export const PieMenuView = memo(
                         fontSize={9.5}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${hot ? 'fill-slate-300' : 'fill-slate-500'} font-bold pointer-events-none`}
+                        className={`${hot ? 'fill-slate-300' : 'fill-slate-400'} font-bold pointer-events-none`}
                       >
                         Menu
                       </text>
@@ -902,7 +916,7 @@ export const PieMenuView = memo(
                       service={service}
                       x={x}
                       y={y}
-                      hot={hot}
+                      hot={false}
                       compact={compact}
                     />
                   ))}
@@ -910,14 +924,13 @@ export const PieMenuView = memo(
             );
           })}
         </Appear>
+        <circle r={INNER} className="fill-slate-900/95" />
         <Appear key={result ? `result-${result}` : centerKey}>
-          <g className="drop-shadow-[0_0_3px_rgba(0,0,0,0.95)]">
-            {result ? (
-              <ResultBody feedback={result} service={service} />
-            ) : (
-              <CenterBody state={state} config={config} service={service} />
-            )}
-          </g>
+          {result ? (
+            <ResultBody feedback={result} service={service} />
+          ) : (
+            <CenterBody state={state} config={config} service={service} />
+          )}
         </Appear>
       </svg>
     );
