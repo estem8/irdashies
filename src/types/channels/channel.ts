@@ -280,6 +280,10 @@ export interface PitServiceSnapshot {
   plannedCompound?: number;
   /** Compound index of the tires on the car. */
   currentCompound?: number;
+  /** `TrackWetness`: 1 dry to 7 extremely wet, 0 unknown. */
+  trackWetness?: number;
+  /** `Precipitation` as a 0 to 1 fraction, to 0.01. */
+  precipitation?: number;
   /** Litres, rounded to 0.1 for display; not for fuel calculations. */
   fuelLevel?: number;
   /** 0 to 1, rounded to 0.01. */

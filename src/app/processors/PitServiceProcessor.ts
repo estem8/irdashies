@@ -34,6 +34,11 @@ export class PitServiceProcessor implements TelemetryProcessor<PitServiceSnapsho
       this.set('plannedFuel', round(numberValue(frame, 'PitSvFuel'), 10)),
       this.set('plannedCompound', numberValue(frame, 'PitSvTireCompound')),
       this.set('currentCompound', numberValue(frame, 'PlayerTireCompound')),
+      this.set('trackWetness', numberValue(frame, 'TrackWetness')),
+      this.set(
+        'precipitation',
+        round(numberValue(frame, 'Precipitation'), 100)
+      ),
       this.set('fuelLevel', round(numberValue(frame, 'FuelLevel'), 10)),
       this.set('fuelLevelPct', round(numberValue(frame, 'FuelLevelPct'), 100)),
     ];
@@ -46,6 +51,8 @@ export class PitServiceProcessor implements TelemetryProcessor<PitServiceSnapsho
     this.latest.plannedFuel = undefined;
     this.latest.plannedCompound = undefined;
     this.latest.currentCompound = undefined;
+    this.latest.trackWetness = undefined;
+    this.latest.precipitation = undefined;
     this.latest.fuelLevel = undefined;
     this.latest.fuelLevelPct = undefined;
     this.latest.version += 1;

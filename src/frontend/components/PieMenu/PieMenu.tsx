@@ -38,6 +38,25 @@ const selectFuelLaps = (
     ? Math.round((snapshot.fuelLevel / snapshot.projectedLapUsage) * 10) / 10
     : undefined;
 
+/** Laps of fuel beyond the finish, to a tenth; undefined when the race length is unknown. */
+const selectFuelMargin = (
+  snapshot: Parameters<typeof fuelToFinish>[0]
+): number | undefined =>
+  snapshot?.hasValidRaceEstimate && snapshot.projectedLapUsage > 0
+    ? Math.round(
+        (snapshot.fuelLevel / snapshot.projectedLapUsage -
+          snapshot.estimatedLapsRemaining) *
+          10
+      ) / 10
+    : undefined;
+
+const selectLapUsage = (
+  snapshot: Parameters<typeof fuelToFinish>[0]
+): number | undefined =>
+  snapshot && snapshot.projectedLapUsage > 0
+    ? Math.round(snapshot.projectedLapUsage * 10) / 10
+    : undefined;
+
 export const PieMenu = () => {
   const { currentDashboard, isDemoMode } = useDashboard();
   const savedConfig = currentDashboard?.widgets.find(
@@ -53,12 +72,18 @@ export const PieMenu = () => {
   const sessionTires = useDriverTires();
   const fuelToAdd = useFuelProjectionSelector(selectFuelToAdd);
   const fuelLaps = useFuelProjectionSelector(selectFuelLaps);
+  const fuelMargin = useFuelProjectionSelector(selectFuelMargin);
+  const lapUsage = useFuelProjectionSelector(selectLapUsage);
   const service = useMemo(
     () =>
       isDemoMode
         ? DEMO_PIT_SERVICE
-        : describePitService(snapshot, sessionTires, fuelLaps),
-    [isDemoMode, snapshot, sessionTires, fuelLaps]
+        : describePitService(snapshot, sessionTires, {
+            laps: fuelLaps,
+            marginLaps: fuelMargin,
+            lapUsage,
+          }),
+    [isDemoMode, snapshot, sessionTires, fuelLaps, fuelMargin, lapUsage]
   );
 
   // Read when a side is pressed, so the handler does not resubscribe.

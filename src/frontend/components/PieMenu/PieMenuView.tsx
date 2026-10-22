@@ -6,6 +6,7 @@ import {
   BroomIcon,
   CheckCircleIcon,
   CloudRainIcon,
+  DropIcon,
   GasPumpIcon,
   LightningIcon,
   ListIcon,
@@ -18,7 +19,6 @@ import {
   type Icon,
 } from '@phosphor-icons/react';
 import type { PieIconName } from '@irdashies/types';
-import { PieLogo } from './PieLogo';
 import {
   PIE_DIRECTIONS,
   getPieItems,
@@ -64,7 +64,6 @@ const VECTOR: Record<PieDirection, readonly [number, number]> = {
 
 const INNER = 68;
 const OUTER = 130;
-const CENTER = 62;
 const MID = (INNER + OUTER) / 2;
 const POP = 10;
 /** A tire that is not being replaced; one checked for a change shows the new compound's colour. */
@@ -451,7 +450,112 @@ const SectorBody = ({
   );
 };
 
-/** The centre: the menu we are in, or the main menu's logo. */
+const WET_LABEL: Record<number, string> = {
+  1: 'Dry',
+  2: 'Dry',
+  3: 'Damp',
+  4: 'Damp',
+  5: 'Wet',
+  6: 'Wet',
+  7: 'Soaked',
+};
+const WATER = '#2f9bff';
+
+/** Main menu centre: the state of the track above, the fuel verdict below. */
+const MainCenter = ({ service }: { service: PitServiceView }) => {
+  const { wetness, precipitation, fuelMargin, lapUsage } = service;
+  const known = wetness !== undefined && wetness >= 1;
+  const filled = known ? Math.min(5, wetness - 1) : 0;
+  const rain = precipitation ? Math.round(precipitation * 100) : 0;
+  const trackLabel = known ? WET_LABEL[wetness] : '--';
+  const verdictColour =
+    fuelMargin === undefined
+      ? 'fill-slate-500'
+      : fuelMargin >= 1
+        ? 'fill-green-500'
+        : fuelMargin >= 0
+          ? 'fill-amber-500'
+          : 'fill-red-500';
+  const short =
+    fuelMargin !== undefined && fuelMargin < 0 && lapUsage
+      ? `short ${(-fuelMargin * lapUsage).toFixed(1)} L`
+      : 'laps to finish';
+  return (
+    <g className="pointer-events-none">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <DropIcon
+          key={i}
+          x={-30 + i * 15 - 6.5}
+          y={-38 - 6.5}
+          size={13}
+          weight="fill"
+          color={i < filled ? WATER : undefined}
+          className={i < filled ? undefined : 'text-slate-600'}
+        />
+      ))}
+      <text
+        x={rain > 0 ? -8 : 0}
+        y={-19.5}
+        fontSize={10}
+        textAnchor={rain > 0 ? 'end' : 'middle'}
+        dominantBaseline="middle"
+        className="fill-slate-200 font-bold"
+      >
+        {trackLabel}
+      </text>
+      {rain > 0 && (
+        <g>
+          <CloudRainIcon
+            x={8.5}
+            y={-25}
+            size={11}
+            weight="fill"
+            className="text-slate-300"
+          />
+          <text
+            x={22}
+            y={-19.5}
+            fontSize={9.5}
+            dominantBaseline="middle"
+            className="fill-slate-300 font-bold"
+          >
+            {`${rain}%`}
+          </text>
+        </g>
+      )}
+      <line
+        x1={-34}
+        x2={34}
+        y1={-4}
+        y2={-4}
+        className="stroke-slate-600"
+        strokeWidth={1.5}
+      />
+      <text
+        y={19}
+        fontSize={fuelMargin === undefined ? 20 : 21}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className={`${verdictColour} font-extrabold`}
+      >
+        {fuelMargin === undefined
+          ? '--'
+          : `${fuelMargin >= 0 ? '+' : ''}${fuelMargin.toFixed(1)}`}
+      </text>
+      <text
+        y={38}
+        fontSize={9}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-slate-300 font-semibold"
+      >
+        {fuelMargin === undefined ? 'finish unknown' : short}
+      </text>
+    </g>
+  );
+};
+
+/** The centre: the menu we are in, or the track and fuel at a glance. */
 const CenterBody = ({
   state,
   config,
@@ -518,7 +622,7 @@ const CenterBody = ({
         />
       );
     default:
-      return <PieLogo x={-31} y={-31} size={62} />;
+      return <MainCenter service={service} />;
   }
 };
 
@@ -714,6 +818,12 @@ export const PieMenuView = memo(
       : state;
     const items = getPieItems(ringState, config);
     const compact = ringState.level === 'root';
+    // Back is drawn first so the other sides lie over it.
+    const drawOrder = [...PIE_DIRECTIONS].sort(
+      (a, b) =>
+        Number(items[b]?.action === 'back') -
+        Number(items[a]?.action === 'back')
+    );
     // A new key replays the quick fade-in when another menu comes up.
     const ringKey =
       ringState.level === 'sub' ? `sub-${ringState.entry}` : 'root';
@@ -722,14 +832,14 @@ export const PieMenuView = memo(
     return (
       <svg viewBox="-150 -150 300 300" className="w-full h-full">
         <Appear key={ringKey} hidden={Boolean(result)}>
-          {PIE_DIRECTIONS.map((direction) => {
+          {drawOrder.map((direction) => {
             const item = items[direction];
             if (!item && !onSelect) return null;
             const hot = highlight === direction || selected === direction;
             const [vx, vy] = VECTOR[direction];
             const a = ANGLE[direction];
             const isBack = item?.action === 'back';
-            const [x, y] = polar(isBack ? 99 : MID, a);
+            const [x, y] = polar(MID, a);
             return (
               <g
                 key={direction}
@@ -740,27 +850,25 @@ export const PieMenuView = memo(
                 onMouseLeave={
                   onHighlight ? () => onHighlight(undefined) : undefined
                 }
-                className={`transition-transform duration-150 ${onSelect ? 'cursor-pointer' : ''}`}
+                className={`transition-transform duration-150 ${onSelect ? 'cursor-pointer' : ''} ${isBack ? '' : 'drop-shadow-[0_0_7px_rgba(0,0,0,0.65)]'}`}
                 style={{
                   transform: hot
-                    ? `translate(${vx * (isBack ? 7 : POP)}px, ${vy * (isBack ? 7 : POP)}px)`
+                    ? `translate(${vx * (isBack ? 5 : POP)}px, ${vy * (isBack ? 5 : POP)}px)`
                     : undefined,
                 }}
               >
                 <path
-                  d={
-                    isBack
-                      ? arcPath(84, 118, a - 26, a + 26)
-                      : arcPath(INNER, OUTER, a - 41, a + 41)
-                  }
+                  d={arcPath(INNER, OUTER, a - 41, a + 41)}
                   strokeWidth={2}
                   strokeLinejoin="round"
                   strokeDasharray={item ? undefined : '5 5'}
                   className={[
-                    hot
-                      ? 'fill-slate-400 stroke-slate-300'
-                      : isBack
-                        ? 'fill-slate-900 stroke-slate-600'
+                    isBack
+                      ? hot
+                        ? 'fill-slate-700 stroke-slate-500'
+                        : 'fill-slate-900/60 stroke-slate-700'
+                      : hot
+                        ? 'fill-slate-400 stroke-slate-300'
                         : 'fill-slate-800/90 stroke-slate-500',
                     item ? '' : 'stroke-slate-600',
                     onSelect && !hot ? 'hover:fill-slate-700' : '',
@@ -775,10 +883,18 @@ export const PieMenuView = memo(
                         y={y - 6}
                         size={20}
                         hot={hot}
+                        className={hot ? 'text-slate-300' : 'text-slate-500'}
                       />
-                      <Label x={x} y={y + 12} size={9} hot={hot}>
+                      <text
+                        x={x}
+                        y={y + 12}
+                        fontSize={9.5}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className={`${hot ? 'fill-slate-300' : 'fill-slate-500'} font-bold pointer-events-none`}
+                      >
                         Menu
-                      </Label>
+                      </text>
                     </g>
                   ) : (
                     <SectorBody
@@ -794,17 +910,14 @@ export const PieMenuView = memo(
             );
           })}
         </Appear>
-        <circle
-          r={CENTER}
-          className="fill-slate-950 stroke-slate-500"
-          strokeWidth={2}
-        />
         <Appear key={result ? `result-${result}` : centerKey}>
-          {result ? (
-            <ResultBody feedback={result} service={service} />
-          ) : (
-            <CenterBody state={state} config={config} service={service} />
-          )}
+          <g className="drop-shadow-[0_0_3px_rgba(0,0,0,0.95)]">
+            {result ? (
+              <ResultBody feedback={result} service={service} />
+            ) : (
+              <CenterBody state={state} config={config} service={service} />
+            )}
+          </g>
         </Appear>
       </svg>
     );

@@ -392,6 +392,14 @@ export interface PitServiceView {
   fuelPct?: number;
   /** Laps the fuel in the tank lasts, when known. */
   fuelLaps?: number;
+  /** Laps of fuel beyond the finish; negative when it will not last. */
+  fuelMargin?: number;
+  /** Litres per lap the margin is worked out with. */
+  lapUsage?: number;
+  /** `TrackWetness`: 1 dry to 7 extremely wet. */
+  wetness?: number;
+  /** Precipitation, 0 to 1. */
+  precipitation?: number;
   /** Litres requested at the stop, when fuel is checked. */
   fuelAdd?: number;
   repair: boolean;
@@ -404,7 +412,7 @@ export interface PitServiceView {
 export const describePitService = (
   snapshot: PitServiceSnapshot | undefined,
   tires: readonly SessionTire[] | undefined,
-  fuelLaps?: number
+  fuel: { laps?: number; marginLaps?: number; lapUsage?: number } = {}
 ): PitServiceView => {
   const flags = snapshot?.flags ?? 0;
   const current = compoundStyle(snapshot?.currentCompound, tires);
@@ -432,7 +440,11 @@ export const describePitService = (
       0,
     fuelLevel: snapshot?.fuelLevel,
     fuelPct: snapshot?.fuelLevelPct,
-    fuelLaps,
+    fuelLaps: fuel.laps,
+    fuelMargin: fuel.marginLaps,
+    lapUsage: fuel.lapUsage,
+    wetness: snapshot?.trackWetness,
+    precipitation: snapshot?.precipitation,
     fuelAdd,
     repair: (flags & PIT_SV_FLAGS.repair) !== 0,
     tearoff: (flags & PIT_SV_FLAGS.tearoff) !== 0,
@@ -458,6 +470,10 @@ export const DEMO_PIT_SERVICE: PitServiceView = {
   fuelLevel: 31.2,
   fuelPct: 0.52,
   fuelLaps: 8.2,
+  fuelMargin: 2.2,
+  lapUsage: 3.8,
+  wetness: 3,
+  precipitation: 0.2,
   fuelAdd: 20,
   repair: true,
   tearoff: false,
