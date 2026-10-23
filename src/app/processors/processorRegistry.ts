@@ -27,6 +27,7 @@ import { RelativeGapProcessor } from './RelativeGapProcessor';
 import { SectorTimingProcessor } from './SectorTimingProcessor';
 import { SessionBarProcessor } from './SessionBarProcessor';
 import { CarSystemsProcessor } from './CarSystemsProcessor';
+import { TireProcessor } from './TireProcessor';
 import { SessionTimingProcessor } from './SessionTimingProcessor';
 import { StandingsProcessor } from './StandingsProcessor';
 import { TrackStateProcessor } from './TrackStateProcessor';
@@ -150,6 +151,11 @@ export const createProcessorDefinitions = ({
     channel: 'car-systems.snapshot',
     metricsPrefix: 'carSystems',
     create: () => new CarSystemsProcessor(),
+  }),
+  defineProcessor({
+    channel: 'tires.snapshot',
+    metricsPrefix: 'tires',
+    create: () => new TireProcessor(),
   }),
   defineProcessor({
     channel: 'driver-controls.snapshot',

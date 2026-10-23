@@ -1,0 +1,41 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+  ChannelSnapshotDecorator,
+  sessionBarStorySnapshot,
+  TelemetryDecorator,
+  trackStateStorySnapshot,
+} from '@irdashies/storybook';
+import type { TireSnapshot } from '@irdashies/types';
+import { Tires } from './Tires';
+
+export default {
+  component: Tires,
+  title: 'widgets/Tires',
+} as Meta;
+
+type Story = StoryObj<typeof Tires>;
+
+const snapshot: TireSnapshot = {
+  version: 1,
+  corners: {
+    lf: { temp: [92, 98, 95], wear: [88.4, 91.2, 89.9] },
+    rf: { temp: [60, 64, 66], wear: [42.1, 45.5, 40.3] },
+    lr: { temp: [88, 90, 89], wear: [20.7, 22.0, 21.1] },
+    rr: { temp: [101, 118, 123], wear: [85.2, 87.8, 84.6] },
+  },
+};
+
+export const Primary: Story = {
+  decorators: [
+    ChannelSnapshotDecorator({
+      'tires.snapshot': snapshot,
+      'session-bar.snapshot': sessionBarStorySnapshot,
+      'track-state.snapshot': trackStateStorySnapshot,
+    }),
+    (Story, context) => (
+      <div style={{ width: '260px', height: '200px' }}>
+        {TelemetryDecorator('/test-data/1731637331038')(Story, context)}
+      </div>
+    ),
+  ],
+};

@@ -262,6 +262,17 @@ export interface WindConfig {
   sessionVisibility: SessionVisibilitySettings;
 }
 
+export interface TiresConfig {
+  background: { opacity: number };
+  units: 'auto' | 'Metric' | 'Imperial';
+  /** Carcass temperature, in Celsius, below which a zone reads as cold. */
+  tempCold: number;
+  /** Carcass temperature, in Celsius, above which a zone reads as hot. */
+  tempHot: number;
+  showOnlyWhenOnTrack: boolean;
+  sessionVisibility: SessionVisibilitySettings;
+}
+
 export interface TrackMapConfig {
   turnLabels: {
     enabled: boolean;
@@ -1388,6 +1399,7 @@ export interface WidgetConfigMap {
   relative: RelativeConfig;
   weather: WeatherConfig;
   wind: WindConfig;
+  tires: TiresConfig;
   map: TrackMapConfig;
   flatmap: FlatTrackMapConfig;
   input: InputConfig;
@@ -1497,6 +1509,7 @@ export type StandingsWidgetSettings = BaseWidgetSettings<StandingsConfig>;
 export type RelativeWidgetSettings = BaseWidgetSettings<RelativeConfig>;
 export type WeatherWidgetSettings = BaseWidgetSettings<WeatherConfig>;
 export type WindWidgetSettings = BaseWidgetSettings<WindConfig>;
+export type TiresWidgetSettings = BaseWidgetSettings<TiresConfig>;
 export type TrackMapWidgetSettings = BaseWidgetSettings<TrackMapConfig>;
 export type FlatTrackMapWidgetSettings = BaseWidgetSettings<FlatTrackMapConfig>;
 export type SteerWidgetSettings = BaseWidgetSettings<SteerConfig>;

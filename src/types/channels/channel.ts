@@ -15,6 +15,7 @@ export interface ChannelPayloads {
   'blind-spot.snapshot': BlindSpotSnapshot;
   'car-speeds.snapshot': CarSpeedsSnapshot;
   'car-systems.snapshot': CarSystemsSnapshot;
+  'tires.snapshot': TireSnapshot;
   'driver-controls.snapshot': DriverControlsSnapshot;
   'fuel.projection': FuelProjectionSnapshot;
   'lap-times.snapshot': LapTimesSnapshot;
@@ -265,6 +266,22 @@ export interface CarSystemsSnapshot {
   /** False before any in-car frame has been seen, when the set is unknown. */
   discovered: boolean;
   sessionNum: number | null;
+  version: number;
+}
+
+export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
+
+/** One tire: three zones across the tread, as the driver sees it, left to right. */
+export interface TireCornerSnapshot {
+  /** Carcass temperature in degrees Celsius. */
+  temp: readonly [number, number, number];
+  /** Tread remaining as a percentage, 100 = new. */
+  wear: readonly [number, number, number];
+}
+
+/** Tire temperatures and wear as telemetry reports them, with no estimation. */
+export interface TireSnapshot {
+  corners: Partial<Record<TireCorner, TireCornerSnapshot>>;
   version: number;
 }
 
@@ -597,6 +614,13 @@ export const channelRegistry = {
     kind: 'snapshot',
     defaultRateHz: 2,
     maxRateHz: 10,
+  },
+  // Temperatures drift slowly and wear moves in steps; a couple of updates a
+  // second is as fast as a person can read the numbers.
+  'tires.snapshot': {
+    kind: 'snapshot',
+    defaultRateHz: 2,
+    maxRateHz: 5,
   },
   // Publishes on version change, roughly 0.6 times a second in a 60-car field.
   // The rate cap only bounds the worst case; it is not a sampling rate.
