@@ -53,7 +53,7 @@ export const Primary: Story = {
       'track-state.snapshot': trackStateStorySnapshot,
     }),
     (Story, context) => (
-      <div style={{ width: '300px', height: '340px' }}>
+      <div style={{ width: '340px', height: '400px' }}>
         {TelemetryDecorator('/test-data/1731637331038')(Story, context)}
       </div>
     ),

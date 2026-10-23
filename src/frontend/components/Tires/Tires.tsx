@@ -11,13 +11,6 @@ import {
 import type { TireCorner, TireCornerSnapshot } from '@irdashies/types';
 import { useTiresSettings } from './hooks/useTiresSettings';
 
-const LAYOUT: readonly { corner: TireCorner; label: string }[] = [
-  { corner: 'lf', label: 'LF' },
-  { corner: 'rf', label: 'RF' },
-  { corner: 'lr', label: 'LR' },
-  { corner: 'rr', label: 'RR' },
-];
-
 const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   lf: {
     temp: [92, 98, 95],
@@ -45,20 +38,20 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   },
 };
 
-/** Hue runs blue (cold) through green to red (hot), a little past each limit. */
+/** Neon hue from blue (cold) through green to red (hot), a little past each limit. */
 const tempColor = (celsius: number, cold: number, hot: number) => {
   const margin = 15;
   const ratio = Math.min(
     1,
     Math.max(0, (celsius - (cold - margin)) / (hot + margin - (cold - margin)))
   );
-  return `hsl(${Math.round(210 * (1 - ratio))} 70% 48%)`;
+  return `hsl(${Math.round(210 * (1 - ratio))} 100% 50%)`;
 };
 
 /** Green while there is plenty of tread, red at the limit and below. */
 const wearColor = (percent: number, limit: number) => {
   const ratio = Math.min(1, Math.max(0, (percent - limit) / (100 - limit)));
-  return `hsl(${Math.round(130 * ratio)} 65% 50%)`;
+  return `hsl(${Math.round(130 * ratio)} 100% 50%)`;
 };
 
 /** Whole laps until the worst zone reaches the limit, if a rate is known. */
@@ -70,12 +63,13 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
 
-// Tread grooves across each zone, drawn over its temperature colour.
-const GROOVES =
-  'repeating-linear-gradient(to bottom, transparent 0 7px, rgb(0 0 0 / 0.22) 7px 9px)';
-// Soft highlight down the left of the tire, like the glass bezel it is styled on.
-const GLOSS =
-  'linear-gradient(100deg, rgb(255 255 255 / 0.28), transparent 45%, rgb(0 0 0 / 0.18))';
+// Cell gaps across each tread lane, so a lane reads as the ribbed lug blocks
+// of a tire rather than a flat bar.
+const CELLS =
+  'repeating-linear-gradient(to bottom, transparent 0 8px, rgb(0 0 0 / 0.85) 8px 10px)';
+
+const COLD_TO_HOT =
+  'linear-gradient(to right, hsl(210 100% 50%), hsl(120 100% 50%), hsl(0 100% 50%))';
 
 interface TireCardProps {
   label: string;
@@ -84,55 +78,46 @@ interface TireCardProps {
   cold: number;
   hot: number;
   limit: number;
-  staleTemps: boolean;
 }
 
 const TireCard = memo(
-  ({
-    label,
-    tire,
-    fahrenheit,
-    cold,
-    hot,
-    limit,
-    staleTemps,
-  }: TireCardProps) => {
+  ({ label, tire, fahrenheit, cold, hot, limit }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     return (
-      <div className="flex min-h-0 flex-col gap-1.5 rounded-2xl bg-linear-to-b from-white/12 to-white/4 p-2 ring-1 ring-white/15">
-        <div className="flex flex-none items-baseline justify-between">
-          <span className="text-base font-extrabold leading-none text-slate-300/70">
+      <div className="flex min-h-0 flex-col gap-1.5">
+        <div className="flex flex-none items-center justify-between gap-1">
+          <span className="-skew-x-12 bg-white px-2 text-sm font-black italic leading-5 text-black">
             {label}
           </span>
           {left !== undefined && (
-            <span className="text-xs font-bold tabular-nums text-white/90">
-              ~{left} laps
+            <span className="text-xs font-black italic tabular-nums text-amber-300">
+              ~{left} LAPS
             </span>
           )}
         </div>
 
         <div className="flex min-h-0 flex-1 justify-center">
-          <div className="flex aspect-[3/4] h-full max-w-full gap-[3%] rounded-[22%] bg-linear-to-b from-slate-600 to-slate-800 p-[7%] shadow-[inset_0_0_0_2px_rgb(255_255_255/0.12),0_2px_6px_rgb(0_0_0/0.4)]">
+          <div className="flex aspect-[3/4] h-full max-w-full gap-[4%] rounded-[24%] bg-black p-[7%] shadow-[0_0_0_2px_rgb(245_158_11/0.85),0_0_12px_rgb(245_158_11/0.55),inset_0_0_8px_rgb(245_158_11/0.45)]">
             {[0, 1, 2].map((zone) => {
               const celsius = tire?.temp[zone];
+              const color =
+                celsius === undefined
+                  ? 'rgb(100 116 139)'
+                  : tempColor(celsius, cold, hot);
               return (
                 <div
                   key={zone}
-                  className={`relative flex flex-1 items-center justify-center overflow-hidden rounded-lg ${
-                    staleTemps ? 'opacity-60' : ''
-                  }`}
+                  className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md"
                   style={{
-                    backgroundColor:
-                      celsius === undefined
-                        ? 'rgb(100 116 139 / 0.5)'
-                        : tempColor(celsius, cold, hot),
+                    backgroundColor: color,
+                    boxShadow: `0 0 8px ${color}`,
                   }}
                 >
                   <div
                     className="absolute inset-0"
-                    style={{ backgroundImage: `${GROOVES}, ${GLOSS}` }}
+                    style={{ backgroundImage: CELLS }}
                   />
-                  <span className="relative text-sm font-extrabold tabular-nums text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+                  <span className="relative -rotate-90 text-sm font-black tabular-nums text-black/90">
                     {celsius === undefined
                       ? '--'
                       : Math.round(
@@ -145,22 +130,26 @@ const TireCard = memo(
           </div>
         </div>
 
-        <div className="grid flex-none grid-cols-3 gap-[3%] px-[7%]">
+        <div className="grid flex-none grid-cols-3 gap-[4%] px-[7%]">
           {[0, 1, 2].map((zone) => {
             const wear = tire?.wear[zone];
             return (
               <div key={zone} className="flex flex-col items-center gap-0.5">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                <div className="h-1.5 w-full -skew-x-12 overflow-hidden bg-white/15">
                   <div
-                    className="h-full rounded-full"
+                    className="h-full"
                     style={{
                       width: `${wear ?? 0}%`,
                       backgroundColor:
                         wear === undefined ? undefined : wearColor(wear, limit),
+                      boxShadow:
+                        wear === undefined
+                          ? undefined
+                          : `0 0 6px ${wearColor(wear, limit)}`,
                     }}
                   />
                 </div>
-                <span className="text-xs font-bold tabular-nums leading-none text-slate-200">
+                <span className="text-[0.7em] font-bold tabular-nums leading-none text-white">
                   {wear === undefined
                     ? '--'
                     : `${tire?.estimated ? '~' : ''}${Math.round(wear)}%`}
@@ -174,6 +163,38 @@ const TireCard = memo(
   }
 );
 TireCard.displayName = 'TireCard';
+
+/** Top view of the car, nose up, between the left and right tires. */
+const Car = memo(() => (
+  <svg
+    viewBox="0 0 100 240"
+    preserveAspectRatio="xMidYMid meet"
+    className="h-full w-full"
+    aria-hidden="true"
+  >
+    <defs>
+      <linearGradient id="tires-car-body" x1="0" x2="1">
+        <stop offset="0" stopColor="#450a0a" />
+        <stop offset="0.5" stopColor="#dc2626" />
+        <stop offset="1" stopColor="#450a0a" />
+      </linearGradient>
+    </defs>
+    <rect x="14" y="6" width="72" height="10" rx="3" fill="#1c1c1f" />
+    <path d="M44 16 L56 16 L60 78 L40 78 Z" fill="url(#tires-car-body)" />
+    <path
+      d="M34 78 L66 78 L72 130 L66 200 L34 200 L28 130 Z"
+      fill="url(#tires-car-body)"
+    />
+    <ellipse cx="50" cy="112" rx="8" ry="14" fill="#0a0a0a" />
+    <ellipse cx="50" cy="112" rx="8" ry="14" fill="none" stroke="#f87171" />
+    <rect x="22" y="212" width="56" height="12" rx="3" fill="#1c1c1f" />
+    <line x1="30" y1="50" x2="2" y2="50" stroke="#3f3f46" strokeWidth="3" />
+    <line x1="70" y1="50" x2="98" y2="50" stroke="#3f3f46" strokeWidth="3" />
+    <line x1="30" y1="176" x2="2" y2="176" stroke="#3f3f46" strokeWidth="3" />
+    <line x1="70" y1="176" x2="98" y2="176" stroke="#3f3f46" strokeWidth="3" />
+  </svg>
+));
+Car.displayName = 'Car';
 
 export const Tires = memo(() => {
   const { isDemoMode } = useDashboard();
@@ -194,34 +215,64 @@ export const Tires = memo(() => {
       : settings.units === 'Imperial';
   const corners = isDemoMode ? DEMO : (snapshot?.corners ?? {});
 
-  // iRacing freezes tire values while the car is driving and refreshes them
-  // when it stops, so on track they describe the last stop, not the tires now.
+  // iRacing freezes the carcass readings while the car is driving and
+  // refreshes them at a stop, so on track they describe the last stop.
   const stale = Boolean(isOnTrack) && !isDemoMode;
   const estimated = Object.values(corners).some((c) => c.estimated);
 
+  const card = (corner: TireCorner, label: string) => (
+    <TireCard
+      label={label}
+      tire={corners[corner]}
+      fahrenheit={fahrenheit}
+      cold={settings.tempCold}
+      hot={settings.tempHot}
+      limit={settings.wearLimit}
+    />
+  );
+
   return (
     <div
-      className="flex h-full w-full flex-col gap-1.5 rounded-2xl bg-slate-800/(--bg-opacity) p-1.5"
+      className="flex h-full w-full flex-col gap-2 rounded-2xl bg-[linear-gradient(180deg,rgb(0_0_0/var(--bg-opacity)),rgb(6_44_48/var(--bg-opacity)))] p-2 text-white"
       style={{
         ['--bg-opacity' as string]: `${settings.background.opacity}%`,
       }}
     >
-      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-1.5">
-        {LAYOUT.map(({ corner, label }) => (
-          <TireCard
-            key={corner}
-            label={label}
-            tire={corners[corner]}
-            fahrenheit={fahrenheit}
-            cold={settings.tempCold}
-            hot={settings.tempHot}
-            limit={settings.wearLimit}
-            staleTemps={stale}
+      <div className="flex flex-none items-center justify-between">
+        <span className="text-base font-black italic uppercase tracking-wider">
+          Tires
+        </span>
+        <div className="flex items-center gap-1 text-[0.65em] font-bold">
+          <span>COLD</span>
+          <div
+            className="h-1.5 w-16"
+            style={{ backgroundImage: COLD_TO_HOT }}
           />
-        ))}
+          <span>HOT</span>
+        </div>
       </div>
+
+      {/* Car layout, nose up: front tires on top, left tires on the left. */}
+      <div className="grid min-h-0 flex-1 grid-cols-[1fr_0.7fr_1fr] grid-rows-2 gap-x-2 gap-y-3">
+        <div className="col-start-1 row-start-1 min-h-0">
+          {card('lf', 'LF')}
+        </div>
+        <div className="col-start-2 row-span-2 row-start-1 min-h-0">
+          <Car />
+        </div>
+        <div className="col-start-3 row-start-1 min-h-0">
+          {card('rf', 'RF')}
+        </div>
+        <div className="col-start-1 row-start-2 min-h-0">
+          {card('lr', 'LR')}
+        </div>
+        <div className="col-start-3 row-start-2 min-h-0">
+          {card('rr', 'RR')}
+        </div>
+      </div>
+
       {stale && (
-        <div className="flex-none text-center text-[0.65em] font-semibold text-slate-300/60">
+        <div className="flex-none text-center text-[0.65em] font-bold italic uppercase text-white/50">
           {estimated
             ? 'Wear estimated, temps from last stop'
             : 'Values from last stop'}

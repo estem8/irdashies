@@ -112,7 +112,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const temps: Partial<Record<TireCorner, Zones>> = {};
     const readings: Partial<Record<TireCorner, Zones>> = {};
     for (const [corner, prefix] of CORNERS) {
-      const temp = zones(frame, `${prefix}tempC`, ['L', 'M', 'R']);
+      // Tread temperature where the car publishes it (the cockpit dash reads
+      // live values), else the carcass reading, which only refreshes at a stop.
+      const temp =
+        zones(frame, `${prefix}temp`, ['L', 'M', 'R']) ??
+        zones(frame, `${prefix}tempC`, ['L', 'M', 'R']);
       const wear = zones(frame, `${prefix}wear`, ['L', 'M', 'R']);
       if (temp && wear) {
         temps[corner] = temp;
@@ -213,7 +217,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const raw = CORNERS.map(([, prefix]) => {
       const t = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}tempC${z}`));
       const w = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`));
-      return `${prefix} t=${t.join('/')} w=${w.join('/')}`;
+      const tread = ['L', 'M', 'R'].map((z) =>
+        number(frame, `${prefix}temp${z}`)
+      );
+      const press = number(frame, `${prefix}pressure`);
+      return `${prefix} t=${t.join('/')} w=${w.join('/')} tread=${tread.join('/')} p=${press}`;
     });
     const wearKey = CORNERS.flatMap(([, prefix]) =>
       ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`))

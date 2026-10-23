@@ -8,8 +8,8 @@ export default defineWidgetManifest({
   layout: {
     x: 1334,
     y: 700,
-    width: 300,
-    height: 340,
+    width: 340,
+    height: 400,
   },
   config: {
     background: { opacity: 80 },
