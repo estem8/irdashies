@@ -3,14 +3,14 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 /** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.0025;
+const HEAT = 0.0035;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.0025;
+const COOL = 0.003;
 const COOL_SPEED = 50;
 /** Lateral g, in m/s2, at which the outside tires carry their full extra load. */
 const FULL_LATERAL = 20;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.08;
+const LOAD_TRANSFER = 0.3;
 /** Rear tires took a little more heat than the front in the recorded stints. */
 const REAR_HEAT = 1.1;
 /** Steering angle, in radians, under which a corner is treated as straight. */
@@ -29,8 +29,6 @@ export interface ThermalInput {
   speed: number;
   /** m/s2, magnitude only. */
   lateral: number;
-  /** m/s2, negative when braking. */
-  longitudinal: number;
   /** Radians; positive is a left turn, so the right tires are outside. */
   steer: number;
   ambient: number;
@@ -40,12 +38,14 @@ export interface ThermalInput {
  * Estimates the mean carcass temperature of each tire between pit stops, when
  * iRacing publishes no live reading.
  *
- * It is a lumped model, not a simulation: heat goes in as speed times the load
- * a tire carries (lateral, braking or driving force, shared between tires by
- * the direction of the turn and the axle) and leaves toward ambient faster at
- * speed. The constants were fitted to five recorded stints (20 tire readings,
- * about 1.3 degrees RMS), which is few enough that they may not carry over to
- * another car or track. What keeps the result honest is calibration: at every pit stop the prediction is compared with the
+ * It is a lumped model, not a simulation: heat goes in as speed times the
+ * lateral load a tire carries, shared between tires by the direction of the
+ * turn, and leaves toward ambient faster at speed. Braking and driving force
+ * are left out on purpose: fitted over 27 recorded stints on an oval and a road
+ * course, both made the fit worse. The fit is still weakest on the oval, where
+ * the outside tires run hotter than lateral load explains (banking and
+ * downforce load them vertically, which this model does not see yet). What
+ * keeps the result honest is calibration: at every pit stop the prediction is compared with the
  * reading the sim provides and that tire's heat gain is corrected, so the model
  * learns the car and track over a few stints.
  */
@@ -102,18 +102,10 @@ export class TireThermalModel {
     );
   }
 
-  step({
-    dt,
-    speed,
-    lateral,
-    longitudinal,
-    steer,
-    ambient,
-  }: ThermalInput): void {
+  step({ dt, speed, lateral, steer, ambient }: ThermalInput): void {
     if (!(dt > 0)) return;
     const h = Math.min(dt, MAX_DT);
     const latN = Math.min(1, lateral / FULL_LATERAL);
-    const braking = longitudinal < 0;
     const cooling = COOL * (1 + speed / COOL_SPEED);
 
     for (const corner of CORNERS) {
@@ -125,9 +117,7 @@ export class TireThermalModel {
       const outside =
         Math.abs(steer) < STEER_DEADBAND ? 0 : steer > 0 === right ? 1 : -1;
       const sideFactor = 1 + outside * LOAD_TRANSFER * latN;
-      const axleShare = braking ? (front ? 0.65 : 0.35) : front ? 0.3 : 0.7;
-      const load =
-        lateral * 0.25 * sideFactor + Math.abs(longitudinal) * axleShare * 0.5;
+      const load = lateral * 0.25 * sideFactor;
       const heat =
         HEAT * this.gain[corner] * speed * load * (front ? 1 : REAR_HEAT);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));

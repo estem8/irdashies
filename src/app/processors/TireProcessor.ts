@@ -299,7 +299,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       dt,
       speed: number(frame, 'Speed') ?? 0,
       lateral: Math.abs(number(frame, 'LatAccel') ?? 0),
-      longitudinal: number(frame, 'LongAccel') ?? 0,
       steer: number(frame, 'SteeringWheelAngle') ?? 0,
       ambient: this.ambient(frame),
     });
