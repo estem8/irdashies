@@ -8,6 +8,7 @@ import type {
 } from '@irdashies/types';
 import logger from '../logger';
 import type { TelemetryProcessor } from './TelemetryProcessor';
+import { TireStintStats } from './TireStintStats';
 import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
@@ -67,6 +68,8 @@ interface CornerState {
   baselineLap: number;
   /** Percentage points lost per lap over the last measured stint. */
   rate?: Zones;
+  /** Mean temperature at the previous reading, for the fit log. */
+  lastMean: number;
   /** How each zone differs from the tire's mean temperature at the last reading. */
   tempOffset: Zones;
 }
@@ -116,6 +119,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private keysLogged = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly thermal = new TireThermalModel();
+  private readonly stats = new TireStintStats();
+  private stintNumber = 0;
   private lastTime: number | undefined;
   private readonly latest: TireSnapshot = { corners: {}, version: 0 };
 
@@ -196,6 +201,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         : 0;
     this.lastTime = time;
     if (flag(frame, 'IsOnTrack') !== 1) return;
+    this.stats.add(
+      (key) => number(frame, key),
+      dt,
+      flag(frame, 'OnPitRoad') === 1,
+      flag(frame, 'BrakeABSactive') === 1
+    );
     this.thermal.step({
       dt,
       speed: number(frame, 'Speed') ?? 0,
@@ -248,6 +259,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           baseline: reading,
           baselineLap: lap,
           tempOffset: offsets(temp),
+          lastMean: mean(temp),
         };
         this.thermal.set(corner, mean(temp));
         continue;
@@ -262,6 +274,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const changed = (flags & TIRE_CHANGE_BIT[corner]) !== 0;
       st.baseline = changed ? [100, 100, 100] : reading;
       st.baselineLap = lap;
+      logger.info(
+        `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
+          ` end=${mean(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
+          ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
+          ` ${this.stats.corner(corner.toUpperCase())}`
+      );
+      st.lastMean = mean(temp);
       const predicted = this.thermal.mean(corner);
       this.thermal.calibrate(corner, mean(temp));
       logger.info(
@@ -274,6 +293,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       this.thermal.set(corner, changed ? ambient : mean(temp));
       st.tempOffset = changed ? NO_OFFSET : offsets(temp);
     }
+
+    if (!seeding) {
+      logger.info(
+        `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
+      );
+      this.stintNumber += 1;
+    }
+    this.stats.reset();
   }
 
   private changed(next: Partial<Record<TireCorner, TireCornerSnapshot>>) {
@@ -335,6 +362,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.lastReading = '';
     this.state = {};
     this.thermal.reset();
+    this.stats.reset();
+    this.stintNumber = 0;
     this.lastTime = undefined;
   }
 
