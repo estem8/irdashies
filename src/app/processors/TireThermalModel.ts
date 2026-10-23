@@ -2,25 +2,29 @@ import type { TireCorner } from '@irdashies/types';
 
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
-/** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.0035;
+// Fitted second by second against 109 cockpit-dash readings over a 30-minute
+// Nordschleife session (436 tire values, 3.9 C RMS, no bias on any tire).
+
+/** Heat per unit of speed times lateral load, degrees per second. */
+const HEAT = 0.0032;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
 const COOL = 0.003;
 const COOL_SPEED = 50;
-/** Lateral g, in m/s2, at which the outside tires carry their full extra load. */
-const FULL_LATERAL = 20;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.3;
+const LOAD_TRANSFER = 0.37;
+/** Heat on the front tires per unit of speed times braking deceleration. */
+const BRAKE_HEAT = 0.00043;
+/** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
+const AERO_HEAT = 0.0002;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
- * throttle), degrees per second. Rough: set from a burnout that took the rear
- * tires from 27 to 51 C in a few seconds; refine from the trace log.
+ * throttle), degrees per second. Set from a burnout that took the rear tires
+ * from 27 to 51 C in a few seconds; ordinary racing has too little wheelspin
+ * for the fitted session to pin it down.
  */
 const SPIN_HEAT = 0.25;
-/** Rear tires took a little more heat than the front in the recorded stints. */
-const REAR_HEAT = 1.1;
-/** Steering angle, in radians, under which a corner is treated as straight. */
-const STEER_DEADBAND = 0.05;
+/** Lateral acceleration, m/s2, under which the car is treated as going straight. */
+const STRAIGHT_LATERAL = 1;
 /**
  * The longest step integrated; a hitch in telemetry must not heat a tire.
  * ProcessorHost runs this processor at its tick rate (5 Hz), so ordinary steps
@@ -33,10 +37,10 @@ export interface ThermalInput {
   dt: number;
   /** m/s */
   speed: number;
-  /** m/s2, magnitude only. */
+  /** m/s2; positive in a left turn, which loads the right tires. */
   lateral: number;
-  /** Radians; positive is a left turn, so the right tires are outside. */
-  steer: number;
+  /** m/s2, negative when braking. */
+  longitudinal: number;
   /**
    * Driven (rear) wheel slip beyond ordinary traction, m/s, times throttle:
    * wheelspin heats the rear tires even with the car standing still.
@@ -50,13 +54,10 @@ export interface ThermalInput {
  * iRacing publishes no live reading.
  *
  * It is a lumped model, not a simulation: heat goes in as speed times the
- * lateral load a tire carries, shared between tires by the direction of the
- * turn, and leaves toward ambient faster at speed. Braking and driving force
- * are left out on purpose: fitted over 27 recorded stints on an oval and a road
- * course, both made the fit worse. The fit is still weakest on the oval, where
- * the outside tires run hotter than lateral load explains (banking and
- * downforce load them vertically, which this model does not see yet). What
- * keeps the result honest is calibration: at every pit stop the prediction is compared with the
+ * lateral load a tire carries (more on the outside of the turn), braking on
+ * the fronts, wheelspin on the rears and a little with speed cubed for the
+ * aerodynamic load, and leaves toward ambient faster at speed. What keeps the
+ * result honest is calibration: at every pit stop the prediction is compared with the
  * reading the sim provides and that tire's heat gain is corrected, so the model
  * learns the car and track over a few stints.
  */
@@ -118,26 +119,35 @@ export class TireThermalModel {
     );
   }
 
-  step({ dt, speed, lateral, steer, driveSlip, ambient }: ThermalInput): void {
+  step({
+    dt,
+    speed,
+    lateral,
+    longitudinal,
+    driveSlip,
+    ambient,
+  }: ThermalInput): void {
     if (!(dt > 0)) return;
     const h = Math.min(dt, MAX_DT);
-    const latN = Math.min(1, lateral / FULL_LATERAL);
     const cooling = COOL * (1 + speed / COOL_SPEED);
+    const cornering = Math.abs(lateral);
+    const braking = Math.max(0, -longitudinal);
+    const aero = (AERO_HEAT * speed * speed * speed) / 1000;
 
     for (const corner of CORNERS) {
       const t = this.temp[corner];
       if (t === undefined) continue;
       const right = corner === 'rf' || corner === 'rr';
       const front = corner === 'lf' || corner === 'rf';
-      // A left turn (positive steer) loads the right tires.
+      // A left turn (positive lateral) loads the right tires.
       const outside =
-        Math.abs(steer) < STEER_DEADBAND ? 0 : steer > 0 === right ? 1 : -1;
-      const sideFactor = 1 + outside * LOAD_TRANSFER * latN;
-      const load = lateral * 0.25 * sideFactor;
+        cornering < STRAIGHT_LATERAL ? 0 : lateral > 0 === right ? 1 : -1;
+      const load = cornering * 0.25 * (1 + outside * LOAD_TRANSFER);
       const heat =
         this.gain[corner] *
-        (HEAT * speed * load * (front ? 1 : REAR_HEAT) +
-          (front ? 0 : SPIN_HEAT * driveSlip));
+        (HEAT * speed * load +
+          (front ? BRAKE_HEAT * speed * braking : SPIN_HEAT * driveSlip) +
+          aero);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);

@@ -405,8 +405,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.thermal.step({
       dt,
       speed: number(frame, 'Speed') ?? 0,
-      lateral: Math.abs(number(frame, 'LatAccel') ?? 0),
-      steer: number(frame, 'SteeringWheelAngle') ?? 0,
+      lateral: number(frame, 'LatAccel') ?? 0,
+      longitudinal: number(frame, 'LongAccel') ?? 0,
       driveSlip,
       ambient: this.ambient(frame),
     });
