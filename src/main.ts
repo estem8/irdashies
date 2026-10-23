@@ -1,4 +1,5 @@
 import { setupReleaseNotesBridge } from './app/bridge/releaseNotesBridge';
+import { startDashCapture } from './app/dashCapture';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import log from './app/logger';
 import {
@@ -441,6 +442,7 @@ void app.whenReady().then(async () => {
     channelBus
   );
   await iRacingSDKSetup(overlayManager, channelBus);
+  startDashCapture(getSessionLifecycle());
   setupTapeReplayBridge(getCurrentBridge);
   if (process.env.IRDASHIES_TELEMETRY_REPLAY) createTapeReplayWindow();
 
