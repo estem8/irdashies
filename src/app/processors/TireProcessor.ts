@@ -80,6 +80,8 @@ const offsets = (z: Zones): Zones => {
   return [z[0] - m, z[1] - m, z[2] - m];
 };
 const NO_OFFSET: Zones = [0, 0, 0];
+/** Fresh tires start a few degrees over ambient, as fitted to recorded stints. */
+const FRESH_TIRE_OFFSET = 3;
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
 
@@ -290,7 +292,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       );
       // The reading describes the tires being removed. Fresh ones start at
       // ambient and carry no zone spread yet.
-      this.thermal.set(corner, changed ? ambient : mean(temp));
+      this.thermal.set(
+        corner,
+        changed ? ambient + FRESH_TIRE_OFFSET : mean(temp)
+      );
       st.tempOffset = changed ? NO_OFFSET : offsets(temp);
     }
 

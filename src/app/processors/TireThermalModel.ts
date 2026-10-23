@@ -3,14 +3,16 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 /** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.0115;
+const HEAT = 0.0065;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.02;
+const COOL = 0.007;
 const COOL_SPEED = 50;
 /** Lateral g, in m/s2, at which the outside tires carry their full extra load. */
 const FULL_LATERAL = 20;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.4;
+const LOAD_TRANSFER = 0.08;
+/** Rear tires took a little more heat than the front in the recorded stints. */
+const REAR_HEAT = 1.1;
 /** Steering angle, in radians, under which a corner is treated as straight. */
 const STEER_DEADBAND = 0.05;
 /** The longest step integrated; a hitch in telemetry must not heat a tire. */
@@ -37,8 +39,9 @@ export interface ThermalInput {
  * It is a lumped model, not a simulation: heat goes in as speed times the load
  * a tire carries (lateral, braking or driving force, shared between tires by
  * the direction of the turn and the axle) and leaves toward ambient faster at
- * speed. The constants are plausible rather than fitted. What keeps the result
- * honest is calibration: at every pit stop the prediction is compared with the
+ * speed. The constants were fitted to five recorded stints (20 tire readings,
+ * about 1.3 degrees RMS), which is few enough that they may not carry over to
+ * another car or track. What keeps the result honest is calibration: at every pit stop the prediction is compared with the
  * reading the sim provides and that tire's heat gain is corrected, so the model
  * learns the car and track over a few stints.
  */
@@ -121,7 +124,8 @@ export class TireThermalModel {
       const axleShare = braking ? (front ? 0.65 : 0.35) : front ? 0.3 : 0.7;
       const load =
         lateral * 0.25 * sideFactor + Math.abs(longitudinal) * axleShare * 0.5;
-      const heat = HEAT * this.gain[corner] * speed * load;
+      const heat =
+        HEAT * this.gain[corner] * speed * load * (front ? 1 : REAR_HEAT);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);

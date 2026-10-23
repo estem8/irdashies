@@ -69,11 +69,7 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
 const CELLS =
   'repeating-linear-gradient(to bottom, transparent 0 8px, rgb(0 0 0 / 0.85) 8px 10px)';
 
-const COLD_TO_HOT =
-  'linear-gradient(to right, hsl(210 100% 50%), hsl(120 100% 50%), hsl(0 100% 50%))';
-
 interface TireCardProps {
-  label: string;
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
   optimal: number;
@@ -82,52 +78,47 @@ interface TireCardProps {
 }
 
 const TireCard = memo(
-  ({ label, tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
+  ({ tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
+    const colors = [0, 1, 2].map((zone) => {
+      const celsius = tire?.temp[zone];
+      return celsius === undefined
+        ? 'rgb(100 116 139)'
+        : tempColor(celsius, optimal, range);
+    });
+    const treadGradient = `linear-gradient(to right, ${colors[0]} 16.7%, ${colors[1]} 50%, ${colors[2]} 83.3%)`;
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
-        <div className="flex flex-none items-center justify-between gap-1">
-          <span className="-skew-x-12 bg-white px-2 text-sm font-black italic leading-5 text-black">
-            {label}
-          </span>
-          {left !== undefined && (
-            <span className="text-xs font-black italic tabular-nums text-amber-300">
-              ~{left} LAPS
-            </span>
-          )}
-        </div>
-
         <div className="flex min-h-0 flex-1 justify-center">
-          <div className="flex aspect-[3/4] h-full max-w-full gap-[4%] rounded-[24%] bg-black p-[7%] shadow-[0_0_0_2px_rgb(245_158_11/0.85),0_0_12px_rgb(245_158_11/0.55),inset_0_0_8px_rgb(245_158_11/0.45)]">
-            {[0, 1, 2].map((zone) => {
-              const celsius = tire?.temp[zone];
-              const color =
-                celsius === undefined
-                  ? 'rgb(100 116 139)'
-                  : tempColor(celsius, optimal, range);
-              return (
-                <div
-                  key={zone}
-                  className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md"
-                  style={{
-                    backgroundColor: color,
-                    boxShadow: `0 0 8px ${color}`,
-                  }}
-                >
+          <div className="aspect-[3/4] h-full max-w-full rounded-[24%] bg-black p-[7%] shadow-[0_0_0_2px_rgb(245_158_11/0.85),0_0_12px_rgb(245_158_11/0.55),inset_0_0_8px_rgb(245_158_11/0.45)]">
+            {/* One gradient across the tread: each stop sits at the centre of
+                its zone, so the colour blends between the three readings. */}
+            <div
+              className="relative grid h-full w-full grid-cols-3 overflow-hidden rounded-[18%]"
+              style={{ backgroundImage: treadGradient }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{ backgroundImage: CELLS }}
+              />
+              {[0, 1, 2].map((zone) => {
+                const celsius = tire?.temp[zone];
+                return (
                   <div
-                    className="absolute inset-0"
-                    style={{ backgroundImage: CELLS }}
-                  />
-                  <span className="relative -rotate-90 text-sm font-black tabular-nums text-black/90">
-                    {celsius === undefined
-                      ? '--'
-                      : `${tire?.tempEstimated ? '~' : ''}${Math.round(
-                          fahrenheit ? (celsius * 9) / 5 + 32 : celsius
-                        )}`}
-                  </span>
-                </div>
-              );
-            })}
+                    key={zone}
+                    className="relative flex items-center justify-center"
+                  >
+                    <span className="-rotate-90 text-sm font-black tabular-nums text-black/90">
+                      {celsius === undefined
+                        ? '--'
+                        : `${tire?.tempEstimated ? '~' : ''}${Math.round(
+                            fahrenheit ? (celsius * 9) / 5 + 32 : celsius
+                          )}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -159,6 +150,11 @@ const TireCard = memo(
             );
           })}
         </div>
+        {left !== undefined && (
+          <div className="flex-none text-center text-xs font-black italic tabular-nums text-amber-300">
+            ~{left} LAPS
+          </div>
+        )}
       </div>
     );
   }
@@ -189,9 +185,8 @@ export const Tires = memo(() => {
   const driving = Boolean(isOnTrack) && !isDemoMode;
   const tempEstimated = Object.values(corners).some((c) => c.tempEstimated);
 
-  const card = (corner: TireCorner, label: string) => (
+  const card = (corner: TireCorner) => (
     <TireCard
-      label={label}
       tire={corners[corner]}
       fahrenheit={fahrenheit}
       optimal={settings.tempOptimal}
@@ -207,26 +202,12 @@ export const Tires = memo(() => {
         ['--bg-opacity' as string]: `${settings.background.opacity}%`,
       }}
     >
-      <div className="flex flex-none items-center justify-between">
-        <span className="text-base font-black italic uppercase tracking-wider">
-          Tires
-        </span>
-        <div className="flex items-center gap-1 text-[0.65em] font-bold">
-          <span>COLD</span>
-          <div
-            className="h-1.5 w-16"
-            style={{ backgroundImage: COLD_TO_HOT }}
-          />
-          <span>HOT</span>
-        </div>
-      </div>
-
       {/* Direction of travel is up: front tires on top, left tires on the left. */}
       <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-x-3 gap-y-3">
-        {card('lf', 'LF')}
-        {card('rf', 'RF')}
-        {card('lr', 'LR')}
-        {card('rr', 'RR')}
+        {card('lf')}
+        {card('rf')}
+        {card('lr')}
+        {card('rr')}
       </div>
 
       {driving && !tempEstimated && (
