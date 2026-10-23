@@ -273,7 +273,10 @@ export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
 
 /** One tire: three zones across the tread, as the driver sees it, left to right. */
 export interface TireCornerSnapshot {
-  /** Carcass temperature in degrees Celsius. */
+  /**
+   * Carcass temperature in degrees Celsius. iRacing refreshes it only at a
+   * pit stop, so while driving it is estimated from the load on the tire.
+   */
   temp: readonly [number, number, number];
   /**
    * Tread remaining as a percentage, 100 = new. iRacing only refreshes the
@@ -281,6 +284,8 @@ export interface TireCornerSnapshot {
    * estimate for the current lap rather than the last reading.
    */
   wear: readonly [number, number, number];
+  /** True when `temp` is a load-based estimate, not the last stop's reading. */
+  tempEstimated: boolean;
   /** True when `wear` is extrapolated from the last stint, not read. */
   estimated: boolean;
   /** Percentage points lost per lap, from the last stint on these tires. */

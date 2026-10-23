@@ -8,6 +8,7 @@ import type {
 } from '@irdashies/types';
 import logger from '../logger';
 import type { TelemetryProcessor } from './TelemetryProcessor';
+import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
   ['lf', 'LF'],
@@ -66,7 +67,18 @@ interface CornerState {
   baselineLap: number;
   /** Percentage points lost per lap over the last measured stint. */
   rate?: Zones;
+  /** How each zone differs from the tire's mean temperature at the last reading. */
+  tempOffset: Zones;
 }
+
+const mean = (z: Zones) => (z[0] + z[1] + z[2]) / 3;
+const offsets = (z: Zones): Zones => {
+  const m = mean(z);
+  return [z[0] - m, z[1] - m, z[2] - m];
+};
+const NO_OFFSET: Zones = [0, 0, 0];
+/** Used for ambient when the frame carries neither air nor track temperature. */
+const DEFAULT_AMBIENT = 25;
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -79,7 +91,9 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
  * does not refresh after fresh tires go on, so the next reading is the first
  * to describe them. Between stops the values are frozen.
  *
- * Temperatures are therefore passed through as last reported. Wear is tracked
+ * Temperature is estimated between stops by TireThermalModel and corrected
+ * against each reading; before any driving it is passed through as reported.
+ * Wear is tracked
  * per tire as a baseline (100 after a tire change, the reading otherwise) and,
  * once a stint has been measured, extrapolated at that stint's rate per lap.
  * A tire change is taken from the PitSvFlags bits at the moment the reading
@@ -101,6 +115,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private lastReading = '';
   private keysLogged = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
+  private readonly thermal = new TireThermalModel();
+  private lastTime: number | undefined;
   private readonly latest: TireSnapshot = { corners: {}, version: 0 };
 
   init(session: Session): void {
@@ -113,11 +129,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const temps: Partial<Record<TireCorner, Zones>> = {};
     const readings: Partial<Record<TireCorner, Zones>> = {};
     for (const [corner, prefix] of CORNERS) {
-      // Tread temperature where the car publishes it (the cockpit dash reads
-      // live values), else the carcass reading, which only refreshes at a stop.
-      const temp =
-        zones(frame, `${prefix}temp`, ['L', 'M', 'R']) ??
-        zones(frame, `${prefix}tempC`, ['L', 'M', 'R']);
+      const temp = zones(frame, `${prefix}tempC`, ['L', 'M', 'R']);
       const wear = zones(frame, `${prefix}wear`, ['L', 'M', 'R']);
       if (temp && wear) {
         temps[corner] = temp;
@@ -126,7 +138,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     }
 
     const lap = this.lapsNow(frame);
-    this.trackStints(frame, readings, lap);
+    this.stepThermal(frame);
+    this.trackStints(frame, readings, temps, lap);
 
     const corners: Partial<Record<TireCorner, TireCornerSnapshot>> = {};
     for (const [corner] of CORNERS) {
@@ -137,8 +150,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const wear = st.baseline.map((b, i) =>
         st.rate ? Math.max(0, b - st.rate[i] * driven) : b
       );
+      const modelled = this.thermal.active
+        ? this.thermal.mean(corner)
+        : undefined;
+      const shown =
+        modelled === undefined
+          ? temp
+          : (st.tempOffset.map((o) => modelled + o) as Zones);
       corners[corner] = {
-        temp: temp.map(Math.round) as Zones,
+        temp: shown.map(Math.round) as Zones,
+        tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
         ...(st.rate && { wearPerLap: st.rate.map(round2) as Zones }),
@@ -166,6 +187,31 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     logger.info(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
   }
 
+  /** Feeds the thermal model one frame of driving. */
+  private stepThermal(frame: Telemetry): void {
+    const time = number(frame, 'SessionTime');
+    const dt =
+      time !== undefined && this.lastTime !== undefined
+        ? time - this.lastTime
+        : 0;
+    this.lastTime = time;
+    if (flag(frame, 'IsOnTrack') !== 1) return;
+    this.thermal.step({
+      dt,
+      speed: number(frame, 'Speed') ?? 0,
+      lateral: Math.abs(number(frame, 'LatAccel') ?? 0),
+      longitudinal: number(frame, 'LongAccel') ?? 0,
+      steer: number(frame, 'SteeringWheelAngle') ?? 0,
+      ambient: this.ambient(frame),
+    });
+  }
+
+  private ambient(frame: Telemetry): number {
+    return (
+      number(frame, 'AirTemp') ?? number(frame, 'TrackTemp') ?? DEFAULT_AMBIENT
+    );
+  }
+
   /** Completed laps plus the fraction of the current one. */
   private lapsNow(frame: Telemetry): number {
     return (
@@ -182,6 +228,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private trackStints(
     frame: Telemetry,
     readings: Partial<Record<TireCorner, Zones>>,
+    temps: Partial<Record<TireCorner, Zones>>,
     lap: number
   ): void {
     const key = JSON.stringify(readings);
@@ -189,13 +236,20 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const seeding = this.lastReading === '';
     this.lastReading = key;
     const flags = number(frame, 'PitSvFlags') ?? 0;
+    const ambient = this.ambient(frame);
 
     for (const [corner] of CORNERS) {
       const reading = readings[corner];
-      if (!reading) continue;
+      const temp = temps[corner];
+      if (!reading || !temp) continue;
       const st = this.state[corner];
       if (seeding || !st) {
-        this.state[corner] = { baseline: reading, baselineLap: lap };
+        this.state[corner] = {
+          baseline: reading,
+          baselineLap: lap,
+          tempOffset: offsets(temp),
+        };
+        this.thermal.set(corner, mean(temp));
         continue;
       }
       const stintLaps = lap - st.baselineLap;
@@ -205,9 +259,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ) as Zones;
         if (rate.every((r) => r >= 0)) st.rate = rate;
       }
-      st.baseline =
-        (flags & TIRE_CHANGE_BIT[corner]) !== 0 ? [100, 100, 100] : reading;
+      const changed = (flags & TIRE_CHANGE_BIT[corner]) !== 0;
+      st.baseline = changed ? [100, 100, 100] : reading;
       st.baselineLap = lap;
+      this.thermal.calibrate(corner, mean(temp), ambient);
+      // The reading describes the tires being removed. Fresh ones start at
+      // ambient and carry no zone spread yet.
+      this.thermal.set(corner, changed ? ambient : mean(temp));
+      st.tempOffset = changed ? NO_OFFSET : offsets(temp);
     }
   }
 
@@ -219,6 +278,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       if (!a || !b) return a !== b;
       return (
         a.estimated !== b.estimated ||
+        a.tempEstimated !== b.tempEstimated ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()
@@ -231,11 +291,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const raw = CORNERS.map(([, prefix]) => {
       const t = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}tempC${z}`));
       const w = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`));
-      const tread = ['L', 'M', 'R'].map((z) =>
-        number(frame, `${prefix}temp${z}`)
-      );
-      const press = number(frame, `${prefix}pressure`);
-      return `${prefix} t=${t.join('/')} w=${w.join('/')} tread=${tread.join('/')} p=${press}`;
+      return `${prefix} t=${t.join('/')} w=${w.join('/')}`;
     });
     const wearKey = CORNERS.flatMap(([, prefix]) =>
       ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`))
@@ -272,6 +328,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.lastWear = '';
     this.lastReading = '';
     this.state = {};
+    this.thermal.reset();
+    this.lastTime = undefined;
   }
 
   snapshot(): TireSnapshot {

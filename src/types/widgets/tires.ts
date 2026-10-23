@@ -8,14 +8,14 @@ export default defineWidgetManifest({
   layout: {
     x: 1334,
     y: 700,
-    width: 340,
+    width: 280,
     height: 400,
   },
   config: {
     background: { opacity: 80 },
     units: 'auto',
-    tempCold: 70,
-    tempHot: 110,
+    tempOptimal: 79,
+    tempRange: 25,
     wearLimit: 30,
     showOnlyWhenOnTrack: false,
     sessionVisibility: {
@@ -44,23 +44,24 @@ export default defineWidgetManifest({
         { value: 'Imperial', label: 'Fahrenheit' },
       ],
     },
-    tempCold: {
+    tempOptimal: {
       type: 'number',
-      label: 'Cold Below',
-      description: 'Carcass temperature below which a zone is shown as cold',
-      min: 0,
+      label: 'Optimal Temperature',
+      description: 'Temperature shown green; colder turns blue, hotter red',
+      min: 20,
       max: 150,
       step: 1,
-      units: '°C',
+      units: '\u00b0C',
     },
-    tempHot: {
+    tempRange: {
       type: 'number',
-      label: 'Hot Above',
-      description: 'Carcass temperature above which a zone is shown as hot',
-      min: 0,
-      max: 200,
+      label: 'Colour Range',
+      description:
+        'Degrees from the optimum at which the colour is fully blue or red',
+      min: 5,
+      max: 60,
       step: 1,
-      units: '°C',
+      units: '\u00b0C',
     },
     wearLimit: {
       type: 'number',

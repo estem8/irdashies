@@ -20,13 +20,13 @@ describe('Tires', () => {
   it('flags values as from the last stop while driving', () => {
     vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
     render(<Tires />);
-    expect(screen.getByText('Values from last stop')).toBeTruthy();
+    expect(screen.getByText('Temps from last stop')).toBeTruthy();
     expect(screen.getByText('85')).toBeTruthy();
   });
 
   it('shows no caption when not on track', () => {
     vi.mocked(Context.useTrackStateSelector).mockReturnValue(false);
     render(<Tires />);
-    expect(screen.queryByText('Values from last stop')).toBeNull();
+    expect(screen.queryByText('Temps from last stop')).toBeNull();
   });
 });

@@ -16,36 +16,37 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     temp: [92, 98, 95],
     wear: [88.4, 91.2, 89.9],
     estimated: true,
+    tempEstimated: true,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rf: {
     temp: [101, 106, 112],
     wear: [82.1, 85.5, 80.3],
     estimated: true,
+    tempEstimated: true,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   lr: {
     temp: [88, 90, 89],
     wear: [90.7, 92.0, 91.1],
     estimated: true,
+    tempEstimated: true,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rr: {
     temp: [96, 99, 103],
     wear: [85.2, 87.8, 84.6],
     estimated: true,
+    tempEstimated: true,
     wearPerLap: [0.4, 0.4, 0.4],
   },
 };
 
-/** Neon hue from blue (cold) through green to red (hot), a little past each limit. */
-const tempColor = (celsius: number, cold: number, hot: number) => {
-  const margin = 15;
-  const ratio = Math.min(
-    1,
-    Math.max(0, (celsius - (cold - margin)) / (hot + margin - (cold - margin)))
-  );
-  return `hsl(${Math.round(210 * (1 - ratio))} 100% 50%)`;
+/** Green at the optimum, fading to blue when colder and red when hotter. */
+const tempColor = (celsius: number, optimal: number, range: number) => {
+  const away = Math.min(1, Math.abs(celsius - optimal) / range);
+  const hue = celsius < optimal ? 120 + 90 * away : 120 - 120 * away;
+  return `hsl(${Math.round(hue)} 100% 50%)`;
 };
 
 /** Green while there is plenty of tread, red at the limit and below. */
@@ -75,13 +76,13 @@ interface TireCardProps {
   label: string;
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
-  cold: number;
-  hot: number;
+  optimal: number;
+  range: number;
   limit: number;
 }
 
 const TireCard = memo(
-  ({ label, tire, fahrenheit, cold, hot, limit }: TireCardProps) => {
+  ({ label, tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
@@ -103,7 +104,7 @@ const TireCard = memo(
               const color =
                 celsius === undefined
                   ? 'rgb(100 116 139)'
-                  : tempColor(celsius, cold, hot);
+                  : tempColor(celsius, optimal, range);
               return (
                 <div
                   key={zone}
@@ -120,9 +121,9 @@ const TireCard = memo(
                   <span className="relative -rotate-90 text-sm font-black tabular-nums text-black/90">
                     {celsius === undefined
                       ? '--'
-                      : Math.round(
+                      : `${tire?.tempEstimated ? '~' : ''}${Math.round(
                           fahrenheit ? (celsius * 9) / 5 + 32 : celsius
-                        )}
+                        )}`}
                   </span>
                 </div>
               );
@@ -164,38 +165,6 @@ const TireCard = memo(
 );
 TireCard.displayName = 'TireCard';
 
-/** Top view of the car, nose up, between the left and right tires. */
-const Car = memo(() => (
-  <svg
-    viewBox="0 0 100 240"
-    preserveAspectRatio="xMidYMid meet"
-    className="h-full w-full"
-    aria-hidden="true"
-  >
-    <defs>
-      <linearGradient id="tires-car-body" x1="0" x2="1">
-        <stop offset="0" stopColor="#450a0a" />
-        <stop offset="0.5" stopColor="#dc2626" />
-        <stop offset="1" stopColor="#450a0a" />
-      </linearGradient>
-    </defs>
-    <rect x="14" y="6" width="72" height="10" rx="3" fill="#1c1c1f" />
-    <path d="M44 16 L56 16 L60 78 L40 78 Z" fill="url(#tires-car-body)" />
-    <path
-      d="M34 78 L66 78 L72 130 L66 200 L34 200 L28 130 Z"
-      fill="url(#tires-car-body)"
-    />
-    <ellipse cx="50" cy="112" rx="8" ry="14" fill="#0a0a0a" />
-    <ellipse cx="50" cy="112" rx="8" ry="14" fill="none" stroke="#f87171" />
-    <rect x="22" y="212" width="56" height="12" rx="3" fill="#1c1c1f" />
-    <line x1="30" y1="50" x2="2" y2="50" stroke="#3f3f46" strokeWidth="3" />
-    <line x1="70" y1="50" x2="98" y2="50" stroke="#3f3f46" strokeWidth="3" />
-    <line x1="30" y1="176" x2="2" y2="176" stroke="#3f3f46" strokeWidth="3" />
-    <line x1="70" y1="176" x2="98" y2="176" stroke="#3f3f46" strokeWidth="3" />
-  </svg>
-));
-Car.displayName = 'Car';
-
 export const Tires = memo(() => {
   const { isDemoMode } = useDashboard();
   const settings = useTiresSettings();
@@ -215,18 +184,18 @@ export const Tires = memo(() => {
       : settings.units === 'Imperial';
   const corners = isDemoMode ? DEMO : (snapshot?.corners ?? {});
 
-  // iRacing freezes the carcass readings while the car is driving and
-  // refreshes them at a stop, so on track they describe the last stop.
-  const stale = Boolean(isOnTrack) && !isDemoMode;
-  const estimated = Object.values(corners).some((c) => c.estimated);
+  // iRacing refreshes its readings at a stop, so on track the temperatures
+  // are the processor's estimate once it has one, otherwise the last stop's.
+  const driving = Boolean(isOnTrack) && !isDemoMode;
+  const tempEstimated = Object.values(corners).some((c) => c.tempEstimated);
 
   const card = (corner: TireCorner, label: string) => (
     <TireCard
       label={label}
       tire={corners[corner]}
       fahrenheit={fahrenheit}
-      cold={settings.tempCold}
-      hot={settings.tempHot}
+      optimal={settings.tempOptimal}
+      range={settings.tempRange}
       limit={settings.wearLimit}
     />
   );
@@ -252,30 +221,17 @@ export const Tires = memo(() => {
         </div>
       </div>
 
-      {/* Car layout, nose up: front tires on top, left tires on the left. */}
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_0.7fr_1fr] grid-rows-2 gap-x-2 gap-y-3">
-        <div className="col-start-1 row-start-1 min-h-0">
-          {card('lf', 'LF')}
-        </div>
-        <div className="col-start-2 row-span-2 row-start-1 min-h-0">
-          <Car />
-        </div>
-        <div className="col-start-3 row-start-1 min-h-0">
-          {card('rf', 'RF')}
-        </div>
-        <div className="col-start-1 row-start-2 min-h-0">
-          {card('lr', 'LR')}
-        </div>
-        <div className="col-start-3 row-start-2 min-h-0">
-          {card('rr', 'RR')}
-        </div>
+      {/* Direction of travel is up: front tires on top, left tires on the left. */}
+      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-x-3 gap-y-3">
+        {card('lf', 'LF')}
+        {card('rf', 'RF')}
+        {card('lr', 'LR')}
+        {card('rr', 'RR')}
       </div>
 
-      {stale && (
+      {driving && !tempEstimated && (
         <div className="flex-none text-center text-[0.65em] font-bold italic uppercase text-white/50">
-          {estimated
-            ? 'Wear estimated, temps from last stop'
-            : 'Values from last stop'}
+          Temps from last stop
         </div>
       )}
     </div>

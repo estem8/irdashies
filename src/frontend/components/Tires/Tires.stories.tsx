@@ -22,24 +22,28 @@ const snapshot: TireSnapshot = {
       temp: [92, 98, 95],
       wear: [88.4, 91.2, 89.9],
       estimated: true,
+      tempEstimated: true,
       wearPerLap: [0.4, 0.4, 0.4],
     },
     rf: {
       temp: [60, 64, 66],
       wear: [42.1, 45.5, 40.3],
       estimated: true,
+      tempEstimated: true,
       wearPerLap: [0.5, 0.5, 0.5],
     },
     lr: {
       temp: [88, 90, 89],
       wear: [20.7, 22.0, 21.1],
       estimated: true,
+      tempEstimated: true,
       wearPerLap: [0.5, 0.5, 0.5],
     },
     rr: {
       temp: [101, 118, 123],
       wear: [85.2, 87.8, 84.6],
       estimated: true,
+      tempEstimated: true,
       wearPerLap: [0.5, 0.5, 0.5],
     },
   },
@@ -53,7 +57,7 @@ export const Primary: Story = {
       'track-state.snapshot': trackStateStorySnapshot,
     }),
     (Story, context) => (
-      <div style={{ width: '340px', height: '400px' }}>
+      <div style={{ width: '280px', height: '400px' }}>
         {TelemetryDecorator('/test-data/1731637331038')(Story, context)}
       </div>
     ),

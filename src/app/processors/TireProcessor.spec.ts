@@ -36,6 +36,7 @@ describe('TireProcessor', () => {
       temp: [88, 88, 88],
       wear: [92.3, 92.3, 92.3],
       estimated: false,
+      tempEstimated: false,
     });
     expect(Object.keys(p.snapshot().corners)).toHaveLength(4);
   });

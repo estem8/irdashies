@@ -103,8 +103,8 @@ export const TiresSettings = () => {
               <WidgetScaleSettings widgetId={SETTING_ID} />
               <SettingProp path="background.opacity" />
               <SettingProp path="units" />
-              <SettingProp path="tempCold" />
-              <SettingProp path="tempHot" />
+              <SettingProp path="tempOptimal" />
+              <SettingProp path="tempRange" />
               <SettingProp path="wearLimit" />
             </SettingsSection>
 

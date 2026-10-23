@@ -265,10 +265,10 @@ export interface WindConfig {
 export interface TiresConfig {
   background: { opacity: number };
   units: 'auto' | 'Metric' | 'Imperial';
-  /** Carcass temperature, in Celsius, below which a zone reads as cold. */
-  tempCold: number;
-  /** Carcass temperature, in Celsius, above which a zone reads as hot. */
-  tempHot: number;
+  /** Carcass temperature, in Celsius, that is shown green. */
+  tempOptimal: number;
+  /** Degrees either side of the optimum at which the colour is fully blue or red. */
+  tempRange: number;
   /** Tread remaining, in percent, that the laps-left forecast counts down to. */
   wearLimit: number;
   showOnlyWhenOnTrack: boolean;
