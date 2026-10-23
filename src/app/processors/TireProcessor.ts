@@ -263,7 +263,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           tempOffset: offsets(temp),
           lastMean: mean(temp),
         };
-        this.thermal.set(corner, mean(temp));
+        // The reading frozen in the sim describes the tires last taken off, so a
+        // hot one at start-up is stale: assume fresh tires instead of heating a
+        // model from it. A cold reading is kept as it is.
+        this.thermal.set(
+          corner,
+          Math.min(mean(temp), this.ambient(frame) + FRESH_TIRE_OFFSET)
+        );
         continue;
       }
       const stintLaps = lap - st.baselineLap;
