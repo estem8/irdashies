@@ -73,7 +73,7 @@ describe('TireProcessor', () => {
     const info = vi.mocked(logger.info);
     info.mockClear();
     const lines = () =>
-      info.mock.calls.filter((c) => !String(c[0]).includes('keys('));
+      info.mock.calls.filter((c) => !/keys\(|CALIB/.test(String(c[0])));
     const p = new TireProcessor();
     p.onFrame(frame(tires(80, 1), 0));
     p.onFrame(frame(tires(81, 1), 1));

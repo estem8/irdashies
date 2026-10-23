@@ -262,7 +262,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const changed = (flags & TIRE_CHANGE_BIT[corner]) !== 0;
       st.baseline = changed ? [100, 100, 100] : reading;
       st.baselineLap = lap;
+      const predicted = this.thermal.mean(corner);
       this.thermal.calibrate(corner, mean(temp), ambient);
+      logger.info(
+        `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
+          ` measured=${mean(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
+          ` gain=${this.thermal.gainOf(corner).toFixed(2)} changed=${changed ? 1 : 0}`
+      );
       // The reading describes the tires being removed. Fresh ones start at
       // ambient and carry no zone spread yet.
       this.thermal.set(corner, changed ? ambient : mean(temp));

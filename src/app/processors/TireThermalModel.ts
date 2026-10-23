@@ -52,6 +52,10 @@ export class TireThermalModel {
     return this.integrated;
   }
 
+  gainOf(corner: TireCorner): number {
+    return this.gain[corner];
+  }
+
   has(corner: TireCorner): boolean {
     return this.temp[corner] !== undefined;
   }
