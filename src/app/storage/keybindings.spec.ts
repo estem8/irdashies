@@ -66,6 +66,35 @@ describe('keybindings storage', () => {
       expect('toggle-widget:' in result).toBe(false);
     });
 
+    it('drops a stored single key, which would block it in every other app', () => {
+      const stored: Partial<KeybindingsMap> = {
+        ...DEFAULT_KEYBINDINGS,
+        'toggle-hide-ui': {
+          accelerator: 'Space',
+          label: 'Hide / Show UI',
+          description: '',
+        },
+        'pie-menu:open': {
+          accelerator: 'Return',
+          label: 'Open / Close',
+          description: '',
+        },
+        'pie-menu:up': {
+          accelerator: 'gamepad:btn0',
+          label: 'Up',
+          description: '',
+        },
+      };
+      mockReadData.mockReturnValue(stored);
+      const result = getKeybindings();
+      expect(result['toggle-hide-ui']).toEqual(
+        DEFAULT_KEYBINDINGS['toggle-hide-ui']
+      );
+      expect(result['pie-menu:open']).toBeUndefined();
+      expect(result['pie-menu:up']?.accelerator).toBe('gamepad:btn0');
+      expect(result['toggle-edit-mode']?.accelerator).toBe('F6');
+    });
+
     it('keeps stored overrides of static actions', () => {
       mockReadData.mockReturnValue({
         'toggle-hide-ui': {

@@ -1,6 +1,8 @@
 import type { KeybindingActionId, KeybindingsMap } from '@irdashies/types';
 import { DEFAULT_KEYBINDINGS } from '@irdashies/types';
 import {
+  isBareKeyAccelerator,
+  isGamepadBinding,
   isPieMenuActionId,
   isValidWidgetToggleActionId,
 } from '@irdashies/shared';
@@ -20,6 +22,16 @@ export function getKeybindings(): KeybindingsMap {
   for (const key of Object.keys(stored) as KeybindingActionId[]) {
     const entry = stored[key];
     if (!entry) continue;
+    // A single key saved before such keys were refused would still be taken
+    // from every other app; drop it, so the action falls back to its default
+    // or unbound.
+    if (
+      entry.accelerator &&
+      !isGamepadBinding(entry.accelerator) &&
+      isBareKeyAccelerator(entry.accelerator)
+    ) {
+      continue;
+    }
     // Keep stored overrides of known static actions, plus any well-formed
     // dynamic per-widget toggles and Pie Menu inputs (no factory default to
     // merge against). Malformed `toggle-widget:` keys (empty id) are dropped.
