@@ -19,6 +19,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   lf: {
     camber: -3.5,
     toe: '-2.8 mm',
+    toeDeg: -0.134,
     temp: [92, 98, 95],
     wear: [88.4, 91.2, 89.9],
     estimated: true,
@@ -28,6 +29,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   rf: {
     camber: -3.5,
     toe: '-2.8 mm',
+    toeDeg: -0.134,
     temp: [101, 106, 112],
     wear: [82.1, 85.5, 80.3],
     estimated: true,
@@ -37,6 +39,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   lr: {
     camber: -2.5,
     toe: '+0.1 mm',
+    toeDeg: 0.01,
     temp: [88, 90, 89],
     wear: [90.7, 92.0, 91.1],
     estimated: true,
@@ -46,6 +49,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   rr: {
     camber: -2.5,
     toe: '+0.1 mm',
+    toeDeg: 0.01,
     temp: [96, 99, 103],
     wear: [85.2, 87.8, 84.6],
     estimated: true,
@@ -78,6 +82,9 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
 
 /** Drawing degrees of lean per degree of camber; a few real degrees would not show. */
 const CAMBER_TILT = 4;
+/** Drawing degrees of turn per degree of toe; real toe is a fraction of a degree. */
+const TOE_TURN = 25;
+const MAX_TOE_TURN = 12;
 
 // Tire seen from above, in viewBox units: dark sidewalls bulge out either side
 // of the tread, which carries the temperature colours.
@@ -333,13 +340,22 @@ const TireCard = memo(
     // Negative camber leans the top toward the car, turning the inner
     // shoulder toward the viewer.
     const tilt = (side === 'left' ? 1 : -1) * (tire?.camber ?? 0) * CAMBER_TILT;
+    // Toe-in points the front of the tire (the top here) toward the car.
+    const toeTurn =
+      (side === 'left' ? 1 : -1) *
+      Math.max(
+        -MAX_TOE_TURN,
+        Math.min(MAX_TOE_TURN, (tire?.toeDeg ?? 0) * TOE_TURN)
+      );
 
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
         <div className="flex min-h-0 flex-1 justify-center">
           <div
             className="aspect-[5/7] h-full max-w-full"
-            style={{ transform: `perspective(280px) rotateY(${tilt}deg)` }}
+            style={{
+              transform: `perspective(280px) rotateZ(${toeTurn}deg) rotateY(${tilt}deg)`,
+            }}
           >
             <TireTop
               side={side}

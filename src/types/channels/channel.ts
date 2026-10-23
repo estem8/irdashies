@@ -288,6 +288,8 @@ export interface TireCornerSnapshot {
   camber?: number;
   /** Toe from the car setup as the sim formats it, e.g. "-2.8 mm". */
   toe?: string;
+  /** Toe as an angle for this tire, in degrees; positive is toe-in. */
+  toeDeg?: number;
   /** True when `temp` is a load-based estimate, not the last stop's reading. */
   tempEstimated: boolean;
   /** True when `wear` is extrapolated from the last stint, not read. */

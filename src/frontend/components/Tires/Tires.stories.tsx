@@ -22,6 +22,7 @@ const snapshot: TireSnapshot = {
     lf: {
       camber: -4.0,
       toe: '-2.8 mm',
+      toeDeg: -0.134,
       temp: [92, 98, 95],
       wear: [88.4, 91.2, 89.9],
       estimated: true,
@@ -31,6 +32,7 @@ const snapshot: TireSnapshot = {
     rf: {
       camber: -4.0,
       toe: '-2.8 mm',
+      toeDeg: -0.134,
       temp: [60, 64, 66],
       wear: [42.1, 45.5, 40.3],
       estimated: true,
@@ -40,6 +42,7 @@ const snapshot: TireSnapshot = {
     lr: {
       camber: -3.2,
       toe: '+0.1 mm',
+      toeDeg: 0.25,
       temp: [88, 90, 89],
       wear: [20.7, 22.0, 21.1],
       estimated: true,
@@ -49,6 +52,7 @@ const snapshot: TireSnapshot = {
     rr: {
       camber: -3.2,
       toe: '+0.1 mm',
+      toeDeg: 0.25,
       temp: [101, 118, 123],
       wear: [85.2, 87.8, 84.6],
       estimated: true,

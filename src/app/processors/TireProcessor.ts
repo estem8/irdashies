@@ -95,48 +95,79 @@ const SETUP_CORNERS: Record<string, TireCorner> = {
   RightRear: 'rr',
 };
 
-const AXLE_CORNERS: Record<string, readonly TireCorner[]> = {
-  Front: ['lf', 'rf'],
-  Rear: ['lr', 'rr'],
-};
-
 interface Alignment {
   camber: Partial<Record<TireCorner, number>>;
+  /** As the sim formats it, for display. */
   toe: Partial<Record<TireCorner, string>>;
+  /** Per tire, degrees; positive is toe-in. */
+  toeDeg: Partial<Record<TireCorner, number>>;
+  /** Every setup value that was read, path=value, for the diagnostic log. */
+  seen: string[];
 }
+
+/** Toe in mm is a length across the tire; this is the span it is measured over. */
+const TOE_SPAN_MM = 600;
+
+/**
+ * One tire's toe as an angle, or undefined for a unit not understood. An axle
+ * value is the total for both tires, so each gets half.
+ */
+const toeAngle = (text: string, perAxle: boolean): number | undefined => {
+  const value = parseFloat(text);
+  if (!Number.isFinite(value)) return undefined;
+  const share = perAxle ? value / 2 : value;
+  if (/deg|°/i.test(text)) return share;
+  if (/mm/i.test(text)) return (Math.atan(share / TOE_SPAN_MM) * 180) / Math.PI;
+  return undefined;
+};
+
+const cornersOf = (path: readonly string[]): readonly TireCorner[] => {
+  for (const segment of [...path].reverse()) {
+    const corner = SETUP_CORNERS[segment];
+    if (corner) return [corner];
+  }
+  const joined = path.join('/');
+  if (/front/i.test(joined)) return ['lf', 'rf'];
+  if (/rear/i.test(joined)) return ['lr', 'rr'];
+  return [];
+};
 
 /**
  * Camber and toe per tire from the car setup. The layout of CarSetup differs
- * between cars, so rather than hard-code a path this takes the values of the
- * first LeftFront/RightFront/LeftRear/RightRear section found anywhere in it.
- * Toe is often set per axle instead (a Front or Rear section), which then
- * applies to both of that axle's tires.
+ * between cars, so rather than hard-code paths this walks it: a Camber value
+ * belongs to the LeftFront/RightFront/LeftRear/RightRear section it sits in,
+ * and a value whose name contains "toe" to that section, or to both tires of
+ * an axle when its path only says front or rear. The first value found for a
+ * tire wins.
  */
 const findAlignment = (
   node: unknown,
-  found: Alignment = { camber: {}, toe: {} }
+  path: string[] = [],
+  found: Alignment = { camber: {}, toe: {}, toeDeg: {}, seen: [] }
 ): Alignment => {
   if (node === null || typeof node !== 'object') return found;
   for (const [key, value] of Object.entries(node)) {
-    if (value && typeof value === 'object') {
-      const section = value as Record<string, unknown>;
-      const corner = SETUP_CORNERS[key];
-      const toe = typeof section.ToeIn === 'string' ? section.ToeIn : undefined;
-      if (corner) {
-        const degrees =
-          typeof section.Camber === 'string' ? parseFloat(section.Camber) : NaN;
-        if (found.camber[corner] === undefined && Number.isFinite(degrees)) {
-          found.camber[corner] = degrees;
+    if (typeof value === 'string') {
+      const isCamber = key === 'Camber';
+      const isToe = /toe/i.test(key);
+      if (!isCamber && !isToe) continue;
+      found.seen.push(`${[...path, key].join('/')}=${value}`);
+      const corners = cornersOf(path);
+      const perAxle = corners.length === 2;
+      for (const corner of corners) {
+        if (isCamber && found.camber[corner] === undefined) {
+          const degrees = parseFloat(value);
+          if (Number.isFinite(degrees)) found.camber[corner] = degrees;
         }
-        if (toe && found.toe[corner] === undefined) found.toe[corner] = toe;
-      }
-      for (const axleCorner of AXLE_CORNERS[key] ?? []) {
-        if (toe && found.toe[axleCorner] === undefined) {
-          found.toe[axleCorner] = toe;
+        if (isToe && found.toe[corner] === undefined) {
+          found.toe[corner] = value;
+          const angle = toeAngle(value, perAxle);
+          if (angle !== undefined) found.toeDeg[corner] = angle;
         }
       }
+    } else {
+      findAlignment(value, [...path, key], found);
     }
-    findAlignment(value, found);
   }
   return found;
 };
@@ -213,7 +244,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private service: { applied: number; running: boolean } | undefined;
   /** Tire changes requested at any time while the service ran. */
   private pendingBits = 0;
-  private alignment: Alignment = { camber: {}, toe: {} };
+  private alignment: Alignment = { camber: {}, toe: {}, toeDeg: {}, seen: [] };
+  private loggedSetup = '';
   private readonly latest: TireSnapshot = {
     corners: {},
     slip: NO_SLIP,
@@ -222,6 +254,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   init(session: Session): void {
     this.alignment = findAlignment(session.CarSetup);
+    const seen = this.alignment.seen.join(' ');
+    if (seen !== this.loggedSetup) {
+      this.loggedSetup = seen;
+      logger.info(`[TireDiag] SETUP ${seen || 'no camber or toe found'}`);
+    }
   }
 
   onFrame(frame: Telemetry): void {
@@ -276,6 +313,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         }),
         ...(this.alignment.toe[corner] !== undefined && {
           toe: this.alignment.toe[corner],
+        }),
+        ...(this.alignment.toeDeg[corner] !== undefined && {
+          toeDeg: this.alignment.toeDeg[corner],
         }),
         tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
@@ -497,6 +537,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         a.tempEstimated !== b.tempEstimated ||
         a.camber !== b.camber ||
         a.toe !== b.toe ||
+        a.toeDeg !== b.toeDeg ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()
