@@ -64,6 +64,9 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
 
+const SHADING =
+  'linear-gradient(to right, rgb(0 0 0 / 0.4), transparent 22%, rgb(255 255 255 / 0.12) 40%, transparent 55%, transparent 78%, rgb(0 0 0 / 0.4))';
+
 interface TireCardProps {
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
@@ -81,35 +84,42 @@ const TireCard = memo(
         ? 'rgb(100 116 139)'
         : tempColor(celsius, optimal, range);
     });
-    const treadGradient = `linear-gradient(to right, ${colors[0]} 16.7%, ${colors[1]} 50%, ${colors[2]} 83.3%)`;
+    const treadGradient = `linear-gradient(to right, ${colors[0]} 10%, ${colors[1]} 50%, ${colors[2]} 90%)`;
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
         <div className="flex min-h-0 flex-1 justify-center">
-          <div className="aspect-[3/4] h-full max-w-full rounded-[24%] bg-black p-[7%] shadow-[0_0_0_2px_rgb(245_158_11/0.85),0_0_12px_rgb(245_158_11/0.55),inset_0_0_8px_rgb(245_158_11/0.45)]">
-            {/* One gradient across the tread: each stop sits at the centre of
-                its zone, so the colour blends between the three readings. */}
+          {/* Seen from above: a tall tread with softly rounded corners. The
+              outer fifths are the shoulders, the middle 60% the centre. */}
+          <div
+            className="relative grid aspect-[11/20] h-full max-w-full grid-cols-[20%_60%_20%] overflow-hidden rounded-[14%] shadow-[0_3px_8px_rgb(0_0_0/0.5)]"
+            style={{ backgroundImage: treadGradient }}
+          >
+            {/* Darker shoulders and a highlight give the flat fill some roundness. */}
             <div
-              className="relative grid h-full w-full grid-cols-3 overflow-hidden rounded-[18%]"
-              style={{ backgroundImage: treadGradient }}
-            >
-              {[0, 1, 2].map((zone) => {
-                const celsius = tire?.temp[zone];
-                return (
-                  <div
-                    key={zone}
-                    className="relative flex items-center justify-center"
+              className="absolute inset-0"
+              style={{ backgroundImage: SHADING }}
+            />
+            {[0, 1, 2].map((zone) => {
+              const celsius = tire?.temp[zone];
+              return (
+                <div
+                  key={zone}
+                  className="relative flex items-center justify-center"
+                >
+                  <span
+                    className={`-rotate-90 font-black tabular-nums text-black/90 ${
+                      zone === 1 ? 'text-base' : 'text-[0.7em]'
+                    }`}
                   >
-                    <span className="-rotate-90 text-sm font-black tabular-nums text-black/90">
-                      {celsius === undefined
-                        ? '--'
-                        : `${tire?.tempEstimated ? '~' : ''}${Math.round(
-                            fahrenheit ? (celsius * 9) / 5 + 32 : celsius
-                          )}`}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    {celsius === undefined
+                      ? '--'
+                      : `${tire?.tempEstimated ? '~' : ''}${Math.round(
+                          fahrenheit ? (celsius * 9) / 5 + 32 : celsius
+                        )}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
