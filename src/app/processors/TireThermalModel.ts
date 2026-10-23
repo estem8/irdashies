@@ -3,7 +3,7 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 /** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.0096;
+const HEAT = 0.0115;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
 const COOL = 0.02;
 const COOL_SPEED = 50;
@@ -44,6 +44,8 @@ export interface ThermalInput {
  */
 export class TireThermalModel {
   private temp: Partial<Record<TireCorner, number>> = {};
+  /** What each tire would read had it only cooled since it was last set. */
+  private passive: Partial<Record<TireCorner, number>> = {};
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
   private integrated = false;
 
@@ -67,20 +69,26 @@ export class TireThermalModel {
   /** Sets a tire's temperature, e.g. from a reading or for fresh tires. */
   set(corner: TireCorner, value: number): void {
     this.temp[corner] = value;
+    this.passive[corner] = value;
   }
 
   /**
    * Compares the prediction with a reading and corrects the tire's gain.
-   * Returns nothing: a tire that has barely heated up says too little to learn
-   * from, so the gain is left alone.
+   *
+   * Only the part of the temperature that came from heating scales with the
+   * gain; the part left over from where the tire started does not. Judging the
+   * whole rise above ambient let a tire that began the stint warm teach the
+   * model that its heating was too strong. A tire that has barely heated says
+   * too little to learn from, so the gain is left alone.
    */
-  calibrate(corner: TireCorner, measured: number, ambient: number): void {
+  calibrate(corner: TireCorner, measured: number): void {
     const predicted = this.temp[corner];
-    if (predicted === undefined) return;
-    const predictedRise = predicted - ambient;
-    const measuredRise = measured - ambient;
-    if (predictedRise < 5 || measuredRise < 5) return;
-    const next = this.gain[corner] * (measuredRise / predictedRise) ** 0.8;
+    const passive = this.passive[corner];
+    if (predicted === undefined || passive === undefined) return;
+    const heated = predicted - passive;
+    const needed = measured - passive;
+    if (heated < 3 || needed <= 0) return;
+    const next = this.gain[corner] * (needed / heated) ** 0.8;
     this.gain[corner] = Math.min(
       GAIN_LIMITS[1],
       Math.max(GAIN_LIMITS[0], next)
@@ -115,12 +123,15 @@ export class TireThermalModel {
         lateral * 0.25 * sideFactor + Math.abs(longitudinal) * axleShare * 0.5;
       const heat = HEAT * this.gain[corner] * speed * load;
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
+      const p = this.passive[corner] ?? t;
+      this.passive[corner] = p - h * cooling * (p - ambient);
     }
     this.integrated = true;
   }
 
   reset(): void {
     this.temp = {};
+    this.passive = {};
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };
     this.integrated = false;
   }

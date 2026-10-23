@@ -263,7 +263,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.baseline = changed ? [100, 100, 100] : reading;
       st.baselineLap = lap;
       const predicted = this.thermal.mean(corner);
-      this.thermal.calibrate(corner, mean(temp), ambient);
+      this.thermal.calibrate(corner, mean(temp));
       logger.info(
         `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
           ` measured=${mean(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
