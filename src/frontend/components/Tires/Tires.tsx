@@ -105,23 +105,36 @@ export const Tires = memo(() => {
       : settings.units === 'Imperial';
   const corners = isDemoMode ? DEMO : (snapshot?.corners ?? {});
 
+  // iRacing freezes tire values while the car is driving and refreshes them
+  // when it stops, so on track they describe the last stop, not the tires now.
+  const stale = isOnTrack && !isDemoMode;
+
   return (
     <div
-      className="grid h-full w-full grid-cols-2 gap-1 rounded-sm bg-slate-800/(--bg-opacity) p-1"
+      className="flex h-full w-full flex-col gap-1 rounded-sm bg-slate-800/(--bg-opacity) p-1"
       style={{
         ['--bg-opacity' as string]: `${settings.background.opacity}%`,
       }}
     >
-      {LAYOUT.map(({ corner, label }) => (
-        <TireCard
-          key={corner}
-          label={label}
-          tire={corners[corner]}
-          fahrenheit={fahrenheit}
-          cold={settings.tempCold}
-          hot={settings.tempHot}
-        />
-      ))}
+      <div
+        className={`grid min-h-0 flex-1 grid-cols-2 gap-1 ${stale ? 'opacity-60' : ''}`}
+      >
+        {LAYOUT.map(({ corner, label }) => (
+          <TireCard
+            key={corner}
+            label={label}
+            tire={corners[corner]}
+            fahrenheit={fahrenheit}
+            cold={settings.tempCold}
+            hot={settings.tempHot}
+          />
+        ))}
+      </div>
+      {stale && (
+        <div className="flex-none text-center text-[0.65em] text-white/50">
+          Values from last stop
+        </div>
+      )}
     </div>
   );
 });
