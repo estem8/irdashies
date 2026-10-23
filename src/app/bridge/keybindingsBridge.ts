@@ -2,6 +2,7 @@ import { ipcMain, webContents } from 'electron';
 import type { KeybindingActionId } from '@irdashies/types';
 import { DEFAULT_KEYBINDINGS } from '@irdashies/types';
 import {
+  isBareKeyAccelerator,
   isGamepadBinding,
   isPieMenuActionId,
   isValidWidgetToggleActionId,
@@ -37,6 +38,10 @@ function assertValidAccelerator(accelerator: string): void {
     }
   } else if (!KeybindingManager.isValidAccelerator(accelerator)) {
     throw new Error(`"${accelerator}" is not a valid keyboard shortcut`);
+  } else if (isBareKeyAccelerator(accelerator)) {
+    throw new Error(
+      `"${accelerator}" on its own would stop working in every other app. Add Ctrl, Alt or Shift, or use a controller button`
+    );
   }
 }
 

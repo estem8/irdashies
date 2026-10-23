@@ -89,3 +89,29 @@ export function pieMenuInputFromActionId(
 ): PieMenuInput {
   return actionId.slice(PIE_MENU_PREFIX.length) as PieMenuInput;
 }
+
+const ACCELERATOR_MODIFIERS = new Set([
+  'CommandOrControl',
+  'CmdOrCtrl',
+  'Command',
+  'Cmd',
+  'Control',
+  'Ctrl',
+  'Alt',
+  'Option',
+  'AltGr',
+  'Shift',
+  'Super',
+  'Meta',
+]);
+
+/**
+ * True for a keyboard accelerator that is a single key other than F1-F24.
+ * Keyboard bindings are global shortcuts, so such a key (Enter, Space, a
+ * letter) would stop reaching every other app while the overlay runs.
+ */
+export function isBareKeyAccelerator(accelerator: string): boolean {
+  const parts = accelerator.split('+');
+  if (parts.some((part) => ACCELERATOR_MODIFIERS.has(part))) return false;
+  return !/^F([1-9]|1[0-9]|2[0-4])$/.test(parts[parts.length - 1]);
+}

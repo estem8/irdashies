@@ -6,6 +6,7 @@ import {
   widgetToggleActionId,
   widgetIdFromToggleActionId,
   nextProfileIndex,
+  isBareKeyAccelerator,
   isPieMenuActionId,
   pieMenuActionId,
   pieMenuInputFromActionId,
@@ -61,6 +62,26 @@ describe('nextProfileIndex', () => {
 
   it('treats an unknown current index as the start', () => {
     expect(nextProfileIndex(-1, 3, 1, false)).toBe(1);
+  });
+});
+
+describe('isBareKeyAccelerator', () => {
+  it('flags a single key that other apps type with', () => {
+    for (const key of ['Return', 'Space', 'A', 'Up', 'Escape', '1']) {
+      expect(isBareKeyAccelerator(key)).toBe(true);
+    }
+  });
+
+  it('allows F-keys alone and anything with a modifier', () => {
+    for (const key of [
+      'F6',
+      'F24',
+      'Alt+Return',
+      'CommandOrControl+Shift+A',
+      'Shift+Space',
+    ]) {
+      expect(isBareKeyAccelerator(key)).toBe(false);
+    }
   });
 });
 

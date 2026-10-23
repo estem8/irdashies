@@ -126,6 +126,15 @@ describe('keybindingsBridge keybindings:update', () => {
     );
   });
 
+  it('rejects a key on its own, which would block it in every other app', () => {
+    mockIsValidAccelerator.mockReturnValue(true);
+
+    expect(() => invokeUpdate('toggle-hide-ui', 'Return')).toThrow(
+      'would stop working in every other app'
+    );
+    expect(mockUpdateKeybinding).not.toHaveBeenCalled();
+  });
+
   it('persists and reloads when the accelerator is valid', () => {
     mockIsValidAccelerator.mockReturnValue(true);
     const next = sampleBindings();
