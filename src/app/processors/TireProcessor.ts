@@ -79,8 +79,11 @@ const offsets = (z: Zones): Zones => {
   const m = mean(z);
   return [z[0] - m, z[1] - m, z[2] - m];
 };
-/** Fresh tires start a few degrees over ambient, as fitted to recorded stints. */
-const FRESH_TIRE_OFFSET = 3;
+/**
+ * Fresh tires start well over ambient: the cockpit dash read 34 C on leaving
+ * the pits with 21 C air. Fitted stops tolerate it (3.4 C RMS against 2.2 C).
+ */
+const FRESH_TIRE_OFFSET = 13;
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
 

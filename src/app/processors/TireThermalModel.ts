@@ -3,9 +3,9 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 /** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.0065;
+const HEAT = 0.005;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.007;
+const COOL = 0.005;
 const COOL_SPEED = 50;
 /** Lateral g, in m/s2, at which the outside tires carry their full extra load. */
 const FULL_LATERAL = 20;
