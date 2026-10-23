@@ -8,7 +8,11 @@ import {
   useTireSnapshot,
   useTrackStateSelector,
 } from '@irdashies/context';
-import type { TireCorner, TireCornerSnapshot } from '@irdashies/types';
+import type {
+  TireCorner,
+  TireCornerSnapshot,
+  TireSlipSnapshot,
+} from '@irdashies/types';
 import { useTiresSettings } from './hooks/useTiresSettings';
 
 const DEMO: Record<TireCorner, TireCornerSnapshot> = {
@@ -85,17 +89,51 @@ const ZONE_CENTRES = [0.1, 0.5, 0.9];
 const DIVIDERS = [0.2, 0.8];
 /** Contact patch, as a share of the tread, and how far camber shifts it. */
 const PATCH_W = 0.6;
-const PATCH_H = 0.3;
+const PATCH_H = 0.37;
 const PATCH_SHIFT_PER_DEGREE = 0.04;
+
+interface SlipEvent {
+  label: string;
+  color: string;
+  /** 0 to 1. */
+  level: number;
+}
+
+/**
+ * What to light up on one tire's contact patch: the strongest slip that
+ * applies to it. Spin, lock and traction control act on the driven rear
+ * wheels; ABS on all four; a slide on the axle that is letting go.
+ */
+const slipEvent = (
+  slip: TireSlipSnapshot | undefined,
+  corner: TireCorner
+): SlipEvent | undefined => {
+  if (!slip) return undefined;
+  const rear = corner === 'lr' || corner === 'rr';
+  const candidates: SlipEvent[] = [
+    { label: 'ABS', color: '#ffb020', level: slip.abs ? 1 : 0 },
+    ...(rear
+      ? [
+          { label: 'LOCK', color: '#ffb020', level: slip.lock },
+          { label: 'SPIN', color: '#ff3b3b', level: slip.spin },
+          { label: 'TC', color: '#d24bff', level: slip.tc },
+          { label: 'SLIDE', color: '#3fd7ff', level: slip.over },
+        ]
+      : [{ label: 'SLIDE', color: '#3fd7ff', level: slip.under }]),
+  ];
+  const strongest = candidates.reduce((a, b) => (b.level > a.level ? b : a));
+  return strongest.level > 0 ? strongest : undefined;
+};
 
 interface TireTopProps {
   side: 'left' | 'right';
   tire?: TireCornerSnapshot;
   colors: readonly string[];
   labels: readonly string[];
+  event?: SlipEvent;
 }
 
-const TireTop = memo(({ side, tire, colors, labels }: TireTopProps) => {
+const TireTop = memo(({ side, tire, colors, labels, event }: TireTopProps) => {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const camber = tire?.camber ?? 0;
   // Negative camber leans the top inward and loads the inner shoulder, so the
@@ -189,19 +227,6 @@ const TireTop = memo(({ side, tire, colors, labels }: TireTopProps) => {
         fill={`url(#round${id})`}
       />
 
-      {/* Contact patch: where the tread meets the road. */}
-      <rect
-        x={patchX}
-        y={patchY}
-        width={patchW}
-        height={patchH}
-        rx={8}
-        fill="rgb(255 255 255 / 0.14)"
-        stroke="rgb(255 255 255 / 0.85)"
-        strokeWidth={1.2}
-        strokeDasharray="4 3"
-      />
-
       {DIVIDERS.map((p) => (
         <line
           key={p}
@@ -213,6 +238,49 @@ const TireTop = memo(({ side, tire, colors, labels }: TireTopProps) => {
           strokeWidth={0.8}
         />
       ))}
+
+      {/* Contact patch: where the tread meets the road. It lights up while
+          the tire slides there (ABS, spin, lock, traction control). */}
+      {event && (
+        <rect
+          x={patchX - 2}
+          y={patchY - 2}
+          width={patchW + 4}
+          height={patchH + 4}
+          rx={10}
+          fill="none"
+          stroke={event.color}
+          strokeOpacity={0.35 + 0.4 * event.level}
+          strokeWidth={4}
+        />
+      )}
+      <rect
+        x={patchX}
+        y={patchY}
+        width={patchW}
+        height={patchH}
+        rx={8}
+        fill={event ? event.color : 'rgb(255 255 255)'}
+        fillOpacity={event ? 0.3 + 0.5 * event.level : 0.14}
+        stroke={event ? event.color : 'rgb(255 255 255 / 0.85)'}
+        strokeWidth={event ? 1.6 : 1.2}
+        strokeDasharray={event ? undefined : '4 3'}
+      />
+      {event && (
+        <text
+          x={patchX + patchW / 2}
+          y={patchY + patchH - 4.5}
+          textAnchor="middle"
+          fontSize={9}
+          fontWeight={900}
+          fill="#fff"
+          stroke="rgb(0 0 0 / 0.7)"
+          strokeWidth={2}
+          paintOrder="stroke"
+        >
+          {event.label}
+        </text>
+      )}
 
       {ZONE_CENTRES.map((q, zone) => (
         <text
@@ -241,10 +309,11 @@ interface TireCardProps {
   optimal: number;
   range: number;
   limit: number;
+  event?: SlipEvent;
 }
 
 const TireCard = memo(
-  ({ side, tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
+  ({ side, tire, fahrenheit, optimal, range, limit, event }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     // Zones run left to right across the car (iRacing's L, M, R), the same
     // order on the screen for every tire.
@@ -272,7 +341,13 @@ const TireCard = memo(
             className="aspect-[5/7] h-full max-w-full"
             style={{ transform: `perspective(280px) rotateY(${tilt}deg)` }}
           >
-            <TireTop side={side} tire={tire} colors={colors} labels={labels} />
+            <TireTop
+              side={side}
+              tire={tire}
+              colors={colors}
+              labels={labels}
+              event={event}
+            />
           </div>
         </div>
 
@@ -343,6 +418,7 @@ export const Tires = memo(() => {
       optimal={settings.tempOptimal}
       range={settings.tempRange}
       limit={settings.wearLimit}
+      event={slipEvent(isDemoMode ? undefined : snapshot?.slip, corner)}
     />
   );
 

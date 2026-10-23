@@ -5,5 +5,5 @@ export default {
   sessionData: true,
   channels: ['tires.snapshot', 'session-bar.snapshot', 'track-state.snapshot'],
   ratePreset: 'informational',
-  channelRates: { 'tires.snapshot': 2 },
+  channelRates: { 'tires.snapshot': 10 },
 } satisfies WidgetRuntimeDefinition;

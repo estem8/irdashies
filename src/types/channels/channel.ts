@@ -296,9 +296,26 @@ export interface TireCornerSnapshot {
   wearPerLap?: readonly [number, number, number];
 }
 
+/**
+ * Where the tires are sliding right now, each 0 to 1. Only ABS comes from the
+ * sim; the rest are inferred (no per-wheel speed is published), and spin, lock
+ * and traction control refer to the driven rear wheels.
+ */
+export interface TireSlipSnapshot {
+  abs: boolean;
+  tc: number;
+  spin: number;
+  lock: number;
+  /** Front tires sliding: the car turns less than the steering asks. */
+  under: number;
+  /** Rear tires sliding: the car turns more, or is being caught. */
+  over: number;
+}
+
 /** Tire temperatures as last reported and wear estimated between pit stops. */
 export interface TireSnapshot {
   corners: Partial<Record<TireCorner, TireCornerSnapshot>>;
+  slip?: TireSlipSnapshot;
   version: number;
 }
 
@@ -632,12 +649,12 @@ export const channelRegistry = {
     defaultRateHz: 2,
     maxRateHz: 10,
   },
-  // Temperatures drift slowly and wear moves in steps; a couple of updates a
-  // second is as fast as a person can read the numbers.
+  // Temperatures drift slowly, but the slip highlights flick on and off with
+  // ABS and wheelspin, so this runs at a driver-input rate.
   'tires.snapshot': {
     kind: 'snapshot',
-    defaultRateHz: 2,
-    maxRateHz: 5,
+    defaultRateHz: 10,
+    maxRateHz: 15,
   },
   // Publishes on version change, roughly 0.6 times a second in a 60-car field.
   // The rate cap only bounds the worst case; it is not a sampling rate.

@@ -9,6 +9,7 @@ import type {
 import logger from '../logger';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
+import { NO_SLIP, TireSlipEstimator } from './TireSlipEstimator';
 import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
@@ -167,7 +168,8 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
  */
 export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   readonly channel = 'tires.snapshot';
-  readonly tickRateHz = 5;
+  // Fast enough for the slip highlights to follow ABS and wheelspin.
+  readonly tickRateHz = 15;
 
   private enabled = true;
   private lastDiagTime = -Infinity;
@@ -178,10 +180,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private readonly thermal = new TireThermalModel();
   private readonly stats = new TireStintStats();
   private readonly trace = new TireTraceSecond();
+  private readonly slipEstimator = new TireSlipEstimator();
   private stintNumber = 0;
   private lastTime: number | undefined;
+  private slip = NO_SLIP;
   private alignment: Alignment = { camber: {}, toe: {} };
-  private readonly latest: TireSnapshot = { corners: {}, version: 0 };
+  private readonly latest: TireSnapshot = {
+    corners: {},
+    slip: NO_SLIP,
+    version: 0,
+  };
 
   init(session: Session): void {
     this.alignment = findAlignment(session.CarSetup);
@@ -246,8 +254,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       };
     }
 
-    if (this.changed(corners)) {
+    const slip = this.slip;
+    const slipChanged = (Object.keys(slip) as (keyof typeof slip)[]).some(
+      (key) => slip[key] !== this.latest.slip?.[key]
+    );
+    if (this.changed(corners) || slipChanged) {
       this.latest.corners = corners;
+      this.latest.slip = slip;
       this.latest.version += 1;
     }
 
@@ -275,7 +288,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ? time - this.lastTime
         : 0;
     this.lastTime = time;
-    if (flag(frame, 'IsOnTrack') !== 1) return;
+    if (flag(frame, 'IsOnTrack') !== 1) {
+      this.slip = NO_SLIP;
+      return;
+    }
+    this.slip = this.slipEstimator.update(
+      (key) => number(frame, key),
+      dt,
+      flag(frame, 'OnPitRoad') === 1,
+      flag(frame, 'BrakeABSactive') === 1
+    );
     this.stats.add(
       (key) => number(frame, key),
       dt,
@@ -285,7 +307,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.trace.add(
       (key) => number(frame, key),
       dt,
-      flag(frame, 'OnPitRoad') === 1
+      flag(frame, 'OnPitRoad') === 1,
+      this.slip
     );
     if (this.trace.seconds >= 1) {
       const temps = CORNERS.map(
@@ -462,6 +485,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.state = {};
     this.thermal.reset();
     this.stats.reset();
+    this.slipEstimator.reset();
+    this.slip = NO_SLIP;
     this.stintNumber = 0;
     this.lastTime = undefined;
   }

@@ -1,3 +1,5 @@
+import type { TireSlipSnapshot } from '@irdashies/types';
+
 const PREFIXES = ['LF', 'RF', 'LR', 'RR'] as const;
 const STEER_DEADBAND = 0.05;
 /** Steps arrive at the processor's 5 Hz tick; only a hitch is clipped. */
@@ -164,8 +166,14 @@ export class TireTraceSecond {
   private brk = 0;
   private acc = 0;
   private pit = 0;
+  private slip = { abs: 0, tc: 0, spin: 0, lock: 0, under: 0, over: 0 };
 
-  add(get: Getter, rawDt: number, onPitRoad: boolean): void {
+  add(
+    get: Getter,
+    rawDt: number,
+    onPitRoad: boolean,
+    slip: TireSlipSnapshot
+  ): void {
     if (!(rawDt > 0)) return;
     const dt = Math.min(rawDt, MAX_DT);
     const speed = get('Speed') ?? 0;
@@ -185,6 +193,12 @@ export class TireTraceSecond {
     if (lon < 0) this.brk += -lon * speed * dt;
     else this.acc += lon * speed * dt;
     if (onPitRoad) this.pit += dt;
+    this.slip.abs += (slip.abs ? 1 : 0) * dt;
+    this.slip.tc += slip.tc * dt;
+    this.slip.spin += slip.spin * dt;
+    this.slip.lock += slip.lock * dt;
+    this.slip.under += slip.under * dt;
+    this.slip.over += slip.over * dt;
   }
 
   get seconds(): number {
@@ -205,6 +219,7 @@ export class TireTraceSecond {
       `brk=${f(this.brk, 0)}`,
       `acc=${f(this.acc, 0)}`,
       `pit=${f(this.pit, 1)}`,
+      ...Object.entries(this.slip).map(([k, v]) => `${k}=${f(v, 2)}`),
     ].join(' ');
     this.dt = 0;
     this.v = 0;
@@ -217,6 +232,7 @@ export class TireTraceSecond {
     this.brk = 0;
     this.acc = 0;
     this.pit = 0;
+    this.slip = { abs: 0, tc: 0, spin: 0, lock: 0, under: 0, over: 0 };
     return line;
   }
 }

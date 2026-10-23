@@ -17,6 +17,7 @@ type Story = StoryObj<typeof Tires>;
 
 const snapshot: TireSnapshot = {
   version: 1,
+  slip: { abs: false, tc: 0, spin: 0.7, lock: 0, under: 0.5, over: 0 },
   corners: {
     lf: {
       camber: -4.0,
