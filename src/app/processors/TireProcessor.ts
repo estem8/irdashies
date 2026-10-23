@@ -137,6 +137,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ` service=${flag(frame, 'PitstopActive')}` +
         ` speed=${(number(frame, 'Speed') ?? -1).toFixed(1)}` +
         ` compound=${number(frame, 'PlayerTireCompound') ?? -1}` +
+        ` lap=${number(frame, 'Lap') ?? -1}` +
+        ` done=${number(frame, 'LapCompleted') ?? -1}` +
+        ` sets=${number(frame, 'TireSetsUsed') ?? -1}` +
+        ` used=${['LF', 'RF', 'LR', 'RR'].map((c) => number(frame, `${c}TiresUsed`) ?? -1).join('/')}` +
+        ` svTires=${number(frame, 'PitSvFlags') ?? -1}` +
         ` | ${raw.join(' | ')}`
     );
   }
