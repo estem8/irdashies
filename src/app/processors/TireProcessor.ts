@@ -99,6 +99,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private lastDiagTime = -Infinity;
   private lastWear = '';
   private lastReading = '';
+  private keysLogged = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly latest: TireSnapshot = { corners: {}, version: 0 };
 
@@ -150,6 +151,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     }
 
     this.logDiagnostics(frame);
+    this.logKeys(frame);
+  }
+
+  /** One-time list of tire-ish variables the car publishes, to find a live source. */
+  private logKeys(frame: Telemetry): void {
+    if (this.keysLogged) return;
+    const keys = Object.keys(frame);
+    if (keys.length === 0) return;
+    this.keysLogged = true;
+    const found = keys.filter((k) =>
+      /tire|tyre|temp|press|wear|^(LF|RF|LR|RR)/i.test(k)
+    );
+    logger.info(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
   }
 
   /** Completed laps plus the fraction of the current one. */
