@@ -64,11 +64,6 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
 
-// Cell gaps across each tread lane, so a lane reads as the ribbed lug blocks
-// of a tire rather than a flat bar.
-const CELLS =
-  'repeating-linear-gradient(to bottom, transparent 0 8px, rgb(0 0 0 / 0.85) 8px 10px)';
-
 interface TireCardProps {
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
@@ -97,10 +92,6 @@ const TireCard = memo(
               className="relative grid h-full w-full grid-cols-3 overflow-hidden rounded-[18%]"
               style={{ backgroundImage: treadGradient }}
             >
-              <div
-                className="absolute inset-0"
-                style={{ backgroundImage: CELLS }}
-              />
               {[0, 1, 2].map((zone) => {
                 const celsius = tire?.temp[zone];
                 return (
