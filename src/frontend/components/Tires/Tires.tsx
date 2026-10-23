@@ -45,19 +45,21 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   },
 };
 
-const tempClass = (celsius: number, cold: number, hot: number) =>
-  celsius < cold
-    ? 'text-sky-300'
-    : celsius > hot
-      ? 'text-red-400'
-      : 'text-emerald-300';
+/** Hue runs blue (cold) through green to red (hot), a little past each limit. */
+const tempColor = (celsius: number, cold: number, hot: number) => {
+  const margin = 15;
+  const ratio = Math.min(
+    1,
+    Math.max(0, (celsius - (cold - margin)) / (hot + margin - (cold - margin)))
+  );
+  return `hsl(${Math.round(210 * (1 - ratio))} 70% 48%)`;
+};
 
-const wearClass = (percent: number) =>
-  percent < 25
-    ? 'bg-red-500'
-    : percent < 50
-      ? 'bg-amber-400'
-      : 'bg-emerald-400';
+/** Green while there is plenty of tread, red at the limit and below. */
+const wearColor = (percent: number, limit: number) => {
+  const ratio = Math.min(1, Math.max(0, (percent - limit) / (100 - limit)));
+  return `hsl(${Math.round(130 * ratio)} 65% 50%)`;
+};
 
 /** Whole laps until the worst zone reaches the limit, if a rate is known. */
 const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
@@ -67,6 +69,13 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
     .reduce((a, b) => Math.min(a, b), Infinity);
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
+
+// Tread grooves across each zone, drawn over its temperature colour.
+const GROOVES =
+  'repeating-linear-gradient(to bottom, transparent 0 7px, rgb(0 0 0 / 0.22) 7px 9px)';
+// Soft highlight down the left of the tire, like the glass bezel it is styled on.
+const GLOSS =
+  'linear-gradient(100deg, rgb(255 255 255 / 0.28), transparent 45%, rgb(0 0 0 / 0.18))';
 
 interface TireCardProps {
   label: string;
@@ -90,41 +99,72 @@ const TireCard = memo(
   }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     return (
-      <div className="flex flex-col gap-1 rounded-sm bg-slate-900/60 p-1.5">
-        <div className="flex items-baseline justify-between text-xs font-semibold text-white/60">
-          <span>{label}</span>
+      <div className="flex min-h-0 flex-col gap-1.5 rounded-2xl bg-linear-to-b from-white/12 to-white/4 p-2 ring-1 ring-white/15">
+        <div className="flex flex-none items-baseline justify-between">
+          <span className="text-base font-extrabold leading-none text-slate-300/70">
+            {label}
+          </span>
           {left !== undefined && (
-            <span className="tabular-nums text-white/80">~{left} laps</span>
+            <span className="text-xs font-bold tabular-nums text-white/90">
+              ~{left} laps
+            </span>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-1">
+
+        <div className="flex min-h-0 flex-1 justify-center">
+          <div className="flex aspect-[3/4] h-full max-w-full gap-[3%] rounded-[22%] bg-linear-to-b from-slate-600 to-slate-800 p-[7%] shadow-[inset_0_0_0_2px_rgb(255_255_255/0.12),0_2px_6px_rgb(0_0_0/0.4)]">
+            {[0, 1, 2].map((zone) => {
+              const celsius = tire?.temp[zone];
+              return (
+                <div
+                  key={zone}
+                  className={`relative flex flex-1 items-center justify-center overflow-hidden rounded-lg ${
+                    staleTemps ? 'opacity-60' : ''
+                  }`}
+                  style={{
+                    backgroundColor:
+                      celsius === undefined
+                        ? 'rgb(100 116 139 / 0.5)'
+                        : tempColor(celsius, cold, hot),
+                  }}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{ backgroundImage: `${GROOVES}, ${GLOSS}` }}
+                  />
+                  <span className="relative text-sm font-extrabold tabular-nums text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+                    {celsius === undefined
+                      ? '--'
+                      : Math.round(
+                          fahrenheit ? (celsius * 9) / 5 + 32 : celsius
+                        )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid flex-none grid-cols-3 gap-[3%] px-[7%]">
           {[0, 1, 2].map((zone) => {
-            const celsius = tire?.temp[zone];
             const wear = tire?.wear[zone];
             return (
               <div key={zone} className="flex flex-col items-center gap-0.5">
-                <div
-                  className={`text-sm font-semibold tabular-nums ${
-                    celsius === undefined
-                      ? 'text-white/40'
-                      : tempClass(celsius, cold, hot)
-                  } ${staleTemps ? 'opacity-60' : ''}`}
-                >
-                  {celsius === undefined
-                    ? '--'
-                    : Math.round(fahrenheit ? (celsius * 9) / 5 + 32 : celsius)}
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                   <div
-                    className={`h-full ${wear === undefined ? '' : wearClass(wear)}`}
-                    style={{ width: `${wear ?? 0}%` }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${wear ?? 0}%`,
+                      backgroundColor:
+                        wear === undefined ? undefined : wearColor(wear, limit),
+                    }}
                   />
                 </div>
-                <div className="text-[0.7em] tabular-nums text-white/70">
+                <span className="text-xs font-bold tabular-nums leading-none text-slate-200">
                   {wear === undefined
                     ? '--'
                     : `${tire?.estimated ? '~' : ''}${Math.round(wear)}%`}
-                </div>
+                </span>
               </div>
             );
           })}
@@ -161,12 +201,12 @@ export const Tires = memo(() => {
 
   return (
     <div
-      className="flex h-full w-full flex-col gap-1 rounded-sm bg-slate-800/(--bg-opacity) p-1"
+      className="flex h-full w-full flex-col gap-1.5 rounded-2xl bg-slate-800/(--bg-opacity) p-1.5"
       style={{
         ['--bg-opacity' as string]: `${settings.background.opacity}%`,
       }}
     >
-      <div className="grid min-h-0 flex-1 grid-cols-2 gap-1">
+      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-1.5">
         {LAYOUT.map(({ corner, label }) => (
           <TireCard
             key={corner}
@@ -181,7 +221,7 @@ export const Tires = memo(() => {
         ))}
       </div>
       {stale && (
-        <div className="flex-none text-center text-[0.65em] text-white/50">
+        <div className="flex-none text-center text-[0.65em] font-semibold text-slate-300/60">
           {estimated
             ? 'Wear estimated, temps from last stop'
             : 'Values from last stop'}
