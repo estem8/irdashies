@@ -79,11 +79,44 @@ const offsets = (z: Zones): Zones => {
   const m = mean(z);
   return [z[0] - m, z[1] - m, z[2] - m];
 };
-const NO_OFFSET: Zones = [0, 0, 0];
 /** Fresh tires start a few degrees over ambient, as fitted to recorded stints. */
 const FRESH_TIRE_OFFSET = 3;
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
+
+const SETUP_CORNERS: Record<string, TireCorner> = {
+  LeftFront: 'lf',
+  RightFront: 'rf',
+  LeftRear: 'lr',
+  RightRear: 'rr',
+};
+
+/**
+ * Camber per tire from the car setup. The layout of CarSetup differs between
+ * cars, so rather than hard-code a path this takes the Camber of the first
+ * LeftFront/RightFront/LeftRear/RightRear section found anywhere in it.
+ */
+const findCamber = (
+  node: unknown,
+  found: Partial<Record<TireCorner, number>> = {}
+): Partial<Record<TireCorner, number>> => {
+  if (node === null || typeof node !== 'object') return found;
+  for (const [key, value] of Object.entries(node)) {
+    const corner = SETUP_CORNERS[key];
+    if (
+      corner &&
+      found[corner] === undefined &&
+      value &&
+      typeof value === 'object'
+    ) {
+      const raw = (value as Record<string, unknown>).Camber;
+      const degrees = typeof raw === 'string' ? parseFloat(raw) : NaN;
+      if (Number.isFinite(degrees)) found[corner] = degrees;
+    }
+    findCamber(value, found);
+  }
+  return found;
+};
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -124,10 +157,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private readonly stats = new TireStintStats();
   private stintNumber = 0;
   private lastTime: number | undefined;
+  private camber: Partial<Record<TireCorner, number>> = {};
   private readonly latest: TireSnapshot = { corners: {}, version: 0 };
 
   init(session: Session): void {
-    void session;
+    this.camber = findCamber(session.CarSetup);
   }
 
   onFrame(frame: Telemetry): void {
@@ -145,6 +179,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     }
 
     const lap = this.lapsNow(frame);
+    const ambient = this.ambient(frame);
     this.stepThermal(frame);
     this.trackStints(frame, readings, temps, lap);
 
@@ -160,12 +195,24 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const modelled = this.thermal.active
         ? this.thermal.mean(corner)
         : undefined;
+      // The zone spread seen at the last reading builds up as the tire heats,
+      // so it is applied in proportion to how far this tire has warmed.
+      const warmed =
+        modelled !== undefined && st.lastMean > ambient + 5
+          ? Math.min(
+              1,
+              Math.max(0, (modelled - ambient) / (st.lastMean - ambient))
+            )
+          : 1;
       const shown =
         modelled === undefined
           ? temp
-          : (st.tempOffset.map((o) => modelled + o) as Zones);
+          : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
       corners[corner] = {
         temp: shown.map(Math.round) as Zones,
+        ...(this.camber[corner] !== undefined && {
+          camber: this.camber[corner],
+        }),
         tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
@@ -286,6 +333,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
           ` end=${mean(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
           ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
+          ` camber=${this.camber[corner] ?? 'n/a'}` +
           ` ${this.stats.corner(corner.toUpperCase())}`
       );
       st.lastMean = mean(temp);
@@ -302,7 +350,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         corner,
         changed ? ambient + FRESH_TIRE_OFFSET : mean(temp)
       );
-      st.tempOffset = changed ? NO_OFFSET : offsets(temp);
+      st.tempOffset = offsets(temp);
     }
 
     if (!seeding) {
@@ -323,6 +371,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       return (
         a.estimated !== b.estimated ||
         a.tempEstimated !== b.tempEstimated ||
+        a.camber !== b.camber ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()

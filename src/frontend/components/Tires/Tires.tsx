@@ -13,6 +13,7 @@ import { useTiresSettings } from './hooks/useTiresSettings';
 
 const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   lf: {
+    camber: -3.5,
     temp: [92, 98, 95],
     wear: [88.4, 91.2, 89.9],
     estimated: true,
@@ -20,6 +21,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rf: {
+    camber: -3.5,
     temp: [101, 106, 112],
     wear: [82.1, 85.5, 80.3],
     estimated: true,
@@ -27,6 +29,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wearPerLap: [0.4, 0.4, 0.4],
   },
   lr: {
+    camber: -2.5,
     temp: [88, 90, 89],
     wear: [90.7, 92.0, 91.1],
     estimated: true,
@@ -34,6 +37,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rr: {
+    camber: -2.5,
     temp: [96, 99, 103],
     wear: [85.2, 87.8, 84.6],
     estimated: true,
@@ -64,10 +68,15 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
 
+/** Drawing degrees of tilt per degree of camber. */
+const CAMBER_TILT = 4;
+
 const SHADING =
   'linear-gradient(to right, rgb(0 0 0 / 0.4), transparent 22%, rgb(255 255 255 / 0.12) 40%, transparent 55%, transparent 78%, rgb(0 0 0 / 0.4))';
 
 interface TireCardProps {
+  /** Which side of the car the tire is on; camber leans toward the car. */
+  side: 'left' | 'right';
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
   optimal: number;
@@ -76,7 +85,7 @@ interface TireCardProps {
 }
 
 const TireCard = memo(
-  ({ tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
+  ({ side, tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     const colors = [0, 1, 2].map((zone) => {
       const celsius = tire?.temp[zone];
@@ -84,6 +93,9 @@ const TireCard = memo(
         ? 'rgb(100 116 139)'
         : tempColor(celsius, optimal, range);
     });
+    // Negative camber leans the top toward the car, so the inner shoulder is
+    // turned toward the viewer. Exaggerated, since a few degrees would not show.
+    const tilt = (side === 'left' ? 1 : -1) * (tire?.camber ?? 0) * CAMBER_TILT;
     const treadGradient = `linear-gradient(to right, ${colors[0]} 10%, ${colors[1]} 50%, ${colors[2]} 90%)`;
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
@@ -91,12 +103,15 @@ const TireCard = memo(
           {/* Seen from above: a tall tread with softly rounded corners. The
               outer fifths are the shoulders, the middle 60% the centre. */}
           <div
-            className="relative grid aspect-[11/20] h-full max-w-full grid-cols-[20%_60%_20%] overflow-hidden rounded-[14%] shadow-[0_3px_8px_rgb(0_0_0/0.5)]"
-            style={{ backgroundImage: treadGradient }}
+            className="relative grid aspect-[7/10] h-full max-w-full grid-cols-[20%_60%_20%] divide-x divide-white/40 overflow-hidden rounded-[12%] shadow-[0_3px_8px_rgb(0_0_0/0.5)]"
+            style={{
+              backgroundImage: treadGradient,
+              transform: `perspective(280px) rotateY(${tilt}deg)`,
+            }}
           >
             {/* Darker shoulders and a highlight give the flat fill some roundness. */}
             <div
-              className="absolute inset-0"
+              className="pointer-events-none absolute inset-0"
               style={{ backgroundImage: SHADING }}
             />
             {[0, 1, 2].map((zone) => {
@@ -107,8 +122,8 @@ const TireCard = memo(
                   className="relative flex items-center justify-center"
                 >
                   <span
-                    className={`-rotate-90 font-black tabular-nums text-black/90 ${
-                      zone === 1 ? 'text-base' : 'text-[0.7em]'
+                    className={`font-black tabular-nums text-black/90 ${
+                      zone === 1 ? 'text-base' : 'text-[0.6em]'
                     }`}
                   >
                     {celsius === undefined
@@ -188,6 +203,7 @@ export const Tires = memo(() => {
 
   const card = (corner: TireCorner) => (
     <TireCard
+      side={corner === 'lf' || corner === 'lr' ? 'left' : 'right'}
       tire={corners[corner]}
       fahrenheit={fahrenheit}
       optimal={settings.tempOptimal}

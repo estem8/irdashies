@@ -284,6 +284,8 @@ export interface TireCornerSnapshot {
    * estimate for the current lap rather than the last reading.
    */
   wear: readonly [number, number, number];
+  /** Camber from the car setup in degrees; negative leans the top inward. */
+  camber?: number;
   /** True when `temp` is a load-based estimate, not the last stop's reading. */
   tempEstimated: boolean;
   /** True when `wear` is extrapolated from the last stint, not read. */
