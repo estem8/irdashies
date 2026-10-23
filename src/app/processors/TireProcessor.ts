@@ -141,6 +141,28 @@ const findAlignment = (
   return found;
 };
 
+/** Pit-menu checkboxes, per tire or per side, that order a tire change. */
+const TIRE_CHANGE_BOXES: readonly [string, number][] = [
+  ['dpLFTireChange', 0x1],
+  ['dpRFTireChange', 0x2],
+  ['dpLRTireChange', 0x4],
+  ['dpRRTireChange', 0x8],
+  ['dpLTireChange', 0x1 | 0x4],
+  ['dpRTireChange', 0x2 | 0x8],
+];
+
+/**
+ * Which tires are being changed, as bits per TIRE_CHANGE_BIT. Read from the
+ * service flags and the pit-menu boxes together, since cars use either.
+ */
+const requestedChanges = (frame: Telemetry): number => {
+  let bits = (number(frame, 'PitSvFlags') ?? 0) & 0xf;
+  for (const [key, bit] of TIRE_CHANGE_BOXES) {
+    if ((number(frame, key) ?? 0) > 0) bits |= bit;
+  }
+  return bits;
+};
+
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
@@ -184,6 +206,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private stintNumber = 0;
   private lastTime: number | undefined;
   private slip = NO_SLIP;
+  /**
+   * A stop in progress: the tire changes already applied at the reading, and
+   * whether the service has been seen running.
+   */
+  private service: { applied: number; running: boolean } | undefined;
+  /** Tire changes requested at any time while the service ran. */
+  private pendingBits = 0;
   private alignment: Alignment = { camber: {}, toe: {} };
   private readonly latest: TireSnapshot = {
     corners: {},
@@ -213,6 +242,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const ambient = this.ambient(frame);
     this.stepThermal(frame);
     this.trackStints(frame, readings, temps, lap);
+    this.followService(frame, lap);
 
     const corners: Partial<Record<TireCorner, TireCornerSnapshot>> = {};
     for (const [corner] of CORNERS) {
@@ -342,6 +372,38 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   }
 
   /**
+   * The reading arrives as the service starts, but which tires get changed is
+   * often settled in the pit menu while it runs: in recorded stops the flags
+   * were still clear at the reading and the tires were changed anyway. So the
+   * requested changes are collected until the service ends, and any tire
+   * ordered in that time is treated as fresh from then on.
+   */
+  private followService(frame: Telemetry, lap: number): void {
+    if (!this.service) return;
+    const active = flag(frame, 'PitstopActive') === 1;
+    const requested = requestedChanges(frame);
+    if (active) {
+      this.service.running = true;
+      this.pendingBits |= requested;
+      return;
+    }
+    const left = flag(frame, 'OnPitRoad') !== 1;
+    if (!this.service.running && !left) return;
+    const late = this.pendingBits & ~this.service.applied;
+    const ambient = this.ambient(frame);
+    for (const [corner] of CORNERS) {
+      const st = this.state[corner];
+      if (!st || (late & TIRE_CHANGE_BIT[corner]) === 0) continue;
+      st.baseline = [100, 100, 100];
+      st.baselineLap = lap;
+      this.thermal.set(corner, ambient + FRESH_TIRE_OFFSET);
+    }
+    if (late) logger.info(`[TireDiag] SERVICE late tire change bits=${late}`);
+    this.service = undefined;
+    this.pendingBits = 0;
+  }
+
+  /**
    * A reading that differs from the previous one is a refresh: it closes the
    * stint that just ended and opens the next. The first reading after a reset
    * only seeds the baseline, since it says nothing about a finished stint.
@@ -356,7 +418,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (key === '{}' || key === this.lastReading) return;
     const seeding = this.lastReading === '';
     this.lastReading = key;
-    const flags = number(frame, 'PitSvFlags') ?? 0;
+    const flags = requestedChanges(frame);
     const ambient = this.ambient(frame);
 
     for (const [corner] of CORNERS) {
@@ -415,6 +477,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     }
 
     if (!seeding) {
+      this.service = { applied: flags, running: false };
       logger.info(
         `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
       );
@@ -487,6 +550,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.stats.reset();
     this.slipEstimator.reset();
     this.slip = NO_SLIP;
+    this.service = undefined;
+    this.pendingBits = 0;
     this.stintNumber = 0;
     this.lastTime = undefined;
   }

@@ -32,9 +32,9 @@ const tenths = (v: number) => Math.round(clamp01(v) * 10) / 10;
  *   Each gear's ratio is learned while cruising, when the tires grip.
  * - TC is the gap between the throttle pedal and the throttle that reaches
  *   the engine.
- * - Understeer and oversteer compare how fast the car rotates with what the
- *   steering asks for, against a ratio learned in gentle corners, and count
- *   counter-steering as the rear sliding.
+ * - Understeer compares how fast the car rotates with what the steering asks
+ *   for, against a ratio learned in gentle corners. Oversteer is only
+ *   counter-steering: the wheel pointed against the way the car rotates.
  */
 export class TireSlipEstimator {
   private readonly gearRatio = new Map<number, number>();
@@ -107,10 +107,12 @@ export class TireSlipEstimator {
             ? gain
             : this.steerGain + (gain - this.steerGain) * LEARN;
       }
-      if (this.steerGain !== undefined && this.steerGain !== 0 && lat >= 6) {
-        const turning = gain / this.steerGain;
-        under = (0.85 - turning) / 0.35;
-        over = (turning - 1.2) / 0.5;
+      // Turning well short of what the steering asks is the front letting go.
+      // The opposite (turning more) is not trusted as oversteer: on a banked
+      // oval the car needs less steering for the same turn, which read as a
+      // slide for a quarter of every lap in the recordings.
+      if (this.steerGain !== undefined && this.steerGain !== 0 && lat >= 8) {
+        under = (0.75 - gain / this.steerGain) / 0.3;
       }
       // Steering against the way the car rotates is catching the rear.
       if (
