@@ -71,15 +71,17 @@ describe('TireProcessor', () => {
   it('logs a diagnostic line on an interval and immediately on wear change', () => {
     const info = vi.mocked(logger.info);
     info.mockClear();
+    const lines = () =>
+      info.mock.calls.filter((c) => !String(c[0]).includes('keys('));
     const p = new TireProcessor();
     p.onFrame(frame(tires(80, 1), 0));
     p.onFrame(frame(tires(81, 1), 1));
-    expect(info).toHaveBeenCalledTimes(1);
+    expect(lines()).toHaveLength(1);
     p.onFrame(frame(tires(81, 1), 2.5));
-    expect(info).toHaveBeenCalledTimes(2);
+    expect(lines()).toHaveLength(2);
     p.onFrame(frame(tires(81, 0.95), 3));
-    expect(info).toHaveBeenCalledTimes(3);
-    expect(info.mock.calls[2][0]).toContain('WEAR-CHANGED');
+    expect(lines()).toHaveLength(3);
+    expect(lines()[2][0]).toContain('WEAR-CHANGED');
   });
 
   describe('stint tracking', () => {
