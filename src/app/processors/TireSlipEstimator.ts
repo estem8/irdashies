@@ -8,6 +8,9 @@ const MIN_SPEED = 15;
 const LEARN = 0.02;
 /** RPM settles for a moment after a shift; slip is not judged meanwhile. */
 const SHIFT_SETTLE_S = 0.4;
+/** Car slip angle, in degrees, that is ordinary cornering; full scale above it. */
+const SLIP_ANGLE_GRACE = 4;
+const SLIP_ANGLE_FULL = 6;
 
 export const NO_SLIP: TireSlipSnapshot = {
   abs: false,
@@ -32,14 +35,16 @@ const tenths = (v: number) => Math.round(clamp01(v) * 10) / 10;
  *   Each gear's ratio is learned while cruising, when the tires grip.
  * - TC is the gap between the throttle pedal and the throttle that reaches
  *   the engine.
- * - Understeer compares how fast the car rotates with what the steering asks
- *   for, against a ratio learned in gentle corners. Oversteer is only
- *   counter-steering: the wheel pointed against the way the car rotates.
+ * - Understeer is the steering going light: steering torque per unit of
+ *   lateral load, against what it is in moderate corners (the Grip-o-Meter
+ *   idea). Comparing the steering angle with the turn failed on an oval,
+ *   where a staggered car corners with the wheel nearly straight.
+ * - Oversteer is the car's slip angle beyond ordinary cornering.
  */
 export class TireSlipEstimator {
   private readonly gearRatio = new Map<number, number>();
-  /** Yaw rate per unit of speed times steering; its sign is learned too. */
-  private steerGain: number | undefined;
+  /** Steering torque per unit of lateral acceleration with the front gripping. */
+  private torquePerLoad: number | undefined;
   private lastGear: number | undefined;
   private sinceShift = 0;
 
@@ -66,8 +71,6 @@ export class TireSlipEstimator {
     const clutch = get('Clutch') ?? 1;
     const lon = get('LongAccel') ?? 0;
     const lat = Math.abs(get('LatAccel') ?? 0);
-    const steer = get('SteeringWheelAngle') ?? 0;
-    const yaw = get('YawRate') ?? 0;
 
     let spin = 0;
     let lock = 0;
@@ -97,33 +100,31 @@ export class TireSlipEstimator {
 
     const tc = throttleRaw > 0.2 ? (throttleRaw - throttle - 0.05) / 0.3 : 0;
 
+    // Front grip: the steering goes light as the front tires saturate,
+    // because the self-aligning torque falls while the cornering load holds.
+    // The usual torque per unit of lateral load is learned in moderate corners.
     let under = 0;
-    let over = 0;
-    if (Math.abs(steer) > 0.02) {
-      const gain = yaw / (speed * steer);
-      if (lat < 4 && Math.abs(steer) > 0.03) {
-        this.steerGain =
-          this.steerGain === undefined
-            ? gain
-            : this.steerGain + (gain - this.steerGain) * LEARN;
+    const torque = Math.abs(get('SteeringWheelTorque') ?? 0);
+    if (lat > 3 && torque > 0) {
+      const perLoad = torque / lat;
+      if (lat < 7) {
+        this.torquePerLoad =
+          this.torquePerLoad === undefined
+            ? perLoad
+            : this.torquePerLoad + (perLoad - this.torquePerLoad) * LEARN;
       }
-      // Turning well short of what the steering asks is the front letting go.
-      // The opposite (turning more) is not trusted as oversteer: on a banked
-      // oval the car needs less steering for the same turn, which read as a
-      // slide for a quarter of every lap in the recordings.
-      if (this.steerGain !== undefined && this.steerGain !== 0 && lat >= 8) {
-        under = (0.75 - gain / this.steerGain) / 0.3;
-      }
-      // Steering against the way the car rotates is catching the rear.
-      if (
-        this.steerGain !== undefined &&
-        Math.abs(yaw) > 0.15 &&
-        Math.abs(steer) > 0.05 &&
-        Math.sign(yaw) !== Math.sign(steer) * Math.sign(this.steerGain)
-      ) {
-        over = Math.max(over, (Math.abs(yaw) - 0.15) / 0.35);
+      if (this.torquePerLoad !== undefined && lat >= 8) {
+        under = (0.75 - perLoad / this.torquePerLoad) / 0.35;
       }
     }
+
+    // Rear grip: the car's own slip angle, the gap between where it points
+    // and where it travels. It stays small while the rear holds.
+    const sideways = Math.abs(
+      (Math.atan2(get('VelocityY') ?? 0, get('VelocityX') ?? speed) * 180) /
+        Math.PI
+    );
+    const over = (sideways - SLIP_ANGLE_GRACE) / SLIP_ANGLE_FULL;
 
     return {
       abs,
@@ -137,7 +138,7 @@ export class TireSlipEstimator {
 
   reset(): void {
     this.gearRatio.clear();
-    this.steerGain = undefined;
+    this.torquePerLoad = undefined;
     this.lastGear = undefined;
     this.sinceShift = 0;
   }

@@ -339,7 +339,9 @@ const TireCard = memo(
     });
     // Negative camber leans the top toward the car, turning the inner
     // shoulder toward the viewer.
-    const tilt = (side === 'left' ? 1 : -1) * (tire?.camber ?? 0) * CAMBER_TILT;
+    const tilt =
+      (side === 'left' ? 1 : -1) *
+      Math.max(-20, Math.min(20, (tire?.camber ?? 0) * CAMBER_TILT));
     // Toe-in points the front of the tire (the top here) toward the car.
     const toeTurn =
       (side === 'left' ? 1 : -1) *
