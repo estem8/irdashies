@@ -8,7 +8,7 @@ import type {
 } from '@irdashies/types';
 import logger from '../logger';
 import type { TelemetryProcessor } from './TelemetryProcessor';
-import { TireStintStats } from './TireStintStats';
+import { TireStintStats, TireTraceSecond } from './TireStintStats';
 import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
@@ -94,29 +94,48 @@ const SETUP_CORNERS: Record<string, TireCorner> = {
   RightRear: 'rr',
 };
 
+const AXLE_CORNERS: Record<string, readonly TireCorner[]> = {
+  Front: ['lf', 'rf'],
+  Rear: ['lr', 'rr'],
+};
+
+interface Alignment {
+  camber: Partial<Record<TireCorner, number>>;
+  toe: Partial<Record<TireCorner, string>>;
+}
+
 /**
- * Camber per tire from the car setup. The layout of CarSetup differs between
- * cars, so rather than hard-code a path this takes the Camber of the first
- * LeftFront/RightFront/LeftRear/RightRear section found anywhere in it.
+ * Camber and toe per tire from the car setup. The layout of CarSetup differs
+ * between cars, so rather than hard-code a path this takes the values of the
+ * first LeftFront/RightFront/LeftRear/RightRear section found anywhere in it.
+ * Toe is often set per axle instead (a Front or Rear section), which then
+ * applies to both of that axle's tires.
  */
-const findCamber = (
+const findAlignment = (
   node: unknown,
-  found: Partial<Record<TireCorner, number>> = {}
-): Partial<Record<TireCorner, number>> => {
+  found: Alignment = { camber: {}, toe: {} }
+): Alignment => {
   if (node === null || typeof node !== 'object') return found;
   for (const [key, value] of Object.entries(node)) {
-    const corner = SETUP_CORNERS[key];
-    if (
-      corner &&
-      found[corner] === undefined &&
-      value &&
-      typeof value === 'object'
-    ) {
-      const raw = (value as Record<string, unknown>).Camber;
-      const degrees = typeof raw === 'string' ? parseFloat(raw) : NaN;
-      if (Number.isFinite(degrees)) found[corner] = degrees;
+    if (value && typeof value === 'object') {
+      const section = value as Record<string, unknown>;
+      const corner = SETUP_CORNERS[key];
+      const toe = typeof section.ToeIn === 'string' ? section.ToeIn : undefined;
+      if (corner) {
+        const degrees =
+          typeof section.Camber === 'string' ? parseFloat(section.Camber) : NaN;
+        if (found.camber[corner] === undefined && Number.isFinite(degrees)) {
+          found.camber[corner] = degrees;
+        }
+        if (toe && found.toe[corner] === undefined) found.toe[corner] = toe;
+      }
+      for (const axleCorner of AXLE_CORNERS[key] ?? []) {
+        if (toe && found.toe[axleCorner] === undefined) {
+          found.toe[axleCorner] = toe;
+        }
+      }
     }
-    findCamber(value, found);
+    findAlignment(value, found);
   }
   return found;
 };
@@ -158,13 +177,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly thermal = new TireThermalModel();
   private readonly stats = new TireStintStats();
+  private readonly trace = new TireTraceSecond();
   private stintNumber = 0;
   private lastTime: number | undefined;
-  private camber: Partial<Record<TireCorner, number>> = {};
+  private alignment: Alignment = { camber: {}, toe: {} };
   private readonly latest: TireSnapshot = { corners: {}, version: 0 };
 
   init(session: Session): void {
-    this.camber = findCamber(session.CarSetup);
+    this.alignment = findAlignment(session.CarSetup);
   }
 
   onFrame(frame: Telemetry): void {
@@ -213,8 +233,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
       corners[corner] = {
         temp: shown.map(Math.round) as Zones,
-        ...(this.camber[corner] !== undefined && {
-          camber: this.camber[corner],
+        ...(this.alignment.camber[corner] !== undefined && {
+          camber: this.alignment.camber[corner],
+        }),
+        ...(this.alignment.toe[corner] !== undefined && {
+          toe: this.alignment.toe[corner],
         }),
         tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
@@ -259,6 +282,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       flag(frame, 'OnPitRoad') === 1,
       flag(frame, 'BrakeABSactive') === 1
     );
+    this.trace.add(
+      (key) => number(frame, key),
+      dt,
+      flag(frame, 'OnPitRoad') === 1
+    );
+    if (this.trace.seconds >= 1) {
+      const temps = CORNERS.map(
+        ([corner]) => this.thermal.mean(corner)?.toFixed(1) ?? '-'
+      ).join('/');
+      logger.info(
+        `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}`
+      );
+    }
     this.thermal.step({
       dt,
       speed: number(frame, 'Speed') ?? 0,
@@ -336,7 +372,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
           ` end=${mean(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
           ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
-          ` camber=${this.camber[corner] ?? 'n/a'}` +
+          ` camber=${this.alignment.camber[corner] ?? 'n/a'}` +
           ` ${this.stats.corner(corner.toUpperCase())}`
       );
       st.lastMean = mean(temp);
@@ -375,6 +411,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         a.estimated !== b.estimated ||
         a.tempEstimated !== b.tempEstimated ||
         a.camber !== b.camber ||
+        a.toe !== b.toe ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()

@@ -286,6 +286,8 @@ export interface TireCornerSnapshot {
   wear: readonly [number, number, number];
   /** Camber from the car setup in degrees; negative leans the top inward. */
   camber?: number;
+  /** Toe from the car setup as the sim formats it, e.g. "-2.8 mm". */
+  toe?: string;
   /** True when `temp` is a load-based estimate, not the last stop's reading. */
   tempEstimated: boolean;
   /** True when `wear` is extrapolated from the last stint, not read. */

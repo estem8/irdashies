@@ -3,9 +3,9 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 /** Heat input per unit of speed times load, in degrees per second. */
-const HEAT = 0.005;
+const HEAT = 0.0025;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.005;
+const COOL = 0.0025;
 const COOL_SPEED = 50;
 /** Lateral g, in m/s2, at which the outside tires carry their full extra load. */
 const FULL_LATERAL = 20;
@@ -15,8 +15,12 @@ const LOAD_TRANSFER = 0.08;
 const REAR_HEAT = 1.1;
 /** Steering angle, in radians, under which a corner is treated as straight. */
 const STEER_DEADBAND = 0.05;
-/** The longest step integrated; a hitch in telemetry must not heat a tire. */
-const MAX_DT = 0.1;
+/**
+ * The longest step integrated; a hitch in telemetry must not heat a tire.
+ * ProcessorHost runs this processor at its tick rate (5 Hz), so ordinary steps
+ * are 0.2 s and must pass through whole.
+ */
+const MAX_DT = 0.5;
 const GAIN_LIMITS = [0.4, 2.5] as const;
 
 export interface ThermalInput {

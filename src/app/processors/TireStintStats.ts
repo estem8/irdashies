@@ -1,6 +1,7 @@
 const PREFIXES = ['LF', 'RF', 'LR', 'RR'] as const;
 const STEER_DEADBAND = 0.05;
-const MAX_DT = 0.1;
+/** Steps arrive at the processor's 5 Hz tick; only a hitch is clipped. */
+const MAX_DT = 0.5;
 
 type Getter = (key: string) => number | undefined;
 
@@ -139,5 +140,83 @@ export class TireStintStats {
     this.air = 0;
     this.track = 0;
     this.corners = this.emptyCorners();
+  }
+}
+
+/**
+ * TEMPORARY: one second of load inputs, summed, for fitting the thermal model
+ * offline against cockpit-dash screenshots matched by timestamp.
+ *
+ * `latS` is lateral work signed by steering (positive in left turns) and
+ * `latRaw` the plain signed LatAccel, so the sign convention can be checked.
+ * `vert` is speed times vertical acceleration (banking and bumps load the
+ * tires) and `v3` speed cubed (aerodynamic load grows with speed squared).
+ */
+export class TireTraceSecond {
+  private dt = 0;
+  private v = 0;
+  private lat = 0;
+  private latS = 0;
+  private lat2 = 0;
+  private latRaw = 0;
+  private vert = 0;
+  private v3 = 0;
+  private brk = 0;
+  private acc = 0;
+  private pit = 0;
+
+  add(get: Getter, rawDt: number, onPitRoad: boolean): void {
+    if (!(rawDt > 0)) return;
+    const dt = Math.min(rawDt, MAX_DT);
+    const speed = get('Speed') ?? 0;
+    const latSigned = get('LatAccel') ?? 0;
+    const lat = Math.abs(latSigned);
+    const lon = get('LongAccel') ?? 0;
+    const steer = get('SteeringWheelAngle') ?? 0;
+    const side = steer > STEER_DEADBAND ? 1 : steer < -STEER_DEADBAND ? -1 : 0;
+    this.dt += dt;
+    this.v += speed * dt;
+    this.lat += speed * lat * dt;
+    this.latS += speed * lat * side * dt;
+    this.lat2 += speed * lat * lat * dt;
+    this.latRaw += latSigned * dt;
+    this.vert += speed * (get('VertAccel') ?? 0) * dt;
+    this.v3 += (speed * speed * speed * dt) / 1000;
+    if (lon < 0) this.brk += -lon * speed * dt;
+    else this.acc += lon * speed * dt;
+    if (onPitRoad) this.pit += dt;
+  }
+
+  get seconds(): number {
+    return this.dt;
+  }
+
+  /** The second's sums as `key=value` pairs; resets for the next second. */
+  flush(): string {
+    const line = [
+      `dt=${f(this.dt, 2)}`,
+      `v=${f(this.v)}`,
+      `lat=${f(this.lat, 0)}`,
+      `latS=${f(this.latS, 0)}`,
+      `lat2=${f(this.lat2, 0)}`,
+      `latRaw=${f(this.latRaw, 2)}`,
+      `vert=${f(this.vert, 0)}`,
+      `v3=${f(this.v3, 0)}`,
+      `brk=${f(this.brk, 0)}`,
+      `acc=${f(this.acc, 0)}`,
+      `pit=${f(this.pit, 1)}`,
+    ].join(' ');
+    this.dt = 0;
+    this.v = 0;
+    this.lat = 0;
+    this.latS = 0;
+    this.lat2 = 0;
+    this.latRaw = 0;
+    this.vert = 0;
+    this.v3 = 0;
+    this.brk = 0;
+    this.acc = 0;
+    this.pit = 0;
+    return line;
   }
 }
