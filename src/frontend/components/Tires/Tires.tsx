@@ -72,177 +72,166 @@ const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
   return Number.isFinite(laps) ? Math.max(0, Math.floor(laps)) : undefined;
 };
 
-/** Camber as an alignment sheet prints it, e.g. -4.2 -> -4°12'. */
-const degreesMinutes = (degrees: number) => {
-  const sign = degrees < 0 ? '-' : '';
-  const total = Math.round(Math.abs(degrees) * 60);
-  const minutes = String(total % 60).padStart(2, '0');
-  return `${sign}${Math.floor(total / 60)}°${minutes}'`;
-};
-
 /** Drawing degrees of lean per degree of camber; a few real degrees would not show. */
-const CAMBER_TILT = 2.5;
+const CAMBER_TILT = 4;
 
-// Wheel geometry, in viewBox units, drawn for a left wheel seen from the front
-// and a little to the outside: the outboard sidewall (with the rim) is an
-// ellipse on the left, the tread runs from it toward the car. Right wheels are
-// the mirror image.
-const VIEW = 116;
-const CY = 60;
-const R = 47;
-const W = 60;
-const RX = 17;
-const XO = 24;
-const PIVOT_Y = CY + R;
-const ZONES = [0.1, 0.5, 0.9];
+// Tire seen from above, in viewBox units: dark sidewalls bulge out either side
+// of the tread, which carries the temperature colours.
+const VIEW_W = 100;
+const VIEW_H = 140;
+const TREAD_X = 9;
+const TREAD_W = VIEW_W - 2 * TREAD_X;
+const ZONE_CENTRES = [0.1, 0.5, 0.9];
 const DIVIDERS = [0.2, 0.8];
+/** Contact patch, as a share of the tread, and how far camber shifts it. */
+const PATCH_W = 0.6;
+const PATCH_H = 0.3;
+const PATCH_SHIFT_PER_DEGREE = 0.04;
 
-interface WheelProps {
+interface TireTopProps {
   side: 'left' | 'right';
   tire?: TireCornerSnapshot;
   colors: readonly string[];
   labels: readonly string[];
 }
 
-const Wheel = memo(({ side, tire, colors, labels }: WheelProps) => {
+const TireTop = memo(({ side, tire, colors, labels }: TireTopProps) => {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const x = (v: number) => (side === 'left' ? v : VIEW - v);
-  const sweep = side === 'left' ? 1 : 0;
-  // Negative camber leans the top toward the car.
-  const lean = -(tire?.camber ?? 0) * CAMBER_TILT * (side === 'left' ? 1 : -1);
-  const pivotX = x(XO + RX + W / 2);
-  const treadFrom = x(XO + RX);
-  const treadTo = x(XO + RX + W);
-
-  // The tread: between the outboard sidewall and the inner edge, both curved
-  // like the sidewall so the band reads as part of a cylinder.
-  const tread = `M ${x(XO)} ${CY - R} L ${x(XO + W)} ${CY - R} A ${RX} ${R} 0 0 ${sweep} ${x(XO + W)} ${CY + R} L ${x(XO)} ${CY + R} Z`;
-  const spokes = [0, 72, 144, 216, 288].map((deg) => {
-    const a = ((deg - 90) * Math.PI) / 180;
-    return [x(XO + RX * 0.62 * Math.cos(a)), CY + R * 0.62 * Math.sin(a)];
-  });
-  const arcRadius = 2 * R + 4;
-  const arcEnd = (lean * Math.PI) / 180;
+  const camber = tire?.camber ?? 0;
+  // Negative camber leans the top inward and loads the inner shoulder, so the
+  // patch moves toward the car: right on a left tire, left on a right one.
+  const inward = side === 'left' ? 1 : -1;
+  const shift = Math.max(
+    -0.15,
+    Math.min(0.15, -camber * PATCH_SHIFT_PER_DEGREE * inward)
+  );
+  const patchW = TREAD_W * PATCH_W;
+  const patchH = VIEW_H * PATCH_H;
+  const patchX = TREAD_X + TREAD_W * (0.5 + shift) - patchW / 2;
+  const patchY = VIEW_H / 2 - patchH / 2;
 
   return (
     <svg
-      viewBox={`0 0 ${VIEW} ${VIEW}`}
+      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       preserveAspectRatio="xMidYMid meet"
       className="h-full w-full overflow-visible"
       aria-hidden="true"
     >
       <defs>
-        <linearGradient
-          id={`tread${id}`}
-          gradientUnits="userSpaceOnUse"
-          x1={Math.min(treadFrom, treadTo)}
-          x2={Math.max(treadFrom, treadTo)}
-          y1="0"
-          y2="0"
-        >
-          <stop offset="0.1" stopColor={colors[0]} />
-          <stop offset="0.5" stopColor={colors[1]} />
-          <stop offset="0.9" stopColor={colors[2]} />
+        <linearGradient id={`sidewall${id}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#0c0d0f" />
+          <stop offset="0.06" stopColor="#34363c" />
+          <stop offset="0.12" stopColor="#141518" />
+          <stop offset="0.88" stopColor="#141518" />
+          <stop offset="0.94" stopColor="#34363c" />
+          <stop offset="1" stopColor="#0c0d0f" />
         </linearGradient>
+        <linearGradient id={`tread${id}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset={ZONE_CENTRES[0]} stopColor={colors[0]} />
+          <stop offset={ZONE_CENTRES[1]} stopColor={colors[1]} />
+          <stop offset={ZONE_CENTRES[2]} stopColor={colors[2]} />
+        </linearGradient>
+        {/* The tread curves away at both ends of the tire. */}
         <linearGradient id={`round${id}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="rgb(0 0 0 / 0.45)" />
-          <stop offset="0.3" stopColor="rgb(0 0 0 / 0)" />
-          <stop offset="0.45" stopColor="rgb(255 255 255 / 0.18)" />
-          <stop offset="0.6" stopColor="rgb(0 0 0 / 0)" />
-          <stop offset="1" stopColor="rgb(0 0 0 / 0.5)" />
+          <stop offset="0" stopColor="rgb(0 0 0 / 0.55)" />
+          <stop offset="0.22" stopColor="rgb(0 0 0 / 0)" />
+          <stop offset="0.78" stopColor="rgb(0 0 0 / 0)" />
+          <stop offset="1" stopColor="rgb(0 0 0 / 0.55)" />
         </linearGradient>
-        <radialGradient id={`rubber${id}`} cx="0.45" cy="0.4" r="0.7">
-          <stop offset="0" stopColor="#3a3c42" />
-          <stop offset="1" stopColor="#0d0e10" />
-        </radialGradient>
-        <linearGradient id={`rim${id}`} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#eef1f4" />
-          <stop offset="1" stopColor="#7c838c" />
+        {/* Shoulders round off into the sidewalls; a soft highlight left of centre. */}
+        <linearGradient id={`shoulder${id}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="rgb(0 0 0 / 0.45)" />
+          <stop offset="0.12" stopColor="rgb(0 0 0 / 0)" />
+          <stop offset="0.35" stopColor="rgb(255 255 255 / 0.16)" />
+          <stop offset="0.5" stopColor="rgb(255 255 255 / 0)" />
+          <stop offset="0.88" stopColor="rgb(0 0 0 / 0)" />
+          <stop offset="1" stopColor="rgb(0 0 0 / 0.45)" />
         </linearGradient>
       </defs>
 
-      <g transform={`rotate(${lean} ${pivotX} ${PIVOT_Y})`}>
-        <path d={tread} fill={`url(#tread${id})`} />
-        <path d={tread} fill={`url(#round${id})`} />
-        {DIVIDERS.map((p) => (
-          <path
-            key={p}
-            d={`M ${x(XO + p * W)} ${CY - R} A ${RX} ${R} 0 0 ${sweep} ${x(XO + p * W)} ${CY + R}`}
-            fill="none"
-            stroke="rgb(255 255 255 / 0.6)"
-            strokeWidth="0.8"
-          />
-        ))}
-        {ZONES.map((q, zone) => (
-          <text
-            key={q}
-            x={x(XO + RX + q * W)}
-            y={CY}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={zone === 1 ? 14 : 8.5}
-            fontWeight={900}
-            fill="rgb(0 0 0 / 0.85)"
-          >
-            {/* Mirrored, the first zone position is the car's right edge. */}
-            {labels[side === 'left' ? zone : 2 - zone]}
-          </text>
-        ))}
+      <ellipse
+        cx={VIEW_W / 2}
+        cy={VIEW_H - 2}
+        rx={VIEW_W * 0.46}
+        ry={4}
+        fill="rgb(0 0 0 / 0.45)"
+      />
+      <rect
+        x={0}
+        y={1}
+        width={VIEW_W}
+        height={VIEW_H - 2}
+        rx={18}
+        fill={`url(#sidewall${id})`}
+      />
+      <rect
+        x={TREAD_X}
+        y={3}
+        width={TREAD_W}
+        height={VIEW_H - 6}
+        rx={13}
+        fill={`url(#tread${id})`}
+      />
+      <rect
+        x={TREAD_X}
+        y={3}
+        width={TREAD_W}
+        height={VIEW_H - 6}
+        rx={13}
+        fill={`url(#shoulder${id})`}
+      />
+      <rect
+        x={TREAD_X}
+        y={3}
+        width={TREAD_W}
+        height={VIEW_H - 6}
+        rx={13}
+        fill={`url(#round${id})`}
+      />
 
-        {/* Outboard sidewall with the rim. */}
-        <ellipse cx={x(XO)} cy={CY} rx={RX} ry={R} fill={`url(#rubber${id})`} />
-        <ellipse
-          cx={x(XO)}
-          cy={CY}
-          rx={RX * 0.72}
-          ry={R * 0.72}
-          fill={`url(#rim${id})`}
-          stroke="#2b2e33"
-          strokeWidth="0.8"
+      {/* Contact patch: where the tread meets the road. */}
+      <rect
+        x={patchX}
+        y={patchY}
+        width={patchW}
+        height={patchH}
+        rx={8}
+        fill="rgb(255 255 255 / 0.14)"
+        stroke="rgb(255 255 255 / 0.85)"
+        strokeWidth={1.2}
+        strokeDasharray="4 3"
+      />
+
+      {DIVIDERS.map((p) => (
+        <line
+          key={p}
+          x1={TREAD_X + p * TREAD_W}
+          x2={TREAD_X + p * TREAD_W}
+          y1={5}
+          y2={VIEW_H - 5}
+          stroke="rgb(255 255 255 / 0.55)"
+          strokeWidth={0.8}
         />
-        {spokes.map(([sx, sy], i) => (
-          <line
-            key={i}
-            x1={x(XO)}
-            y1={CY}
-            x2={sx}
-            y2={sy}
-            stroke="#3b4048"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-          />
-        ))}
-        <ellipse
-          cx={x(XO)}
-          cy={CY}
-          rx={RX * 0.18}
-          ry={R * 0.16}
-          fill="#1b1d21"
-        />
-      </g>
-      {/* Camber: a short upright reference above the wheel and a red arc
-          from it out to the wheel's lean. */}
-      {Math.abs(lean) > 0.5 && (
-        <g fill="none" strokeLinecap="round">
-          <line
-            x1={pivotX}
-            y1={PIVOT_Y - arcRadius - 5}
-            x2={pivotX}
-            y2={PIVOT_Y - arcRadius + 7}
-            stroke="rgb(255 255 255 / 0.8)"
-            strokeWidth="1.2"
-          />
-          <path
-            d={`M ${pivotX} ${PIVOT_Y - arcRadius} A ${arcRadius} ${arcRadius} 0 0 ${lean > 0 ? 1 : 0} ${pivotX + arcRadius * Math.sin(arcEnd)} ${PIVOT_Y - arcRadius * Math.cos(arcEnd)}`}
-            stroke="#ef2b2b"
-            strokeWidth="3"
-          />
-        </g>
-      )}
+      ))}
+
+      {ZONE_CENTRES.map((q, zone) => (
+        <text
+          key={q}
+          x={TREAD_X + q * TREAD_W}
+          y={VIEW_H / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={zone === 1 ? 19 : 10.5}
+          fontWeight={900}
+          fill="rgb(0 0 0 / 0.88)"
+        >
+          {labels[zone]}
+        </text>
+      ))}
     </svg>
   );
 });
-Wheel.displayName = 'Wheel';
+TireTop.displayName = 'TireTop';
 
 interface TireCardProps {
   /** Which side of the car the tire is on; camber leans toward the car. */
@@ -257,8 +246,8 @@ interface TireCardProps {
 const TireCard = memo(
   ({ side, tire, fahrenheit, optimal, range, limit }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
-    // Zones run left to right across the car (iRacing's L, M, R), which on
-    // the screen is the same order for every wheel.
+    // Zones run left to right across the car (iRacing's L, M, R), the same
+    // order on the screen for every tire.
     const colors = [0, 1, 2].map((zone) => {
       const celsius = tire?.temp[zone];
       return celsius === undefined
@@ -272,31 +261,29 @@ const TireCard = memo(
       // The estimate mark only on the centre: the shoulders are too narrow.
       return `${tire?.tempEstimated && zone === 1 ? '~' : ''}${value}`;
     });
+    // Negative camber leans the top toward the car, turning the inner
+    // shoulder toward the viewer.
+    const tilt = (side === 'left' ? 1 : -1) * (tire?.camber ?? 0) * CAMBER_TILT;
+
     return (
-      <div className="relative flex min-h-0 flex-col gap-1">
-        <div
-          className={`absolute top-0 z-10 flex flex-col text-[0.7em] font-black leading-tight tabular-nums text-[#3cf03c] [text-shadow:0_1px_2px_rgb(0_0_0/0.7)] ${
-            side === 'left' ? 'left-0 items-start' : 'right-0 items-end'
-          }`}
-        >
-          {tire?.camber !== undefined && (
-            <span>{degreesMinutes(tire.camber)}</span>
-          )}
-          {tire?.toe !== undefined && <span>{tire.toe}</span>}
+      <div className="flex min-h-0 flex-col gap-1.5">
+        <div className="flex min-h-0 flex-1 justify-center">
+          <div
+            className="aspect-[5/7] h-full max-w-full"
+            style={{ transform: `perspective(280px) rotateY(${tilt}deg)` }}
+          >
+            <TireTop side={side} tire={tire} colors={colors} labels={labels} />
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1">
-          <Wheel side={side} tire={tire} colors={colors} labels={labels} />
-        </div>
-
-        <div className="grid flex-none grid-cols-3 gap-1 px-[12%]">
+        <div className="grid flex-none grid-cols-3 gap-[4%] px-[9%]">
           {[0, 1, 2].map((zone) => {
             const wear = tire?.wear[zone];
             return (
               <div key={zone} className="flex flex-col items-center gap-0.5">
-                <div className="h-1 w-full overflow-hidden rounded-full bg-black/30">
+                <div className="h-1.5 w-full -skew-x-12 overflow-hidden bg-white/15">
                   <div
-                    className="h-full rounded-full"
+                    className="h-full"
                     style={{
                       width: `${wear ?? 0}%`,
                       backgroundColor:
@@ -304,7 +291,7 @@ const TireCard = memo(
                     }}
                   />
                 </div>
-                <span className="text-[0.65em] font-bold tabular-nums leading-none text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+                <span className="text-[0.7em] font-bold tabular-nums leading-none text-white">
                   {wear === undefined
                     ? '--'
                     : `${tire?.estimated ? '~' : ''}${Math.round(wear)}%`}
@@ -314,7 +301,7 @@ const TireCard = memo(
           })}
         </div>
         {left !== undefined && (
-          <div className="flex-none text-center text-[0.7em] font-black tabular-nums text-[#3cf03c] [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
+          <div className="flex-none text-center text-xs font-black italic tabular-nums text-amber-300">
             ~{left} LAPS
           </div>
         )}
@@ -361,13 +348,13 @@ export const Tires = memo(() => {
 
   return (
     <div
-      className="flex h-full w-full flex-col gap-2 rounded-xl bg-[linear-gradient(180deg,rgb(150_155_161/var(--bg-opacity)),rgb(108_113_119/var(--bg-opacity)))] p-2 text-white"
+      className="flex h-full w-full flex-col gap-2 rounded-2xl bg-[linear-gradient(180deg,rgb(0_0_0/var(--bg-opacity)),rgb(6_44_48/var(--bg-opacity)))] p-2 text-white"
       style={{
         ['--bg-opacity' as string]: `${settings.background.opacity}%`,
       }}
     >
       {/* Direction of travel is up: front tires on top, left tires on the left. */}
-      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-x-3 gap-y-2">
+      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-x-3 gap-y-3">
         {card('lf')}
         {card('rf')}
         {card('lr')}
@@ -375,7 +362,7 @@ export const Tires = memo(() => {
       </div>
 
       {driving && !tempEstimated && (
-        <div className="flex-none text-center text-[0.65em] font-bold uppercase text-white/70">
+        <div className="flex-none text-center text-[0.65em] font-bold italic uppercase text-white/50">
           Temps from last stop
         </div>
       )}
