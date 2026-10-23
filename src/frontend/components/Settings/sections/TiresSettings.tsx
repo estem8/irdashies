@@ -105,6 +105,7 @@ export const TiresSettings = () => {
               <SettingProp path="units" />
               <SettingProp path="tempCold" />
               <SettingProp path="tempHot" />
+              <SettingProp path="wearLimit" />
             </SettingsSection>
 
             <SettingsSection title="Visibility">

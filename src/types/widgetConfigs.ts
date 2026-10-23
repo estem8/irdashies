@@ -269,6 +269,8 @@ export interface TiresConfig {
   tempCold: number;
   /** Carcass temperature, in Celsius, above which a zone reads as hot. */
   tempHot: number;
+  /** Tread remaining, in percent, that the laps-left forecast counts down to. */
+  wearLimit: number;
   showOnlyWhenOnTrack: boolean;
   sessionVisibility: SessionVisibilitySettings;
 }

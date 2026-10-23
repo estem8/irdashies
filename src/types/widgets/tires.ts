@@ -16,6 +16,7 @@ export default defineWidgetManifest({
     units: 'auto',
     tempCold: 70,
     tempHot: 110,
+    wearLimit: 30,
     showOnlyWhenOnTrack: false,
     sessionVisibility: {
       race: true,
@@ -60,6 +61,15 @@ export default defineWidgetManifest({
       max: 200,
       step: 1,
       units: '°C',
+    },
+    wearLimit: {
+      type: 'number',
+      label: 'Wear Limit',
+      description: 'Laps left counts down to this much tread remaining',
+      min: 0,
+      max: 90,
+      step: 1,
+      units: '%',
     },
     showOnlyWhenOnTrack: {
       type: 'boolean',

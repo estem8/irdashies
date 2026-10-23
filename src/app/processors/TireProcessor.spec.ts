@@ -35,6 +35,7 @@ describe('TireProcessor', () => {
     expect(p.snapshot().corners.lf).toEqual({
       temp: [88, 88, 88],
       wear: [92.3, 92.3, 92.3],
+      estimated: false,
     });
     expect(Object.keys(p.snapshot().corners)).toHaveLength(4);
   });
@@ -79,5 +80,63 @@ describe('TireProcessor', () => {
     p.onFrame(frame(tires(81, 0.95), 3));
     expect(info).toHaveBeenCalledTimes(3);
     expect(info.mock.calls[2][0]).toContain('WEAR-CHANGED');
+  });
+
+  describe('stint tracking', () => {
+    // Laps are driven by LapCompleted; a refresh is a change in the readings.
+    const at = (
+      wear: number,
+      lap: number,
+      extra: Record<string, number | boolean> = {}
+    ) => frame({ ...tires(80, wear), LapCompleted: lap, ...extra });
+
+    it('does not estimate during the first stint', () => {
+      const p = new TireProcessor();
+      p.onFrame(at(1, 0));
+      p.onFrame(at(1, 5));
+      const lf = p.snapshot().corners.lf;
+      expect(lf?.estimated).toBe(false);
+      expect(lf?.wear).toEqual([100, 100, 100]);
+    });
+
+    it('derives a rate at the first refresh and resets after a tire change', () => {
+      const p = new TireProcessor();
+      p.onFrame(at(1, 0));
+      // Stop after 10 laps: 10 points lost. All four tires are changed.
+      p.onFrame(at(0.9, 10, { PitSvFlags: 0xf }));
+      const lf = p.snapshot().corners.lf;
+      expect(lf?.wearPerLap).toEqual([1, 1, 1]);
+      expect(lf?.wear).toEqual([100, 100, 100]);
+      expect(lf?.estimated).toBe(true);
+      // Four laps into the next stint the estimate follows the rate.
+      p.onFrame(at(0.9, 14, { PitSvFlags: 0xf }));
+      expect(p.snapshot().corners.lf?.wear).toEqual([96, 96, 96]);
+    });
+
+    it('keeps the reading as the baseline when a tire is not changed', () => {
+      const p = new TireProcessor();
+      p.onFrame(at(1, 0));
+      p.onFrame(at(0.9, 10, { PitSvFlags: 0x1 }));
+      // LF was changed; RF was not and carries on from its reading.
+      expect(p.snapshot().corners.lf?.wear).toEqual([100, 100, 100]);
+      expect(p.snapshot().corners.rf?.wear).toEqual([90, 90, 90]);
+    });
+
+    it('ignores a stint too short to give a rate', () => {
+      const p = new TireProcessor();
+      p.onFrame(at(1, 0));
+      p.onFrame(at(0.99, 1, { PitSvFlags: 0xf }));
+      expect(p.snapshot().corners.lf?.estimated).toBe(false);
+    });
+
+    it('starts over after a lifecycle reset', () => {
+      const p = new TireProcessor();
+      p.onFrame(at(1, 0));
+      p.onFrame(at(0.9, 10, { PitSvFlags: 0xf }));
+      p.onLifecycle({ type: 'sessionNumChange' });
+      p.onFrame(at(0.8, 3));
+      expect(p.snapshot().corners.lf?.estimated).toBe(false);
+      expect(p.snapshot().corners.lf?.wear).toEqual([80, 80, 80]);
+    });
   });
 });

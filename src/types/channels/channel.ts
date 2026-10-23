@@ -275,11 +275,19 @@ export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
 export interface TireCornerSnapshot {
   /** Carcass temperature in degrees Celsius. */
   temp: readonly [number, number, number];
-  /** Tread remaining as a percentage, 100 = new. */
+  /**
+   * Tread remaining as a percentage, 100 = new. iRacing only refreshes the
+   * reading at a pit stop, so once a stint's wear rate is known this is an
+   * estimate for the current lap rather than the last reading.
+   */
   wear: readonly [number, number, number];
+  /** True when `wear` is extrapolated from the last stint, not read. */
+  estimated: boolean;
+  /** Percentage points lost per lap, from the last stint on these tires. */
+  wearPerLap?: readonly [number, number, number];
 }
 
-/** Tire temperatures and wear as telemetry reports them, with no estimation. */
+/** Tire temperatures as last reported and wear estimated between pit stops. */
 export interface TireSnapshot {
   corners: Partial<Record<TireCorner, TireCornerSnapshot>>;
   version: number;
