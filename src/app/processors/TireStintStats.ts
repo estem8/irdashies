@@ -169,6 +169,8 @@ export class TireTraceSecond {
   private slip = { abs: 0, tc: 0, spin: 0, lock: 0, under: 0, over: 0 };
   /** Largest car slip angle in the second, degrees. */
   private betaMax = 0;
+  /** Driven-wheel slip beyond traction times throttle, summed (m). */
+  private spinWork = 0;
   /** Steering torque and lateral acceleration summed where cornering. */
   private torque = 0;
   private latForTorque = 0;
@@ -177,7 +179,8 @@ export class TireTraceSecond {
     get: Getter,
     rawDt: number,
     onPitRoad: boolean,
-    slip: TireSlipSnapshot
+    slip: TireSlipSnapshot,
+    driveSlip: number
   ): void {
     if (!(rawDt > 0)) return;
     const dt = Math.min(rawDt, MAX_DT);
@@ -209,6 +212,7 @@ export class TireTraceSecond {
       this.torque += Math.abs(get('SteeringWheelTorque') ?? 0) * dt;
       this.latForTorque += lat * dt;
     }
+    this.spinWork += driveSlip * dt;
     this.slip.abs += (slip.abs ? 1 : 0) * dt;
     this.slip.tc += slip.tc * dt;
     this.slip.spin += slip.spin * dt;
@@ -237,6 +241,7 @@ export class TireTraceSecond {
       `pit=${f(this.pit, 1)}`,
       ...Object.entries(this.slip).map(([k, v]) => `${k}=${f(v, 2)}`),
       `beta=${f(this.betaMax, 1)}`,
+      `spinWork=${f(this.spinWork, 1)}`,
       `tqLat=${this.latForTorque > 0 ? f(this.torque / this.latForTorque, 3) : '-'}`,
     ].join(' ');
     this.dt = 0;
@@ -252,6 +257,7 @@ export class TireTraceSecond {
     this.pit = 0;
     this.slip = { abs: 0, tc: 0, spin: 0, lock: 0, under: 0, over: 0 };
     this.betaMax = 0;
+    this.spinWork = 0;
     this.torque = 0;
     this.latForTorque = 0;
     return line;

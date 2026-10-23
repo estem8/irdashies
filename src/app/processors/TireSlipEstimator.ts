@@ -8,6 +8,12 @@ const MIN_SPEED = 15;
 const LEARN = 0.02;
 /** RPM settles for a moment after a shift; slip is not judged meanwhile. */
 const SHIFT_SETTLE_S = 0.4;
+/**
+ * Driven-wheel slip speed, m/s, that is ordinary traction (a few percent at
+ * racing speed), and the extra for full scale.
+ */
+const SPIN_GRACE = 1.5;
+const SPIN_FULL = 6;
 /** Car slip angle, in degrees, that is ordinary cornering; full scale above it. */
 const SLIP_ANGLE_GRACE = 4;
 const SLIP_ANGLE_FULL = 6;
@@ -31,8 +37,9 @@ const tenths = (v: number) => Math.round(clamp01(v) * 10) / 10;
  * There is no per-wheel speed and no traction-control flag in the telemetry, so
  * each signal is inferred and can be wrong:
  * - ABS is the sim's own flag, for the whole car.
- * - Driven (rear) wheel spin and lock compare engine speed with road speed.
- *   Each gear's ratio is learned while cruising, when the tires grip.
+ * - Driven (rear) wheel spin and lock compare engine speed with road speed,
+ *   as a slip speed in m/s, so a burnout standing still counts. Each gear's
+ *   ratio is learned while cruising, when the tires grip.
  * - TC is the gap between the throttle pedal and the throttle that reaches
  *   the engine.
  * - Understeer is the steering going light: steering torque per unit of
@@ -47,6 +54,11 @@ export class TireSlipEstimator {
   private torquePerLoad: number | undefined;
   private lastGear: number | undefined;
   private sinceShift = 0;
+  /**
+   * How much faster the driven wheels' surface moves than the car, m/s, as of
+   * the last update; 0 when the gear ratio is not known yet.
+   */
+  slipSpeed = 0;
 
   update(
     get: Getter,
@@ -62,8 +74,6 @@ export class TireSlipEstimator {
     } else {
       this.sinceShift += Math.max(0, dt);
     }
-    if (speed < MIN_SPEED || onPitRoad) return { ...NO_SLIP, abs };
-
     const rpm = get('RPM') ?? 0;
     const throttle = get('Throttle') ?? 0;
     const throttleRaw = get('ThrottleRaw') ?? throttle;
@@ -72,6 +82,10 @@ export class TireSlipEstimator {
     const lon = get('LongAccel') ?? 0;
     const lat = Math.abs(get('LatAccel') ?? 0);
 
+    // Driven wheels: engine speed through the gear gives the wheels' surface
+    // speed; the gap to road speed is how fast the tires slide. It works
+    // standing still too, which a burnout needs.
+    this.slipSpeed = 0;
     let spin = 0;
     let lock = 0;
     if (
@@ -80,22 +94,31 @@ export class TireSlipEstimator {
       rpm > 0 &&
       this.sinceShift > SHIFT_SETTLE_S
     ) {
-      const ratio = rpm / speed;
       const known = this.gearRatio.get(gear);
       const cruising =
-        Math.abs(lon) < 2 && throttle > 0.05 && throttle < 0.6 && brake < 0.05;
+        speed >= MIN_SPEED &&
+        Math.abs(lon) < 2 &&
+        throttle > 0.05 &&
+        throttle < 0.6 &&
+        brake < 0.05;
       if (cruising) {
+        const ratio = rpm / speed;
         this.gearRatio.set(
           gear,
           known === undefined ? ratio : known + (ratio - known) * LEARN
         );
       }
       if (known !== undefined) {
-        const slip = ratio / known - 1;
-        // A few percent is ordinary tire slip; full scale at 15%.
-        if (throttle > 0.3) spin = (slip - 0.03) / 0.12;
-        if (brake > 0.2) lock = (-slip - 0.05) / 0.15;
+        this.slipSpeed = rpm / known - speed;
+        if (throttle > 0.2) spin = (this.slipSpeed - SPIN_GRACE) / SPIN_FULL;
+        if (brake > 0.2 && speed >= MIN_SPEED) {
+          lock = (-this.slipSpeed - SPIN_GRACE) / SPIN_FULL;
+        }
       }
+    }
+
+    if (speed < MIN_SPEED || onPitRoad) {
+      return { ...NO_SLIP, abs, spin: tenths(spin) };
     }
 
     const tc = throttleRaw > 0.2 ? (throttleRaw - throttle - 0.05) / 0.3 : 0;
@@ -114,7 +137,7 @@ export class TireSlipEstimator {
             : this.torquePerLoad + (perLoad - this.torquePerLoad) * LEARN;
       }
       if (this.torquePerLoad !== undefined && lat >= 8) {
-        under = (0.75 - perLoad / this.torquePerLoad) / 0.35;
+        under = (0.6 - perLoad / this.torquePerLoad) / 0.3;
       }
     }
 
@@ -141,5 +164,6 @@ export class TireSlipEstimator {
     this.torquePerLoad = undefined;
     this.lastGear = undefined;
     this.sinceShift = 0;
+    this.slipSpeed = 0;
   }
 }

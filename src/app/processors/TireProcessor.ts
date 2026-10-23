@@ -71,6 +71,8 @@ interface CornerState {
   rate?: Zones;
   /** Mean temperature at the previous reading, for the fit log. */
   lastMean: number;
+  /** Fitted new at the last stop. */
+  fresh?: boolean;
   /** How each zone differs from the tire's mean temperature at the last reading. */
   tempOffset: Zones;
 }
@@ -84,7 +86,9 @@ const offsets = (z: Zones): Zones => {
  * Fresh tires start well over ambient: the cockpit dash read 34 C on leaving
  * the pits with 21 C air. Fitted stops tolerate it (3.4 C RMS against 2.2 C).
  */
-const FRESH_TIRE_OFFSET = 13;
+const DEFAULT_FRESH_OFFSET = 13;
+/** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
+const SPIN_HEAT_GRACE = 1.5;
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
 
@@ -238,6 +242,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private lastTime: number | undefined;
   private slip = NO_SLIP;
   /**
+   * How far over ambient fresh tires start. It differs by car (34 C on one,
+   * 27 C on another at the same air), so it is learned from tires that were
+   * fitted fresh and barely worked before their next reading.
+   */
+  private freshOffset = DEFAULT_FRESH_OFFSET;
+  /**
    * A stop in progress: the tire changes already applied at the reading, and
    * whether the service has been seen running.
    */
@@ -374,11 +384,15 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       flag(frame, 'OnPitRoad') === 1,
       flag(frame, 'BrakeABSactive') === 1
     );
+    const driveSlip =
+      Math.max(0, this.slipEstimator.slipSpeed - SPIN_HEAT_GRACE) *
+      (number(frame, 'Throttle') ?? 0);
     this.trace.add(
       (key) => number(frame, key),
       dt,
       flag(frame, 'OnPitRoad') === 1,
-      this.slip
+      this.slip,
+      driveSlip
     );
     if (this.trace.seconds >= 1) {
       const temps = CORNERS.map(
@@ -393,6 +407,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       speed: number(frame, 'Speed') ?? 0,
       lateral: Math.abs(number(frame, 'LatAccel') ?? 0),
       steer: number(frame, 'SteeringWheelAngle') ?? 0,
+      driveSlip,
       ambient: this.ambient(frame),
     });
   }
@@ -436,7 +451,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       if (!st || (late & TIRE_CHANGE_BIT[corner]) === 0) continue;
       st.baseline = [100, 100, 100];
       st.baselineLap = lap;
-      this.thermal.set(corner, ambient + FRESH_TIRE_OFFSET);
+      st.fresh = true;
+      this.thermal.set(corner, ambient + this.freshOffset);
     }
     if (late) logger.info(`[TireDiag] SERVICE late tire change bits=${late}`);
     this.service = undefined;
@@ -478,7 +494,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         // model from it. A cold reading is kept as it is.
         this.thermal.set(
           corner,
-          Math.min(mean(temp), this.ambient(frame) + FRESH_TIRE_OFFSET)
+          Math.min(mean(temp), this.ambient(frame) + this.freshOffset)
         );
         continue;
       }
@@ -500,6 +516,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           ` ${this.stats.corner(corner.toUpperCase())}`
       );
       st.lastMean = mean(temp);
+      if (st.fresh && this.thermal.heated(corner) < 2) {
+        const offset = Math.min(30, Math.max(0, mean(temp) - ambient));
+        this.freshOffset = (this.freshOffset + offset) / 2;
+        logger.info(
+          `[TireDiag] FRESH ${corner} start=${mean(temp).toFixed(1)} offset=${this.freshOffset.toFixed(1)}`
+        );
+      }
       const predicted = this.thermal.mean(corner);
       this.thermal.calibrate(corner, mean(temp));
       logger.info(
@@ -511,9 +534,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       // ambient and carry no zone spread yet.
       this.thermal.set(
         corner,
-        changed ? ambient + FRESH_TIRE_OFFSET : mean(temp)
+        changed ? ambient + this.freshOffset : mean(temp)
       );
       st.tempOffset = offsets(temp);
+      st.fresh = changed;
     }
 
     if (!seeding) {
@@ -593,6 +617,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.slip = NO_SLIP;
     this.service = undefined;
     this.pendingBits = 0;
+    this.freshOffset = DEFAULT_FRESH_OFFSET;
     this.stintNumber = 0;
     this.lastTime = undefined;
   }

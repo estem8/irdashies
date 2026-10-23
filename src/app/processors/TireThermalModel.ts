@@ -11,6 +11,12 @@ const COOL_SPEED = 50;
 const FULL_LATERAL = 20;
 /** Share of the lateral load moved from the inside to the outside tires. */
 const LOAD_TRANSFER = 0.3;
+/**
+ * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
+ * throttle), degrees per second. Rough: set from a burnout that took the rear
+ * tires from 27 to 51 C in a few seconds; refine from the trace log.
+ */
+const SPIN_HEAT = 0.25;
 /** Rear tires took a little more heat than the front in the recorded stints. */
 const REAR_HEAT = 1.1;
 /** Steering angle, in radians, under which a corner is treated as straight. */
@@ -31,6 +37,11 @@ export interface ThermalInput {
   lateral: number;
   /** Radians; positive is a left turn, so the right tires are outside. */
   steer: number;
+  /**
+   * Driven (rear) wheel slip beyond ordinary traction, m/s, times throttle:
+   * wheelspin heats the rear tires even with the car standing still.
+   */
+  driveSlip: number;
   ambient: number;
 }
 
@@ -63,6 +74,11 @@ export class TireThermalModel {
 
   gainOf(corner: TireCorner): number {
     return this.gain[corner];
+  }
+
+  /** How much of the tire's temperature came from heating since it was set. */
+  heated(corner: TireCorner): number {
+    return (this.temp[corner] ?? 0) - (this.passive[corner] ?? 0);
   }
 
   has(corner: TireCorner): boolean {
@@ -102,7 +118,7 @@ export class TireThermalModel {
     );
   }
 
-  step({ dt, speed, lateral, steer, ambient }: ThermalInput): void {
+  step({ dt, speed, lateral, steer, driveSlip, ambient }: ThermalInput): void {
     if (!(dt > 0)) return;
     const h = Math.min(dt, MAX_DT);
     const latN = Math.min(1, lateral / FULL_LATERAL);
@@ -119,7 +135,9 @@ export class TireThermalModel {
       const sideFactor = 1 + outside * LOAD_TRANSFER * latN;
       const load = lateral * 0.25 * sideFactor;
       const heat =
-        HEAT * this.gain[corner] * speed * load * (front ? 1 : REAR_HEAT);
+        this.gain[corner] *
+        (HEAT * speed * load * (front ? 1 : REAR_HEAT) +
+          (front ? 0 : SPIN_HEAT * driveSlip));
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);

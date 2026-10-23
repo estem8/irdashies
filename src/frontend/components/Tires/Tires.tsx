@@ -334,8 +334,7 @@ const TireCard = memo(
       const celsius = tire?.temp[zone];
       if (celsius === undefined) return '--';
       const value = Math.round(fahrenheit ? (celsius * 9) / 5 + 32 : celsius);
-      // The estimate mark only on the centre: the shoulders are too narrow.
-      return `${tire?.tempEstimated && zone === 1 ? '~' : ''}${value}`;
+      return `${value}`;
     });
     // Negative camber leans the top toward the car, turning the inner
     // shoulder toward the viewer.
@@ -385,9 +384,7 @@ const TireCard = memo(
                   />
                 </div>
                 <span className="text-[0.7em] font-bold tabular-nums leading-none text-white">
-                  {wear === undefined
-                    ? '--'
-                    : `${tire?.estimated ? '~' : ''}${Math.round(wear)}%`}
+                  {wear === undefined ? '--' : `${Math.round(wear)}%`}
                 </span>
               </div>
             );
@@ -395,7 +392,7 @@ const TireCard = memo(
         </div>
         {left !== undefined && (
           <div className="flex-none text-center text-xs font-black italic tabular-nums text-amber-300">
-            ~{left} LAPS
+            {left} LAPS
           </div>
         )}
       </div>
