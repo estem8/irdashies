@@ -298,6 +298,12 @@ export interface TireCornerSnapshot {
   wearPerLap?: readonly [number, number, number];
   /** Tire pressure in kPa: the hot reading if the sim sends one, else the cold set pressure. */
   pressure?: number;
+  /**
+   * Vertical load on this tire as its suspension travel relative to standing
+   * still, in steps of 0.05: 1 at rest, above 1 under cornering, braking or
+   * downforce, below 1 when unloaded. Absent until the car has stood still.
+   */
+  load?: number;
   /** True when `pressure` is a live hot reading, not the cold set pressure. */
   pressureHot?: boolean;
 }

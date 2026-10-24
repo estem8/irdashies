@@ -255,6 +255,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private stintNumber = 0;
   private lastTime: number | undefined;
   private slip = NO_SLIP;
+  /** Suspension travel (m) of each corner when last standing still. */
+  private rest: Partial<Record<TireCorner, number>> = {};
   /**
    * How far over ambient fresh tires start. It differs by car (34 C on one,
    * 27 C on another at the same air), so it is learned from tires that were
@@ -353,6 +355,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           toeDeg: this.alignment.toeDeg[corner],
         }),
         ...pressureOf(frame, corner),
+        ...this.loadOf(frame, corner),
         tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
@@ -384,6 +387,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       /tire|tyre|temp|press|wear|^(LF|RF|LR|RR)/i.test(k)
     );
     tyreLog(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
+  }
+
+  /** Load on a tire from its suspension travel against its standstill travel. */
+  private loadOf(frame: Telemetry, corner: TireCorner) {
+    const prefix = CORNERS.find(([c]) => c === corner)?.[1];
+    const travel = number(frame, `${prefix}shockDefl`);
+    if (travel === undefined || travel <= 0) return {};
+    if ((number(frame, 'Speed') ?? 0) < 0.5) this.rest[corner] = travel;
+    const rest = this.rest[corner];
+    return rest ? { load: Math.round((travel / rest) * 20) / 20 } : {};
   }
 
   /** Feeds the thermal model one frame of driving. */
@@ -594,6 +607,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         a.toe !== b.toe ||
         a.toeDeg !== b.toeDeg ||
         a.pressure !== b.pressure ||
+        a.load !== b.load ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()
@@ -647,6 +661,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.lastWear = '';
     this.lastReading = '';
     this.state = {};
+    this.rest = {};
     this.thermal.reset();
     this.stats.reset();
     this.slipEstimator.reset();

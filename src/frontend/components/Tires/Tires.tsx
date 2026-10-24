@@ -25,6 +25,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     estimated: true,
     tempEstimated: true,
     pressure: 152.0,
+    load: 0.9,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rf: {
@@ -36,6 +37,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     estimated: true,
     tempEstimated: true,
     pressure: 153.0,
+    load: 1.5,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   lr: {
@@ -47,6 +49,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     estimated: true,
     tempEstimated: true,
     pressure: 148.0,
+    load: 0.8,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rr: {
@@ -58,6 +61,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     estimated: true,
     tempEstimated: true,
     pressure: 149.0,
+    load: 1.3,
     wearPerLap: [0.4, 0.4, 0.4],
   },
 };
@@ -104,6 +108,9 @@ const DIVIDERS = [0.2, 0.8];
 const PATCH_W = 0.6;
 const PATCH_H = 0.37;
 const PATCH_SHIFT_PER_DEGREE = 0.04;
+/** Load (1 = standing) that draws the smallest and the largest patch. */
+const LOAD_MIN = 0.6;
+const LOAD_MAX = 1.8;
 
 interface SlipEvent {
   label: string;
@@ -156,8 +163,17 @@ const TireTop = memo(({ side, tire, colors, labels, event }: TireTopProps) => {
     -0.15,
     Math.min(0.15, -camber * PATCH_SHIFT_PER_DEGREE * inward)
   );
-  const patchW = TREAD_W * PATCH_W;
-  const patchH = VIEW_H * PATCH_H;
+  // 0 when unloaded to 1 under the heaviest load; a middling patch if unknown.
+  const load =
+    tire?.load === undefined
+      ? 0.5
+      : Math.max(
+          0,
+          Math.min(1, (tire.load - LOAD_MIN) / (LOAD_MAX - LOAD_MIN))
+        );
+  const scale = 0.8 + 0.4 * load;
+  const patchW = TREAD_W * PATCH_W * scale;
+  const patchH = VIEW_H * PATCH_H * scale;
   const patchX = TREAD_X + TREAD_W * (0.5 + shift) - patchW / 2;
   const patchY = VIEW_H / 2 - patchH / 2;
 
@@ -274,9 +290,10 @@ const TireTop = memo(({ side, tire, colors, labels, event }: TireTopProps) => {
         height={patchH}
         rx={8}
         fill={event ? event.color : 'rgb(255 255 255)'}
-        fillOpacity={event ? 0.3 + 0.5 * event.level : 0.14}
-        stroke={event ? event.color : 'rgb(255 255 255 / 0.85)'}
+        fillOpacity={event ? 0.3 + 0.5 * event.level : 0.05 + 0.4 * load}
+        stroke={event ? event.color : 'rgb(255 255 255)'}
         strokeWidth={event ? 1.6 : 1.2}
+        strokeOpacity={event ? 1 : 0.4 + 0.6 * load}
         strokeDasharray={event ? undefined : '4 3'}
       />
       {event && (
