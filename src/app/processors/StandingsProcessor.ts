@@ -106,12 +106,7 @@ export class StandingsProcessor implements TelemetryProcessor<StandingsSnapshot>
       this.latest.sessionUniqueId !== 0 &&
       sessionUniqueId !== 0 &&
       sessionUniqueId !== this.latest.sessionUniqueId;
-    if (
-      lifecycleChanged ||
-      timeWentBackwards ||
-      raceRestarted ||
-      identityChanged
-    )
+    if (lifecycleChanged || timeWentBackwards || raceRestarted || identityChanged)
       this.reset(sessionNum);
     this.lastUpdateTime = sessionTime;
 

@@ -7,6 +7,7 @@ import type {
   TireSnapshot,
 } from '@irdashies/types';
 import { startTyreRun, tyreLog } from '../tyreLog';
+import { DEFAULT_PROFILE, profileFor, type TireProfile } from './tireProfiles';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
 import { NO_SLIP, TireSlipEstimator } from './TireSlipEstimator';
@@ -82,17 +83,6 @@ const offsets = (z: Zones): Zones => {
   const m = peak(z);
   return [z[0] - m, z[1] - m, z[2] - m];
 };
-/**
- * Fresh tires start well over ambient: the cockpit dash read 34 C on leaving
- * the pits with 21 C air, a GT3 read 35 C with 18.6 C air.
- */
-const DEFAULT_FRESH_OFFSET = 16;
-/**
- * A new session whose first reading is still the last one's (uneven zones)
- * put the dash at 43 C with 18.6 C air and 44 C with 23.5 C air, so the start
- * does not follow ambient. shortcut: two sessions of one car, recheck on other cars.
- */
-const STALE_START_TEMP = 44;
 /** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
 const SPIN_HEAT_GRACE = 1.5;
 /** Used for ambient when the frame carries neither air nor track temperature. */
@@ -250,6 +240,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private keysLogged = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly thermal = new TireThermalModel();
+  /** What is known about this car's tires; the default until a session names the car. */
+  private profile: TireProfile = DEFAULT_PROFILE;
+  private profileCar: string | undefined;
   private readonly stats = new TireStintStats();
   private readonly trace = new TireTraceSecond();
   private readonly slipEstimator = new TireSlipEstimator();
@@ -263,7 +256,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
    * 27 C on another at the same air), so it is learned from tires that were
    * fitted fresh and barely worked before their next reading.
    */
-  private freshOffset = DEFAULT_FRESH_OFFSET;
+  private freshOffset = DEFAULT_PROFILE.freshOffset;
   /**
    * A stop in progress: the tire changes already applied at the reading, and
    * whether the service has been seen running.
@@ -293,6 +286,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
     startTyreRun(`${label} ${sub}`, label);
+    if (car?.CarPath !== this.profileCar) {
+      this.profileCar = car?.CarPath;
+      this.profile = profileFor(car?.CarPath);
+      this.thermal.configure(this.profile.thermal);
+      this.freshOffset = this.profile.freshOffset;
+    }
     tyreLog(
       `[TireDiag] RUN car=${car?.CarScreenName} path=${car?.CarPath} track=${track}` +
         ` subsession=${sub} airTemp=${session.WeekendInfo?.TrackAirTemp}`
@@ -403,7 +402,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const prefix = CORNERS.find(([c]) => c === corner)?.[1];
     const travel = number(frame, `${prefix}shockDefl`);
     if (travel === undefined || travel <= 0) return {};
-    if ((number(frame, 'Speed') ?? 0) < 0.5) this.rest[corner] = travel;
+    const speed = number(frame, 'Speed');
+    if (speed !== undefined && speed < 0.5) this.rest[corner] = travel;
     const rest = this.rest[corner];
     return rest ? { load: Math.round((travel / rest) * 20) / 20 } : {};
   }
@@ -547,7 +547,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           this.freshOffset = Math.min(30, Math.max(0, peak(temp) - ambient));
           this.thermal.set(corner, peak(temp));
         } else {
-          this.thermal.set(corner, Math.min(peak(temp), STALE_START_TEMP));
+          this.thermal.set(
+            corner,
+            Math.min(peak(temp), this.profile.staleStart)
+          );
         }
         continue;
       }
@@ -678,7 +681,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.service = undefined;
     this.pendingBits = 0;
     this.orderedBits = 0;
-    this.freshOffset = DEFAULT_FRESH_OFFSET;
+    this.freshOffset = this.profile.freshOffset;
+    this.lastDiagTime = -Infinity;
     this.stintNumber = 0;
     this.lastTime = undefined;
   }

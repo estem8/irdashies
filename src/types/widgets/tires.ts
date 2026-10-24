@@ -14,6 +14,7 @@ export default defineWidgetManifest({
   config: {
     background: { opacity: 80 },
     units: 'auto',
+    pressureUnits: 'auto',
     tempOptimal: 79,
     tempRange: 25,
     wearLimit: 30,
@@ -42,6 +43,15 @@ export default defineWidgetManifest({
         { value: 'auto', label: 'Auto' },
         { value: 'Metric', label: 'Celsius' },
         { value: 'Imperial', label: 'Fahrenheit' },
+      ],
+    },
+    pressureUnits: {
+      type: 'enum',
+      label: 'Pressure Units',
+      options: [
+        { value: 'auto', label: 'Auto' },
+        { value: 'kPa', label: 'kPa' },
+        { value: 'psi', label: 'psi' },
       ],
     },
     tempOptimal: {

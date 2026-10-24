@@ -20,16 +20,23 @@ let current: { dir: string; key: string; out: WriteStream } | undefined;
 export const startTyreRun = (key: string, label: string): void => {
   if (current?.key === key) return;
   current?.out.end();
+  current = undefined;
   const root = app.isPackaged
     ? path.dirname(app.getPath('exe'))
     : path.join(app.getPath('userData'), 'logs');
   const dir = path.join(root, 'tyre', `${stamp(new Date())} ${safe(label)}`);
-  mkdirSync(dir, { recursive: true });
-  current = {
-    dir,
-    key,
-    out: createWriteStream(path.join(dir, 'tyre.log'), { flags: 'a' }),
-  };
+  try {
+    mkdirSync(dir, { recursive: true });
+    const out = createWriteStream(path.join(dir, 'tyre.log'), { flags: 'a' });
+    // A read-only install folder or a full disk must not take the app down.
+    out.on('error', () => {
+      if (current?.out === out) current = undefined;
+    });
+    current = { dir, key, out };
+  } catch {
+    // No folder, no log: tyreLog and the screen capture then do nothing.
+    current = undefined;
+  }
 };
 
 export const tyreRunDir = (): string | undefined => current?.dir;
