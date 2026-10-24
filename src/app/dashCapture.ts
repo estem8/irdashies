@@ -5,7 +5,7 @@ import logger from './logger';
 import type { SessionLifecycle } from './sessionLifecycle';
 import { stamp, tyreRunDir } from './tyreLog';
 
-const INTERVAL_MS = 15_000;
+const INTERVAL_MS = 2_000;
 
 /** Lower right of the screen, where the cars show tire temperatures (fractions of the display). */
 const CROP = { x: 0.45, y: 0.65, width: 0.35, height: 0.35 };
@@ -37,7 +37,7 @@ const capture = async (dir: string): Promise<void> => {
 
 /**
  * TEMPORARY: while the player is driving, saves a screenshot of the primary
- * display's dash area every 15 s into the current tyre run folder, named by
+ * display's dash area every 2 s into the current tyre run folder, named by
  * local time.
  *
  * iRacing publishes tire temperatures only at pit stops, so the cockpit dash
