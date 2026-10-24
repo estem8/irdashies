@@ -76,9 +76,10 @@ interface CornerState {
   tempOffset: Zones;
 }
 
-const mean = (z: Zones) => (z[0] + z[1] + z[2]) / 3;
+/** The cockpit dash shows the hottest zone of each tire, not the mean. */
+const peak = (z: Zones) => Math.max(z[0], z[1], z[2]);
 const offsets = (z: Zones): Zones => {
-  const m = mean(z);
+  const m = peak(z);
   return [z[0] - m, z[1] - m, z[2] - m];
 };
 /**
@@ -526,7 +527,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           baseline: reading,
           baselineLap: lap,
           tempOffset: offsets(temp),
-          lastMean: mean(temp),
+          lastMean: peak(temp),
         };
         // The reading frozen in the sim describes the tires last taken off, so a
         // hot one at start-up is stale: assume fresh tires instead of heating a
@@ -535,10 +536,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         // at 18.6 C air, matching the dash), so an even reading is the real
         // start and also teaches the offset used for later fresh sets.
         if (Math.max(...temp) - Math.min(...temp) < 1) {
-          this.freshOffset = Math.min(30, Math.max(0, mean(temp) - ambient));
-          this.thermal.set(corner, mean(temp));
+          this.freshOffset = Math.min(30, Math.max(0, peak(temp) - ambient));
+          this.thermal.set(corner, peak(temp));
         } else {
-          this.thermal.set(corner, Math.min(mean(temp), STALE_START_TEMP));
+          this.thermal.set(corner, Math.min(peak(temp), STALE_START_TEMP));
         }
         continue;
       }
@@ -554,31 +555,31 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.baselineLap = lap;
       tyreLog(
         `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
-          ` end=${mean(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
+          ` end=${peak(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
           ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
           ` camber=${this.alignment.camber[corner] ?? 'n/a'}` +
           ` ${this.stats.corner(corner.toUpperCase())}`
       );
-      st.lastMean = mean(temp);
+      st.lastMean = peak(temp);
       if (st.fresh && this.thermal.heated(corner) < 2) {
-        const offset = Math.min(30, Math.max(0, mean(temp) - ambient));
+        const offset = Math.min(30, Math.max(0, peak(temp) - ambient));
         this.freshOffset = (this.freshOffset + offset) / 2;
         tyreLog(
-          `[TireDiag] FRESH ${corner} start=${mean(temp).toFixed(1)} offset=${this.freshOffset.toFixed(1)}`
+          `[TireDiag] FRESH ${corner} start=${peak(temp).toFixed(1)} offset=${this.freshOffset.toFixed(1)}`
         );
       }
       const predicted = this.thermal.mean(corner);
-      this.thermal.calibrate(corner, mean(temp));
+      this.thermal.calibrate(corner, peak(temp));
       tyreLog(
         `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
-          ` measured=${mean(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
+          ` measured=${peak(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
           ` gain=${this.thermal.gainOf(corner).toFixed(2)} changed=${changed ? 1 : 0}`
       );
       // The reading describes the tires being removed. Fresh ones start at
       // ambient and carry no zone spread yet.
       this.thermal.set(
         corner,
-        changed ? ambient + this.freshOffset : mean(temp)
+        changed ? ambient + this.freshOffset : peak(temp)
       );
       st.tempOffset = offsets(temp);
       st.fresh = changed;

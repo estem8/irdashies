@@ -2,30 +2,32 @@ import type { TireCorner } from '@irdashies/types';
 
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
-// Fitted second by second against cockpit-dash readings: 96 readings (about
-// 380 tire values) over four fresh-tire stints of a Ferrari 296 GT3 at the
-// Nordschleife and Mugello, 2.4 C RMS. The dash does not cool a standing car.
+// Fitted second by second against cockpit-dash readings of the hottest zone of
+// each tire: about 250 readings over a Ferrari 296 GT3 at the Nordschleife,
+// Mugello and a skidpad, 2.9 C RMS. The dash does not cool a standing car.
 
 /** Heat per unit of speed times lateral load, degrees per second. */
-const HEAT = 0.00274;
+const HEAT = 0.00146;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.0011;
-const COOL_SPEED = 11;
+const COOL = 0.00023;
+const COOL_SPEED = 2.3;
+/** Share of the cornering heat the rear tires get compared with the fronts. */
+const REAR_SHARE = 0.69;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.353;
+const LOAD_TRANSFER = 0.743;
 /** Heat on the front tires per unit of speed times braking deceleration. */
-const BRAKE_HEAT = 0.000675;
+const BRAKE_HEAT = 0.00009;
 /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
-const AERO_HEAT = 0.00051;
+const AERO_HEAT = 0.00151;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
  * throttle) and per degree the tire is over ambient, degrees per second. The
  * dash showed rear tires heating faster the hotter they were: four burnouts
  * against a wall (35 to 50-90 C), fit to 1.5 C RMS.
  */
-const SPIN_HEAT = 0.00227;
+const SPIN_HEAT = 0.00216;
 /** Degrees over ambient beyond which wheelspin heats no faster. */
-const SPIN_HEAT_CAP = 67;
+const SPIN_HEAT_CAP = 66;
 /** Share of that heat when the car is held still (against a wall), m/s limit below. */
 const SPIN_STILL = 0.26;
 const STILL_SPEED = 2;
@@ -151,7 +153,7 @@ export class TireThermalModel {
       const load = cornering * 0.25 * (1 + outside * LOAD_TRANSFER);
       const heat =
         this.gain[corner] *
-        (HEAT * speed * load +
+        (HEAT * speed * load * (front ? 1 : REAR_SHARE) +
           (front
             ? BRAKE_HEAT * speed * braking
             : SPIN_HEAT *
