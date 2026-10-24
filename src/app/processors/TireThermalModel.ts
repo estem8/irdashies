@@ -2,21 +2,21 @@ import type { TireCorner } from '@irdashies/types';
 
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
-// Fitted second by second against cockpit-dash readings: 14 readings of two
-// fresh-tire stints in a Ferrari 296 GT3 on the Nordschleife (56 tire values,
-// 1.1 C RMS).
+// Fitted second by second against cockpit-dash readings: 96 readings (about
+// 380 tire values) over four fresh-tire stints of a Ferrari 296 GT3 at the
+// Nordschleife and Mugello, 2.4 C RMS. The dash does not cool a standing car.
 
 /** Heat per unit of speed times lateral load, degrees per second. */
-const HEAT = 0.00352;
+const HEAT = 0.00274;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.00288;
-const COOL_SPEED = 36;
+const COOL = 0.0011;
+const COOL_SPEED = 11;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.385;
+const LOAD_TRANSFER = 0.353;
 /** Heat on the front tires per unit of speed times braking deceleration. */
-const BRAKE_HEAT = 0.00074;
+const BRAKE_HEAT = 0.000675;
 /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
-const AERO_HEAT = 0.0003;
+const AERO_HEAT = 0.00051;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
  * throttle), degrees per second. Set from a burnout that took the rear tires

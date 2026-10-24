@@ -86,6 +86,12 @@ const offsets = (z: Zones): Zones => {
  * the pits with 21 C air, a GT3 read 35 C with 18.6 C air.
  */
 const DEFAULT_FRESH_OFFSET = 16;
+/**
+ * A new session whose first reading is still the last one's (uneven zones)
+ * put the dash at 43 C with 18.6 C air and 44 C with 23.5 C air, so the start
+ * does not follow ambient. shortcut: two sessions of one car, recheck on other cars.
+ */
+const STALE_START_TEMP = 44;
 /** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
 const SPIN_HEAT_GRACE = 1.5;
 /** Used for ambient when the frame carries neither air nor track temperature. */
@@ -509,10 +515,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           this.freshOffset = Math.min(30, Math.max(0, mean(temp) - ambient));
           this.thermal.set(corner, mean(temp));
         } else {
-          this.thermal.set(
-            corner,
-            Math.min(mean(temp), ambient + this.freshOffset)
-          );
+          this.thermal.set(corner, Math.min(mean(temp), STALE_START_TEMP));
         }
         continue;
       }
