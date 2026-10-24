@@ -271,6 +271,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private service: { applied: number; running: boolean } | undefined;
   /** Tire changes requested at any time while the service ran. */
   private pendingBits = 0;
+  /**
+   * The tire changes ordered as the car last left the track for the pits. The
+   * sim clears the flags in the box, and in some cars the service never reports
+   * as active, so by the time the reading refreshes only this still tells.
+   */
+  private orderedBits = 0;
   private alignment: Alignment = { camber: {}, toe: {}, toeDeg: {}, seen: [] };
   private loggedSetup = '';
   private readonly latest: TireSnapshot = {
@@ -316,6 +322,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const lap = this.lapsNow(frame);
     const ambient = this.ambient(frame);
     this.stepThermal(frame);
+    if (flag(frame, 'OnPitRoad') !== 1)
+      this.orderedBits = requestedChanges(frame);
     this.trackStints(frame, readings, temps, lap);
     this.followService(frame, lap);
 
@@ -514,7 +522,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (key === '{}' || key === this.lastReading) return;
     const seeding = this.lastReading === '';
     this.lastReading = key;
-    const flags = requestedChanges(frame);
+    const flags = requestedChanges(frame) || this.orderedBits;
     const ambient = this.ambient(frame);
 
     for (const [corner] of CORNERS) {
@@ -669,6 +677,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.slip = NO_SLIP;
     this.service = undefined;
     this.pendingBits = 0;
+    this.orderedBits = 0;
     this.freshOffset = DEFAULT_FRESH_OFFSET;
     this.stintNumber = 0;
     this.lastTime = undefined;

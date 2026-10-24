@@ -379,38 +379,39 @@ const TireCard = memo(
         Math.min(MAX_TOE_TURN, (tire?.toeDeg ?? 0) * TOE_TURN)
       );
 
+    const pressureLabel = pressure !== undefined && (
+      <div className="flex w-[2.6em] flex-none flex-col items-center leading-tight">
+        <span className="text-[0.9em] font-bold tabular-nums text-white">
+          {pressure}
+        </span>
+        <span className="text-center text-[0.55em] font-bold uppercase text-white/50">
+          {pressureUnit}
+          {tire?.pressureHot ? '' : ' cold'}
+        </span>
+      </div>
+    );
+
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
-        <div className="relative flex min-h-0 flex-1 justify-center">
-          {pressure !== undefined && (
+        <div className="flex min-h-0 flex-1 items-center gap-1">
+          {side === 'left' && pressureLabel}
+          <div className="flex h-full min-h-0 min-w-0 flex-1 justify-center">
             <div
-              className={`absolute top-1/2 flex -translate-y-1/2 flex-col items-center leading-tight ${
-                side === 'left' ? 'left-0' : 'right-0'
-              }`}
+              className="aspect-[5/7] h-full max-w-full"
+              style={{
+                transform: `perspective(280px) rotateZ(${toeTurn}deg) rotateY(${tilt}deg)`,
+              }}
             >
-              <span className="text-[0.9em] font-bold tabular-nums text-white">
-                {pressure}
-              </span>
-              <span className="text-[0.55em] font-bold uppercase text-white/50">
-                {pressureUnit}
-                {tire?.pressureHot ? '' : ' cold'}
-              </span>
+              <TireTop
+                side={side}
+                tire={tire}
+                colors={colors}
+                labels={labels}
+                event={event}
+              />
             </div>
-          )}
-          <div
-            className="aspect-[5/7] h-full max-w-full"
-            style={{
-              transform: `perspective(280px) rotateZ(${toeTurn}deg) rotateY(${tilt}deg)`,
-            }}
-          >
-            <TireTop
-              side={side}
-              tire={tire}
-              colors={colors}
-              labels={labels}
-              event={event}
-            />
           </div>
+          {side === 'right' && pressureLabel}
         </div>
 
         <div className="grid flex-none grid-cols-3 gap-[4%] px-[9%]">
