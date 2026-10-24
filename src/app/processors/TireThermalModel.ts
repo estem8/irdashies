@@ -3,22 +3,25 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 // Fitted second by second against cockpit-dash readings of the hottest zone of
-// each tire: about 300 readings over a Ferrari 296 GT3 at the Nordschleife,
-// Mugello and a skidpad, 2.8 C RMS. The dash does not cool a standing car.
+// each tire: about 400 readings over a Ferrari 296 GT3 at the Nordschleife,
+// Mugello and a skidpad, 2.4 C RMS. The dash does not cool a standing car.
 
 /** Heat per unit of speed times lateral load, degrees per second. */
-const HEAT = 0.00171;
+const HEAT = 0.001676;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.000536;
+const COOL = 0.000578;
 const COOL_SPEED = 5.4;
 /** Share of the cornering heat the rear tires get compared with the fronts. */
-const REAR_SHARE = 0.69;
+const REAR_SHARE = 0.678;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.657;
+const LOAD_TRANSFER = 0.694;
 /** Heat on the front tires per unit of speed times braking deceleration. */
 const BRAKE_HEAT = 0.00048;
+/** Extra heating of cold tires, up to this share, below COLD_BELOW degrees. */
+const COLD_BOOST = 0.243;
+const COLD_BELOW = 60;
 /** Heat on the driven rear tires per unit of speed times acceleration. */
-const ACCEL_HEAT = 0.00062;
+const ACCEL_HEAT = 0.000645;
 /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
 const AERO_HEAT = 0.00112;
 /**
@@ -154,17 +157,20 @@ export class TireThermalModel {
       const outside =
         cornering < STRAIGHT_LATERAL ? 0 : lateral > 0 === right ? 1 : -1;
       const load = cornering * 0.25 * (1 + outside * LOAD_TRANSFER);
-      const heat =
-        this.gain[corner] *
-        (HEAT * speed * load * (front ? 1 : REAR_SHARE) +
-          (front
-            ? BRAKE_HEAT * speed * braking
-            : ACCEL_HEAT * speed * accel +
-              SPIN_HEAT *
-                Math.min(Math.max(0, t - ambient), SPIN_HEAT_CAP) *
-                (speed < STILL_SPEED ? SPIN_STILL : 1) *
-                driveSlip) +
-          aero);
+      const driving =
+        HEAT * speed * load * (front ? 1 : REAR_SHARE) +
+        (front ? BRAKE_HEAT * speed * braking : ACCEL_HEAT * speed * accel) +
+        aero;
+      const spin = front
+        ? 0
+        : SPIN_HEAT *
+          Math.min(Math.max(0, t - ambient), SPIN_HEAT_CAP) *
+          (speed < STILL_SPEED ? SPIN_STILL : 1) *
+          driveSlip;
+      // Cold rubber heats faster, fading out as the tire reaches COLD_BELOW.
+      const cold =
+        1 + COLD_BOOST * Math.min(1, Math.max(0, (COLD_BELOW - t) / 25));
+      const heat = this.gain[corner] * (driving * cold + spin);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);
