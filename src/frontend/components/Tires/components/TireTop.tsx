@@ -1,5 +1,6 @@
 import { memo, useId } from 'react';
-import type { TireCornerSnapshot } from '@irdashies/types';
+import type { TireCornerSnapshot, TireForce } from '@irdashies/types';
+import { ContactPatch } from './ContactPatch';
 import type { SlipEvent } from '../slipEvent';
 
 // Tire seen from above, in viewBox units: dark sidewalls bulge out either side
@@ -24,10 +25,22 @@ export interface TireTopProps {
   colors: readonly string[];
   labels: readonly string[];
   event?: SlipEvent;
+  g?: TireForce;
+  trail?: readonly TireForce[];
+  patchStyle: 'oval' | 'gmeter';
 }
 
 export const TireTop = memo(
-  ({ side, tire, colors, labels, event }: TireTopProps) => {
+  ({
+    side,
+    tire,
+    colors,
+    labels,
+    event,
+    g,
+    trail,
+    patchStyle,
+  }: TireTopProps) => {
     const id = useId().replace(/[^a-zA-Z0-9]/g, '');
     const camber = tire?.camber ?? 0;
     // Negative camber leans the top inward and loads the inner shoulder, so the
@@ -142,49 +155,17 @@ export const TireTop = memo(
           />
         ))}
 
-        {/* Contact patch: where the tread meets the road. It lights up while
-          the tire slides there (ABS, spin, lock, traction control). */}
-        {event && (
-          <rect
-            x={patchX - 2}
-            y={patchY - 2}
-            width={patchW + 4}
-            height={patchH + 4}
-            rx={10}
-            fill="none"
-            stroke={event.color}
-            strokeOpacity={0.35 + 0.4 * event.level}
-            strokeWidth={4}
-          />
-        )}
-        <rect
-          x={patchX}
-          y={patchY}
-          width={patchW}
-          height={patchH}
-          rx={8}
-          fill={event ? event.color : 'rgb(255 255 255)'}
-          fillOpacity={event ? 0.3 + 0.5 * event.level : 0.05 + 0.4 * load}
-          stroke={event ? event.color : 'rgb(255 255 255)'}
-          strokeWidth={event ? 1.6 : 1.2}
-          strokeOpacity={event ? 1 : 0.4 + 0.6 * load}
-          strokeDasharray={event ? undefined : '4 3'}
+        <ContactPatch
+          cx={patchX + patchW / 2}
+          cy={patchY + patchH / 2}
+          rx={patchW / 2}
+          ry={patchH / 2}
+          load={load}
+          event={event}
+          g={g}
+          trail={trail}
+          style={patchStyle}
         />
-        {event && (
-          <text
-            x={patchX + patchW / 2}
-            y={patchY + patchH - 4.5}
-            textAnchor="middle"
-            fontSize={9}
-            fontWeight={900}
-            fill="#fff"
-            stroke="rgb(0 0 0 / 0.7)"
-            strokeWidth={2}
-            paintOrder="stroke"
-          >
-            {event.label}
-          </text>
-        )}
 
         {ZONE_CENTRES.map((q, zone) => (
           <text

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { TireCornerSnapshot } from '@irdashies/types';
+import type { TireCornerSnapshot, TireForce } from '@irdashies/types';
 import type { SlipEvent } from '../slipEvent';
 import { formatPressure, lapsLeft, tempColor, wearClass } from '../tireStyle';
 import { PressureLabel } from './PressureLabel';
@@ -21,6 +21,9 @@ interface TireCardProps {
   range: number;
   limit: number;
   event?: SlipEvent;
+  g?: TireForce;
+  trail?: readonly TireForce[];
+  patchStyle: 'oval' | 'gmeter';
 }
 
 export const TireCard = memo(
@@ -33,6 +36,9 @@ export const TireCard = memo(
     range,
     limit,
     event,
+    g,
+    trail,
+    patchStyle,
   }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
     // Zones run left to right across the car (iRacing's L, M, R), the same
@@ -87,6 +93,9 @@ export const TireCard = memo(
                 colors={colors}
                 labels={labels}
                 event={event}
+                g={g}
+                trail={trail}
+                patchStyle={patchStyle}
               />
             </div>
           </div>
