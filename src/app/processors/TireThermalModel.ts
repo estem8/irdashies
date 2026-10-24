@@ -19,11 +19,16 @@ const BRAKE_HEAT = 0.000675;
 const AERO_HEAT = 0.00051;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
- * throttle), degrees per second. Set from a burnout that took the rear tires
- * from 27 to 51 C in a few seconds; ordinary racing has too little wheelspin
- * for the fitted session to pin it down.
+ * throttle) and per degree the tire is over ambient, degrees per second. The
+ * dash showed rear tires heating faster the hotter they were: three burnouts
+ * against a wall, 40 to 50-80 C, fit to 1.1 C RMS.
  */
-const SPIN_HEAT = 0.25;
+const SPIN_HEAT = 0.0022;
+/** Degrees over ambient beyond which wheelspin heats no faster. */
+const SPIN_HEAT_CAP = 60;
+/** Share of that heat when the car is held still (against a wall), m/s limit below. */
+const SPIN_STILL = 0.4;
+const STILL_SPEED = 2;
 /** Lateral acceleration, m/s2, under which the car is treated as going straight. */
 const STRAIGHT_LATERAL = 1;
 /**
@@ -147,7 +152,12 @@ export class TireThermalModel {
       const heat =
         this.gain[corner] *
         (HEAT * speed * load +
-          (front ? BRAKE_HEAT * speed * braking : SPIN_HEAT * driveSlip) +
+          (front
+            ? BRAKE_HEAT * speed * braking
+            : SPIN_HEAT *
+              Math.min(Math.max(0, t - ambient), SPIN_HEAT_CAP) *
+              (speed < STILL_SPEED ? SPIN_STILL : 1) *
+              driveSlip) +
           aero);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;

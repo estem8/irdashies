@@ -174,6 +174,9 @@ export class TireTraceSecond {
   /** Steering torque and lateral acceleration summed where cornering. */
   private torque = 0;
   private latForTorque = 0;
+  private rpm = 0;
+  private throttle = 0;
+  private gear = 0;
 
   add(
     get: Getter,
@@ -213,6 +216,9 @@ export class TireTraceSecond {
       this.latForTorque += lat * dt;
     }
     this.spinWork += driveSlip * dt;
+    this.rpm += (get('RPM') ?? 0) * dt;
+    this.throttle += (get('Throttle') ?? 0) * dt;
+    this.gear = get('Gear') ?? 0;
     this.slip.abs += (slip.abs ? 1 : 0) * dt;
     this.slip.tc += slip.tc * dt;
     this.slip.spin += slip.spin * dt;
@@ -243,6 +249,9 @@ export class TireTraceSecond {
       `beta=${f(this.betaMax, 1)}`,
       `spinWork=${f(this.spinWork, 1)}`,
       `tqLat=${this.latForTorque > 0 ? f(this.torque / this.latForTorque, 3) : '-'}`,
+      `rpm=${f(this.rpm, 0)}`,
+      `thr=${f(this.throttle, 2)}`,
+      `gear=${this.gear}`,
     ].join(' ');
     this.dt = 0;
     this.v = 0;
@@ -260,6 +269,8 @@ export class TireTraceSecond {
     this.spinWork = 0;
     this.torque = 0;
     this.latForTorque = 0;
+    this.rpm = 0;
+    this.throttle = 0;
     return line;
   }
 }
