@@ -21,9 +21,6 @@ const CORNERS: readonly [TireCorner, string][] = [
 
 /** How often the diagnostic line is written while nothing changes. */
 const DIAG_INTERVAL_S = 2;
-/** m/s: faster than any pit-lane crawl, so a stop to zero in one tick is a reset. */
-const RESET_SPEED = 10;
-
 const number = (frame: Telemetry, key: string): number | undefined => {
   const value = (frame as Record<string, { value?: unknown[] } | undefined>)[
     key
@@ -86,9 +83,9 @@ const offsets = (z: Zones): Zones => {
 };
 /**
  * Fresh tires start well over ambient: the cockpit dash read 34 C on leaving
- * the pits with 21 C air. Fitted stops tolerate it (3.4 C RMS against 2.2 C).
+ * the pits with 21 C air, a GT3 read 35 C with 18.6 C air.
  */
-const DEFAULT_FRESH_OFFSET = 13;
+const DEFAULT_FRESH_OFFSET = 16;
 /** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
 const SPIN_HEAT_GRACE = 1.5;
 /** Used for ambient when the frame carries neither air nor track temperature. */
@@ -235,9 +232,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private lastWear = '';
   private lastReading = '';
   private keysLogged = false;
-  private lastSpeed = 0;
-  /** The next first reading seeds fresh tires (after a test-drive reset). */
-  private freshStart = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly thermal = new TireThermalModel();
   private readonly stats = new TireStintStats();
@@ -301,7 +295,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       }
     }
 
-    this.detectReset(frame);
     const lap = this.lapsNow(frame);
     const ambient = this.ambient(frame);
     this.stepThermal(frame);
@@ -501,7 +494,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const st = this.state[corner];
       if (seeding || !st) {
         this.state[corner] = {
-          baseline: this.freshStart ? [100, 100, 100] : reading,
+          baseline: reading,
           baselineLap: lap,
           tempOffset: offsets(temp),
           lastMean: mean(temp),
@@ -509,10 +502,18 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         // The reading frozen in the sim describes the tires last taken off, so a
         // hot one at start-up is stale: assume fresh tires instead of heating a
         // model from it. A cold reading is kept as it is.
-        this.thermal.set(
-          corner,
-          Math.min(mean(temp), this.ambient(frame) + this.freshOffset)
-        );
+        // The sim reports fresh tires as one value across the zones (34.6 C
+        // at 18.6 C air, matching the dash), so an even reading is the real
+        // start and also teaches the offset used for later fresh sets.
+        if (Math.max(...temp) - Math.min(...temp) < 1) {
+          this.freshOffset = Math.min(30, Math.max(0, mean(temp) - ambient));
+          this.thermal.set(corner, mean(temp));
+        } else {
+          this.thermal.set(
+            corner,
+            Math.min(mean(temp), ambient + this.freshOffset)
+          );
+        }
         continue;
       }
       const stintLaps = lap - st.baselineLap;
@@ -557,7 +558,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.fresh = changed;
     }
 
-    this.freshStart = false;
     if (!seeding) {
       this.service = { applied: flags, running: false };
       tyreLog(
@@ -642,25 +642,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.freshOffset = DEFAULT_FRESH_OFFSET;
     this.stintNumber = 0;
     this.lastTime = undefined;
-    this.lastSpeed = 0;
-  }
-
-  /**
-   * Test drive: a reset puts the car back in its stall at once, on fresh
-   * tires. A stop never goes from speed to zero in one tick, so that jump
-   * into the stall is the reset; everything is re-seeded with fresh tires.
-   */
-  private detectReset(frame: Telemetry): void {
-    const speed = number(frame, 'Speed') ?? 0;
-    const jumped =
-      this.lastSpeed > RESET_SPEED &&
-      speed < 1 &&
-      flag(frame, 'PlayerCarInPitStall') === 1;
-    this.lastSpeed = speed;
-    if (!jumped) return;
-    tyreLog('[TireDiag] RESET car put back in the stall, fresh tires assumed');
-    this.clear();
-    this.freshStart = true;
   }
 
   snapshot(): TireSnapshot {
