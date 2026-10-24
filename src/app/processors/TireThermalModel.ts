@@ -3,22 +3,22 @@ import type { TireCorner } from '@irdashies/types';
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 // Fitted second by second against cockpit-dash readings of the hottest zone of
-// each tire: about 250 readings over a Ferrari 296 GT3 at the Nordschleife,
-// Mugello and a skidpad, 2.9 C RMS. The dash does not cool a standing car.
+// each tire: about 300 readings over a Ferrari 296 GT3 at the Nordschleife,
+// Mugello and a skidpad, 3.3 C RMS. The dash does not cool a standing car.
 
 /** Heat per unit of speed times lateral load, degrees per second. */
-const HEAT = 0.00146;
+const HEAT = 0.00158;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.00023;
-const COOL_SPEED = 2.3;
+const COOL = 0.00014;
+const COOL_SPEED = 1.4;
 /** Share of the cornering heat the rear tires get compared with the fronts. */
-const REAR_SHARE = 0.69;
+const REAR_SHARE = 0.735;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.743;
+const LOAD_TRANSFER = 0.67;
 /** Heat on the front tires per unit of speed times braking deceleration. */
-const BRAKE_HEAT = 0.00009;
+const BRAKE_HEAT = 0.000054;
 /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
-const AERO_HEAT = 0.00151;
+const AERO_HEAT = 0.0013;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
  * throttle) and per degree the tire is over ambient, degrees per second. The
@@ -29,7 +29,7 @@ const SPIN_HEAT = 0.00216;
 /** Degrees over ambient beyond which wheelspin heats no faster. */
 const SPIN_HEAT_CAP = 66;
 /** Share of that heat when the car is held still (against a wall), m/s limit below. */
-const SPIN_STILL = 0.26;
+const SPIN_STILL = 0.25;
 const STILL_SPEED = 2;
 /** Lateral acceleration, m/s2, under which the car is treated as going straight. */
 const STRAIGHT_LATERAL = 1;
