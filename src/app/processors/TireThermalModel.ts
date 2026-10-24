@@ -20,14 +20,14 @@ const AERO_HEAT = 0.00051;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
  * throttle) and per degree the tire is over ambient, degrees per second. The
- * dash showed rear tires heating faster the hotter they were: three burnouts
- * against a wall, 40 to 50-80 C, fit to 1.1 C RMS.
+ * dash showed rear tires heating faster the hotter they were: four burnouts
+ * against a wall (35 to 50-90 C), fit to 1.5 C RMS.
  */
-const SPIN_HEAT = 0.0022;
+const SPIN_HEAT = 0.00227;
 /** Degrees over ambient beyond which wheelspin heats no faster. */
-const SPIN_HEAT_CAP = 60;
+const SPIN_HEAT_CAP = 67;
 /** Share of that heat when the car is held still (against a wall), m/s limit below. */
-const SPIN_STILL = 0.4;
+const SPIN_STILL = 0.26;
 const STILL_SPEED = 2;
 /** Lateral acceleration, m/s2, under which the car is treated as going straight. */
 const STRAIGHT_LATERAL = 1;
