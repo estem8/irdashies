@@ -203,6 +203,15 @@ const requestedChanges = (frame: Telemetry): number => {
   return bits;
 };
 
+/** The hot pressure if the sim sends one (kPa), else the cold set pressure. */
+const pressureOf = (frame: Telemetry, corner: TireCorner) => {
+  const prefix = CORNERS.find(([c]) => c === corner)?.[1];
+  const hot = number(frame, `${prefix}pressure`);
+  if (hot !== undefined && hot > 0) return { pressure: hot, pressureHot: true };
+  const cold = number(frame, `${prefix}coldPressure`);
+  return cold !== undefined && cold > 0 ? { pressure: cold } : {};
+};
+
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
@@ -343,6 +352,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ...(this.alignment.toeDeg[corner] !== undefined && {
           toeDeg: this.alignment.toeDeg[corner],
         }),
+        ...pressureOf(frame, corner),
         tempEstimated: modelled !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
@@ -583,6 +593,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         a.camber !== b.camber ||
         a.toe !== b.toe ||
         a.toeDeg !== b.toeDeg ||
+        a.pressure !== b.pressure ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||
         (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()
@@ -595,7 +606,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const raw = CORNERS.map(([, prefix]) => {
       const t = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}tempC${z}`));
       const w = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`));
-      return `${prefix} t=${t.join('/')} w=${w.join('/')}`;
+      return `${prefix} t=${t.join('/')} w=${w.join('/')} p=${number(frame, `${prefix}coldPressure`)}/${number(frame, `${prefix}pressure`)}`;
     });
     const wearKey = CORNERS.flatMap(([, prefix]) =>
       ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`))

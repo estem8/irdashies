@@ -296,6 +296,10 @@ export interface TireCornerSnapshot {
   estimated: boolean;
   /** Percentage points lost per lap, from the last stint on these tires. */
   wearPerLap?: readonly [number, number, number];
+  /** Tire pressure in kPa: the hot reading if the sim sends one, else the cold set pressure. */
+  pressure?: number;
+  /** True when `pressure` is a live hot reading, not the cold set pressure. */
+  pressureHot?: boolean;
 }
 
 /**

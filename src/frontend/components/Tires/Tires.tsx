@@ -24,6 +24,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wear: [88.4, 91.2, 89.9],
     estimated: true,
     tempEstimated: true,
+    pressure: 152.0,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rf: {
@@ -34,6 +35,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wear: [82.1, 85.5, 80.3],
     estimated: true,
     tempEstimated: true,
+    pressure: 153.0,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   lr: {
@@ -44,6 +46,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wear: [90.7, 92.0, 91.1],
     estimated: true,
     tempEstimated: true,
+    pressure: 148.0,
     wearPerLap: [0.4, 0.4, 0.4],
   },
   rr: {
@@ -54,6 +57,7 @@ const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wear: [85.2, 87.8, 84.6],
     estimated: true,
     tempEstimated: true,
+    pressure: 149.0,
     wearPerLap: [0.4, 0.4, 0.4],
   },
 };
@@ -65,11 +69,13 @@ const tempColor = (celsius: number, optimal: number, range: number) => {
   return `hsl(${Math.round(hue)} 100% 50%)`;
 };
 
-/** Green while there is plenty of tread, red at the limit and below. */
-const wearColor = (percent: number, limit: number) => {
-  const ratio = Math.min(1, Math.max(0, (percent - limit) / (100 - limit)));
-  return `hsl(${Math.round(130 * ratio)} 100% 50%)`;
-};
+/** White while there is plenty of tread, yellow as it runs down, red at the limit. */
+const wearClass = (percent: number, limit: number) =>
+  percent <= limit
+    ? 'text-red-500'
+    : percent <= limit + 20
+      ? 'text-yellow-300'
+      : 'text-white';
 
 /** Whole laps until the worst zone reaches the limit, if a rate is known. */
 const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
@@ -322,6 +328,13 @@ interface TireCardProps {
 const TireCard = memo(
   ({ side, tire, fahrenheit, optimal, range, limit, event }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
+    const pressure =
+      tire?.pressure === undefined
+        ? undefined
+        : fahrenheit
+          ? (tire.pressure * 0.145038).toFixed(1)
+          : tire.pressure.toFixed(0);
+    const pressureUnit = fahrenheit ? 'psi' : 'kPa';
     // Zones run left to right across the car (iRacing's L, M, R), the same
     // order on the screen for every tire.
     const colors = [0, 1, 2].map((zone) => {
@@ -351,7 +364,22 @@ const TireCard = memo(
 
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
-        <div className="flex min-h-0 flex-1 justify-center">
+        <div className="relative flex min-h-0 flex-1 justify-center">
+          {pressure !== undefined && (
+            <div
+              className={`absolute top-1/2 flex -translate-y-1/2 flex-col items-center leading-tight ${
+                side === 'left' ? 'left-0' : 'right-0'
+              }`}
+            >
+              <span className="text-[0.9em] font-bold tabular-nums text-white">
+                {pressure}
+              </span>
+              <span className="text-[0.55em] font-bold uppercase text-white/50">
+                {pressureUnit}
+                {tire?.pressureHot ? '' : ' cold'}
+              </span>
+            </div>
+          )}
           <div
             className="aspect-[5/7] h-full max-w-full"
             style={{
@@ -372,21 +400,14 @@ const TireCard = memo(
           {[0, 1, 2].map((zone) => {
             const wear = tire?.wear[zone];
             return (
-              <div key={zone} className="flex flex-col items-center gap-0.5">
-                <div className="h-1.5 w-full -skew-x-12 overflow-hidden bg-white/15">
-                  <div
-                    className="h-full"
-                    style={{
-                      width: `${wear ?? 0}%`,
-                      backgroundColor:
-                        wear === undefined ? undefined : wearColor(wear, limit),
-                    }}
-                  />
-                </div>
-                <span className="text-[0.7em] font-bold tabular-nums leading-none text-white">
-                  {wear === undefined ? '--' : `${Math.round(wear)}%`}
-                </span>
-              </div>
+              <span
+                key={zone}
+                className={`text-center text-[0.8em] font-bold tabular-nums leading-none ${
+                  wear === undefined ? 'text-white' : wearClass(wear, limit)
+                }`}
+              >
+                {wear === undefined ? '--' : `${Math.round(wear)}%`}
+              </span>
             );
           })}
         </div>
