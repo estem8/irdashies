@@ -4,28 +4,30 @@ const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
 // Fitted second by second against cockpit-dash readings of the hottest zone of
 // each tire: about 300 readings over a Ferrari 296 GT3 at the Nordschleife,
-// Mugello and a skidpad, 3.3 C RMS. The dash does not cool a standing car.
+// Mugello and a skidpad, 2.8 C RMS. The dash does not cool a standing car.
 
 /** Heat per unit of speed times lateral load, degrees per second. */
-const HEAT = 0.00158;
+const HEAT = 0.00171;
 /** Base cooling rate toward ambient, per second; airflow adds to it with speed. */
-const COOL = 0.00014;
-const COOL_SPEED = 1.4;
+const COOL = 0.000536;
+const COOL_SPEED = 5.4;
 /** Share of the cornering heat the rear tires get compared with the fronts. */
-const REAR_SHARE = 0.735;
+const REAR_SHARE = 0.69;
 /** Share of the lateral load moved from the inside to the outside tires. */
-const LOAD_TRANSFER = 0.67;
+const LOAD_TRANSFER = 0.657;
 /** Heat on the front tires per unit of speed times braking deceleration. */
-const BRAKE_HEAT = 0.000054;
+const BRAKE_HEAT = 0.00048;
+/** Heat on the driven rear tires per unit of speed times acceleration. */
+const ACCEL_HEAT = 0.00062;
 /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
-const AERO_HEAT = 0.0013;
+const AERO_HEAT = 0.00112;
 /**
  * Heat per unit of driven-wheel slip (m/s beyond ordinary traction, times
  * throttle) and per degree the tire is over ambient, degrees per second. The
  * dash showed rear tires heating faster the hotter they were: four burnouts
  * against a wall (35 to 50-90 C), fit to 1.5 C RMS.
  */
-const SPIN_HEAT = 0.00216;
+const SPIN_HEAT = 0.00223;
 /** Degrees over ambient beyond which wheelspin heats no faster. */
 const SPIN_HEAT_CAP = 66;
 /** Share of that heat when the car is held still (against a wall), m/s limit below. */
@@ -140,6 +142,7 @@ export class TireThermalModel {
     const cooling = COOL * (1 + speed / COOL_SPEED);
     const cornering = Math.abs(lateral);
     const braking = Math.max(0, -longitudinal);
+    const accel = Math.max(0, longitudinal);
     const aero = (AERO_HEAT * speed * speed * speed) / 1000;
 
     for (const corner of CORNERS) {
@@ -156,10 +159,11 @@ export class TireThermalModel {
         (HEAT * speed * load * (front ? 1 : REAR_SHARE) +
           (front
             ? BRAKE_HEAT * speed * braking
-            : SPIN_HEAT *
-              Math.min(Math.max(0, t - ambient), SPIN_HEAT_CAP) *
-              (speed < STILL_SPEED ? SPIN_STILL : 1) *
-              driveSlip) +
+            : ACCEL_HEAT * speed * accel +
+              SPIN_HEAT *
+                Math.min(Math.max(0, t - ambient), SPIN_HEAT_CAP) *
+                (speed < STILL_SPEED ? SPIN_STILL : 1) *
+                driveSlip) +
           aero);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
