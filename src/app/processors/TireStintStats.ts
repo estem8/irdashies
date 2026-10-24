@@ -145,6 +145,39 @@ export class TireStintStats {
   }
 }
 
+/** Weather, surface and setup values logged as each second's average. */
+const AVERAGED = [
+  'AirTemp',
+  'TrackTemp',
+  'TrackTempCrew',
+  'WindVel',
+  'WindDir',
+  'RelativeHumidity',
+  'AirDensity',
+  'TrackWetness',
+  'Precipitation',
+  'SolarAltitude',
+  'dcBrakeBias',
+  'PlayerTrackSurface',
+  'PlayerTrackSurfaceMaterial',
+  'Brake',
+  'TireLF_RumblePitch',
+  'TireRF_RumblePitch',
+  'TireLR_RumblePitch',
+  'TireRR_RumblePitch',
+];
+/** Signed motion values logged as the average of their magnitude. */
+const ABSOLUTE = [
+  'YawRate',
+  'VelocityY',
+  'SteeringWheelAngle',
+  'VertAccel',
+  'LFshockVel',
+  'RFshockVel',
+  'LRshockVel',
+  'RRshockVel',
+];
+
 /**
  * TEMPORARY: one second of load inputs, summed, for fitting the thermal model
  * offline against cockpit-dash screenshots matched by timestamp.
@@ -177,6 +210,7 @@ export class TireTraceSecond {
   private rpm = 0;
   private throttle = 0;
   private gear = 0;
+  private extra: Record<string, number> = {};
 
   add(
     get: Getter,
@@ -219,6 +253,10 @@ export class TireTraceSecond {
     this.rpm += (get('RPM') ?? 0) * dt;
     this.throttle += (get('Throttle') ?? 0) * dt;
     this.gear = get('Gear') ?? 0;
+    for (const key of AVERAGED)
+      this.extra[key] = (this.extra[key] ?? 0) + (get(key) ?? 0) * dt;
+    for (const key of ABSOLUTE)
+      this.extra[key] = (this.extra[key] ?? 0) + Math.abs(get(key) ?? 0) * dt;
     this.slip.abs += (slip.abs ? 1 : 0) * dt;
     this.slip.tc += slip.tc * dt;
     this.slip.spin += slip.spin * dt;
@@ -252,6 +290,9 @@ export class TireTraceSecond {
       `rpm=${f(this.rpm, 0)}`,
       `thr=${f(this.throttle, 2)}`,
       `gear=${this.gear}`,
+      ...[...AVERAGED, ...ABSOLUTE].map(
+        (key) => `${key}=${f((this.extra[key] ?? 0) / (this.dt || 1), 3)}`
+      ),
     ].join(' ');
     this.dt = 0;
     this.v = 0;
@@ -271,6 +312,7 @@ export class TireTraceSecond {
     this.latForTorque = 0;
     this.rpm = 0;
     this.throttle = 0;
+    this.extra = {};
     return line;
   }
 }
