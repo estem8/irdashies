@@ -1,16 +1,14 @@
-import { app, desktopCapturer, screen } from 'electron';
+import { desktopCapturer, screen } from 'electron';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import logger from './logger';
 import type { SessionLifecycle } from './sessionLifecycle';
+import { stamp, tyreRunDir } from './tyreLog';
 
 const INTERVAL_MS = 15_000;
 
-const pad = (n: number) => String(n).padStart(2, '0');
-/** Local time to the second, the same clock main.log is written in. */
-const stamp = (d: Date) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
-  `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+/** Lower right of the screen, where the cars show tire temperatures (fractions of the display). */
+const CROP = { x: 0.45, y: 0.65, width: 0.35, height: 0.35 };
 
 const capture = async (dir: string): Promise<void> => {
   const display = screen.getPrimaryDisplay();
@@ -24,16 +22,23 @@ const capture = async (dir: string): Promise<void> => {
   const source =
     sources.find((s) => s.display_id === String(display.id)) ?? sources[0];
   if (!source || source.thumbnail.isEmpty()) return;
-  await fs.mkdir(dir, { recursive: true });
+  const { width, height } = source.thumbnail.getSize();
+  const crop = source.thumbnail.crop({
+    x: Math.round(width * CROP.x),
+    y: Math.round(height * CROP.y),
+    width: Math.round(width * CROP.width),
+    height: Math.round(height * CROP.height),
+  });
   await fs.writeFile(
     path.join(dir, `dash ${stamp(new Date())}.jpg`),
-    source.thumbnail.toJPEG(80)
+    crop.toJPEG(70)
   );
 };
 
 /**
  * TEMPORARY: while the player is driving, saves a screenshot of the primary
- * display every 15 s to <userData>/logs/dash, named by local time.
+ * display's dash area every 15 s into the current tyre run folder, named by
+ * local time.
  *
  * iRacing publishes tire temperatures only at pit stops, so the cockpit dash
  * is the only live reference for the tire model; these shots are matched
@@ -41,10 +46,10 @@ const capture = async (dir: string): Promise<void> => {
  * of the tire diagnostics.
  */
 export const startDashCapture = (lifecycle: SessionLifecycle): (() => void) => {
-  const dir = path.join(app.getPath('userData'), 'logs', 'dash');
   let busy = false;
   const timer = setInterval(() => {
-    if (busy || lifecycle.getCurrentState().isDriving !== true) return;
+    const dir = tyreRunDir();
+    if (!dir || busy || lifecycle.getCurrentState().isDriving !== true) return;
     busy = true;
     capture(dir)
       .catch((err: unknown) => logger.warn('[DashCapture] failed', err))

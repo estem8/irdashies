@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Telemetry } from '@irdashies/types';
 import { TireProcessor } from './TireProcessor';
 
-vi.mock('../logger', () => ({ default: { info: vi.fn() } }));
-import logger from '../logger';
+vi.mock('../tyreLog', () => ({ tyreLog: vi.fn(), startTyreRun: vi.fn() }));
+import { tyreLog } from '../tyreLog';
 
 const frame = (
   values: Record<string, number | boolean>,
@@ -70,7 +70,7 @@ describe('TireProcessor', () => {
   });
 
   it('logs a diagnostic line on an interval and immediately on wear change', () => {
-    const info = vi.mocked(logger.info);
+    const info = vi.mocked(tyreLog);
     info.mockClear();
     const lines = () =>
       info.mock.calls.filter((c) => !/keys\(|CALIB|TireFit/.test(String(c[0])));

@@ -1,0 +1,39 @@
+import { app } from 'electron';
+import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
+import path from 'node:path';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+/** Local time to the second, e.g. "2026-10-24 153012". */
+export const stamp = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+  `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+
+const safe = (s: string) => s.replace(/[^\w.-]+/g, '_').slice(0, 40);
+
+let current: { dir: string; key: string; out: WriteStream } | undefined;
+
+/**
+ * TEMPORARY: one folder per car and race (next to the exe when packaged, so
+ * it sits with the build), holding tyre.log and the dash screenshots. The
+ * tire model is said to change between series, so each run is kept apart.
+ */
+export const startTyreRun = (key: string, label: string): void => {
+  if (current?.key === key) return;
+  current?.out.end();
+  const root = app.isPackaged
+    ? path.dirname(app.getPath('exe'))
+    : path.join(app.getPath('userData'), 'logs');
+  const dir = path.join(root, 'tyre', `${stamp(new Date())} ${safe(label)}`);
+  mkdirSync(dir, { recursive: true });
+  current = {
+    dir,
+    key,
+    out: createWriteStream(path.join(dir, 'tyre.log'), { flags: 'a' }),
+  };
+};
+
+export const tyreRunDir = (): string | undefined => current?.dir;
+
+export const tyreLog = (line: string): void => {
+  current?.out.write(`${stamp(new Date())} ${line}\n`);
+};

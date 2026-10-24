@@ -6,7 +6,7 @@ import type {
   TireCornerSnapshot,
   TireSnapshot,
 } from '@irdashies/types';
-import logger from '../logger';
+import { startTyreRun, tyreLog } from '../tyreLog';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
 import { NO_SLIP, TireSlipEstimator } from './TireSlipEstimator';
@@ -21,6 +21,8 @@ const CORNERS: readonly [TireCorner, string][] = [
 
 /** How often the diagnostic line is written while nothing changes. */
 const DIAG_INTERVAL_S = 2;
+/** m/s: faster than any pit-lane crawl, so a stop to zero in one tick is a reset. */
+const RESET_SPEED = 10;
 
 const number = (frame: Telemetry, key: string): number | undefined => {
   const value = (frame as Record<string, { value?: unknown[] } | undefined>)[
@@ -233,6 +235,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private lastWear = '';
   private lastReading = '';
   private keysLogged = false;
+  private lastSpeed = 0;
+  /** The next first reading seeds fresh tires (after a test-drive reset). */
+  private freshStart = false;
   private state: Partial<Record<TireCorner, CornerState>> = {};
   private readonly thermal = new TireThermalModel();
   private readonly stats = new TireStintStats();
@@ -263,11 +268,22 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   };
 
   init(session: Session): void {
+    const car = session.DriverInfo?.Drivers?.find(
+      (d) => d.CarIdx === session.DriverInfo.DriverCarIdx
+    );
+    const track = session.WeekendInfo?.TrackName ?? 'track';
+    const sub = session.WeekendInfo?.SubSessionID ?? 0;
+    const label = `${car?.CarPath ?? 'car'} ${track}`;
+    startTyreRun(`${label} ${sub}`, label);
+    tyreLog(
+      `[TireDiag] RUN car=${car?.CarScreenName} path=${car?.CarPath} track=${track}` +
+        ` subsession=${sub} airTemp=${session.WeekendInfo?.TrackAirTemp}`
+    );
     this.alignment = findAlignment(session.CarSetup);
     const seen = this.alignment.seen.join(' ');
     if (seen !== this.loggedSetup) {
       this.loggedSetup = seen;
-      logger.info(`[TireDiag] SETUP ${seen || 'no camber or toe found'}`);
+      tyreLog(`[TireDiag] SETUP ${seen || 'no camber or toe found'}`);
     }
   }
 
@@ -285,6 +301,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       }
     }
 
+    this.detectReset(frame);
     const lap = this.lapsNow(frame);
     const ambient = this.ambient(frame);
     this.stepThermal(frame);
@@ -357,7 +374,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const found = keys.filter((k) =>
       /tire|tyre|temp|press|wear|^(LF|RF|LR|RR)/i.test(k)
     );
-    logger.info(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
+    tyreLog(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
   }
 
   /** Feeds the thermal model one frame of driving. */
@@ -398,7 +415,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const temps = CORNERS.map(
         ([corner]) => this.thermal.mean(corner)?.toFixed(1) ?? '-'
       ).join('/');
-      logger.info(
+      tyreLog(
         `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}`
       );
     }
@@ -454,7 +471,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.fresh = true;
       this.thermal.set(corner, ambient + this.freshOffset);
     }
-    if (late) logger.info(`[TireDiag] SERVICE late tire change bits=${late}`);
+    if (late) tyreLog(`[TireDiag] SERVICE late tire change bits=${late}`);
     this.service = undefined;
     this.pendingBits = 0;
   }
@@ -484,7 +501,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const st = this.state[corner];
       if (seeding || !st) {
         this.state[corner] = {
-          baseline: reading,
+          baseline: this.freshStart ? [100, 100, 100] : reading,
           baselineLap: lap,
           tempOffset: offsets(temp),
           lastMean: mean(temp),
@@ -508,7 +525,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const changed = (flags & TIRE_CHANGE_BIT[corner]) !== 0;
       st.baseline = changed ? [100, 100, 100] : reading;
       st.baselineLap = lap;
-      logger.info(
+      tyreLog(
         `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
           ` end=${mean(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
           ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
@@ -519,13 +536,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       if (st.fresh && this.thermal.heated(corner) < 2) {
         const offset = Math.min(30, Math.max(0, mean(temp) - ambient));
         this.freshOffset = (this.freshOffset + offset) / 2;
-        logger.info(
+        tyreLog(
           `[TireDiag] FRESH ${corner} start=${mean(temp).toFixed(1)} offset=${this.freshOffset.toFixed(1)}`
         );
       }
       const predicted = this.thermal.mean(corner);
       this.thermal.calibrate(corner, mean(temp));
-      logger.info(
+      tyreLog(
         `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
           ` measured=${mean(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
           ` gain=${this.thermal.gainOf(corner).toFixed(2)} changed=${changed ? 1 : 0}`
@@ -540,9 +557,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.fresh = changed;
     }
 
+    this.freshStart = false;
     if (!seeding) {
       this.service = { applied: flags, running: false };
-      logger.info(
+      tyreLog(
         `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
       );
       this.stintNumber += 1;
@@ -585,7 +603,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.lastDiagTime = time;
     this.lastWear = wearKey;
 
-    logger.info(
+    tyreLog(
       `[TireDiag] ${wearChanged ? 'WEAR-CHANGED ' : ''}t=${time.toFixed(1)}` +
         ` onTrack=${flag(frame, 'IsOnTrack')}` +
         ` pitRoad=${flag(frame, 'OnPitRoad')}` +
@@ -606,6 +624,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (event.type === 'enter') {
       this.enabled = !event.replay;
     }
+    this.clear();
+  }
+
+  private clear(): void {
     this.latest.corners = {};
     this.latest.version += 1;
     this.lastWear = '';
@@ -620,6 +642,25 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.freshOffset = DEFAULT_FRESH_OFFSET;
     this.stintNumber = 0;
     this.lastTime = undefined;
+    this.lastSpeed = 0;
+  }
+
+  /**
+   * Test drive: a reset puts the car back in its stall at once, on fresh
+   * tires. A stop never goes from speed to zero in one tick, so that jump
+   * into the stall is the reset; everything is re-seeded with fresh tires.
+   */
+  private detectReset(frame: Telemetry): void {
+    const speed = number(frame, 'Speed') ?? 0;
+    const jumped =
+      this.lastSpeed > RESET_SPEED &&
+      speed < 1 &&
+      flag(frame, 'PlayerCarInPitStall') === 1;
+    this.lastSpeed = speed;
+    if (!jumped) return;
+    tyreLog('[TireDiag] RESET car put back in the stall, fresh tires assumed');
+    this.clear();
+    this.freshStart = true;
   }
 
   snapshot(): TireSnapshot {
