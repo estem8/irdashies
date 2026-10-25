@@ -315,7 +315,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     version: 0,
   };
 
-  constructor(private readonly calibrations?: TireCalibrationStore) {}
+  /** The session (practice, qualifying, race) the frames belong to. */
+  private sessionNum: number | undefined;
+
+  /** `demo`: mock data, which must not leave run folders or train the model. */
+  constructor(
+    private readonly calibrations?: TireCalibrationStore,
+    private readonly demo = false
+  ) {}
 
   init(session: Session): void {
     const car = session.DriverInfo?.Drivers?.find(
@@ -324,7 +331,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const track = session.WeekendInfo?.TrackName ?? 'track';
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
-    startTyreRun(`${label} ${sub}`, label, car?.CarPath);
+    if (!this.demo) startTyreRun(`${label} ${sub}`, label, car?.CarPath);
     const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
     if (key !== this.calibrationKey) {
       this.calibrationKey = key;
@@ -353,6 +360,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   onFrame(frame: Telemetry): void {
     if (!this.enabled) return;
+
+    // A new session starts on other tires: the reading frozen in the sim is the
+    // last session's, so begin again as at a sim start (a race on the grid
+    // starts warm, see staleStart). A frame without SessionNum says nothing.
+    const sessionNum = number(frame, 'SessionNum');
+    if (sessionNum !== undefined) {
+      if (this.sessionNum !== undefined && sessionNum !== this.sessionNum)
+        this.clear();
+      this.sessionNum = sessionNum;
+    }
 
     const temps: Partial<Record<TireCorner, Zones>> = {};
     const readings: Partial<Record<TireCorner, Zones>> = {};
@@ -716,6 +733,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (event.type === 'enter') {
       this.enabled = !event.replay;
     }
+    this.sessionNum = undefined;
     this.clear();
   }
 

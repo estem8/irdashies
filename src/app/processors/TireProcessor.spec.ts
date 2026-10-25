@@ -60,6 +60,16 @@ describe('TireProcessor', () => {
     expect(p.snapshot().corners.lf).toBeDefined();
   });
 
+  it('starts over when the session number changes', () => {
+    const p = new TireProcessor();
+    p.onFrame(frame({ ...tires(80, 1), SessionNum: 0 }));
+    p.onFrame(frame({ ...tires(80, 1), SessionNum: 0 }));
+    const version = p.snapshot().version;
+    p.onFrame(frame({ ...tires(80, 1), SessionNum: 1 }));
+    // clear() bumps the version even though the new reading looks alike.
+    expect(p.snapshot().version).toBeGreaterThan(version);
+  });
+
   it('clears on lifecycle changes and ignores replays', () => {
     const p = new TireProcessor();
     p.onFrame(frame(tires(80, 1)));

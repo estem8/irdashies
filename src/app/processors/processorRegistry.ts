@@ -39,6 +39,8 @@ interface ProcessorRegistryOptions {
   radarTuning?: () => RadarProcessorTuning;
   /** Keeps what the tire model learned per car and track; none without. */
   tireCalibration?: TireCalibrationStore;
+  /** Mock data: the tire model keeps no run folders for it. */
+  demo?: boolean;
 }
 
 interface DefaultProcessorHostOptions extends ProcessorRegistryOptions {
@@ -72,6 +74,7 @@ export const createProcessorDefinitions = ({
   referenceLapPersistence,
   radarTuning,
   tireCalibration,
+  demo,
 }: ProcessorRegistryOptions): readonly AnyProcessorDefinition[] => [
   defineProcessor({
     channel: 'blind-spot.snapshot',
@@ -159,7 +162,7 @@ export const createProcessorDefinitions = ({
   defineProcessor({
     channel: 'tires.snapshot',
     metricsPrefix: 'tires',
-    create: () => new TireProcessor(tireCalibration),
+    create: () => new TireProcessor(tireCalibration, demo),
   }),
   defineProcessor({
     channel: 'driver-controls.snapshot',
