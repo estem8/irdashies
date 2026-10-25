@@ -29,6 +29,8 @@ export interface ThermalInput {
    */
   driveSlip: number;
   ambient: number;
+  /** Steering wheel angle, rad, absolute. */
+  steering?: number;
 }
 
 /**
@@ -47,6 +49,8 @@ export class TireThermalModel {
   private temp: Partial<Record<TireCorner, number>> = {};
   /** What each tire would read had it only cooled since it was last set. */
   private passive: Partial<Record<TireCorner, number>> = {};
+  /** Front surface heat on top of the carcass, from steering scrub. */
+  private excess: Partial<Record<TireCorner, number>> = {};
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
   private integrated = false;
   private params: ThermalParams = GT3_THERMAL;
@@ -79,12 +83,22 @@ export class TireThermalModel {
     return (this.temp[corner] ?? 0) - (this.passive[corner] ?? 0);
   }
 
+  /** Degrees the tire surface reads over the carcass. */
+  surfaceExcess(corner: TireCorner): number {
+    return this.excess[corner] ?? 0;
+  }
+
   mean(corner: TireCorner): number | undefined {
     return this.temp[corner];
   }
 
-  /** Sets a tire's temperature, e.g. from a reading or for fresh tires. */
-  set(corner: TireCorner, value: number): void {
+  /**
+   * Sets a tire's temperature, e.g. from a reading or for fresh tires. The
+   * surface heat stays unless the tire is `fresh`: a stop that keeps the tire
+   * keeps it hot.
+   */
+  set(corner: TireCorner, value: number, fresh = false): void {
+    if (fresh) this.excess[corner] = 0;
     this.temp[corner] = value;
     this.passive[corner] = value;
   }
@@ -119,6 +133,7 @@ export class TireThermalModel {
     longitudinal,
     driveSlip,
     ambient,
+    steering = 0,
   }: ThermalInput): void {
     if (!(dt > 0)) return;
     const par = this.params;
@@ -155,6 +170,17 @@ export class TireThermalModel {
         1 + par.coldBoost * Math.min(1, Math.max(0, (par.coldBelow - t) / 25));
       const heat = this.gain[corner] * (driving * cold + spin);
       this.temp[corner] = t + h * (heat - cooling * (t - ambient));
+      const scrub = par.scrub;
+      if (scrub && front) {
+        const x = this.excess[corner] ?? 0;
+        const scrubHeat =
+          scrub.heat *
+          Math.max(0, steering - scrub.from) *
+          speed *
+          Math.max(0, 1 + outside * scrub.outside);
+        this.excess[corner] =
+          x + h * (scrubHeat - (x / scrub.tau) * (1 + scrub.coolSpeed * speed));
+      }
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);
     }
@@ -164,6 +190,7 @@ export class TireThermalModel {
   reset(): void {
     this.temp = {};
     this.passive = {};
+    this.excess = {};
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };
     this.integrated = false;
   }

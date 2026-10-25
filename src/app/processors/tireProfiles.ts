@@ -32,6 +32,24 @@ export interface ThermalParams {
   spinHeatCap: number;
   /** Share of the spin heat when the car is held still against a wall. */
   spinStill: number;
+  /**
+   * Heat of the front tire surface from steering far past the grip limit
+   * (scrub). It rides on top of the carcass temperature, what a dash that shows
+   * the hottest spot reads, and does not enter the stop calibration.
+   */
+  scrub?: ScrubParams;
+}
+
+export interface ScrubParams {
+  /** Steering angle (rad) the scrub heat starts at. */
+  from: number;
+  /** Degrees per second per rad past `from` times speed. */
+  heat: number;
+  /** Decay time constant (s) standing, and extra decay rate per m/s. */
+  tau: number;
+  coolSpeed: number;
+  /** Share of the heat moved from the inside to the outside tire. */
+  outside: number;
 }
 
 /**
@@ -122,11 +140,15 @@ export const GT3_THERMAL: ThermalParams = {
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
+  // Skidpad at full lock, fronts 20.5 -> 7.5 C RMS against the dash. shortcut: one run,
+  // recheck on another car and track; the rears need nothing.
+  scrub: { from: 1.5, heat: 0.006, tau: 237, coolSpeed: 0.0317, outside: 0.11 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
 const heatScaled = (base: ThermalParams, scale: number): ThermalParams => ({
   ...base,
+  scrub: undefined,
   heat: base.heat * scale,
   brakeHeat: base.brakeHeat * scale,
   accelHeat: base.accelHeat * scale,
