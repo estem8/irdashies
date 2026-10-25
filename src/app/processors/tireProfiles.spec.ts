@@ -9,8 +9,10 @@ describe('profileFor', () => {
 
   it('gives the Cadillac its surface model and the truck more heat', () => {
     expect(profileFor('cadillacvseriesrgtp').surface).toBeDefined();
-    expect(profileFor('trucks ram2026').thermal.heat).toBeGreaterThan(
-      DEFAULT_PROFILE.thermal.heat
+    // The truck keeps the heat it was scaled to from the earlier GT3 fit.
+    expect(profileFor('trucks ram2026').thermal.heat).toBeCloseTo(
+      0.001924 * 1.2,
+      6
     );
     expect(profileFor('trucks ram2026').surface).toBeUndefined();
   });

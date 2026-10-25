@@ -6,13 +6,14 @@ const drive = (
   m: TireThermalModel,
   seconds: number,
   steering: number,
-  yawPerSpeed = 0.012 * steering
+  yawPerSpeed = 0.012 * steering,
+  lateral = 10
 ) => {
   for (let i = 0; i < seconds * 15; i++)
     m.step({
       dt: 1 / 15,
       speed: 40,
-      lateral: 10,
+      lateral,
       longitudinal: 0,
       driveSlip: 0,
       ambient: 20,
@@ -21,31 +22,34 @@ const drive = (
     });
 };
 
-describe('TireThermalModel surface scrub', () => {
-  it('heats the front surface when the car turns less than the steering says, not the rears, and not while it grips', () => {
-    const lock = new TireThermalModel();
-    const gentle = new TireThermalModel();
-    for (const m of [lock, gentle]) {
-      for (const c of ['lf', 'rf', 'lr', 'rr'] as const) m.set(c, 40);
-    }
-    drive(lock, 60, 3.5, 0.0065);
-    drive(gentle, 60, 1);
-    expect(lock.surfaceExcess('rf')).toBeGreaterThan(20);
-    expect(lock.surfaceExcess('rf')).toBeGreaterThan(lock.surfaceExcess('lf'));
-    expect(lock.surfaceExcess('lr')).toBe(0);
-    expect(gentle.surfaceExcess('rf')).toBe(0);
+const heated = () => {
+  const m = new TireThermalModel();
+  for (const c of ['lf', 'rf', 'lr', 'rr'] as const) m.set(c, 40);
+  return m;
+};
+
+describe('TireThermalModel scrub heat', () => {
+  it('heats the fronts more when the car turns less than the steering says, the rears not', () => {
+    const sliding = heated();
+    const gripping = heated();
+    drive(sliding, 60, 3.5, 0.0065);
+    drive(gripping, 60, 1);
+    expect(sliding.mean('rf')).toBeGreaterThan((gripping.mean('rf') ?? 0) + 15);
+    expect(sliding.mean('lr')).toBeCloseTo(gripping.mean('lr') ?? 0, 0);
   });
 
-  it('decays when the car stops steering, and a fresh tire loses it', () => {
-    const m = new TireThermalModel();
-    m.set('rf', 40);
+  it('puts the extra heat on the outside tire of the turn', () => {
+    const m = heated();
     drive(m, 60, 3.5, 0.0065);
-    const hot = m.surfaceExcess('rf');
-    drive(m, 120, 0, 0);
-    expect(m.surfaceExcess('rf')).toBeLessThan(hot / 2);
-    m.set('rf', 50);
-    expect(m.surfaceExcess('rf')).toBeGreaterThan(0);
-    m.set('rf', 20, true);
-    expect(m.surfaceExcess('rf')).toBe(0);
+    // lateral > 0 is a left turn, which loads the right tires
+    expect(m.mean('rf')).toBeGreaterThan(m.mean('lf') ?? 0);
+  });
+
+  it('cools back toward the air once the car stops sliding', () => {
+    const m = heated();
+    drive(m, 60, 3.5, 0.0065);
+    const hot = m.mean('rf') ?? 0;
+    drive(m, 120, 0, 0, 0);
+    expect(m.mean('rf')).toBeLessThan(hot);
   });
 });

@@ -33,23 +33,17 @@ export interface ThermalParams {
   /** Share of the spin heat when the car is held still against a wall. */
   spinStill: number;
   /**
-   * Heat of the front tire surface from steering the car does not turn on
-   * (scrub), found the Grip-O-Meter way: the yaw rate the steering angle should
-   * give, learned while the front grips, against the yaw rate the car has. It
-   * rides on top of the carcass temperature, what a dash that shows the
-   * hottest spot reads, and does not enter the stop calibration.
+   * Heat of the front tires from steering the car does not turn on (scrub),
+   * found the Grip-O-Meter way: the yaw rate the steering angle should give,
+   * learned while the front grips, against the yaw rate the car has. It heats
+   * the same temperature as the rest, which cools by the same law.
    */
   scrub?: ScrubParams;
 }
 
 export interface ScrubParams {
-  /** Steering angle (rad) the car may turn short of before scrub heat starts. */
-  from: number;
   /** Degrees per second per rad of unexplained steering times speed. */
   heat: number;
-  /** Decay time constant (s) standing, and extra decay rate per m/s. */
-  tau: number;
-  coolSpeed: number;
   /** Share of the heat moved from the inside to the outside tire. */
   outside: number;
 }
@@ -58,7 +52,7 @@ export interface ScrubParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-25-v35';
+export const MODEL_VERSION = '2026-10-26-v41';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -124,11 +118,12 @@ export interface TireProfile {
 }
 
 /**
+ * The earlier GT3 fit, kept as the base the truck and Super Formula profiles were scaled from.
  * Fitted second by second against cockpit-dash readings of the hottest zone of
  * each tire: about 500 readings over a Ferrari 296 GT3 at the Nordschleife,
  * Mugello and a skidpad, 2.8 C RMS, including a 20-minute stint and cool-down. Wheelspin: four wall burnouts, 1.5 C RMS.
  */
-export const GT3_THERMAL: ThermalParams = {
+const LEGACY_THERMAL: ThermalParams = {
   heat: 0.001924,
   cool: 0.0013,
   coolSpeed: 13,
@@ -142,15 +137,37 @@ export const GT3_THERMAL: ThermalParams = {
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
-  // Three skidpad runs (left and right turns), fronts about 7.5-8 C RMS each
-  // against the dash. shortcut: one car and track, recheck elsewhere; the rears need nothing.
-  scrub: { from: 0, heat: 0.0054, tau: 382, coolSpeed: 0.0837, outside: 0.14 },
+};
+
+/**
+ * Fitted against cockpit-dash readings of the hottest zone of each tire on a
+ * Ferrari 296 GT3: three skidpad runs (left and right turns, full lock, 4.8 to
+ * 5.4 C RMS over all four tires) and the Nordschleife race (1.1 C at three
+ * points: the grid, mid-race and the stop). One temperature, as the dash shows
+ * it: lateral load, braking, drive, aero and scrub all heat it, and it cools to
+ * the air faster at speed. shortcut: one car, recheck on another; wheelspin
+ * (spinHeat) is from the earlier burnout fit and not part of this one.
+ */
+export const GT3_THERMAL: ThermalParams = {
+  heat: 0.0025,
+  cool: 0.00196,
+  coolSpeed: 15,
+  rearShare: 0.708,
+  loadTransfer: 0.628,
+  brakeHeat: 0.000788,
+  accelHeat: 0.00142,
+  aeroHeat: 0.00125,
+  coldBoost: 0,
+  coldBelow: 60,
+  spinHeat: 0.0022,
+  spinHeatCap: 66,
+  spinStill: 0.27,
+  scrub: { heat: 0.00464, outside: 0.079 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
 const heatScaled = (base: ThermalParams, scale: number): ThermalParams => ({
   ...base,
-  scrub: undefined,
   heat: base.heat * scale,
   brakeHeat: base.brakeHeat * scale,
   accelHeat: base.accelHeat * scale,
@@ -213,7 +230,7 @@ const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
   // the rears brings the error from 26 C to 17 C. Not enough to say more.
   'trucks ram2026': {
     thermal: {
-      ...heatScaled(GT3_THERMAL, 1.2),
+      ...heatScaled(LEGACY_THERMAL, 1.2),
       loadTransfer: 0,
       rearShare: 1.3,
     },
@@ -222,7 +239,7 @@ const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
   // GT3 fit overheated these tires by about 15 percent at the first stop
   // (gains 0.79 to 0.92), so the heat is scaled to match. Not dash-fitted.
   superformulasf23: {
-    thermal: heatScaled(GT3_THERMAL, 0.85),
+    thermal: heatScaled(LEGACY_THERMAL, 0.85),
     freshOffset: 33,
   },
 };

@@ -419,10 +419,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           ? ([surface, surface, surface] as Zones)
           : modelled === undefined
             ? temp
-            : (st.tempOffset.map(
-                (o) =>
-                  modelled + o * warmed + this.thermal.surfaceExcess(corner)
-              ) as Zones);
+            : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
       const next: TireCornerSnapshot = {
         temp: shown.map(Math.round) as Zones,
         ...(this.alignment.camber[corner] !== undefined && {
@@ -585,7 +582,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.baseline = [100, 100, 100];
       st.baselineLap = lap;
       st.fresh = true;
-      this.thermal.set(corner, ambient + this.freshOffset, true);
+      this.thermal.set(corner, ambient + this.freshOffset);
     }
     if (late) tyreLog(`[TireDiag] SERVICE late tire change bits=${late}`);
     this.service = undefined;
@@ -676,8 +673,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       // ambient and carry no zone spread yet.
       this.thermal.set(
         corner,
-        changed ? ambient + this.freshOffset : peak(temp),
-        changed
+        changed ? ambient + this.freshOffset : peak(temp)
       );
       st.tempOffset = offsets(temp);
       st.fresh = changed;
