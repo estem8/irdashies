@@ -2,7 +2,7 @@ import type { TireSlipSnapshot } from '@irdashies/types';
 
 const PREFIXES = ['LF', 'RF', 'LR', 'RR'] as const;
 const STEER_DEADBAND = 0.05;
-/** Steps arrive at the processor's 5 Hz tick; only a hitch is clipped. */
+/** Steps arrive at the processor's 15 Hz tick; only a hitch is clipped. */
 const MAX_DT = 0.5;
 
 type Getter = (key: string) => number | undefined;

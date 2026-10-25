@@ -18,7 +18,7 @@ interface Crop {
 /**
  * Where each car shows its tire temperatures. A car that is not listed is
  * captured whole at half size, and `dashCrop.json` next to the exe overrides or
- * adds entries without a rebuild: { "<CarPath>": { x, y, width, height } }.
+ * adds entries without a rebuild (read when a run starts): { "<CarPath>": { x, y, width, height } }.
  */
 const CROPS: Record<string, Crop> = {
   ferrari296gt3: { x: 0.45, y: 0.65, width: 0.35, height: 0.35 },
@@ -26,18 +26,28 @@ const CROPS: Record<string, Crop> = {
   cadillacvseriesrgtp: { x: 0.37, y: 0.8, width: 0.13, height: 0.14 },
 };
 
+/** The crops each run folder was started with: the file is read once per run. */
+const cropsByRun = new Map<string, Record<string, Crop>>();
+
 const readCrops = async (
+  dir: string,
   root: string | undefined
 ): Promise<Record<string, Crop>> => {
-  if (!root) return CROPS;
-  try {
-    const file = JSON.parse(
-      await fs.readFile(path.join(root, 'dashCrop.json'), 'utf8')
-    ) as Record<string, Crop>;
-    return { ...CROPS, ...file };
-  } catch {
-    return CROPS;
+  const known = cropsByRun.get(dir);
+  if (known) return known;
+  let crops = CROPS;
+  if (root) {
+    try {
+      const file = JSON.parse(
+        await fs.readFile(path.join(root, 'dashCrop.json'), 'utf8')
+      ) as Record<string, Crop>;
+      crops = { ...CROPS, ...file };
+    } catch {
+      // No file, or one that does not parse: the built-in crops stand.
+    }
   }
+  cropsByRun.set(dir, crops);
+  return crops;
 };
 
 /** Run folders that already have their one whole-screen picture. */
@@ -68,7 +78,7 @@ const capture = async (dir: string): Promise<void> => {
   }
 
   const car = tyreRunCar();
-  const crop = car ? (await readCrops(tyreRunRoot()))[car] : undefined;
+  const crop = car ? (await readCrops(dir, tyreRunRoot()))[car] : undefined;
   const picture = crop
     ? image
         .crop({

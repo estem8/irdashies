@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Telemetry } from '@irdashies/types';
+import type { Session, Telemetry } from '@irdashies/types';
 import { TireProcessor } from './TireProcessor';
 
 vi.mock('../tyreLog', () => ({ tyreLog: vi.fn(), startTyreRun: vi.fn() }));
@@ -140,6 +140,23 @@ describe('TireProcessor', () => {
       p.onFrame(at(0.8, 3));
       expect(p.snapshot().corners.lf?.estimated).toBe(false);
       expect(p.snapshot().corners.lf?.wear).toEqual([80, 80, 80]);
+    });
+  });
+
+  describe('saved calibration', () => {
+    const session = {
+      DriverInfo: { DriverCarIdx: 0, Drivers: [{ CarIdx: 0, CarPath: 'car' }] },
+      WeekendInfo: { TrackName: 'track', SubSessionID: 1 },
+    } as unknown as Session;
+
+    it('does not count a stop that taught the model nothing', () => {
+      const store = { load: vi.fn(), save: vi.fn() };
+      const p = new TireProcessor(store);
+      p.init(session);
+      // Two readings in a row with no driving between them: nothing to learn.
+      p.onFrame(frame(tires(80, 1), 0));
+      p.onFrame(frame(tires(81, 0.9), 1));
+      expect(store.save).not.toHaveBeenCalled();
     });
   });
 });

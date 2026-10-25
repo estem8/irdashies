@@ -563,6 +563,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (key === '{}' || key === this.lastReading) return;
     const seeding = this.lastReading === '';
     this.lastReading = key;
+    const gainsBefore = JSON.stringify(this.thermal.gains());
     const flags = requestedChanges(frame) || this.orderedBits;
     const ambient = this.ambient(frame);
 
@@ -643,7 +644,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
       );
       this.stintNumber += 1;
-      this.saveGains();
+      if (JSON.stringify(this.thermal.gains()) !== gainsBefore)
+        this.saveGains();
     }
     this.stats.reset();
   }
@@ -672,11 +674,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   private logDiagnostics(frame: Telemetry): void {
     const time = number(frame, 'SessionTime') ?? 0;
-    const raw = CORNERS.map(([, prefix]) => {
-      const t = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}tempC${z}`));
-      const w = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`));
-      return `${prefix} t=${t.join('/')} w=${w.join('/')} p=${number(frame, `${prefix}coldPressure`)}/${number(frame, `${prefix}pressure`)}`;
-    });
     const wearKey = CORNERS.flatMap(([, prefix]) =>
       ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`))
     ).join(',');
@@ -685,6 +682,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (!wearChanged && time - this.lastDiagTime < DIAG_INTERVAL_S) return;
     this.lastDiagTime = time;
     this.lastWear = wearKey;
+
+    const raw = CORNERS.map(([, prefix]) => {
+      const t = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}tempC${z}`));
+      const w = ['L', 'M', 'R'].map((z) => number(frame, `${prefix}wear${z}`));
+      return `${prefix} t=${t.join('/')} w=${w.join('/')} p=${number(frame, `${prefix}coldPressure`)}/${number(frame, `${prefix}pressure`)}`;
+    });
 
     tyreLog(
       `[TireDiag] ${wearChanged ? 'WEAR-CHANGED ' : ''}t=${time.toFixed(1)}` +
