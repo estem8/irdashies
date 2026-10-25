@@ -10,8 +10,7 @@ import {
 } from '@irdashies/context';
 import type { TireCorner } from '@irdashies/types';
 import { TireCard } from './components/TireCard';
-import { DEMO, DEMO_FORCE, DEMO_TRAIL } from './demo';
-import { useForceTrail } from './hooks/useForceTrail';
+import { DEMO } from './demo';
 import { useTiresSettings } from './hooks/useTiresSettings';
 import { slipEvent } from './slipEvent';
 
@@ -19,10 +18,6 @@ export const Tires = memo(() => {
   const { isDemoMode } = useDashboard();
   const settings = useTiresSettings();
   const snapshot = useTireSnapshot();
-  const liveTrail = useForceTrail(
-    snapshot?.g,
-    settings.patchStyle === 'gmeter'
-  );
   const displayUnits = useSessionBarSelector(sessionBarSelectors.displayUnits);
   const isOnTrack = useTrackStateSelector(trackStateSelectors.isOnTrack);
   const isSessionVisible = useSessionVisibility(settings.sessionVisibility);
@@ -59,9 +54,6 @@ export const Tires = memo(() => {
       range={settings.tempRange}
       limit={settings.wearLimit}
       event={slipEvent(isDemoMode ? undefined : snapshot?.slip, corner)}
-      g={isDemoMode ? DEMO_FORCE : snapshot?.g}
-      trail={isDemoMode ? DEMO_TRAIL : liveTrail}
-      patchStyle={settings.patchStyle}
     />
   );
 

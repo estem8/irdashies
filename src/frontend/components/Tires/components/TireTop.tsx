@@ -1,5 +1,5 @@
 import { memo, useId } from 'react';
-import type { TireCornerSnapshot, TireForce } from '@irdashies/types';
+import type { TireCornerSnapshot } from '@irdashies/types';
 import { ContactPatch } from './ContactPatch';
 import type { SlipEvent } from '../slipEvent';
 
@@ -25,22 +25,10 @@ export interface TireTopProps {
   colors: readonly string[];
   labels: readonly string[];
   event?: SlipEvent;
-  g?: TireForce;
-  trail?: readonly TireForce[];
-  patchStyle: 'oval' | 'gmeter';
 }
 
 export const TireTop = memo(
-  ({
-    side,
-    tire,
-    colors,
-    labels,
-    event,
-    g,
-    trail,
-    patchStyle,
-  }: TireTopProps) => {
+  ({ side, tire, colors, labels, event }: TireTopProps) => {
     const id = useId().replace(/[^a-zA-Z0-9]/g, '');
     const camber = tire?.camber ?? 0;
     // Negative camber leans the top inward and loads the inner shoulder, so the
@@ -162,9 +150,6 @@ export const TireTop = memo(
           ry={patchH / 2}
           load={load}
           event={event}
-          g={g}
-          trail={trail}
-          style={patchStyle}
         />
 
         {ZONE_CENTRES.map((q, zone) => (

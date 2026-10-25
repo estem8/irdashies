@@ -375,13 +375,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const slipChanged = (Object.keys(slip) as (keyof typeof slip)[]).some(
       (key) => slip[key] !== this.latest.slip?.[key]
     );
-    const g = this.forceOf(frame);
-    const gChanged =
-      g?.lat !== this.latest.g?.lat || g?.lon !== this.latest.g?.lon;
-    if (this.changed(corners) || slipChanged || gChanged) {
+    if (this.changed(corners) || slipChanged) {
       this.latest.corners = corners;
       this.latest.slip = slip;
-      this.latest.g = g;
       this.latest.version += 1;
     }
 
@@ -399,14 +395,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       /tire|tyre|temp|press|wear|^(LF|RF|LR|RR)/i.test(k)
     );
     tyreLog(`[TireDiag] keys(${keys.length}): ${found.join(' ')}`);
-  }
-
-  /** The car's acceleration in g, to 0.05; none while off the track. */
-  private forceOf(frame: Telemetry) {
-    if (flag(frame, 'IsOnTrack') !== 1) return undefined;
-    const g = (key: string) =>
-      Math.round(((number(frame, key) ?? 0) / 9.81) * 20) / 20;
-    return { lat: g('LatAccel'), lon: g('LongAccel') };
   }
 
   /** Load on a tire from its suspension travel against its standstill travel. */

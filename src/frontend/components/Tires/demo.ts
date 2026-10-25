@@ -1,8 +1,4 @@
-import type {
-  TireCorner,
-  TireCornerSnapshot,
-  TireForce,
-} from '@irdashies/types';
+import type { TireCorner, TireCornerSnapshot } from '@irdashies/types';
 
 export const DEMO: Record<TireCorner, TireCornerSnapshot> = {
   lf: {
@@ -54,14 +50,3 @@ export const DEMO: Record<TireCorner, TireCornerSnapshot> = {
     wearPerLap: [0.4, 0.4, 0.4],
   },
 };
-
-/** Braking into a left turn, with the path that led there. */
-export const DEMO_FORCE: TireForce = { lat: 0.8, lon: -0.9 };
-export const DEMO_TRAIL: readonly TireForce[] = [
-  { lat: 0, lon: 1.1 },
-  { lat: 0, lon: 0.6 },
-  { lat: 0, lon: -0.4 },
-  { lat: 0.2, lon: -1.2 },
-  { lat: 0.5, lon: -1.1 },
-  { lat: 0.8, lon: -0.9 },
-];

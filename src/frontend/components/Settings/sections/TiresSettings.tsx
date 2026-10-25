@@ -104,7 +104,6 @@ export const TiresSettings = () => {
               <SettingProp path="background.opacity" />
               <SettingProp path="units" />
               <SettingProp path="pressureUnits" />
-              <SettingProp path="patchStyle" />
               <SettingProp path="tempOptimal" />
               <SettingProp path="tempRange" />
               <SettingProp path="wearLimit" />

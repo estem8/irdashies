@@ -324,20 +324,10 @@ export interface TireSlipSnapshot {
   over: number;
 }
 
-/** Acceleration of the car in g, in steps of 0.05. */
-export interface TireForce {
-  /** Positive in a left turn, toward the inside of the corner. */
-  lat: number;
-  /** Positive when accelerating, negative when braking. */
-  lon: number;
-}
-
 /** Tire temperatures as last reported and wear estimated between pit stops. */
 export interface TireSnapshot {
   corners: Partial<Record<TireCorner, TireCornerSnapshot>>;
   slip?: TireSlipSnapshot;
-  /** Where the car's acceleration points; absent when not on track. */
-  g?: TireForce;
   version: number;
 }
 

@@ -15,7 +15,6 @@ export default defineWidgetManifest({
     background: { opacity: 80 },
     units: 'auto',
     pressureUnits: 'auto',
-    patchStyle: 'oval',
     tempOptimal: 79,
     tempRange: 25,
     wearLimit: 30,
@@ -53,16 +52,6 @@ export default defineWidgetManifest({
         { value: 'auto', label: 'Auto' },
         { value: 'kPa', label: 'kPa' },
         { value: 'psi', label: 'psi' },
-      ],
-    },
-    patchStyle: {
-      type: 'enum',
-      label: 'Contact Patch',
-      description:
-        'Oval with a force dot, or a g-meter that also draws a trail',
-      options: [
-        { value: 'oval', label: 'Oval' },
-        { value: 'gmeter', label: 'G-meter' },
       ],
     },
     tempOptimal: {

@@ -267,8 +267,6 @@ export interface TiresConfig {
   units: 'auto' | 'Metric' | 'Imperial';
   /** Tire pressure unit; auto follows the temperature units. */
   pressureUnits: 'auto' | 'kPa' | 'psi';
-  /** How the contact patch is drawn: a force dot in an oval, or a g-meter with a trail. */
-  patchStyle: 'oval' | 'gmeter';
   /** Carcass temperature, in Celsius, that is shown green. */
   tempOptimal: number;
   /** Degrees either side of the optimum at which the colour is fully blue or red. */
