@@ -52,6 +52,7 @@ export const Tires = memo(() => {
       pressureUnit={pressureUnit}
       optimal={settings.tempOptimal}
       range={settings.tempRange}
+      overheat={settings.tempOverheat}
       limit={settings.wearLimit}
       event={slipEvent(isDemoMode ? undefined : snapshot?.slip, corner)}
     />

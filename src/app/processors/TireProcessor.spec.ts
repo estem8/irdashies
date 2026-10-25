@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Session, Telemetry } from '@irdashies/types';
 import { TireProcessor } from './TireProcessor';
 
-vi.mock('../tyreLog', () => ({ tyreLog: vi.fn(), startTyreRun: vi.fn() }));
+vi.mock('../tyreLog', () => ({
+  tyreLog: vi.fn(),
+  startTyreRun: vi.fn(),
+  tyreFile: vi.fn(),
+  stamp: vi.fn(() => '2026-10-26 000000'),
+}));
 import { tyreLog } from '../tyreLog';
 
 const frame = (

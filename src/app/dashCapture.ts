@@ -22,8 +22,10 @@ interface Crop {
  */
 const CROPS: Record<string, Crop> = {
   ferrari296gt3: { x: 0.45, y: 0.65, width: 0.35, height: 0.35 },
-  // The four tire temperatures on the centre screen, left of the pressures.
-  cadillacvseriesrgtp: { x: 0.37, y: 0.8, width: 0.13, height: 0.14 },
+  // The "Tire Temps" block on the centre screen. It moves up and down by about
+  // 60 px between frames, so the crop takes the whole range (the red label
+  // sits between 74 and 136 px of the old 151 px crop, the block ends 50 px below).
+  cadillacvseriesrgtp: { x: 0.365, y: 0.84, width: 0.15, height: 0.15 },
 };
 
 /** The crops each run folder was started with: the file is read once per run. */

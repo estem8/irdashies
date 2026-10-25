@@ -21,6 +21,8 @@ interface TireCardProps {
   optimal: number;
   range: number;
   limit: number;
+  /** Peak temperature, in Celsius, from which the tire glows; 0 is off. */
+  overheat: number;
   event?: SlipEvent;
 }
 
@@ -33,6 +35,7 @@ export const TireCard = memo(
     optimal,
     range,
     limit,
+    overheat,
     event,
   }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
@@ -50,6 +53,15 @@ export const TireCard = memo(
             : tempColor(celsius, optimal, range);
         }),
       [temp, optimal, range]
+    );
+    // Zones at or over the overheat limit; the number alone is highlighted.
+    const hot = useMemo(
+      () =>
+        [0, 1, 2].map(
+          (zone) =>
+            overheat > 0 && temp?.[zone] !== undefined && temp[zone] >= overheat
+        ),
+      [temp, overheat]
     );
     const labels = useMemo(
       () =>
@@ -104,6 +116,7 @@ export const TireCard = memo(
                 tire={tire}
                 colors={colors}
                 labels={labels}
+                hot={hot}
                 event={event}
               />
             </div>

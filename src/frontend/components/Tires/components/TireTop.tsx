@@ -24,11 +24,13 @@ export interface TireTopProps {
   tire?: TireCornerSnapshot;
   colors: readonly string[];
   labels: readonly string[];
+  /** Zones over the overheat limit, whose number is highlighted. */
+  hot: readonly boolean[];
   event?: SlipEvent;
 }
 
 export const TireTop = memo(
-  ({ side, tire, colors, labels, event }: TireTopProps) => {
+  ({ side, tire, colors, labels, hot, event }: TireTopProps) => {
     const id = useId().replace(/[^a-zA-Z0-9]/g, '');
     const camber = tire?.camber ?? 0;
     // Negative camber leans the top inward and loads the inner shoulder, so the
@@ -161,7 +163,11 @@ export const TireTop = memo(
             dominantBaseline="central"
             fontSize={zone === 1 ? 19 : 10.5}
             fontWeight={900}
-            fill="rgb(0 0 0 / 0.88)"
+            fill={hot[zone] ? '#fff' : 'rgb(0 0 0 / 0.88)'}
+            stroke={hot[zone] ? '#7f1d1d' : undefined}
+            strokeWidth={hot[zone] ? 2.6 : undefined}
+            paintOrder="stroke"
+            strokeLinejoin="round"
           >
             {labels[zone]}
           </text>

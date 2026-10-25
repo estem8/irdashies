@@ -23,7 +23,7 @@ const snapshot: TireSnapshot = {
       camber: -4.0,
       toe: '-2.8 mm',
       toeDeg: -0.134,
-      temp: [92, 98, 95],
+      temp: [96, 108, 101],
       wear: [88.4, 91.2, 89.9],
       pressure: 152.0,
       disc: 0.3,

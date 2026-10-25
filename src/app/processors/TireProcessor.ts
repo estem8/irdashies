@@ -6,7 +6,8 @@ import type {
   TireCornerSnapshot,
   TireSnapshot,
 } from '@irdashies/types';
-import { startTyreRun, tyreLog } from '../tyreLog';
+import { SdkDump } from './sdkDump';
+import { startTyreRun, stamp, tyreFile, tyreLog } from '../tyreLog';
 import {
   calibrationKey,
   isSavable,
@@ -282,6 +283,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private calibratedStops = 0;
   private readonly stats = new TireStintStats();
   private readonly trace = new TireTraceSecond();
+  private readonly sdkDump = new SdkDump();
   private readonly slipEstimator = new TireSlipEstimator();
   private stintNumber = 0;
   private lastTime: number | undefined;
@@ -519,6 +521,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       this.slip,
       driveSlip
     );
+    if (!this.demo) {
+      this.sdkDump.add(frame, dt);
+      if (this.sdkDump.seconds >= 1)
+        tyreFile('sdk.csv', this.sdkDump.flush(stamp(new Date()).slice(11)));
+    }
     if (this.trace.seconds >= 1) {
       const temps = CORNERS.map(
         ([corner]) => this.thermal.mean(corner)?.toFixed(1) ?? '-'

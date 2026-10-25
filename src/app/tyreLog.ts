@@ -1,5 +1,10 @@
 import { app } from 'electron';
-import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
+import {
+  appendFile,
+  createWriteStream,
+  mkdirSync,
+  type WriteStream,
+} from 'node:fs';
 import path from 'node:path';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -53,4 +58,12 @@ export const tyreRunRoot = (): string | undefined => current?.root;
 
 export const tyreLog = (line: string): void => {
   current?.out.write(`${stamp(new Date())} ${line}\n`);
+};
+
+/** Appends text to another file of the current run folder, e.g. sdk.csv. */
+export const tyreFile = (name: string, text: string): void => {
+  if (!current) return;
+  appendFile(path.join(current.dir, name), text, () => {
+    // A full disk must not take the app down; the file is a diagnostic.
+  });
 };

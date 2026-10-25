@@ -271,6 +271,8 @@ export interface TiresConfig {
   tempOptimal: number;
   /** Degrees either side of the optimum at which the colour is fully blue or red. */
   tempRange: number;
+  /** Peak temperature, in Celsius, from which a zone's number is highlighted; 0 turns it off. */
+  tempOverheat: number;
   /** Tread remaining, in percent, that the laps-left forecast counts down to. */
   wearLimit: number;
   showOnlyWhenOnTrack: boolean;

@@ -17,6 +17,7 @@ export default defineWidgetManifest({
     pressureUnits: 'auto',
     tempOptimal: 79,
     tempRange: 25,
+    tempOverheat: 105,
     wearLimit: 30,
     showOnlyWhenOnTrack: false,
     sessionVisibility: {
@@ -70,6 +71,16 @@ export default defineWidgetManifest({
         'Degrees from the optimum at which the colour is fully blue or red',
       min: 5,
       max: 60,
+      step: 1,
+      units: '\u00b0C',
+    },
+    tempOverheat: {
+      type: 'number',
+      label: 'Overheat Warning',
+      description:
+        'The number of a zone is highlighted from this temperature; 0 turns it off',
+      min: 0,
+      max: 250,
       step: 1,
       units: '\u00b0C',
     },
