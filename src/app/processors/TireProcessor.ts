@@ -12,6 +12,7 @@ import {
   startingGains,
   type TireCalibrationStore,
 } from './tireCalibration';
+import { TireSurfaceModel } from './TireSurfaceModel';
 import {
   DEFAULT_PROFILE,
   MODEL_VERSION,
@@ -252,6 +253,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private readonly thermal = new TireThermalModel();
   /** What is known about this car's tires; the default until a session names the car. */
   private profile: TireProfile = DEFAULT_PROFILE;
+  /** The tread surface, for cars whose dash shows it instead of the tire. */
+  private surface: TireSurfaceModel | undefined;
   private profileCar: string | undefined;
   /** Where this car and track's learned gains are kept; none until a session names them. */
   private calibrationKey: string | undefined;
@@ -311,6 +314,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       this.profileCar = car?.CarPath;
       this.profile = profileFor(car?.CarPath);
       this.thermal.configure(this.profile.thermal);
+      this.surface = this.profile.surface
+        ? new TireSurfaceModel(this.profile.surface)
+        : undefined;
       this.freshOffset = this.profile.freshOffset;
     }
     tyreLog(
@@ -368,10 +374,15 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
               Math.max(0, (modelled - ambient) / (st.lastMean - ambient))
             )
           : 1;
+      const surface = this.surface?.active
+        ? this.surface.temp(corner, ambient)
+        : undefined;
       const shown =
-        modelled === undefined
-          ? temp
-          : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
+        surface !== undefined
+          ? ([surface, surface, surface] as Zones)
+          : modelled === undefined
+            ? temp
+            : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
       corners[corner] = {
         temp: shown.map(Math.round) as Zones,
         ...(this.alignment.camber[corner] !== undefined && {
@@ -385,7 +396,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         }),
         ...pressureOf(frame, corner),
         ...this.loadOf(frame, corner),
-        tempEstimated: modelled !== undefined,
+        tempEstimated: modelled !== undefined || surface !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
         ...(st.rate && { wearPerLap: st.rate.map(round2) as Zones }),
@@ -471,13 +482,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}`
       );
     }
-    this.thermal.step({
+    const input = {
       dt,
       speed: number(frame, 'Speed') ?? 0,
       lateral: number(frame, 'LatAccel') ?? 0,
       longitudinal: number(frame, 'LongAccel') ?? 0,
       driveSlip,
       ambient: this.ambient(frame),
+    };
+    this.thermal.step(input);
+    this.surface?.step({
+      ...input,
+      steering: Math.abs(number(frame, 'SteeringWheelAngle') ?? 0),
+      brake: number(frame, 'Brake') ?? 0,
     });
   }
 
@@ -723,6 +740,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.state = {};
     this.rest = {};
     this.thermal.reset();
+    this.surface?.reset();
     this.applySavedGains();
     this.stats.reset();
     this.slipEstimator.reset();
