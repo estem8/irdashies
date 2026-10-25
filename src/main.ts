@@ -1,6 +1,6 @@
+import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
 import { setupReleaseNotesBridge } from './app/bridge/releaseNotesBridge';
 import { startDashCapture } from './app/dashCapture';
-import { app, BrowserWindow, ipcMain } from 'electron';
 import log from './app/logger';
 import {
   iRacingSDKSetup,
@@ -427,7 +427,9 @@ void app.whenReady().then(async () => {
   // for every overlay window.
   await loadSimWidgetSupport();
 
-  setupChannelBridge(channelBus);
+  setupChannelBridge(channelBus, {
+    isAlwaysFed: (sender) => overlayManager.isGantryWebContents(sender),
+  });
   const rendererDataSubscriptions = setupRendererDataSubscriptions({
     onSubscribe: (sender, stream) => {
       if (stream === 'sessionData') overlayManager.seedSessionData(sender);
@@ -681,6 +683,9 @@ const handleBeforeQuit = createBeforeQuitHandler({
 });
 
 app.on('before-quit', handleBeforeQuit);
+// An update restart closes windows before `before-quit`, so the Gantry has to
+// know it is quitting earlier or it hides instead of closing.
+autoUpdater.on('before-quit-for-update', () => overlayManager.markQuitting());
 
 // Terminal shutdown must use the same cleanup and storage flush as tray quit.
 process.on('SIGINT', () => app.quit());
