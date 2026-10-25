@@ -7,7 +7,17 @@ import type {
   TireSnapshot,
 } from '@irdashies/types';
 import { startTyreRun, tyreLog } from '../tyreLog';
-import { DEFAULT_PROFILE, profileFor, type TireProfile } from './tireProfiles';
+import {
+  calibrationKey,
+  startingGains,
+  type TireCalibrationStore,
+} from './tireCalibration';
+import {
+  DEFAULT_PROFILE,
+  MODEL_VERSION,
+  profileFor,
+  type TireProfile,
+} from './tireProfiles';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
 import { NO_SLIP, TireSlipEstimator } from './TireSlipEstimator';
@@ -243,6 +253,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   /** What is known about this car's tires; the default until a session names the car. */
   private profile: TireProfile = DEFAULT_PROFILE;
   private profileCar: string | undefined;
+  /** Where this car and track's learned gains are kept; none until a session names them. */
+  private calibrationKey: string | undefined;
+  /** Stops already counted in the saved calibration. */
+  private calibratedStops = 0;
   private readonly stats = new TireStintStats();
   private readonly trace = new TireTraceSecond();
   private readonly slipEstimator = new TireSlipEstimator();
@@ -278,6 +292,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     version: 0,
   };
 
+  constructor(private readonly calibrations?: TireCalibrationStore) {}
+
   init(session: Session): void {
     const car = session.DriverInfo?.Drivers?.find(
       (d) => d.CarIdx === session.DriverInfo.DriverCarIdx
@@ -286,6 +302,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
     startTyreRun(`${label} ${sub}`, label);
+    const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
+    if (key !== this.calibrationKey) {
+      this.calibrationKey = key;
+      this.applySavedGains();
+    }
     if (car?.CarPath !== this.profileCar) {
       this.profileCar = car?.CarPath;
       this.profile = profileFor(car?.CarPath);
@@ -602,6 +623,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
       );
       this.stintNumber += 1;
+      this.saveGains();
     }
     this.stats.reset();
   }
@@ -667,6 +689,28 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.clear();
   }
 
+  /** Starts the tires from what this car and track taught the model before. */
+  private applySavedGains(): void {
+    const saved =
+      this.calibrationKey === undefined
+        ? undefined
+        : this.calibrations?.load(this.calibrationKey);
+    this.calibratedStops = saved?.stops ?? 0;
+    const gains = startingGains(saved, Date.now());
+    if (gains) this.thermal.setGains(gains);
+  }
+
+  private saveGains(): void {
+    if (!this.calibrations || this.calibrationKey === undefined) return;
+    this.calibratedStops += 1;
+    this.calibrations.save(this.calibrationKey, {
+      model: MODEL_VERSION,
+      gains: this.thermal.gains(),
+      stops: this.calibratedStops,
+      updatedAt: Date.now(),
+    });
+  }
+
   private clear(): void {
     this.latest.corners = {};
     this.latest.version += 1;
@@ -675,6 +719,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.state = {};
     this.rest = {};
     this.thermal.reset();
+    this.applySavedGains();
     this.stats.reset();
     this.slipEstimator.reset();
     this.slip = NO_SLIP;

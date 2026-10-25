@@ -61,6 +61,15 @@ export class TireThermalModel {
     return this.integrated;
   }
 
+  gains(): Record<TireCorner, number> {
+    return { ...this.gain };
+  }
+
+  /** Starts the tires from gains learned earlier; reset() clears them. */
+  setGains(gains: Record<TireCorner, number>): void {
+    this.gain = { ...gains };
+  }
+
   gainOf(corner: TireCorner): number {
     return this.gain[corner];
   }

@@ -34,6 +34,12 @@ export interface ThermalParams {
   spinStill: number;
 }
 
+/**
+ * Names the set of constants below. Saved calibrations were learned against
+ * this model, so change it whenever the numbers change.
+ */
+export const MODEL_VERSION = '2026-10-25-v27';
+
 export interface TireProfile {
   thermal: ThermalParams;
   /**

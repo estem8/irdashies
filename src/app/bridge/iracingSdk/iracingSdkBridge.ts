@@ -155,6 +155,9 @@ export async function publishIRacingSDKEvents(
   const radarTuningStorage = channelBus
     ? await import('../../storage/radarTuning')
     : undefined;
+  const tireCalibrationStorage = channelBus
+    ? await import('../../storage/tireCalibration')
+    : undefined;
   const processorHost =
     channelBus && referenceLapStorage
       ? createDefaultProcessorHost({
@@ -168,6 +171,10 @@ export async function publishIRacingSDKEvents(
             save: referenceLapStorage.saveReferenceLap,
           },
           radarTuning: radarTuningStorage?.getRadarTuning,
+          tireCalibration: tireCalibrationStorage && {
+            load: tireCalibrationStorage.loadTireCalibration,
+            save: tireCalibrationStorage.saveTireCalibration,
+          },
         })
       : undefined;
 
