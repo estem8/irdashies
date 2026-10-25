@@ -52,7 +52,7 @@ export interface ScrubParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-26-v41';
+export const MODEL_VERSION = '2026-10-26-v42';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -141,28 +141,28 @@ const LEGACY_THERMAL: ThermalParams = {
 
 /**
  * Fitted against cockpit-dash readings of the hottest zone of each tire on a
- * Ferrari 296 GT3: three skidpad runs (left and right turns, full lock, 4.8 to
- * 5.4 C RMS over all four tires) and the Nordschleife race (1.1 C at three
+ * Ferrari 296 GT3: four skidpad runs (left and right turns, full lock and
+ * alternating turns, 4.9 to 5.4 C RMS over all four tires) and the Nordschleife race (1.1 C at three
  * points: the grid, mid-race and the stop). One temperature, as the dash shows
  * it: lateral load, braking, drive, aero and scrub all heat it, and it cools to
  * the air faster at speed. shortcut: one car, recheck on another; wheelspin
  * (spinHeat) is from the earlier burnout fit and not part of this one.
  */
 export const GT3_THERMAL: ThermalParams = {
-  heat: 0.0025,
-  cool: 0.00196,
-  coolSpeed: 15,
-  rearShare: 0.708,
-  loadTransfer: 0.628,
-  brakeHeat: 0.000788,
-  accelHeat: 0.00142,
-  aeroHeat: 0.00125,
+  heat: 0.00337,
+  cool: 0.00187,
+  coolSpeed: 15.7,
+  rearShare: 0.589,
+  loadTransfer: 0.556,
+  brakeHeat: 0.0012,
+  accelHeat: 0.00233,
+  aeroHeat: 0.000534,
   coldBoost: 0,
   coldBelow: 60,
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
-  scrub: { heat: 0.00464, outside: 0.079 },
+  scrub: { heat: 0.00376, outside: 0 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
