@@ -51,6 +51,19 @@ describe('TireSurfaceModel', () => {
     expect(model.temp('rf', 19)).toBeGreaterThan(model.temp('lf', 19));
   });
 
+  it('keeps a hot disc hot on a standing car and cools it at speed', () => {
+    const standing = new TireSurfaceModel(params);
+    const rolling = new TireSurfaceModel(params);
+    for (const model of [standing, rolling])
+      run(model, 4, { speed: 60, longitudinal: -22, brake: 0.9 });
+    const peak = standing.discLevel('lf');
+    expect(peak).toBeGreaterThan(0.3);
+    run(standing, 20, { speed: 0, brake: 1 });
+    run(rolling, 20, { speed: 70 });
+    expect(standing.discLevel('lf')).toBeGreaterThan(peak * 0.6);
+    expect(rolling.discLevel('lf')).toBeLessThan(peak * 0.4);
+  });
+
   it('starts over after a reset', () => {
     const model = new TireSurfaceModel(params);
     run(model, 3, { speed: 70, longitudinal: -22, brake: 0.9 });

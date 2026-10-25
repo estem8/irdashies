@@ -396,6 +396,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         }),
         ...pressureOf(frame, corner),
         ...this.loadOf(frame, corner),
+        ...(this.surface?.active && {
+          disc: Math.round(this.surface.discLevel(corner) * 20) / 20,
+        }),
         tempEstimated: modelled !== undefined || surface !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
@@ -658,6 +661,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         a.toe !== b.toe ||
         a.toeDeg !== b.toeDeg ||
         a.pressure !== b.pressure ||
+        a.disc !== b.disc ||
         a.load !== b.load ||
         a.temp.some((v, i) => v !== b.temp[i]) ||
         a.wear.some((v, i) => v !== b.wear[i]) ||

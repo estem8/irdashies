@@ -8,7 +8,7 @@ interface PressureLabelProps {
 /** Pressure beside a tire: the number over its unit. */
 export const PressureLabel = ({ value, unit, hot }: PressureLabelProps) => (
   <div
-    className="flex w-[2.6em] flex-none flex-col items-center leading-tight"
+    className="flex flex-col items-center leading-tight"
     title={hot ? 'Hot pressure' : 'Cold set pressure'}
   >
     <span

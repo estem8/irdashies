@@ -304,6 +304,11 @@ export interface TireCornerSnapshot {
    * downforce, below 1 when unloaded. Absent until the car has stood still.
    */
   load?: number;
+  /**
+   * How hot this tire's brake disc is, 0 (cold) to 1 (as hot as testing made
+   * it), in steps of 0.05. Only for cars with a surface model.
+   */
+  disc?: number;
   /** True when `pressure` is a live hot reading, not the cold set pressure. */
   pressureHot?: boolean;
 }

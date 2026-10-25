@@ -64,10 +64,23 @@ export interface SurfaceParams {
   /** Extra front disc heat per pedal squared times speed: hard pedal heats more than deceleration says. */
   frontPedal: number;
   rearBrake: number;
-  /** Disc cooling: base rate and per m/s; how much of it reaches the tire. */
-  discCool: number;
-  discCoolSpeed: number;
-  discToTire: number;
+  /**
+   * The disc heat has a fast part, which reaches the tire within a second or
+   * two (the dash jumps right after hard braking), and a slow part, which
+   * keeps feeding it for tens of seconds after the car stops. This share of
+   * the braking heat goes to the fast part, the rest to the slow one.
+   */
+  fastShare: number;
+  /** Cooling of each part: base rate and extra per m/s of airflow. */
+  fastCool: number;
+  fastCoolSpeed: number;
+  slowCool: number;
+  slowCoolSpeed: number;
+  /** How much of each part reaches the tire surface, per second. */
+  fastToTire: number;
+  slowToTire: number;
+  /** Slow disc heat, in the model's own units, drawn as fully hot. */
+  discFull: number;
   /** Surface decay: time constant in seconds and extra rate per m/s, front and rear. */
   frontTau: number;
   frontCoolSpeed: number;
@@ -132,31 +145,36 @@ export const DEFAULT_PROFILE: TireProfile = {
 };
 
 /**
- * Cadillac V-Series.R: fitted to its dash over a skidpad run, a Monza run and
- * a burnout test (about 1,300 readings): 13 C RMS, median 6 to 9 C. A front tire
+ * Cadillac V-Series.R: fitted to its dash over a skidpad run, a Monza run, a
+ * Talladega stop-and-go run and a burnout test (about 1,900 readings): 14 C RMS, median 6 to 9 C. A front tire
  * the dash shows above 90 C is found by a model line at 78 C with precision and
  * recall near 0.7 on both the skidpad and Monza. Good for a warning, not for the number.
  */
 const CADILLAC_SURFACE: SurfaceParams = {
-  frontRest: 18.94,
-  rearRest: 13.24,
-  scrubFrom: 1.49,
+  frontRest: 18.88,
+  rearRest: 7.25,
+  scrubFrom: 1.245,
   scrubPower: 2.19,
-  frontScrub: 0.0998,
-  frontCornering: 0.0312,
-  loadTransfer: 0.197,
-  rearAccel: 0.01142,
-  rearSpin: 0.1682,
-  frontBrake: 0.03358,
-  frontPedal: 0.002222,
-  rearBrake: 0.01545,
-  discCool: 0.4574,
-  discCoolSpeed: 0.00633,
-  discToTire: 0.8947,
-  frontTau: 24.7,
-  frontCoolSpeed: 0.0166,
-  rearTau: 3170,
-  rearCoolSpeed: 0.00712,
+  frontScrub: 0.0783,
+  frontCornering: 0.02196,
+  loadTransfer: 0.183,
+  rearAccel: 0,
+  rearSpin: 0.1213,
+  frontBrake: 0.02782,
+  frontPedal: 0.6285,
+  rearBrake: 0.01548,
+  fastShare: 0.465,
+  fastCool: 0.863,
+  fastCoolSpeed: 0.0017,
+  slowCool: 0.0065,
+  slowCoolSpeed: 0.022,
+  fastToTire: 0.909,
+  slowToTire: 0.187,
+  discFull: 25,
+  frontTau: 12.7,
+  frontCoolSpeed: 0.01162,
+  rearTau: 97.9,
+  rearCoolSpeed: 0.00076,
 };
 
 /**

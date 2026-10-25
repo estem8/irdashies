@@ -25,14 +25,15 @@ export interface SurfaceInput {
  * tens of degrees within seconds of heavy braking or a turn with the wheel
  * wound on, and falls back within seconds, faster at speed (airflow).
  *
- * Braking heats a disc state first, which feeds the tire surface a moment
- * later, as the dash does; the front tires also heat from steering angle
+ * Braking heats a disc first, in a fast and a slow part, which feed the tire
+ * surface a moment and tens of seconds later, as the dash does; the front tires also heat from steering angle
  * times speed (scrub); the driven rear tires from acceleration and wheelspin.
  * Everything is an excess over a resting surface temperature that follows the
  * air.
  */
 export class TireSurfaceModel {
-  private disc: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
+  private fast: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
+  private slow: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
   private surface: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
   private integrated = false;
 
@@ -44,6 +45,11 @@ export class TireSurfaceModel {
 
   get active(): boolean {
     return this.integrated;
+  }
+
+  /** How hot a brake disc is, 0 (cold) to 1 (as hot as the testing made it). */
+  discLevel(corner: TireCorner): number {
+    return Math.min(1, this.slow[corner] / this.params.discFull);
   }
 
   /** The surface temperature of a tire, in degrees Celsius. */
@@ -84,11 +90,17 @@ export class TireSurfaceModel {
       const brake = front
         ? p.frontBrake * braking + p.frontPedal * pedal * pedal * speed
         : p.rearBrake * braking;
-      this.disc[corner] = Math.max(
+      const slowAir = p.slowCool + p.slowCoolSpeed * speed;
+      const fastAir = p.fastCool + p.fastCoolSpeed * speed;
+      this.fast[corner] = Math.max(
         0,
-        this.disc[corner] +
-          h *
-            (brake - this.disc[corner] * (p.discCool + p.discCoolSpeed * speed))
+        this.fast[corner] +
+          h * (p.fastShare * brake - this.fast[corner] * fastAir)
+      );
+      this.slow[corner] = Math.max(
+        0,
+        this.slow[corner] +
+          h * ((1 - p.fastShare) * brake - this.slow[corner] * slowAir)
       );
       const decay = front
         ? 1 / p.frontTau + p.frontCoolSpeed * speed
@@ -98,7 +110,8 @@ export class TireSurfaceModel {
         this.surface[corner] +
           h *
             (hot +
-              p.discToTire * this.disc[corner] -
+              p.fastToTire * this.fast[corner] +
+              p.slowToTire * this.slow[corner] -
               this.surface[corner] * decay)
       );
     }
@@ -106,7 +119,8 @@ export class TireSurfaceModel {
   }
 
   reset(): void {
-    this.disc = { lf: 0, rf: 0, lr: 0, rr: 0 };
+    this.fast = { lf: 0, rf: 0, lr: 0, rr: 0 };
+    this.slow = { lf: 0, rf: 0, lr: 0, rr: 0 };
     this.surface = { lf: 0, rf: 0, lr: 0, rr: 0 };
     this.integrated = false;
   }

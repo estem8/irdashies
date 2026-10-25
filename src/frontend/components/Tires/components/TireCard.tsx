@@ -2,6 +2,7 @@ import { memo } from 'react';
 import type { TireCornerSnapshot } from '@irdashies/types';
 import type { SlipEvent } from '../slipEvent';
 import { formatPressure, lapsLeft, tempColor, wearClass } from '../tireStyle';
+import { DiscIcon } from './DiscIcon';
 import { PressureLabel } from './PressureLabel';
 import { TireTop } from './TireTop';
 
@@ -70,10 +71,17 @@ export const TireCard = memo(
       />
     );
 
+    const sideInfo = (pressureLabel || tire?.disc !== undefined) && (
+      <div className="flex w-[2.6em] flex-none flex-col items-center gap-1">
+        {pressureLabel}
+        {tire?.disc !== undefined && <DiscIcon level={tire.disc} />}
+      </div>
+    );
+
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
         <div className="flex min-h-0 flex-1 items-center gap-1">
-          {side === 'left' && pressureLabel}
+          {side === 'left' && sideInfo}
           <div className="flex h-full min-h-0 min-w-0 flex-1 justify-center">
             <div
               className="aspect-[5/7] h-full max-w-full"
@@ -90,7 +98,7 @@ export const TireCard = memo(
               />
             </div>
           </div>
-          {side === 'right' && pressureLabel}
+          {side === 'right' && sideInfo}
         </div>
 
         <div className="grid flex-none grid-cols-3 gap-[4%] px-[9%]">

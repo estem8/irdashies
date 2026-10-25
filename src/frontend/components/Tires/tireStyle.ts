@@ -27,3 +27,21 @@ export const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
 /** Pressure in the unit shown; the sim reports kPa. */
 export const formatPressure = (kpa: number, unit: 'kPa' | 'psi') =>
   unit === 'psi' ? (kpa * 0.145038).toFixed(1) : kpa.toFixed(0);
+
+const DISC_STOPS: readonly (readonly [number, number, number])[] = [
+  [100, 116, 139],
+  [250, 204, 21],
+  [249, 115, 22],
+  [239, 68, 68],
+];
+
+/** Slate when cold, through yellow and orange to red when the disc is hottest. */
+export const discColor = (level: number) => {
+  const x = Math.min(1, Math.max(0, level)) * (DISC_STOPS.length - 1);
+  const i = Math.min(DISC_STOPS.length - 2, Math.floor(x));
+  const f = x - i;
+  const rgb = DISC_STOPS[i].map((c, k) =>
+    Math.round(c + (DISC_STOPS[i + 1][k] - c) * f)
+  );
+  return `rgb(${rgb.join(' ')})`;
+};
