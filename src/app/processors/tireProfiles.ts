@@ -142,9 +142,9 @@ export const GT3_THERMAL: ThermalParams = {
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
-  // Two skidpad runs at full lock, fronts 20 -> 6-7 C RMS against the dash (fit on
-  // one run, 10 C on the other). shortcut: one car, recheck on another track; the rears need nothing.
-  scrub: { from: 0, heat: 0.0045, tau: 208, coolSpeed: 0.0351, outside: 0.16 },
+  // Three skidpad runs (left and right turns), fronts about 7.5-8 C RMS each
+  // against the dash. shortcut: one car and track, recheck elsewhere; the rears need nothing.
+  scrub: { from: 0, heat: 0.0054, tau: 382, coolSpeed: 0.0837, outside: 0.14 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
