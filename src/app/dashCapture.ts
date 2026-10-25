@@ -5,7 +5,7 @@ import logger from './logger';
 import type { SessionLifecycle } from './sessionLifecycle';
 import { stamp, tyreRunCar, tyreRunDir, tyreRunRoot } from './tyreLog';
 
-const INTERVAL_MS = 2_000;
+const INTERVAL_MS = 1_000;
 
 /** A part of the display, as fractions of its width and height. */
 interface Crop {
@@ -22,6 +22,8 @@ interface Crop {
  */
 const CROPS: Record<string, Crop> = {
   ferrari296gt3: { x: 0.45, y: 0.65, width: 0.35, height: 0.35 },
+  // The four tire temperatures on the centre screen, left of the pressures.
+  cadillacvseriesrgtp: { x: 0.37, y: 0.8, width: 0.13, height: 0.14 },
 };
 
 const readCrops = async (
@@ -56,7 +58,9 @@ const capture = async (dir: string): Promise<void> => {
   const image = source.thumbnail;
   const { width, height } = image.getSize();
   const half = () => image.resize({ width: Math.round(width / 2) });
-  const time = stamp(new Date());
+  const now = new Date();
+  // Milliseconds too: a car whose readings jump within a second needs the order.
+  const time = `${stamp(now)}.${String(now.getMilliseconds()).padStart(3, '0')}`;
 
   if (!shown.has(dir)) {
     shown.add(dir);
@@ -80,7 +84,7 @@ const capture = async (dir: string): Promise<void> => {
 
 /**
  * TEMPORARY: while the player is driving, saves a screenshot of the primary
- * display's dash area every 2 s into the current tyre run folder, named by
+ * display's dash area every second into the current tyre run folder, named by
  * local time, and one whole-screen picture per run to see where a car puts
  * its tire temperatures.
  *

@@ -38,7 +38,7 @@ export interface ThermalParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-25-v27';
+export const MODEL_VERSION = '2026-10-25-v31';
 
 export interface TireProfile {
   thermal: ThermalParams;

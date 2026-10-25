@@ -702,10 +702,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   private saveGains(): void {
     if (!this.calibrations || this.calibrationKey === undefined) return;
+    // A gain far from 1 means the model was wrong for this car (a burnout it
+    // overheated by three times), not that the tire is unusual: keep nothing.
+    const gains = this.thermal.gains();
+    if (Object.values(gains).some((g) => g < 0.5 || g > 2)) return;
     this.calibratedStops += 1;
     this.calibrations.save(this.calibrationKey, {
       model: MODEL_VERSION,
-      gains: this.thermal.gains(),
+      gains,
       stops: this.calibratedStops,
       updatedAt: Date.now(),
     });
