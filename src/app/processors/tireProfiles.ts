@@ -47,23 +47,23 @@ export interface TireProfile {
 
 /**
  * Fitted second by second against cockpit-dash readings of the hottest zone of
- * each tire: about 400 readings over a Ferrari 296 GT3 at the Nordschleife,
- * Mugello and a skidpad, 2.4 C RMS. Wheelspin: four wall burnouts, 1.5 C RMS.
+ * each tire: about 500 readings over a Ferrari 296 GT3 at the Nordschleife,
+ * Mugello and a skidpad, 2.8 C RMS, including a 20-minute stint and cool-down. Wheelspin: four wall burnouts, 1.5 C RMS.
  */
 export const GT3_THERMAL: ThermalParams = {
-  heat: 0.001676,
-  cool: 0.000578,
-  coolSpeed: 5.4,
-  rearShare: 0.678,
-  loadTransfer: 0.694,
-  brakeHeat: 0.00048,
-  accelHeat: 0.000645,
-  aeroHeat: 0.00112,
-  coldBoost: 0.243,
+  heat: 0.001924,
+  cool: 0.0013,
+  coolSpeed: 13,
+  rearShare: 0.692,
+  loadTransfer: 0.64,
+  brakeHeat: 0.000662,
+  accelHeat: 0.000974,
+  aeroHeat: 0.001054,
+  coldBoost: 0.178,
   coldBelow: 60,
-  spinHeat: 0.00223,
+  spinHeat: 0.0022,
   spinHeatCap: 66,
-  spinStill: 0.25,
+  spinStill: 0.27,
 };
 
 /** Scales every source of heat, keeping the cooling. */
