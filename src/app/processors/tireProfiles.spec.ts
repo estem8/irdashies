@@ -16,4 +16,9 @@ describe('profileFor', () => {
     );
     expect(profileFor('trucks ram2026').surface).toBeUndefined();
   });
+
+  it('does not correct the Ferrari to the sim reading, its constants follow the dash', () => {
+    expect(profileFor('ferrari296gt3').calibrates).toBe(false);
+    expect(profileFor('somecar').calibrates).toBeUndefined();
+  });
 });

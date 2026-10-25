@@ -115,6 +115,13 @@ export interface TireProfile {
    * temperatures then come from the surface model.
    */
   surface?: SurfaceParams;
+  /**
+   * Whether the heat gains are corrected at each stop from the sim's reading.
+   * Off for a car whose constants were fitted to the dash: the sim's reading
+   * of the removed tires runs below the dash after a long stint (73.7 against
+   * about 80 on the Ferrari), so correcting to it pulls the model off the dash.
+   */
+  calibrates?: boolean;
 }
 
 /**
@@ -222,6 +229,7 @@ const CADILLAC_SURFACE: SurfaceParams = {
  * gain at each stop.
  */
 const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
+  ferrari296gt3: { calibrates: false },
   cadillacvseriesrgtp: { surface: CADILLAC_SURFACE },
   // A NASCAR truck at Talladega, provisional: one 35-minute race with two
   // stops, no dash to read. The GT3 fit was 25 to 45 C low at the stop (74 to 90

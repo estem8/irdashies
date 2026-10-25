@@ -332,11 +332,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
     if (!this.demo) startTyreRun(`${label} ${sub}`, label, car?.CarPath);
-    const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
-    if (key !== this.calibrationKey) {
-      this.calibrationKey = key;
-      this.applySavedGains();
-    }
     if (car?.CarPath !== this.profileCar) {
       this.profileCar = car?.CarPath;
       this.profile = profileFor(car?.CarPath);
@@ -345,6 +340,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ? new TireSurfaceModel(this.profile.surface)
         : undefined;
       this.freshOffset = this.profile.freshOffset;
+    }
+    const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
+    if (key !== this.calibrationKey) {
+      this.calibrationKey = key;
+      this.applySavedGains();
     }
     tyreLog(
       `[TireDiag] RUN car=${car?.CarScreenName} path=${car?.CarPath} track=${track}` +
@@ -663,7 +663,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         );
       }
       const predicted = this.thermal.mean(corner);
-      this.thermal.calibrate(corner, peak(temp));
+      if (this.profile.calibrates !== false)
+        this.thermal.calibrate(corner, peak(temp));
       tyreLog(
         `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
           ` measured=${peak(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
@@ -741,7 +742,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   /** Starts the tires from what this car and track taught the model before. */
   private applySavedGains(): void {
     const saved =
-      this.calibrationKey === undefined
+      this.calibrationKey === undefined || this.profile.calibrates === false
         ? undefined
         : this.calibrations?.load(this.calibrationKey);
     this.calibratedStops = saved?.stops ?? 0;
