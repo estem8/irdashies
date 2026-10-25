@@ -38,7 +38,7 @@ export interface ThermalParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-25-v31';
+export const MODEL_VERSION = '2026-10-25-v35';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -187,6 +187,18 @@ const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
   // GT3 fit overheated these tires by about 15 percent at the first stop
   // (gains 0.79 to 0.92), so the heat is scaled to match. Not dash-fitted.
   cadillacvseriesrgtp: { surface: CADILLAC_SURFACE },
+  // A NASCAR truck at Talladega, provisional: one 35-minute race with two
+  // stops, no dash to read. The GT3 fit was 25 to 45 C low at the stop (74 to 90
+  // C modelled against 98 to 125 C measured); a bit more heat, even load
+  // between the sides (the left tires were as hot as the right) and more on
+  // the rears brings the error from 26 C to 17 C. Not enough to say more.
+  'trucks ram2026': {
+    thermal: {
+      ...heatScaled(GT3_THERMAL, 1.2),
+      loadTransfer: 0,
+      rearShare: 1.3,
+    },
+  },
   superformulasf23: {
     thermal: heatScaled(GT3_THERMAL, 0.85),
     freshOffset: 33,

@@ -159,4 +159,18 @@ describe('TireProcessor', () => {
       expect(store.save).not.toHaveBeenCalled();
     });
   });
+
+  describe('load from suspension travel', () => {
+    const travel = (m: number) =>
+      Object.fromEntries(
+        ['LF', 'RF', 'LR', 'RR'].map((c) => [`${c}SHshockDefl`, m])
+      );
+
+    it('reads the SH-named shock travel NASCAR cars publish', () => {
+      const p = new TireProcessor();
+      p.onFrame(frame({ ...tires(80, 1), ...travel(0.05), Speed: 0 }, 0));
+      p.onFrame(frame({ ...tires(80, 1), ...travel(0.075), Speed: 30 }, 1));
+      expect(p.snapshot().corners.lf?.load).toBe(1.5);
+    });
+  });
 });

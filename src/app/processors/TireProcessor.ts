@@ -435,7 +435,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   /** Load on a tire from its suspension travel against its standstill travel. */
   private loadOf(frame: Telemetry, corner: TireCorner) {
     const prefix = CORNERS.find(([c]) => c === corner)?.[1];
-    const travel = number(frame, `${prefix}shockDefl`);
+    // Some cars (NASCAR) name the shock travel LFSHshockDefl.
+    const travel =
+      number(frame, `${prefix}shockDefl`) ??
+      number(frame, `${prefix}SHshockDefl`);
     if (travel === undefined || travel <= 0) return {};
     const speed = number(frame, 'Speed');
     if (speed !== undefined && speed < 0.5) this.rest[corner] = travel;
