@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { TireThermalModel } from './TireThermalModel';
 
-const drive = (m: TireThermalModel, seconds: number, steering: number) => {
+/** Yaw rate per speed the car has at this steering while it grips (0.012 per rad). */
+const drive = (
+  m: TireThermalModel,
+  seconds: number,
+  steering: number,
+  yawPerSpeed = 0.012 * steering
+) => {
   for (let i = 0; i < seconds * 15; i++)
     m.step({
       dt: 1 / 15,
@@ -11,17 +17,18 @@ const drive = (m: TireThermalModel, seconds: number, steering: number) => {
       driveSlip: 0,
       ambient: 20,
       steering,
+      yawRate: yawPerSpeed * 40,
     });
 };
 
 describe('TireThermalModel surface scrub', () => {
-  it('heats the front surface at full lock, not the rears, and not at small angles', () => {
+  it('heats the front surface when the car turns less than the steering says, not the rears, and not while it grips', () => {
     const lock = new TireThermalModel();
     const gentle = new TireThermalModel();
     for (const m of [lock, gentle]) {
       for (const c of ['lf', 'rf', 'lr', 'rr'] as const) m.set(c, 40);
     }
-    drive(lock, 60, 3.5);
+    drive(lock, 60, 3.5, 0.0065);
     drive(gentle, 60, 1);
     expect(lock.surfaceExcess('rf')).toBeGreaterThan(20);
     expect(lock.surfaceExcess('rf')).toBeGreaterThan(lock.surfaceExcess('lf'));
@@ -32,9 +39,9 @@ describe('TireThermalModel surface scrub', () => {
   it('decays when the car stops steering, and a fresh tire loses it', () => {
     const m = new TireThermalModel();
     m.set('rf', 40);
-    drive(m, 60, 3.5);
+    drive(m, 60, 3.5, 0.0065);
     const hot = m.surfaceExcess('rf');
-    drive(m, 120, 0);
+    drive(m, 120, 0, 0);
     expect(m.surfaceExcess('rf')).toBeLessThan(hot / 2);
     m.set('rf', 50);
     expect(m.surfaceExcess('rf')).toBeGreaterThan(0);

@@ -33,17 +33,19 @@ export interface ThermalParams {
   /** Share of the spin heat when the car is held still against a wall. */
   spinStill: number;
   /**
-   * Heat of the front tire surface from steering far past the grip limit
-   * (scrub). It rides on top of the carcass temperature, what a dash that shows
-   * the hottest spot reads, and does not enter the stop calibration.
+   * Heat of the front tire surface from steering the car does not turn on
+   * (scrub), found the Grip-O-Meter way: the yaw rate the steering angle should
+   * give, learned while the front grips, against the yaw rate the car has. It
+   * rides on top of the carcass temperature, what a dash that shows the
+   * hottest spot reads, and does not enter the stop calibration.
    */
   scrub?: ScrubParams;
 }
 
 export interface ScrubParams {
-  /** Steering angle (rad) the scrub heat starts at. */
+  /** Steering angle (rad) the car may turn short of before scrub heat starts. */
   from: number;
-  /** Degrees per second per rad past `from` times speed. */
+  /** Degrees per second per rad of unexplained steering times speed. */
   heat: number;
   /** Decay time constant (s) standing, and extra decay rate per m/s. */
   tau: number;
@@ -140,9 +142,9 @@ export const GT3_THERMAL: ThermalParams = {
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
-  // Skidpad at full lock, fronts 20.5 -> 7.5 C RMS against the dash. shortcut: one run,
-  // recheck on another car and track; the rears need nothing.
-  scrub: { from: 1.5, heat: 0.006, tau: 237, coolSpeed: 0.0317, outside: 0.11 },
+  // Two skidpad runs at full lock, fronts 20 -> 6-7 C RMS against the dash (fit on
+  // one run, 10 C on the other). shortcut: one car, recheck on another track; the rears need nothing.
+  scrub: { from: 0, heat: 0.0045, tau: 208, coolSpeed: 0.0351, outside: 0.16 },
 };
 
 /** Scales every source of heat, keeping the cooling. */

@@ -14,6 +14,18 @@ const STRAIGHT_LATERAL = 1;
  */
 const MAX_DT = 0.5;
 const GAIN_LIMITS = [0.4, 2.5] as const;
+/**
+ * Yaw rate per metre per second of speed that one radian of steering wheel
+ * gives while the front grips (the Grip-O-Meter's expected yaw rate), and how
+ * it is learned: in a corner with real load but little steering.
+ */
+const DEFAULT_YAW_PER_STEER = 0.012;
+const YAW_STEER_RANGE = [0.2, 1.3] as const;
+const YAW_MIN_LATERAL = 5;
+const YAW_MIN_SPEED = 20;
+const YAW_LEARN_PER_S = 0.5;
+/** m/s under which yaw per speed says nothing. */
+const SCRUB_MIN_SPEED = 10;
 
 export interface ThermalInput {
   dt: number;
@@ -29,8 +41,9 @@ export interface ThermalInput {
    */
   driveSlip: number;
   ambient: number;
-  /** Steering wheel angle, rad, absolute. */
+  /** Steering wheel angle and yaw rate, rad and rad/s, absolute. */
   steering?: number;
+  yawRate?: number;
 }
 
 /**
@@ -53,6 +66,7 @@ export class TireThermalModel {
   private excess: Partial<Record<TireCorner, number>> = {};
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
   private integrated = false;
+  private yawPerSteer = DEFAULT_YAW_PER_STEER;
   private params: ThermalParams = GT3_THERMAL;
 
   /** Switches the constants without touching the temperatures. */
@@ -134,6 +148,7 @@ export class TireThermalModel {
     driveSlip,
     ambient,
     steering = 0,
+    yawRate = 0,
   }: ThermalInput): void {
     if (!(dt > 0)) return;
     const par = this.params;
@@ -143,6 +158,28 @@ export class TireThermalModel {
     const braking = Math.max(0, -longitudinal);
     const accel = Math.max(0, longitudinal);
     const aero = (par.aeroHeat * speed * speed * speed) / 1000;
+    const yawPerSpeed = yawRate / Math.max(speed, 1);
+    if (
+      speed > YAW_MIN_SPEED &&
+      cornering > YAW_MIN_LATERAL &&
+      steering > YAW_STEER_RANGE[0] &&
+      steering < YAW_STEER_RANGE[1]
+    ) {
+      this.yawPerSteer = Math.min(
+        0.03,
+        Math.max(
+          0.006,
+          this.yawPerSteer +
+            (yawPerSpeed / steering - this.yawPerSteer) *
+              Math.min(1, h * YAW_LEARN_PER_S)
+        )
+      );
+    }
+    // Steering the car does not turn on: the front is sliding.
+    const unexplained =
+      speed > SCRUB_MIN_SPEED
+        ? Math.max(0, steering - yawPerSpeed / this.yawPerSteer)
+        : 0;
 
     for (const corner of CORNERS) {
       const t = this.temp[corner];
@@ -175,7 +212,7 @@ export class TireThermalModel {
         const x = this.excess[corner] ?? 0;
         const scrubHeat =
           scrub.heat *
-          Math.max(0, steering - scrub.from) *
+          Math.max(0, unexplained - scrub.from) *
           speed *
           Math.max(0, 1 + outside * scrub.outside);
         this.excess[corner] =
@@ -191,6 +228,7 @@ export class TireThermalModel {
     this.temp = {};
     this.passive = {};
     this.excess = {};
+    this.yawPerSteer = DEFAULT_YAW_PER_STEER;
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };
     this.integrated = false;
   }
