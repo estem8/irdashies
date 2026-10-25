@@ -56,8 +56,7 @@ export interface SurfaceParams {
   frontCornering: number;
   /** Share of the cornering heat moved to the outside tires. */
   loadTransfer: number;
-  /** Rear heat from acceleration times speed, and from wheelspin. */
-  rearAccel: number;
+  /** Rear heat from wheelspin. */
   rearSpin: number;
   /** Braking heat into the disc, front and rear, per unit of speed times decel. */
   frontBrake: number;
@@ -158,7 +157,6 @@ const CADILLAC_SURFACE: SurfaceParams = {
   frontScrub: 0.0783,
   frontCornering: 0.02196,
   loadTransfer: 0.183,
-  rearAccel: 0,
   rearSpin: 0.1213,
   frontBrake: 0.02782,
   frontPedal: 0.6285,
@@ -183,9 +181,6 @@ const CADILLAC_SURFACE: SurfaceParams = {
  * gain at each stop.
  */
 const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
-  // No dash to fit against. Fresh tires start at 52 C with 18.8 C air, and the
-  // GT3 fit overheated these tires by about 15 percent at the first stop
-  // (gains 0.79 to 0.92), so the heat is scaled to match. Not dash-fitted.
   cadillacvseriesrgtp: { surface: CADILLAC_SURFACE },
   // A NASCAR truck at Talladega, provisional: one 35-minute race with two
   // stops, no dash to read. The GT3 fit was 25 to 45 C low at the stop (74 to 90
@@ -199,6 +194,9 @@ const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
       rearShare: 1.3,
     },
   },
+  // No dash to fit against. Fresh tires start at 52 C with 18.8 C air, and the
+  // GT3 fit overheated these tires by about 15 percent at the first stop
+  // (gains 0.79 to 0.92), so the heat is scaled to match. Not dash-fitted.
   superformulasf23: {
     thermal: heatScaled(GT3_THERMAL, 0.85),
     freshOffset: 33,

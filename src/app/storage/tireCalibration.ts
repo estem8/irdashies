@@ -63,12 +63,15 @@ export const saveTireCalibration = (
   calibration: TireCalibration
 ): void => {
   const data = read();
-  // Rebuilt rather than deleted from: the newest MAX_ENTRIES stay.
-  data.entries = Object.fromEntries(
-    Object.entries({ ...data.entries, [key]: calibration })
-      .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
-      .slice(0, MAX_ENTRIES)
-  );
+  data.entries = { ...data.entries, [key]: calibration };
+  if (Object.keys(data.entries).length > MAX_ENTRIES) {
+    // Rebuilt rather than deleted from: the newest MAX_ENTRIES stay.
+    data.entries = Object.fromEntries(
+      Object.entries(data.entries)
+        .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
+        .slice(0, MAX_ENTRIES)
+    );
+  }
   try {
     fs.writeFileSync(filePath(), JSON.stringify(data));
   } catch (error) {

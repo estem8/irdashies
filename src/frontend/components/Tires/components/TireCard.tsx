@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { TireCornerSnapshot } from '@irdashies/types';
 import type { SlipEvent } from '../slipEvent';
 import { formatPressure, lapsLeft, tempColor, wearClass } from '../tireStyle';
@@ -38,18 +38,28 @@ export const TireCard = memo(
     const left = tire && lapsLeft(tire, limit);
     // Zones run left to right across the car (iRacing's L, M, R), the same
     // order on the screen for every tire.
-    const colors = [0, 1, 2].map((zone) => {
-      const celsius = tire?.temp[zone];
-      return celsius === undefined
-        ? 'rgb(100 116 139)'
-        : tempColor(celsius, optimal, range);
-    });
-    const labels = [0, 1, 2].map((zone) => {
-      const celsius = tire?.temp[zone];
-      if (celsius === undefined) return '--';
-      const value = Math.round(fahrenheit ? (celsius * 9) / 5 + 32 : celsius);
-      return `${value}`;
-    });
+    const temp = tire?.temp;
+    // Memoised so TireTop, which is memoised on these, only redraws when a
+    // temperature or a setting changes, not on a pressure or wear tick.
+    const colors = useMemo(
+      () =>
+        [0, 1, 2].map((zone) => {
+          const celsius = temp?.[zone];
+          return celsius === undefined
+            ? 'rgb(100 116 139)'
+            : tempColor(celsius, optimal, range);
+        }),
+      [temp, optimal, range]
+    );
+    const labels = useMemo(
+      () =>
+        [0, 1, 2].map((zone) => {
+          const celsius = temp?.[zone];
+          if (celsius === undefined) return '--';
+          return `${Math.round(fahrenheit ? (celsius * 9) / 5 + 32 : celsius)}`;
+        }),
+      [temp, fahrenheit]
+    );
     // Negative camber leans the top toward the car, turning the inner
     // shoulder toward the viewer.
     const tilt =

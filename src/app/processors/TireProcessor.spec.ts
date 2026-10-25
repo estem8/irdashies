@@ -173,4 +173,38 @@ describe('TireProcessor', () => {
       expect(p.snapshot().corners.lf?.load).toBe(1.5);
     });
   });
+
+  describe('snapshot', () => {
+    const pressure = (kpa: number) => ({
+      LFcoldPressure: kpa,
+      RFcoldPressure: kpa,
+      LRcoldPressure: kpa,
+      RRcoldPressure: kpa,
+    });
+
+    it('keeps the object of a tire that did not change', () => {
+      const p = new TireProcessor();
+      p.onFrame(frame({ ...tires(80, 1), ...pressure(160) }, 0));
+      const before = p.snapshot().corners;
+      const version = p.snapshot().version;
+      // Only the right front changes its pressure.
+      p.onFrame(
+        frame({ ...tires(80, 1), ...pressure(160), RFcoldPressure: 150 }, 1)
+      );
+      const after = p.snapshot().corners;
+      expect(p.snapshot().version).toBe(version + 1);
+      expect(after.lf).toBe(before.lf);
+      expect(after.lr).toBe(before.lr);
+      expect(after.rf).not.toBe(before.rf);
+      expect(after.rf?.pressure).toBe(150);
+    });
+
+    it('does not publish again when nothing a card shows changed', () => {
+      const p = new TireProcessor();
+      p.onFrame(frame({ ...tires(80, 1), ...pressure(160) }, 0));
+      const version = p.snapshot().version;
+      p.onFrame(frame({ ...tires(80, 1), ...pressure(160) }, 1));
+      expect(p.snapshot().version).toBe(version);
+    });
+  });
 });

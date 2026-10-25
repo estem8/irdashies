@@ -17,7 +17,6 @@ export interface SurfaceInput {
   brake: number;
   /** Driven-wheel slip beyond ordinary traction, m/s, times throttle. */
   driveSlip: number;
-  ambient: number;
 }
 
 /**
@@ -27,7 +26,7 @@ export interface SurfaceInput {
  *
  * Braking heats a disc first, in a fast and a slow part, which feed the tire
  * surface a moment and tens of seconds later, as the dash does; the front tires also heat from steering angle
- * times speed (scrub); the driven rear tires from acceleration and wheelspin.
+ * times speed (scrub); the driven rear tires from wheelspin.
  * Everything is an excess over a resting surface temperature that follows the
  * air.
  */
@@ -72,7 +71,6 @@ export class TireSurfaceModel {
     const p = this.params;
     const h = Math.min(dt, 0.25);
     const braking = Math.max(0, -longitudinal) * speed;
-    const accel = Math.max(0, longitudinal) * speed;
     const scrub =
       Math.pow(Math.max(0, steering - p.scrubFrom), p.scrubPower) * speed;
     const cornering = 0.25 * Math.abs(lateral) * speed;
@@ -86,7 +84,7 @@ export class TireSurfaceModel {
       const share = 1 + outside * p.loadTransfer;
       const hot = front
         ? (p.frontScrub * scrub + p.frontCornering * cornering) * share
-        : p.rearAccel * accel + p.rearSpin * driveSlip;
+        : p.rearSpin * driveSlip;
       const brake = front
         ? p.frontBrake * braking + p.frontPedal * pedal * pedal * speed
         : p.rearBrake * braking;

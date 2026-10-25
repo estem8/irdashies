@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { startingGains, type TireCalibration } from './tireCalibration';
+import {
+  isSavable,
+  startingGains,
+  type TireCalibration,
+} from './tireCalibration';
 import { MODEL_VERSION } from './tireProfiles';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -39,5 +43,14 @@ describe('startingGains', () => {
     expect(startingGains(saved({ model: 'older' }), 1_000_000)).toBeUndefined();
     expect(startingGains(saved(), 1_000_000 + 61 * DAY)).toBeUndefined();
     expect(startingGains(undefined, 1_000_000)).toBeUndefined();
+  });
+});
+
+describe('isSavable', () => {
+  it('keeps gains the model could have learned and drops runaway ones', () => {
+    expect(isSavable({ lf: 1, rf: 0.9, lr: 1.4, rr: 1.1 })).toBe(true);
+    // A burnout the model overheated by three times drove a gain to its floor.
+    expect(isSavable({ lf: 1, rf: 1, lr: 0.4, rr: 0.4 })).toBe(false);
+    expect(isSavable({ lf: 2.5, rf: 1, lr: 1, rr: 1 })).toBe(false);
   });
 });

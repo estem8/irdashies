@@ -9,6 +9,7 @@ import type {
 import { startTyreRun, tyreLog } from '../tyreLog';
 import {
   calibrationKey,
+  isSavable,
   startingGains,
   type TireCalibrationStore,
 } from './tireCalibration';
@@ -21,7 +22,7 @@ import {
 } from './tireProfiles';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
-import { NO_SLIP, TireSlipEstimator } from './TireSlipEstimator';
+import { NO_SLIP, SPIN_GRACE, TireSlipEstimator } from './TireSlipEstimator';
 import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
@@ -30,6 +31,8 @@ const CORNERS: readonly [TireCorner, string][] = [
   ['lr', 'LR'],
   ['rr', 'RR'],
 ];
+/** The sim's variable prefix of each tire: LF, RF, LR, RR. */
+const PREFIX = Object.fromEntries(CORNERS) as Record<TireCorner, string>;
 
 /** How often the diagnostic line is written while nothing changes. */
 const DIAG_INTERVAL_S = 2;
@@ -80,7 +83,7 @@ interface CornerState {
   baselineLap: number;
   /** Percentage points lost per lap over the last measured stint. */
   rate?: Zones;
-  /** Mean temperature at the previous reading, for the fit log. */
+  /** Hottest zone at the previous reading: the zone spread is scaled against it. */
   lastMean: number;
   /** Fitted new at the last stop. */
   fresh?: boolean;
@@ -95,7 +98,6 @@ const offsets = (z: Zones): Zones => {
   return [z[0] - m, z[1] - m, z[2] - m];
 };
 /** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
-const SPIN_HEAT_GRACE = 1.5;
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
 
@@ -207,12 +209,30 @@ const requestedChanges = (frame: Telemetry): number => {
 
 /** The hot pressure if the sim sends one (kPa), else the cold set pressure. */
 const pressureOf = (frame: Telemetry, corner: TireCorner) => {
-  const prefix = CORNERS.find(([c]) => c === corner)?.[1];
+  const prefix = PREFIX[corner];
   const hot = number(frame, `${prefix}pressure`);
-  if (hot !== undefined && hot > 0) return { pressure: hot, pressureHot: true };
+  if (hot !== undefined && hot > 0) {
+    return { pressure: Math.round(hot * 10) / 10, pressureHot: true };
+  }
   const cold = number(frame, `${prefix}coldPressure`);
-  return cold !== undefined && cold > 0 ? { pressure: cold } : {};
+  return cold !== undefined && cold > 0
+    ? { pressure: Math.round(cold * 10) / 10 }
+    : {};
 };
+
+/** Whether a tire would draw the same: every field a card shows, compared. */
+const sameCorner = (a: TireCornerSnapshot, b: TireCornerSnapshot) =>
+  a.estimated === b.estimated &&
+  a.tempEstimated === b.tempEstimated &&
+  a.camber === b.camber &&
+  a.toe === b.toe &&
+  a.toeDeg === b.toeDeg &&
+  a.pressure === b.pressure &&
+  a.disc === b.disc &&
+  a.load === b.load &&
+  a.temp.every((v, i) => v === b.temp[i]) &&
+  a.wear.every((v, i) => v === b.wear[i]) &&
+  (a.wearPerLap ?? []).join() === (b.wearPerLap ?? []).join();
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -383,7 +403,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
           : modelled === undefined
             ? temp
             : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
-      corners[corner] = {
+      const next: TireCornerSnapshot = {
         temp: shown.map(Math.round) as Zones,
         ...(this.alignment.camber[corner] !== undefined && {
           camber: this.alignment.camber[corner],
@@ -404,6 +424,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         estimated: st.rate !== undefined,
         ...(st.rate && { wearPerLap: st.rate.map(round2) as Zones }),
       };
+      const before = this.latest.corners[corner];
+      corners[corner] = before && sameCorner(before, next) ? before : next;
     }
 
     const slip = this.slip;
@@ -434,7 +456,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   /** Load on a tire from its suspension travel against its standstill travel. */
   private loadOf(frame: Telemetry, corner: TireCorner) {
-    const prefix = CORNERS.find(([c]) => c === corner)?.[1];
+    const prefix = PREFIX[corner];
     // Some cars (NASCAR) name the shock travel LFSHshockDefl.
     const travel =
       number(frame, `${prefix}shockDefl`) ??
@@ -443,7 +465,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const speed = number(frame, 'Speed');
     if (speed !== undefined && speed < 0.5) this.rest[corner] = travel;
     const rest = this.rest[corner];
-    return rest ? { load: Math.round((travel / rest) * 20) / 20 } : {};
+    return rest ? { load: Math.round((travel / rest) * 10) / 10 } : {};
   }
 
   /** Feeds the thermal model one frame of driving. */
@@ -471,7 +493,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       flag(frame, 'BrakeABSactive') === 1
     );
     const driveSlip =
-      Math.max(0, this.slipEstimator.slipSpeed - SPIN_HEAT_GRACE) *
+      Math.max(0, this.slipEstimator.slipSpeed - SPIN_GRACE) *
       (number(frame, 'Throttle') ?? 0);
     this.trace.add(
       (key) => number(frame, key),
@@ -495,13 +517,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       longitudinal: number(frame, 'LongAccel') ?? 0,
       driveSlip,
       ambient: this.ambient(frame),
-    };
-    this.thermal.step(input);
-    this.surface?.step({
-      ...input,
       steering: Math.abs(number(frame, 'SteeringWheelAngle') ?? 0),
       brake: number(frame, 'Brake') ?? 0,
-    });
+    };
+    this.thermal.step(input);
+    this.surface?.step(input);
   }
 
   private ambient(frame: Telemetry): number {
@@ -655,24 +675,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
   private changed(next: Partial<Record<TireCorner, TireCornerSnapshot>>) {
     const current = this.latest.corners;
-    return CORNERS.some(([corner]) => {
-      const a = current[corner];
-      const b = next[corner];
-      if (!a || !b) return a !== b;
-      return (
-        a.estimated !== b.estimated ||
-        a.tempEstimated !== b.tempEstimated ||
-        a.camber !== b.camber ||
-        a.toe !== b.toe ||
-        a.toeDeg !== b.toeDeg ||
-        a.pressure !== b.pressure ||
-        a.disc !== b.disc ||
-        a.load !== b.load ||
-        a.temp.some((v, i) => v !== b.temp[i]) ||
-        a.wear.some((v, i) => v !== b.wear[i]) ||
-        (a.wearPerLap ?? []).join() !== (b.wearPerLap ?? []).join()
-      );
-    });
+    return CORNERS.some(([corner]) => current[corner] !== next[corner]);
   }
 
   private logDiagnostics(frame: Telemetry): void {
@@ -732,7 +735,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     // A gain far from 1 means the model was wrong for this car (a burnout it
     // overheated by three times), not that the tire is unusual: keep nothing.
     const gains = this.thermal.gains();
-    if (Object.values(gains).some((g) => g < 0.5 || g > 2)) return;
+    if (!isSavable(gains)) return;
     this.calibratedStops += 1;
     this.calibrations.save(this.calibrationKey, {
       model: MODEL_VERSION,

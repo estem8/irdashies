@@ -12,7 +12,7 @@ const SHIFT_SETTLE_S = 0.4;
  * Driven-wheel slip speed, m/s, that is ordinary traction (a few percent at
  * racing speed), and the extra for full scale.
  */
-const SPIN_GRACE = 1.5;
+export const SPIN_GRACE = 1.5;
 const SPIN_FULL = 6;
 /** Car slip angle, in degrees, that is ordinary cornering; full scale above it. */
 const SLIP_ANGLE_GRACE = 4;

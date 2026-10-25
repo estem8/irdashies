@@ -22,6 +22,13 @@ const MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 /** Stops after which a saved gain is applied in full. */
 const FULL_WEIGHT_STOPS = 3;
 
+/** Gains outside this range mean the model was wrong for the car, not the tire. */
+const SAVE_RANGE = [0.5, 2] as const;
+
+/** Whether what the model learned is worth keeping for the next session. */
+export const isSavable = (gains: Record<TireCorner, number>) =>
+  Object.values(gains).every((g) => g >= SAVE_RANGE[0] && g <= SAVE_RANGE[1]);
+
 export const calibrationKey = (carPath: string, track: string) =>
   `${carPath}|${track}`;
 

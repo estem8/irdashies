@@ -300,7 +300,7 @@ export interface TireCornerSnapshot {
   pressure?: number;
   /**
    * Vertical load on this tire as its suspension travel relative to standing
-   * still, in steps of 0.05: 1 at rest, above 1 under cornering, braking or
+   * still, in steps of 0.1: 1 at rest, above 1 under cornering, braking or
    * downforce, below 1 when unloaded. Absent until the car has stood still.
    */
   load?: number;

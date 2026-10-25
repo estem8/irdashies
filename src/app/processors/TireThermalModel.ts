@@ -79,10 +79,6 @@ export class TireThermalModel {
     return (this.temp[corner] ?? 0) - (this.passive[corner] ?? 0);
   }
 
-  has(corner: TireCorner): boolean {
-    return this.temp[corner] !== undefined;
-  }
-
   mean(corner: TireCorner): number | undefined {
     return this.temp[corner];
   }
