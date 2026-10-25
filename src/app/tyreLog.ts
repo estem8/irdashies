@@ -10,14 +10,20 @@ export const stamp = (d: Date) =>
 
 const safe = (s: string) => s.replace(/[^\w.-]+/g, '_').slice(0, 40);
 
-let current: { dir: string; key: string; out: WriteStream } | undefined;
+let current:
+  | { dir: string; root: string; car?: string; key: string; out: WriteStream }
+  | undefined;
 
 /**
  * TEMPORARY: one folder per car and race (next to the exe when packaged, so
  * it sits with the build), holding tyre.log and the dash screenshots. The
  * tire model is said to change between series, so each run is kept apart.
  */
-export const startTyreRun = (key: string, label: string): void => {
+export const startTyreRun = (
+  key: string,
+  label: string,
+  car?: string
+): void => {
   if (current?.key === key) return;
   current?.out.end();
   current = undefined;
@@ -32,7 +38,7 @@ export const startTyreRun = (key: string, label: string): void => {
     out.on('error', () => {
       if (current?.out === out) current = undefined;
     });
-    current = { dir, key, out };
+    current = { dir, root, car, key, out };
   } catch {
     // No folder, no log: tyreLog and the screen capture then do nothing.
     current = undefined;
@@ -40,6 +46,10 @@ export const startTyreRun = (key: string, label: string): void => {
 };
 
 export const tyreRunDir = (): string | undefined => current?.dir;
+
+/** The car this run is for, and the folder holding the run folders and dashCrop.json. */
+export const tyreRunCar = (): string | undefined => current?.car;
+export const tyreRunRoot = (): string | undefined => current?.root;
 
 export const tyreLog = (line: string): void => {
   current?.out.write(`${stamp(new Date())} ${line}\n`);

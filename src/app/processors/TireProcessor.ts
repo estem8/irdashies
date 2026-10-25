@@ -301,7 +301,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const track = session.WeekendInfo?.TrackName ?? 'track';
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
-    startTyreRun(`${label} ${sub}`, label);
+    startTyreRun(`${label} ${sub}`, label, car?.CarPath);
     const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
     if (key !== this.calibrationKey) {
       this.calibrationKey = key;
