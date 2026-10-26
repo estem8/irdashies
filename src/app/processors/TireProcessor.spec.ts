@@ -190,6 +190,45 @@ describe('TireProcessor', () => {
     });
   });
 
+  describe('pressure', () => {
+    const session = {
+      DriverInfo: { DriverCarIdx: 0, Drivers: [{ CarIdx: 0, CarPath: 'car' }] },
+      WeekendInfo: { TrackName: 'track', SubSessionID: 1 },
+    } as unknown as Session;
+    const cold = Object.fromEntries(
+      ['LF', 'RF', 'LR', 'RR'].map((c) => [`${c}coldPressure`, 158.6])
+    );
+    const drive = (speed: number, lat: number, time: number) =>
+      frame(
+        {
+          ...tires(44, 1),
+          ...cold,
+          IsOnTrack: true,
+          Speed: speed,
+          LatAccel: lat,
+        },
+        time
+      );
+
+    it('shows the cold set pressure until the car has driven', () => {
+      const p = new TireProcessor();
+      p.init(session);
+      p.onFrame(frame({ ...tires(44, 1), ...cold }, 0));
+      expect(p.snapshot().corners.rf?.pressure).toBe(158.6);
+      expect(p.snapshot().corners.rf?.pressureHot).toBeUndefined();
+    });
+
+    it('estimates the hot pressure from the carcass temperature once driving', () => {
+      const p = new TireProcessor();
+      p.init(session);
+      for (let i = 0; i < 15 * 240; i++) p.onFrame(drive(70, 14, i / 15));
+      const rf = p.snapshot().corners.rf;
+      expect(rf?.pressureHot).toBe(true);
+      // Hotter tires, higher pressure: 10 C of gas is about 3 percent
+      expect(rf?.pressure).toBeGreaterThan(158.6 * 1.03);
+    });
+  });
+
   describe('real temperature', () => {
     const session = (path: string) =>
       ({

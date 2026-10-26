@@ -88,6 +88,8 @@ interface CornerState {
   lastMean: number;
   /** Fitted new at the last stop. */
   fresh?: boolean;
+  /** Tire temperature when it was set at its cold pressure, for the pressure estimate. */
+  refTemp?: number;
   /** How each zone differs from the tire's mean temperature at the last reading. */
   tempOffset: Zones;
 }
@@ -209,16 +211,33 @@ const requestedChanges = (frame: Telemetry): number => {
 };
 
 /** The hot pressure if the sim sends one (kPa), else the cold set pressure. */
-const pressureOf = (frame: Telemetry, corner: TireCorner) => {
+/** Absolute zero offset: the gas law needs kelvin. */
+const KELVIN = 273.15;
+
+/**
+ * The tire's pressure for the label. The sim sends only the cold set pressure
+ * for most cars, so the hot one is estimated: the gas in the tire follows the
+ * carcass, P = P_cold * T_carcass / T_start in kelvin, where the start is the
+ * tire's temperature when it was set. Against the cockpit dash on the Ferrari
+ * (Daytona and Nordschleife, 28 readings) that is within 4 kPa.
+ */
+const pressureOf = (
+  frame: Telemetry,
+  corner: TireCorner,
+  gas?: { carcass: number; start: number }
+) => {
   const prefix = PREFIX[corner];
   const hot = number(frame, `${prefix}pressure`);
   if (hot !== undefined && hot > 0) {
     return { pressure: Math.round(hot * 10) / 10, pressureHot: true };
   }
   const cold = number(frame, `${prefix}coldPressure`);
-  return cold !== undefined && cold > 0
-    ? { pressure: Math.round(cold * 10) / 10 }
-    : {};
+  if (cold === undefined || cold <= 0) return {};
+  if (gas) {
+    const estimated = (cold * (KELVIN + gas.carcass)) / (KELVIN + gas.start);
+    return { pressure: Math.round(estimated * 10) / 10, pressureHot: true };
+  }
+  return { pressure: Math.round(cold * 10) / 10 };
 };
 
 /** Whether a tire would draw the same: every field a card shows, compared. */
@@ -440,7 +459,18 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ...(this.alignment.toeDeg[corner] !== undefined && {
           toeDeg: this.alignment.toeDeg[corner],
         }),
-        ...pressureOf(frame, corner),
+        ...pressureOf(
+          frame,
+          corner,
+          this.thermal.active &&
+            st.refTemp !== undefined &&
+            this.thermal.carcassOf(corner) !== undefined
+            ? {
+                carcass: this.thermal.carcassOf(corner) as number,
+                start: st.refTemp,
+              }
+            : undefined
+        ),
         ...this.loadOf(frame, corner),
         ...(this.realSurface?.active && {
           tempReal: Array(3).fill(
@@ -613,6 +643,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.baselineLap = lap;
       st.fresh = true;
       this.thermal.set(corner, ambient + this.freshOffset);
+      st.refTemp = ambient + this.freshOffset;
     }
     if (late) tyreLog(`[TireDiag] SERVICE late tire change bits=${late}`);
     this.service = undefined;
@@ -644,12 +675,13 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       if (!reading || !temp) continue;
       const st = this.state[corner];
       if (seeding || !st) {
-        this.state[corner] = {
+        const seeded: CornerState = {
           baseline: reading,
           baselineLap: lap,
           tempOffset: offsets(temp),
           lastMean: peak(temp),
         };
+        this.state[corner] = seeded;
         // The reading frozen in the sim describes the tires last taken off, so a
         // hot one at start-up is stale: assume fresh tires instead of heating a
         // model from it. A cold reading is kept as it is.
@@ -665,6 +697,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
             Math.min(peak(temp), this.profile.staleStart)
           );
         }
+        seeded.refTemp = this.thermal.mean(corner);
         continue;
       }
       const stintLaps = lap - st.baselineLap;
@@ -706,6 +739,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         corner,
         changed ? ambient + this.freshOffset : peak(temp)
       );
+      if (changed) st.refTemp = ambient + this.freshOffset;
       st.tempOffset = offsets(temp);
       st.fresh = changed;
     }
