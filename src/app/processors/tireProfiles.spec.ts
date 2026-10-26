@@ -3,8 +3,11 @@ import { DEFAULT_PROFILE, profileFor } from './tireProfiles';
 
 describe('profileFor', () => {
   it('falls back to the default for a car it does not know', () => {
-    expect(profileFor('somecar')).toEqual(DEFAULT_PROFILE);
-    expect(profileFor(undefined)).toEqual(DEFAULT_PROFILE);
+    expect(profileFor('somecar')).toMatchObject(DEFAULT_PROFILE);
+    expect(profileFor(undefined)).toMatchObject(DEFAULT_PROFILE);
+    // The Cadillac's own temp is the surface; every other car gets one beside it.
+    expect(profileFor('somecar').realSurface).toBeDefined();
+    expect(profileFor('cadillacvseriesrgtp').realSurface).toBeUndefined();
   });
 
   it('gives the Cadillac its surface model and the truck more heat', () => {

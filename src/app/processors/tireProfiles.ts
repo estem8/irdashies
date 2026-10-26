@@ -146,6 +146,12 @@ export interface TireProfile {
    * about 80 on the Ferrari), so correcting to it pulls the model off the dash.
    */
   calibrates?: boolean;
+  /**
+   * The GTP-style surface model run beside the thermal model, for the widget's
+   * "real" temperature mode on cars whose dash shows the slow value. Taken
+   * from the Cadillac and not fitted to the car.
+   */
+  realSurface?: SurfaceParams;
 }
 
 /**
@@ -284,7 +290,12 @@ const PROFILES: Readonly<Record<string, Partial<TireProfile>>> = {
   },
 };
 
-export const profileFor = (carPath: string | undefined): TireProfile => ({
-  ...DEFAULT_PROFILE,
-  ...(carPath ? PROFILES[carPath] : undefined),
-});
+export const profileFor = (carPath: string | undefined): TireProfile => {
+  const profile = {
+    ...DEFAULT_PROFILE,
+    ...(carPath ? PROFILES[carPath] : undefined),
+  };
+  return profile.surface
+    ? profile
+    : { ...profile, realSurface: CADILLAC_SURFACE };
+};

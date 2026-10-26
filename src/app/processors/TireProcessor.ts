@@ -230,6 +230,7 @@ const sameCorner = (a: TireCornerSnapshot, b: TireCornerSnapshot) =>
   a.toeDeg === b.toeDeg &&
   a.pressure === b.pressure &&
   a.disc === b.disc &&
+  (a.tempReal ?? []).join() === (b.tempReal ?? []).join() &&
   a.load === b.load &&
   a.temp.every((v, i) => v === b.temp[i]) &&
   a.wear.every((v, i) => v === b.wear[i]) &&
@@ -276,6 +277,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private profile: TireProfile = DEFAULT_PROFILE;
   /** The tread surface, for cars whose dash shows it instead of the tire. */
   private surface: TireSurfaceModel | undefined;
+  /** The surface model run beside the thermal one for the "real" mode. */
+  private realSurface: TireSurfaceModel | undefined;
   private profileCar: string | undefined;
   /** Where this car and track's learned gains are kept; none until a session names them. */
   private calibrationKey: string | undefined;
@@ -340,6 +343,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       this.thermal.configure(this.profile.thermal);
       this.surface = this.profile.surface
         ? new TireSurfaceModel(this.profile.surface)
+        : undefined;
+      this.realSurface = this.profile.realSurface
+        ? new TireSurfaceModel(this.profile.realSurface)
         : undefined;
       this.freshOffset = this.profile.freshOffset;
     }
@@ -436,6 +442,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         }),
         ...pressureOf(frame, corner),
         ...this.loadOf(frame, corner),
+        ...(this.realSurface?.active && {
+          tempReal: Array(3).fill(
+            Math.round(this.realSurface.temp(corner, ambient))
+          ) as unknown as Zones,
+        }),
         ...(this.surface?.active && {
           disc: Math.round(this.surface.discLevel(corner) * 20) / 20,
         }),
@@ -538,7 +549,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ([corner]) => this.thermal.mean(corner)?.toFixed(1) ?? '-'
       ).join('/');
       tyreLog(
-        `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}`
+        `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}` +
+          (this.realSurface?.active
+            ? ` R=${CORNERS.map(([c]) => this.realSurface?.temp(c, this.ambient(frame)).toFixed(1)).join('/')}`
+            : '')
       );
     }
     const input = {
@@ -555,6 +569,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     };
     this.thermal.step(input);
     this.surface?.step(input);
+    this.realSurface?.step(input);
   }
 
   private ambient(frame: Telemetry): number {
@@ -789,6 +804,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.rest = {};
     this.thermal.reset();
     this.surface?.reset();
+    this.realSurface?.reset();
     this.applySavedGains();
     this.stats.reset();
     this.slipEstimator.reset();

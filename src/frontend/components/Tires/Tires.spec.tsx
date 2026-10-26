@@ -42,6 +42,64 @@ describe('Tires', () => {
     expect(container.querySelector('[class*="drop-shadow"]')).toBeNull();
   });
 
+  const useSnapshot = () =>
+    vi.mocked(Context.useTireSnapshot).mockReturnValue({
+      version: 1,
+      slip: { abs: false, tc: 0, spin: 0, lock: 0, under: 0, over: 0 },
+      corners: {
+        lf: {
+          temp: [60, 61, 62],
+          tempReal: [101, 101, 101],
+          wear: [90, 80, 70],
+        },
+      },
+    } as never);
+
+  it('shows the slow temperature in average mode', () => {
+    vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
+    useSnapshot();
+    render(<Tires />);
+    expect(screen.getByText('61')).toBeTruthy();
+    expect(screen.queryByText('101')).toBeNull();
+  });
+
+  it('shows the tread remaining of every zone by default', () => {
+    vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
+    useSnapshot();
+    render(<Tires />);
+    for (const text of ['90%', '80%', '70%'])
+      expect(screen.getByText(text)).toBeTruthy();
+  });
+
+  const withConfig = (config: Record<string, unknown>) =>
+    vi.mocked(Context.useDashboard).mockReturnValue({
+      isDemoMode: false,
+      currentDashboard: { widgets: [{ id: 'tires', enabled: true, config }] },
+    } as never);
+
+  it('shows the real temperature in real mode', () => {
+    vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
+    useSnapshot();
+    withConfig({ tempMode: 'real' });
+    render(<Tires />);
+    expect(screen.getAllByText('101').length).toBeGreaterThan(0);
+    expect(screen.queryByText('61')).toBeNull();
+  });
+
+  it('shows one tread remaining value in average and minimum mode', () => {
+    vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
+    useSnapshot();
+    withConfig({ wearMode: 'average' });
+    const average = render(<Tires />);
+    expect(screen.getByText('80%')).toBeTruthy();
+    expect(screen.queryByText('90%')).toBeNull();
+    average.unmount();
+    withConfig({ wearMode: 'min' });
+    render(<Tires />);
+    expect(screen.getByText('70%')).toBeTruthy();
+    expect(screen.queryByText('80%')).toBeNull();
+  });
+
   it('shows no caption when not on track', () => {
     vi.mocked(Context.useTrackStateSelector).mockReturnValue(false);
     render(<Tires />);

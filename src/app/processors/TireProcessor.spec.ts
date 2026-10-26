@@ -190,6 +190,47 @@ describe('TireProcessor', () => {
     });
   });
 
+  describe('real temperature', () => {
+    const session = (path: string) =>
+      ({
+        DriverInfo: {
+          DriverCarIdx: 0,
+          Drivers: [{ CarIdx: 0, CarPath: path }],
+        },
+        WeekendInfo: { TrackName: 'track', SubSessionID: 1 },
+      }) as unknown as Session;
+    const drive = (speed: number, lat: number, time: number) =>
+      frame(
+        {
+          ...tires(60, 1),
+          IsOnTrack: true,
+          Speed: speed,
+          LatAccel: lat,
+          SteeringWheelAngle: 1.5,
+        },
+        time
+      );
+
+    it('gives a GT3 a surface temperature beside the slow one that reacts at once', () => {
+      const p = new TireProcessor();
+      p.init(session('ferrari296gt3'));
+      for (let i = 0; i < 30; i++) p.onFrame(drive(60, 0, i / 15));
+      const calm = p.snapshot().corners.rf?.tempReal?.[1] ?? 0;
+      for (let i = 30; i < 75; i++) p.onFrame(drive(60, 14, i / 15));
+      const slow = p.snapshot().corners.rf?.temp[1] ?? 0;
+      const real = p.snapshot().corners.rf?.tempReal?.[1] ?? 0;
+      expect(real).toBeGreaterThan(calm + 5);
+      expect(real).not.toBe(slow);
+    });
+
+    it('leaves the Cadillac, whose temp already is the surface, without one', () => {
+      const p = new TireProcessor();
+      p.init(session('cadillacvseriesrgtp'));
+      for (let i = 0; i < 30; i++) p.onFrame(drive(60, 10, i / 15));
+      expect(p.snapshot().corners.rf?.tempReal).toBeUndefined();
+    });
+  });
+
   describe('load from suspension travel', () => {
     const travel = (m: number) =>
       Object.fromEntries(

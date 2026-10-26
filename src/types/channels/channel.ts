@@ -279,6 +279,13 @@ export interface TireCornerSnapshot {
    */
   temp: readonly [number, number, number];
   /**
+   * Tread-surface temperature as the GTP dash shows it: it jumps within
+   * seconds of braking, cornering or wheelspin and falls back as fast. An
+   * experimental estimate for cars whose own dash shows the slow value above;
+   * absent for cars whose `temp` already is the surface.
+   */
+  tempReal?: readonly [number, number, number];
+  /**
    * Tread remaining as a percentage, 100 = new. iRacing only refreshes the
    * reading at a pit stop, so once a stint's wear rate is known this is an
    * estimate for the current lap rather than the last reading.

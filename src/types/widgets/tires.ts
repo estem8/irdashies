@@ -18,6 +18,8 @@ export default defineWidgetManifest({
     tempOptimal: 79,
     tempRange: 25,
     tempOverheat: 105,
+    tempMode: 'average',
+    wearMode: 'all',
     wearLimit: 30,
     showOnlyWhenOnTrack: false,
     sessionVisibility: {
@@ -73,6 +75,27 @@ export default defineWidgetManifest({
       max: 60,
       step: 1,
       units: '\u00b0C',
+    },
+    tempMode: {
+      type: 'enum',
+      label: 'Temperature Mode',
+      description:
+        'Average is the slow temperature the GT3 dash shows; Real is the surface temperature that jumps within seconds, as on the GTP dash (an estimate for other cars)',
+      options: [
+        { value: 'average', label: 'Average' },
+        { value: 'real', label: 'Real' },
+      ],
+    },
+    wearMode: {
+      type: 'enum',
+      label: 'Tread Remaining',
+      description:
+        'One value per zone, the mean of the three zones, or the lowest of them',
+      options: [
+        { value: 'all', label: 'All zones' },
+        { value: 'average', label: 'Average' },
+        { value: 'min', label: 'Minimum' },
+      ],
     },
     tempOverheat: {
       type: 'number',

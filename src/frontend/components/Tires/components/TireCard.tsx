@@ -23,6 +23,8 @@ interface TireCardProps {
   limit: number;
   /** Peak temperature, in Celsius, from which the tire glows; 0 is off. */
   overheat: number;
+  tempMode: 'average' | 'real';
+  wearMode: 'all' | 'average' | 'min';
   event?: SlipEvent;
 }
 
@@ -36,12 +38,22 @@ export const TireCard = memo(
     range,
     limit,
     overheat,
+    tempMode,
+    wearMode,
     event,
   }: TireCardProps) => {
     const left = tire && lapsLeft(tire, limit);
+    const wearValues: (number | undefined)[] = !tire
+      ? [undefined, undefined, undefined]
+      : wearMode === 'average'
+        ? [tire.wear.reduce((a, b) => a + b, 0) / tire.wear.length]
+        : wearMode === 'min'
+          ? [Math.min(...tire.wear)]
+          : [tire.wear[0], tire.wear[1], tire.wear[2]];
     // Zones run left to right across the car (iRacing's L, M, R), the same
     // order on the screen for every tire.
-    const temp = tire?.temp;
+    const temp =
+      tempMode === 'real' && tire?.tempReal ? tire.tempReal : tire?.temp;
     // Memoised so TireTop, which is memoised on these, only redraws when a
     // temperature or a setting changes, not on a pressure or wear tick.
     const colors = useMemo(
@@ -125,19 +137,16 @@ export const TireCard = memo(
         </div>
 
         <div className="grid flex-none grid-cols-3 gap-[4%] px-[9%]">
-          {[0, 1, 2].map((zone) => {
-            const wear = tire?.wear[zone];
-            return (
-              <span
-                key={zone}
-                className={`text-center text-[0.8em] font-bold tabular-nums leading-none ${
-                  wear === undefined ? 'text-white' : wearClass(wear, limit)
-                }`}
-              >
-                {wear === undefined ? '--' : `${Math.round(wear)}%`}
-              </span>
-            );
-          })}
+          {wearValues.map((wear, i) => (
+            <span
+              key={i}
+              className={`text-center text-[0.8em] font-bold tabular-nums leading-none ${
+                wearValues.length === 1 ? 'col-span-3 ' : ''
+              }${wear === undefined ? 'text-white' : wearClass(wear, limit)}`}
+            >
+              {wear === undefined ? '--' : `${Math.round(wear)}%`}
+            </span>
+          ))}
         </div>
         {left !== undefined && (
           <div className="flex-none text-center text-xs font-black italic tabular-nums text-amber-300">
