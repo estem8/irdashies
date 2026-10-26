@@ -41,6 +41,8 @@ export interface ThermalParams {
   scrub?: ScrubParams;
   /** Heat from the extra vertical load of banking; none on a flat track. */
   bank?: BankParams;
+  /** Heat per second per m/s of sideways axle slide beyond cornering: a spin or a drift. */
+  slide?: number;
   /**
    * A slow second node under the tread, which is what the sim's stop reading
    * measures. The dash shows the tread; it leans on the carcass, so a warm
@@ -86,11 +88,11 @@ export interface SurfaceParams {
   /** Resting surface temperature over the air, front and rear. */
   frontRest: number;
   rearRest: number;
-  /** Steering angle (rad) the scrub heat starts at, and its power. */
-  scrubFrom: number;
-  scrubPower: number;
-  /** Front heat from steering angle times speed, and from cornering load. */
+  /** Front heat from steering the car does not turn on times speed (scrub), and from cornering load. */
   frontScrub: number;
+  /** Heat per second per m/s of sideways axle slide beyond cornering: a spin, a drift. */
+  frontSlide: number;
+  rearSlide: number;
   frontCornering: number;
   /** Share of the cornering heat moved to the outside tires. */
   loadTransfer: number;
@@ -204,6 +206,9 @@ export const GT3_THERMAL: ThermalParams = {
   // low on every tire; this and a smaller aero term bring it to 8 C and leave the
   // other runs where they were. shortcut: one oval run, recheck on another.
   bank: { from: 3, heat: 0.00567 },
+  // Scaled from the surface model's slide heat by the ratio of the two cornering
+  // heats (0.18); no GT3 run has a spin to fit it to. shortcut: unverified.
+  slide: 0.06,
   // Race start at Nordschleife: the dash held 43-44 C for the minute on the grid
   // and the first minute rolling while one node cooled 5 C; with a carcass under
   // the tread the first minutes fit to 0.5 / 2.2 C (from 1.1 / 3.7).
@@ -236,13 +241,13 @@ export const DEFAULT_PROFILE: TireProfile = {
  * recall near 0.7 on both the skidpad and Monza. Good for a warning, not for the number.
  */
 const CADILLAC_SURFACE: SurfaceParams = {
-  frontRest: 18.88,
-  rearRest: 7.25,
-  scrubFrom: 1.245,
-  scrubPower: 2.19,
-  frontScrub: 0.0783,
-  frontCornering: 0.02196,
-  loadTransfer: 0.183,
+  frontRest: 16.56,
+  rearRest: 13.29,
+  frontScrub: 0.2864,
+  frontSlide: 0.3371,
+  rearSlide: 0.7973,
+  frontCornering: 0.0199,
+  loadTransfer: 0.1707,
   rearSpin: 0.1213,
   frontBrake: 0.02782,
   frontPedal: 0.6285,
@@ -255,10 +260,10 @@ const CADILLAC_SURFACE: SurfaceParams = {
   fastToTire: 0.909,
   slowToTire: 0.187,
   discFull: 25,
-  frontTau: 12.7,
-  frontCoolSpeed: 0.01162,
-  rearTau: 97.9,
-  rearCoolSpeed: 0.00076,
+  frontTau: 14.9,
+  frontCoolSpeed: 0.0113,
+  rearTau: 77.18,
+  rearCoolSpeed: 0.001735,
 };
 
 /**

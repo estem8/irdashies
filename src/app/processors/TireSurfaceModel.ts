@@ -1,5 +1,6 @@
 import type { TireCorner } from '@irdashies/types';
 import type { SurfaceParams } from './tireProfiles';
+import { YawGrip } from './YawGrip';
 
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
@@ -13,6 +14,11 @@ export interface SurfaceInput {
   longitudinal: number;
   /** Steering wheel angle magnitude, radians. */
   steering: number;
+  /** Yaw rate magnitude, rad/s. */
+  yawRate: number;
+  /** How fast the front and rear axle slide sideways beyond cornering, m/s. */
+  slideFront: number;
+  slideRear: number;
   /** Brake pedal, 0 to 1. */
   brake: number;
   /** Driven-wheel slip beyond ordinary traction, m/s, times throttle. */
@@ -35,6 +41,7 @@ export class TireSurfaceModel {
   private slow: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
   private surface: Record<TireCorner, number> = { lf: 0, rf: 0, lr: 0, rr: 0 };
   private integrated = false;
+  private readonly grip = new YawGrip();
 
   constructor(private params: SurfaceParams) {}
 
@@ -64,6 +71,9 @@ export class TireSurfaceModel {
     lateral,
     longitudinal,
     steering,
+    yawRate,
+    slideFront,
+    slideRear,
     brake: pedal,
     driveSlip,
   }: SurfaceInput): void {
@@ -71,8 +81,8 @@ export class TireSurfaceModel {
     const p = this.params;
     const h = Math.min(dt, 0.25);
     const braking = Math.max(0, -longitudinal) * speed;
-    const scrub =
-      Math.pow(Math.max(0, steering - p.scrubFrom), p.scrubPower) * speed;
+    this.grip.learn(h, speed, Math.abs(lateral), steering, yawRate);
+    const scrub = this.grip.unexplained(speed, steering, yawRate) * speed;
     const cornering = 0.25 * Math.abs(lateral) * speed;
 
     for (const corner of CORNERS) {
@@ -83,8 +93,9 @@ export class TireSurfaceModel {
         Math.abs(lateral) < 1 ? 0 : lateral > 0 === right ? 1 : -1;
       const share = 1 + outside * p.loadTransfer;
       const hot = front
-        ? (p.frontScrub * scrub + p.frontCornering * cornering) * share
-        : p.rearSpin * driveSlip;
+        ? (p.frontScrub * scrub + p.frontCornering * cornering) * share +
+          p.frontSlide * slideFront
+        : p.rearSpin * driveSlip + p.rearSlide * slideRear;
       const brake = front
         ? p.frontBrake * braking + p.frontPedal * pedal * pedal * speed
         : p.rearBrake * braking;
@@ -121,5 +132,17 @@ export class TireSurfaceModel {
     this.slow = { lf: 0, rf: 0, lr: 0, rr: 0 };
     this.surface = { lf: 0, rf: 0, lr: 0, rr: 0 };
     this.integrated = false;
+    this.grip.reset();
+  }
+
+  /**
+   * Fresh tires: the tread starts at the temperature they were set at, about
+   * 34 C on the dash, and settles to its resting level from there; the brake
+   * discs stay as hot as they are.
+   */
+  resetTread(corner: TireCorner, start: number, ambient: number): void {
+    const front = corner === 'lf' || corner === 'rf';
+    const rest = front ? this.params.frontRest : this.params.rearRest;
+    this.surface[corner] = Math.max(0, start - ambient - rest);
   }
 }

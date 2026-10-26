@@ -80,7 +80,7 @@ export default defineWidgetManifest({
       type: 'enum',
       label: 'Temperature Mode',
       description:
-        'Average is the slow temperature the GT3 dash shows; Real is the surface temperature that jumps within seconds, as on the GTP dash (an estimate for other cars)',
+        'Average is the slow temperature the GT3 dash shows; Real is the tread surface temperature that jumps within seconds, as on the GTP dash. Both are estimated for every car',
       options: [
         { value: 'average', label: 'Average' },
         { value: 'real', label: 'Real' },

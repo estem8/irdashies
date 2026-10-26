@@ -262,11 +262,13 @@ describe('TireProcessor', () => {
       expect(real).not.toBe(slow);
     });
 
-    it('leaves the Cadillac, whose temp already is the surface, without one', () => {
+    it('gives the Cadillac both, the slow one as the average and the surface as the real', () => {
       const p = new TireProcessor();
       p.init(session('cadillacvseriesrgtp'));
       for (let i = 0; i < 30; i++) p.onFrame(drive(60, 10, i / 15));
-      expect(p.snapshot().corners.rf?.tempReal).toBeUndefined();
+      const rf = p.snapshot().corners.rf;
+      expect(rf?.tempReal).toBeDefined();
+      expect(rf?.temp).toBeDefined();
     });
   });
 

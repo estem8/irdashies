@@ -274,15 +274,15 @@ export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
 /** One tire: three zones across the tread, as the driver sees it, left to right. */
 export interface TireCornerSnapshot {
   /**
-   * Carcass temperature in degrees Celsius. iRacing refreshes it only at a
-   * pit stop, so while driving it is estimated from the load on the tire.
+   * The slow tread temperature, as the GT3 dash shows it, in degrees Celsius.
+   * iRacing refreshes its carcass reading only at a pit stop, so while driving
+   * this is estimated from the load on the tire.
    */
   temp: readonly [number, number, number];
   /**
    * Tread-surface temperature as the GTP dash shows it: it jumps within
-   * seconds of braking, cornering or wheelspin and falls back as fast. An
-   * experimental estimate for cars whose own dash shows the slow value above;
-   * absent for cars whose `temp` already is the surface.
+   * seconds of braking, cornering, wheelspin or a slide and falls back as fast.
+   * Estimated for every car, whichever of `temp` and this its own dash shows.
    */
   tempReal?: readonly [number, number, number];
   /**

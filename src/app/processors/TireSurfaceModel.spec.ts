@@ -10,6 +10,9 @@ const input = {
   lateral: 0,
   longitudinal: 0,
   steering: 0,
+  yawRate: 0,
+  slideFront: 0,
+  slideRear: 0,
   brake: 0,
   driveSlip: 0,
   ambient: 19,
@@ -70,5 +73,21 @@ describe('TireSurfaceModel', () => {
     model.reset();
     expect(model.active).toBe(false);
     expect(model.temp('lf', 19)).toBeCloseTo(19 + params.frontRest, 0);
+  });
+
+  it('heats the rear axle in a spin, more than the front', () => {
+    const model = new TireSurfaceModel(params);
+    run(model, 3, { speed: 25, slideFront: 12, slideRear: 18 });
+    expect(model.temp('lr', 19) - (19 + params.rearRest)).toBeGreaterThan(20);
+    expect(model.temp('lr', 19)).toBeGreaterThan(model.temp('lf', 19) - 15);
+  });
+
+  it('starts fresh tires at their set temperature, not at the resting level', () => {
+    const model = new TireSurfaceModel(params);
+    run(model, 3, { speed: 70, longitudinal: -22, brake: 0.9 });
+    model.resetTread('lf', 45, 19);
+    model.resetTread('rr', 45, 19);
+    expect(model.temp('lf', 19)).toBeCloseTo(45, 0);
+    expect(model.temp('rr', 19)).toBeCloseTo(45, 0);
   });
 });

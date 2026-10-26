@@ -1,5 +1,6 @@
 import type { TireCorner } from '@irdashies/types';
 import { GT3_THERMAL, type ThermalParams } from './tireProfiles';
+import { YawGrip } from './YawGrip';
 
 const CORNERS: readonly TireCorner[] = ['lf', 'rf', 'lr', 'rr'];
 
@@ -14,18 +15,6 @@ const STRAIGHT_LATERAL = 1;
  */
 const MAX_DT = 0.5;
 const GAIN_LIMITS = [0.4, 2.5] as const;
-/**
- * Yaw rate per metre per second of speed that one radian of steering wheel
- * gives while the front grips (the Grip-O-Meter's expected yaw rate), and how
- * it is learned: in a corner with real load but little steering.
- */
-const DEFAULT_YAW_PER_STEER = 0.012;
-const YAW_STEER_RANGE = [0.2, 1.3] as const;
-const YAW_MIN_LATERAL = 5;
-const YAW_MIN_SPEED = 20;
-const YAW_LEARN_PER_S = 0.5;
-/** m/s under which yaw per speed says nothing. */
-const SCRUB_MIN_SPEED = 10;
 const GRAVITY = 9.81;
 /** Seconds over which vertical acceleration is averaged: bumps are not banking. */
 const VERTICAL_SMOOTH_S = 1;
@@ -49,6 +38,9 @@ export interface ThermalInput {
   yawRate?: number;
   /** Vertical acceleration, m/s2, about 9.81 on a flat road. */
   vertical?: number;
+  /** How fast the front and rear axle slide sideways beyond cornering, m/s. */
+  slideFront?: number;
+  slideRear?: number;
 }
 
 /**
@@ -72,7 +64,7 @@ export class TireThermalModel {
   private passive: Partial<Record<TireCorner, number>> = {};
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
   private integrated = false;
-  private yawPerSteer = DEFAULT_YAW_PER_STEER;
+  private readonly grip = new YawGrip();
   private verticalSmooth = GRAVITY;
   private params: ThermalParams = GT3_THERMAL;
 
@@ -155,6 +147,8 @@ export class TireThermalModel {
     steering = 0,
     yawRate = 0,
     vertical = GRAVITY,
+    slideFront = 0,
+    slideRear = 0,
   }: ThermalInput): void {
     if (!(dt > 0)) return;
     const par = this.params;
@@ -164,23 +158,7 @@ export class TireThermalModel {
     const braking = Math.max(0, -longitudinal);
     const accel = Math.max(0, longitudinal);
     const aero = (par.aeroHeat * speed * speed * speed) / 1000;
-    const yawPerSpeed = yawRate / Math.max(speed, 1);
-    if (
-      speed > YAW_MIN_SPEED &&
-      cornering > YAW_MIN_LATERAL &&
-      steering > YAW_STEER_RANGE[0] &&
-      steering < YAW_STEER_RANGE[1]
-    ) {
-      this.yawPerSteer = Math.min(
-        0.03,
-        Math.max(
-          0.006,
-          this.yawPerSteer +
-            (yawPerSpeed / steering - this.yawPerSteer) *
-              Math.min(1, h * YAW_LEARN_PER_S)
-        )
-      );
-    }
+    this.grip.learn(h, speed, cornering, steering, yawRate);
     // Banking presses the tires harder than the lateral acceleration says. The
     // threshold sits on the average, or a bumpy track would cross it on every crest.
     this.verticalSmooth +=
@@ -191,10 +169,7 @@ export class TireThermalModel {
         speed
       : 0;
     // Steering the car does not turn on: the front is sliding.
-    const unexplained =
-      speed > SCRUB_MIN_SPEED
-        ? Math.max(0, steering - yawPerSpeed / this.yawPerSteer)
-        : 0;
+    const unexplained = this.grip.unexplained(speed, steering, yawRate);
 
     for (const corner of CORNERS) {
       const t = this.temp[corner];
@@ -212,6 +187,7 @@ export class TireThermalModel {
           : par.accelHeat * speed * accel) +
         aero +
         banked +
+        (par.slide ?? 0) * (front ? slideFront : slideRear) +
         (front && par.scrub
           ? par.scrub.heat *
             unexplained *
@@ -250,7 +226,7 @@ export class TireThermalModel {
     this.passive = {};
     this.carcass = {};
     this.carcassPassive = {};
-    this.yawPerSteer = DEFAULT_YAW_PER_STEER;
+    this.grip.reset();
     this.verticalSmooth = GRAVITY;
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };
     this.integrated = false;
