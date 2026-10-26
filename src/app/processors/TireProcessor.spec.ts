@@ -75,6 +75,21 @@ describe('TireProcessor', () => {
     expect(p.snapshot().version).toBeGreaterThan(version);
   });
 
+  it("shows the start value of a new session, not the last one's frozen reading, before driving", () => {
+    const p = new TireProcessor();
+    p.onFrame(frame({ ...tires(80, 1), SessionNum: 0 }));
+    // The race grid: iRacing still reports the previous stop's uneven zones.
+    const stale = {
+      ...tires(65, 1),
+      LFtempCL: 59,
+      LFtempCR: 69,
+      SessionNum: 1,
+    };
+    p.onFrame(frame(stale));
+    expect(p.snapshot().corners.lf?.temp[2]).toBeLessThanOrEqual(44);
+    expect(p.snapshot().corners.lf?.tempEstimated).toBe(false);
+  });
+
   it('clears on lifecycle changes and ignores replays', () => {
     const p = new TireProcessor();
     p.onFrame(frame(tires(80, 1)));

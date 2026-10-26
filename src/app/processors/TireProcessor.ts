@@ -401,9 +401,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       const wear = st.baseline.map((b, i) =>
         st.rate ? Math.max(0, b - st.rate[i] * driven) : b
       );
-      const modelled = this.thermal.active
-        ? this.thermal.mean(corner)
-        : undefined;
+      // The model's start value shows from the first frame: a new session's
+      // frozen reading is the last session's (59-69 C on a race grid whose
+      // tires start near 44 C), and it is only an estimate once driving.
+      const modelled = this.thermal.mean(corner);
       // The zone spread seen at the last reading builds up as the tire heats,
       // so it is applied in proportion to how far this tire has warmed.
       const warmed =
@@ -438,7 +439,9 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ...(this.surface?.active && {
           disc: Math.round(this.surface.discLevel(corner) * 20) / 20,
         }),
-        tempEstimated: modelled !== undefined || surface !== undefined,
+        tempEstimated:
+          (this.thermal.active && modelled !== undefined) ||
+          surface !== undefined,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
         ...(st.rate && { wearPerLap: st.rate.map(round2) as Zones }),
