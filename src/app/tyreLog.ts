@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import {
   appendFile,
+  existsSync,
   createWriteStream,
   mkdirSync,
   type WriteStream,
@@ -60,10 +61,14 @@ export const tyreLog = (line: string): void => {
   current?.out.write(`${stamp(new Date())} ${line}\n`);
 };
 
-/** Appends text to another file of the current run folder, e.g. sdk.csv. */
-export const tyreFile = (name: string, text: string): void => {
+/**
+ * Appends text to another file of the current run folder, e.g. sdk.csv, and
+ * starts a new file with `header`: each run folder needs its own.
+ */
+export const tyreFile = (name: string, text: string, header = ''): void => {
   if (!current) return;
-  appendFile(path.join(current.dir, name), text, () => {
+  const file = path.join(current.dir, name);
+  appendFile(file, existsSync(file) ? text : header + text, () => {
     // A full disk must not take the app down; the file is a diagnostic.
   });
 };

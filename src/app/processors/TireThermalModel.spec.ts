@@ -82,4 +82,23 @@ describe('TireThermalModel banking', () => {
   it('ignores the small vertical loads of bumps and crests', () => {
     expect(run(11.5).mean('lf')).toBeCloseTo(run(9.81).mean('lf') ?? 0, 5);
   });
+
+  it('does not mistake a bumpy road for banking', () => {
+    const smooth = run(10.5);
+    const bumpy = heated();
+    for (let i = 0; i < 60 * 15; i++)
+      bumpy.step({
+        dt: 1 / 15,
+        speed: 80,
+        lateral: 5,
+        longitudinal: 0,
+        driveSlip: 0,
+        ambient: 20,
+        steering: 0.1,
+        yawRate: 0.1 * 0.012 * 80,
+        // average 10.5, swinging far past the threshold on the crests
+        vertical: i % 2 === 0 ? 17 : 4,
+      });
+    expect(bumpy.mean('lf')).toBeCloseTo(smooth.mean('lf') ?? 0, 0);
+  });
 });

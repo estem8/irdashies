@@ -27,6 +27,8 @@ const YAW_LEARN_PER_S = 0.5;
 /** m/s under which yaw per speed says nothing. */
 const SCRUB_MIN_SPEED = 10;
 const GRAVITY = 9.81;
+/** Seconds over which vertical acceleration is averaged: bumps are not banking. */
+const VERTICAL_SMOOTH_S = 1;
 
 export interface ThermalInput {
   dt: number;
@@ -68,6 +70,7 @@ export class TireThermalModel {
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
   private integrated = false;
   private yawPerSteer = DEFAULT_YAW_PER_STEER;
+  private verticalSmooth = GRAVITY;
   private params: ThermalParams = GT3_THERMAL;
 
   /** Switches the constants without touching the temperatures. */
@@ -167,9 +170,14 @@ export class TireThermalModel {
         )
       );
     }
-    // Banking presses the tires harder than the lateral acceleration says.
+    // Banking presses the tires harder than the lateral acceleration says. The
+    // threshold sits on the average, or a bumpy track would cross it on every crest.
+    this.verticalSmooth +=
+      (vertical - this.verticalSmooth) * Math.min(1, h / VERTICAL_SMOOTH_S);
     const banked = par.bank
-      ? Math.max(0, vertical - GRAVITY - par.bank.from) * par.bank.heat * speed
+      ? Math.max(0, this.verticalSmooth - GRAVITY - par.bank.from) *
+        par.bank.heat *
+        speed
       : 0;
     // Steering the car does not turn on: the front is sliding.
     const unexplained =
@@ -220,6 +228,7 @@ export class TireThermalModel {
     this.temp = {};
     this.passive = {};
     this.yawPerSteer = DEFAULT_YAW_PER_STEER;
+    this.verticalSmooth = GRAVITY;
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };
     this.integrated = false;
   }

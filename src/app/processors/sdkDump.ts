@@ -12,7 +12,7 @@ const MAX_SAMPLES = 8;
 export class SdkDump {
   private sums = new Map<string, number>();
   private time = 0;
-  private header: string[] | undefined;
+  private columns: string[] | undefined;
 
   get seconds(): number {
     return this.time;
@@ -40,15 +40,11 @@ export class SdkDump {
     }
   }
 
-  /** The second's means as CSV text (header first time), then starts over. */
-  flush(clock: string): string {
-    let out = '';
-    if (!this.header) {
-      this.header = [...this.sums.keys()].sort();
-      out += `clock,${this.header.join(',')}\n`;
-    }
+  /** The second's means as a CSV line and the header line, then starts over. */
+  flush(clock: string): { header: string; line: string } {
+    this.columns ??= [...this.sums.keys()].sort();
     const t = this.time || 1;
-    out += `${clock},${this.header
+    const line = `${clock},${this.columns
       .map((k) => {
         const v = this.sums.get(k);
         return v === undefined ? '' : +(v / t).toPrecision(6);
@@ -56,6 +52,6 @@ export class SdkDump {
       .join(',')}\n`;
     this.sums = new Map();
     this.time = 0;
-    return out;
+    return { header: `clock,${this.columns.join(',')}\n`, line };
   }
 }

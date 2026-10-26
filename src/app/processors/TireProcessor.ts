@@ -523,8 +523,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     );
     if (!this.demo) {
       this.sdkDump.add(frame, dt);
-      if (this.sdkDump.seconds >= 1)
-        tyreFile('sdk.csv', this.sdkDump.flush(stamp(new Date()).slice(11)));
+      if (this.sdkDump.seconds >= 1) {
+        const { header, line } = this.sdkDump.flush(
+          stamp(new Date()).slice(11)
+        );
+        tyreFile('sdk.csv', line, header);
+      }
     }
     if (this.trace.seconds >= 1) {
       const temps = CORNERS.map(
