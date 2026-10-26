@@ -167,6 +167,9 @@ const findAlignment = (
     if (typeof value === 'string') {
       const isCamber = key === 'Camber';
       const isToe = /toe/i.test(key);
+      // Caster is not used by any model yet; it is only logged to see the values.
+      if (/caster/i.test(key))
+        found.seen.push(`${[...path, key].join('/')}=${value}`);
       if (!isCamber && !isToe) continue;
       found.seen.push(`${[...path, key].join('/')}=${value}`);
       const corners = cornersOf(path);
