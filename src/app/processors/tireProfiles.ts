@@ -41,6 +41,21 @@ export interface ThermalParams {
   scrub?: ScrubParams;
   /** Heat from the extra vertical load of banking; none on a flat track. */
   bank?: BankParams;
+  /**
+   * A slow second node under the tread, which is what the sim's stop reading
+   * measures. The dash shows the tread; it leans on the carcass, so a warm
+   * tire sitting still holds its temperature instead of cooling to the air.
+   */
+  carcass?: CarcassParams;
+}
+
+export interface CarcassParams {
+  /** Per second, tread heat that flows into the carcass (per degree of difference). */
+  k: number;
+  /** Per second, carcass warming per degree the tread is hotter. */
+  kc: number;
+  /** Per second, carcass cooling toward the air. */
+  cool: number;
 }
 
 export interface BankParams {
@@ -61,7 +76,7 @@ export interface ScrubParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-26-v43';
+export const MODEL_VERSION = '2026-10-26-v44';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -165,24 +180,28 @@ const LEGACY_THERMAL: ThermalParams = {
  * (spinHeat) is from the earlier burnout fit and not part of this one.
  */
 export const GT3_THERMAL: ThermalParams = {
-  heat: 0.00337,
-  cool: 0.00187,
-  coolSpeed: 15.7,
+  heat: 0.00354,
+  cool: 0.000792,
+  coolSpeed: 5.46,
   rearShare: 0.589,
   loadTransfer: 0.556,
-  brakeHeat: 0.0012,
-  accelHeat: 0.00233,
-  aeroHeat: 0.000299,
+  brakeHeat: 0.00126,
+  accelHeat: 0.00245,
+  aeroHeat: 0.000314,
   coldBoost: 0,
   coldBelow: 60,
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
-  scrub: { heat: 0.00376, outside: 0 },
+  scrub: { heat: 0.00395, outside: 0 },
   // Daytona oval at 77-90 m/s, sustained 13-18 m/s2 vertical: the model was 40 C
   // low on every tire; this and a smaller aero term bring it to 8 C and leave the
   // other runs where they were. shortcut: one oval run, recheck on another.
-  bank: { from: 3, heat: 0.0054 },
+  bank: { from: 3, heat: 0.00567 },
+  // Race start at Nordschleife: the dash held 43-44 C for the minute on the grid
+  // and the first minute rolling while one node cooled 5 C; with a carcass under
+  // the tread the first minutes fit to 0.5 / 2.2 C (from 1.1 / 3.7).
+  carcass: { k: 0.00567, kc: 0.0463, cool: 0.00182 },
 };
 
 /** Scales every source of heat, keeping the cooling. */

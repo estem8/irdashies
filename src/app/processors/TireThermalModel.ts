@@ -65,6 +65,9 @@ export interface ThermalInput {
  */
 export class TireThermalModel {
   private temp: Partial<Record<TireCorner, number>> = {};
+  /** The slow node under the tread, where a profile has one. */
+  private carcass: Partial<Record<TireCorner, number>> = {};
+  private carcassPassive: Partial<Record<TireCorner, number>> = {};
   /** What each tire would read had it only cooled since it was last set. */
   private passive: Partial<Record<TireCorner, number>> = {};
   private gain: Record<TireCorner, number> = { lf: 1, rf: 1, lr: 1, rr: 1 };
@@ -101,6 +104,11 @@ export class TireThermalModel {
     return (this.temp[corner] ?? 0) - (this.passive[corner] ?? 0);
   }
 
+  /** The carcass temperature, what the sim's stop reading measures; the tread's without one. */
+  carcassOf(corner: TireCorner): number | undefined {
+    return this.carcass[corner] ?? this.temp[corner];
+  }
+
   mean(corner: TireCorner): number | undefined {
     return this.temp[corner];
   }
@@ -109,6 +117,8 @@ export class TireThermalModel {
   set(corner: TireCorner, value: number): void {
     this.temp[corner] = value;
     this.passive[corner] = value;
+    this.carcass[corner] = value;
+    this.carcassPassive[corner] = value;
   }
 
   /**
@@ -121,8 +131,9 @@ export class TireThermalModel {
    * too little to learn from, so the gain is left alone.
    */
   calibrate(corner: TireCorner, measured: number): void {
-    const predicted = this.temp[corner];
-    const passive = this.passive[corner];
+    // The reading is the carcass'; the tread stands in where there is no node.
+    const predicted = this.carcass[corner] ?? this.temp[corner];
+    const passive = this.carcassPassive[corner] ?? this.passive[corner];
     if (predicted === undefined || passive === undefined) return;
     const heated = predicted - passive;
     const needed = measured - passive;
@@ -217,9 +228,19 @@ export class TireThermalModel {
       const cold =
         1 + par.coldBoost * Math.min(1, Math.max(0, (par.coldBelow - t) / 25));
       const heat = this.gain[corner] * (driving * cold + spin);
-      this.temp[corner] = t + h * (heat - cooling * (t - ambient));
+      const node = par.carcass;
+      const c = this.carcass[corner] ?? t;
+      const flow = node ? t - c : 0;
+      this.temp[corner] =
+        t + h * (heat - (node?.k ?? 0) * flow - cooling * (t - ambient));
       const p = this.passive[corner] ?? t;
       this.passive[corner] = p - h * cooling * (p - ambient);
+      if (node) {
+        this.carcass[corner] =
+          c + h * (node.kc * flow - node.cool * (c - ambient));
+        const q = this.carcassPassive[corner] ?? c;
+        this.carcassPassive[corner] = q - h * node.cool * (q - ambient);
+      }
     }
     this.integrated = true;
   }
@@ -227,6 +248,8 @@ export class TireThermalModel {
   reset(): void {
     this.temp = {};
     this.passive = {};
+    this.carcass = {};
+    this.carcassPassive = {};
     this.yawPerSteer = DEFAULT_YAW_PER_STEER;
     this.verticalSmooth = GRAVITY;
     this.gain = { lf: 1, rf: 1, lr: 1, rr: 1 };

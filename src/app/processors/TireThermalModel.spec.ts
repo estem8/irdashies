@@ -102,3 +102,33 @@ describe('TireThermalModel banking', () => {
     expect(bumpy.mean('lf')).toBeCloseTo(smooth.mean('lf') ?? 0, 0);
   });
 });
+
+describe('TireThermalModel carcass', () => {
+  const stand = (seconds: number) => {
+    const m = heated();
+    for (const c of ['lf', 'rf', 'lr', 'rr'] as const) m.set(c, 44);
+    for (let i = 0; i < seconds * 15; i++)
+      m.step({
+        dt: 1 / 15,
+        speed: 0,
+        lateral: 0,
+        longitudinal: 0,
+        driveSlip: 0,
+        ambient: 18.8,
+      });
+    return m;
+  };
+
+  it('holds a warm tire near its start temperature on the grid', () => {
+    // The dash read 44 then 43 for the minute on a race grid.
+    const lf = stand(60).mean('lf') ?? 0;
+    expect(lf).toBeGreaterThan(42);
+    expect(lf).toBeLessThan(44);
+  });
+
+  it('keeps the carcass cooler than a tread that has just worked', () => {
+    const m = heated();
+    drive(m, 60, 3.5, 0.0065);
+    expect(m.carcassOf('rf')).toBeLessThan(m.mean('rf') ?? 0);
+  });
+});
