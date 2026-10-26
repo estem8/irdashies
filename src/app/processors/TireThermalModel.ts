@@ -26,6 +26,7 @@ const YAW_MIN_SPEED = 20;
 const YAW_LEARN_PER_S = 0.5;
 /** m/s under which yaw per speed says nothing. */
 const SCRUB_MIN_SPEED = 10;
+const GRAVITY = 9.81;
 
 export interface ThermalInput {
   dt: number;
@@ -44,6 +45,8 @@ export interface ThermalInput {
   /** Steering wheel angle and yaw rate, rad and rad/s, absolute. */
   steering?: number;
   yawRate?: number;
+  /** Vertical acceleration, m/s2, about 9.81 on a flat road. */
+  vertical?: number;
 }
 
 /**
@@ -137,6 +140,7 @@ export class TireThermalModel {
     ambient,
     steering = 0,
     yawRate = 0,
+    vertical = GRAVITY,
   }: ThermalInput): void {
     if (!(dt > 0)) return;
     const par = this.params;
@@ -163,6 +167,10 @@ export class TireThermalModel {
         )
       );
     }
+    // Banking presses the tires harder than the lateral acceleration says.
+    const banked = par.bank
+      ? Math.max(0, vertical - GRAVITY - par.bank.from) * par.bank.heat * speed
+      : 0;
     // Steering the car does not turn on: the front is sliding.
     const unexplained =
       speed > SCRUB_MIN_SPEED
@@ -184,6 +192,7 @@ export class TireThermalModel {
           ? par.brakeHeat * speed * braking
           : par.accelHeat * speed * accel) +
         aero +
+        banked +
         (front && par.scrub
           ? par.scrub.heat *
             unexplained *

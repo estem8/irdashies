@@ -53,3 +53,33 @@ describe('TireThermalModel scrub heat', () => {
     expect(m.mean('rf')).toBeLessThan(hot);
   });
 });
+
+describe('TireThermalModel banking', () => {
+  const run = (vertical: number) => {
+    const m = heated();
+    for (let i = 0; i < 60 * 15; i++)
+      m.step({
+        dt: 1 / 15,
+        speed: 80,
+        lateral: 5,
+        longitudinal: 0,
+        driveSlip: 0,
+        ambient: 20,
+        steering: 0.1,
+        yawRate: 0.1 * 0.012 * 80,
+        vertical,
+      });
+    return m;
+  };
+
+  it('heats every tire more with the extra load of a banked turn', () => {
+    const flat = run(9.81);
+    const banked = run(16);
+    for (const c of ['lf', 'rf', 'lr', 'rr'] as const)
+      expect(banked.mean(c)).toBeGreaterThan((flat.mean(c) ?? 0) + 10);
+  });
+
+  it('ignores the small vertical loads of bumps and crests', () => {
+    expect(run(11.5).mean('lf')).toBeCloseTo(run(9.81).mean('lf') ?? 0, 5);
+  });
+});

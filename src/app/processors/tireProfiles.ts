@@ -39,6 +39,15 @@ export interface ThermalParams {
    * the same temperature as the rest, which cools by the same law.
    */
   scrub?: ScrubParams;
+  /** Heat from the extra vertical load of banking; none on a flat track. */
+  bank?: BankParams;
+}
+
+export interface BankParams {
+  /** Vertical acceleration (m/s2) beyond g that goes unnoticed: bumps, crests. */
+  from: number;
+  /** Degrees per second per m/s2 beyond that, times speed. */
+  heat: number;
 }
 
 export interface ScrubParams {
@@ -52,7 +61,7 @@ export interface ScrubParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-26-v42';
+export const MODEL_VERSION = '2026-10-26-v43';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -163,13 +172,17 @@ export const GT3_THERMAL: ThermalParams = {
   loadTransfer: 0.556,
   brakeHeat: 0.0012,
   accelHeat: 0.00233,
-  aeroHeat: 0.000534,
+  aeroHeat: 0.000299,
   coldBoost: 0,
   coldBelow: 60,
   spinHeat: 0.0022,
   spinHeatCap: 66,
   spinStill: 0.27,
   scrub: { heat: 0.00376, outside: 0 },
+  // Daytona oval at 77-90 m/s, sustained 13-18 m/s2 vertical: the model was 40 C
+  // low on every tire; this and a smaller aero term bring it to 8 C and leave the
+  // other runs where they were. shortcut: one oval run, recheck on another.
+  bank: { from: 3, heat: 0.0054 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
