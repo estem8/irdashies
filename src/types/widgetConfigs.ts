@@ -262,6 +262,30 @@ export interface WindConfig {
   sessionVisibility: SessionVisibilitySettings;
 }
 
+export interface TiresConfig {
+  background: { opacity: number };
+  units: 'auto' | 'Metric' | 'Imperial';
+  /** Tire pressure unit; auto follows the temperature units. */
+  pressureUnits: 'auto' | 'kPa' | 'psi' | 'bar';
+  /** Carcass temperature, in Celsius, that is shown green. */
+  tempOptimal: number;
+  /** Degrees either side of the optimum at which the colour is fully blue or red. */
+  tempRange: number;
+  /** Peak temperature, in Celsius, from which a zone's number is highlighted; 0 turns it off. */
+  tempOverheat: number;
+  /**
+   * average: the slow temperature the GT3 dash shows; real: the GTP-style
+   * surface temperature that jumps within seconds (an estimate for GT3).
+   */
+  tempMode: 'average' | 'real';
+  /** What the tread remaining under each tire shows: every zone, their mean, or the lowest. */
+  wearMode: 'all' | 'average' | 'min';
+  /** Tread remaining, in percent, that the laps-left forecast counts down to. */
+  wearLimit: number;
+  showOnlyWhenOnTrack: boolean;
+  sessionVisibility: SessionVisibilitySettings;
+}
+
 export interface TrackMapConfig {
   turnLabels: {
     enabled: boolean;
@@ -1394,6 +1418,7 @@ export interface WidgetConfigMap {
   relative: RelativeConfig;
   weather: WeatherConfig;
   wind: WindConfig;
+  tires: TiresConfig;
   map: TrackMapConfig;
   flatmap: FlatTrackMapConfig;
   input: InputConfig;
@@ -1503,6 +1528,7 @@ export type StandingsWidgetSettings = BaseWidgetSettings<StandingsConfig>;
 export type RelativeWidgetSettings = BaseWidgetSettings<RelativeConfig>;
 export type WeatherWidgetSettings = BaseWidgetSettings<WeatherConfig>;
 export type WindWidgetSettings = BaseWidgetSettings<WindConfig>;
+export type TiresWidgetSettings = BaseWidgetSettings<TiresConfig>;
 export type TrackMapWidgetSettings = BaseWidgetSettings<TrackMapConfig>;
 export type FlatTrackMapWidgetSettings = BaseWidgetSettings<FlatTrackMapConfig>;
 export type SteerWidgetSettings = BaseWidgetSettings<SteerConfig>;

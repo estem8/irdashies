@@ -23,6 +23,7 @@ export async function publishIRacingSDKEvents(
         lifecycle,
         metrics: perfMetrics,
         logError: (message, error) => logger.error(message, error),
+        demo: true,
         referenceLapPersistence: {
           load: () => null,
           save: () => undefined,

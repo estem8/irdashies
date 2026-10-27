@@ -15,6 +15,7 @@ export interface ChannelPayloads {
   'blind-spot.snapshot': BlindSpotSnapshot;
   'car-speeds.snapshot': CarSpeedsSnapshot;
   'car-systems.snapshot': CarSystemsSnapshot;
+  'tires.snapshot': TireSnapshot;
   'driver-controls.snapshot': DriverControlsSnapshot;
   'fuel.projection': FuelProjectionSnapshot;
   'lap-times.snapshot': LapTimesSnapshot;
@@ -265,6 +266,80 @@ export interface CarSystemsSnapshot {
   /** False before any in-car frame has been seen, when the set is unknown. */
   discovered: boolean;
   sessionNum: number | null;
+  version: number;
+}
+
+export type TireCorner = 'lf' | 'rf' | 'lr' | 'rr';
+
+/** One tire: three zones across the tread, as the driver sees it, left to right. */
+export interface TireCornerSnapshot {
+  /**
+   * The slow tread temperature, as the GT3 dash shows it, in degrees Celsius.
+   * iRacing refreshes its carcass reading only at a pit stop, so while driving
+   * this is estimated from the load on the tire.
+   */
+  temp: readonly [number, number, number];
+  /**
+   * Tread-surface temperature as the GTP dash shows it: it jumps within
+   * seconds of braking, cornering, wheelspin or a slide and falls back as fast.
+   * Estimated for every car, whichever of `temp` and this its own dash shows.
+   */
+  tempReal?: readonly [number, number, number];
+  /**
+   * Tread remaining as a percentage, 100 = new. iRacing only refreshes the
+   * reading at a pit stop, so once a stint's wear rate is known this is an
+   * estimate for the current lap rather than the last reading.
+   */
+  wear: readonly [number, number, number];
+  /** Camber from the car setup in degrees; negative leans the top inward. */
+  camber?: number;
+  /** Toe from the car setup as the sim formats it, e.g. "-2.8 mm". */
+  toe?: string;
+  /** Toe as an angle for this tire, in degrees; positive is toe-in. */
+  toeDeg?: number;
+  /** True when `temp` is a load-based estimate, not the last stop's reading. */
+  tempEstimated: boolean;
+  /** True when `wear` is extrapolated from the last stint, not read. */
+  estimated: boolean;
+  /** Percentage points lost per lap, from the last stint on these tires. */
+  wearPerLap?: readonly [number, number, number];
+  /** Tire pressure in kPa: the hot reading if the sim sends one, else the cold set pressure. */
+  pressure?: number;
+  /**
+   * Vertical load on this tire as its suspension travel relative to standing
+   * still, in steps of 0.1: 1 at rest, above 1 under cornering, braking or
+   * downforce, below 1 when unloaded. Absent until the car has stood still.
+   */
+  load?: number;
+  /**
+   * How hot this tire's brake disc is, 0 (cold) to 1 (as hot as testing made
+   * it), in steps of 0.05. Only for cars with a surface model.
+   */
+  disc?: number;
+  /** True when `pressure` is a live hot reading, not the cold set pressure. */
+  pressureHot?: boolean;
+}
+
+/**
+ * Where the tires are sliding right now, each 0 to 1. Only ABS comes from the
+ * sim; the rest are inferred (no per-wheel speed is published), and spin, lock
+ * and traction control refer to the driven rear wheels.
+ */
+export interface TireSlipSnapshot {
+  abs: boolean;
+  tc: number;
+  spin: number;
+  lock: number;
+  /** Front tires sliding: the car turns less than the steering asks. */
+  under: number;
+  /** Rear tires sliding: the car turns more, or is being caught. */
+  over: number;
+}
+
+/** Tire temperatures as last reported and wear estimated between pit stops. */
+export interface TireSnapshot {
+  corners: Partial<Record<TireCorner, TireCornerSnapshot>>;
+  slip?: TireSlipSnapshot;
   version: number;
 }
 
@@ -597,6 +672,13 @@ export const channelRegistry = {
     kind: 'snapshot',
     defaultRateHz: 2,
     maxRateHz: 10,
+  },
+  // Temperatures drift slowly, but the slip highlights flick on and off with
+  // ABS and wheelspin, so this runs at a driver-input rate.
+  'tires.snapshot': {
+    kind: 'snapshot',
+    defaultRateHz: 10,
+    maxRateHz: 15,
   },
   // Publishes on version change, roughly 0.6 times a second in a 60-car field.
   // The rate cap only bounds the worst case; it is not a sampling rate.

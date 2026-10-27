@@ -125,6 +125,7 @@ const WIDGET_MENU_META: Partial<
   tachometer: { category: 'car', description: 'RPM and shift lights' },
   map: { category: 'track', description: 'Circuit map with cars' },
   twitchchat: { category: 'extras', description: 'Twitch chat feed' },
+  tires: { category: 'car', description: 'Tire temperature and tread wear' },
   weather: { category: 'track', description: 'Temperatures, wind, wetness' },
   wind: { category: 'track', description: 'Wind direction and speed' },
 };

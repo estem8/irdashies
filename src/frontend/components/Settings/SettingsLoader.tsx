@@ -6,6 +6,7 @@ import { StandingsSettings } from './sections/StandingsSettings';
 import { RelativeSettings } from './sections/RelativeSettings';
 import { WeatherSettings } from './sections/WeatherSettings';
 import { WindSettings } from './sections/WindSettings';
+import { TiresSettings } from './sections/TiresSettings';
 import { TrackMapSettings } from './sections/TrackMapSettings';
 import { FlatTrackMapSettings } from './sections/FlatTrackMapSettings';
 import { AdvancedSettings } from './sections/AdvancedSettings';
@@ -53,6 +54,7 @@ export const WIDGET_SETTINGS: Record<
   relative: RelativeSettings,
   weather: WeatherSettings,
   wind: WindSettings,
+  tires: TiresSettings,
   fuel: FuelSettings,
   map: TrackMapSettings,
   flatmap: FlatTrackMapSettings,

@@ -27,6 +27,8 @@ import { RelativeGapProcessor } from './RelativeGapProcessor';
 import { SectorTimingProcessor } from './SectorTimingProcessor';
 import { SessionBarProcessor } from './SessionBarProcessor';
 import { CarSystemsProcessor } from './CarSystemsProcessor';
+import { TireProcessor } from './TireProcessor';
+import type { TireCalibrationStore } from './tireCalibration';
 import { SessionTimingProcessor } from './SessionTimingProcessor';
 import { StandingsProcessor } from './StandingsProcessor';
 import { TrackStateProcessor } from './TrackStateProcessor';
@@ -35,6 +37,10 @@ interface ProcessorRegistryOptions {
   referenceLapPersistence: ReferenceLapPersistence;
   /** The radar's dev tuning from the current dashboard; defaults without. */
   radarTuning?: () => RadarProcessorTuning;
+  /** Keeps what the tire model learned per car and track; none without. */
+  tireCalibration?: TireCalibrationStore;
+  /** Mock data: the tire model keeps no run folders for it. */
+  demo?: boolean;
 }
 
 interface DefaultProcessorHostOptions extends ProcessorRegistryOptions {
@@ -67,6 +73,8 @@ const defineProcessor = <K extends AnyProcessorDefinition['channel']>(
 export const createProcessorDefinitions = ({
   referenceLapPersistence,
   radarTuning,
+  tireCalibration,
+  demo,
 }: ProcessorRegistryOptions): readonly AnyProcessorDefinition[] => [
   defineProcessor({
     channel: 'blind-spot.snapshot',
@@ -150,6 +158,11 @@ export const createProcessorDefinitions = ({
     channel: 'car-systems.snapshot',
     metricsPrefix: 'carSystems',
     create: () => new CarSystemsProcessor(),
+  }),
+  defineProcessor({
+    channel: 'tires.snapshot',
+    metricsPrefix: 'tires',
+    create: () => new TireProcessor(tireCalibration, demo),
   }),
   defineProcessor({
     channel: 'driver-controls.snapshot',
