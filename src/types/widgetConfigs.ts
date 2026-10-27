@@ -266,7 +266,7 @@ export interface TiresConfig {
   background: { opacity: number };
   units: 'auto' | 'Metric' | 'Imperial';
   /** Tire pressure unit; auto follows the temperature units. */
-  pressureUnits: 'auto' | 'kPa' | 'psi';
+  pressureUnits: 'auto' | 'kPa' | 'psi' | 'bar';
   /** Carcass temperature, in Celsius, that is shown green. */
   tempOptimal: number;
   /** Degrees either side of the optimum at which the colour is fully blue or red. */

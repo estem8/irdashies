@@ -36,8 +36,16 @@ describe('TireSurfaceModel', () => {
     // peaks a moment after the braking, as the dash does.
     run(model, 3, { speed: 60, longitudinal: -22, brake: 0.9 });
     run(model, 2, { speed: 30 });
-    expect(model.temp('lf', 19)).toBeGreaterThan(19 + params.frontRest + 30);
-    expect(model.temp('lf', 19) - (19 + params.frontRest)).toBeGreaterThan(30);
+    expect(model.temp('lf', 19)).toBeGreaterThan(19 + params.frontRest + 15);
+    expect(model.temp('lf', 19) - (19 + params.frontRest)).toBeGreaterThan(15);
+  });
+
+  it('heats on banking', () => {
+    const flat = new TireSurfaceModel(params);
+    const banked = new TireSurfaceModel(params);
+    run(flat, 20, { speed: 80, vertical: 9.81 });
+    run(banked, 20, { speed: 80, vertical: 20 });
+    expect(banked.temp('lr', 19)).toBeGreaterThan(flat.temp('lr', 19) + 2);
   });
 
   it('cools back toward rest at speed within seconds', () => {

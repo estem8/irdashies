@@ -51,10 +51,6 @@ export const startTyreRun = (
   }
 };
 
-export const tyreRunDir = (): string | undefined => current?.dir;
-
-/** The car this run is for, and the folder holding the run folders and dashCrop.json. */
-export const tyreRunCar = (): string | undefined => current?.car;
 export const tyreRunRoot = (): string | undefined => current?.root;
 
 export const tyreLog = (line: string): void => {

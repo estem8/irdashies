@@ -78,3 +78,36 @@ export const slideOf = (
     rear: Math.max(0, Math.abs(lateralVelocity - REAR_ARM * yawRate) - grace),
   };
 };
+
+/** Steering wheel to road wheel ratio and the axle arms of the generic car. */
+const STEER_RATIO = 14;
+const SLIP_ARM = 1.35;
+const SLIP_MIN_SPEED = 5;
+/** Beyond this the car is spinning, not gripping: the heat would be nonsense. */
+const SLIP_MAX_DEG = 12;
+
+/**
+ * Slip angle of the front and rear axle in degrees, from the signed steering
+ * wheel angle (rad), speed, forward and lateral velocity (m/s) and yaw rate
+ * (rad/s).
+ * shortcut: one steering ratio and arm for every car (ratio 11-17, arm 1.0-1.7
+ * change the fit by under 6 percent), refine per car if it matters.
+ */
+export const slipAngles = (
+  steeringAngle: number,
+  speed: number,
+  forward: number,
+  lateralVelocity: number,
+  yawRate: number
+): { front: number; rear: number } => {
+  if (speed <= SLIP_MIN_SPEED) return { front: 0, rear: 0 };
+  const vx = Math.max(forward, SLIP_MIN_SPEED);
+  const deg = (rad: number) =>
+    Math.min(SLIP_MAX_DEG, Math.abs(rad) * (180 / Math.PI));
+  return {
+    front: deg(
+      steeringAngle / STEER_RATIO - (lateralVelocity + SLIP_ARM * yawRate) / vx
+    ),
+    rear: deg(-(lateralVelocity - SLIP_ARM * yawRate) / vx),
+  };
+};

@@ -25,8 +25,12 @@ export const lapsLeft = (tire: TireCornerSnapshot, limit: number) => {
 };
 
 /** Pressure in the unit shown; the sim reports kPa. */
-export const formatPressure = (kpa: number, unit: 'kPa' | 'psi') =>
-  unit === 'psi' ? (kpa * 0.145038).toFixed(1) : kpa.toFixed(0);
+export const formatPressure = (kpa: number, unit: 'kPa' | 'psi' | 'bar') =>
+  unit === 'psi'
+    ? (kpa * 0.145038).toFixed(1)
+    : unit === 'bar'
+      ? (kpa / 100).toFixed(2)
+      : kpa.toFixed(0);
 
 const DISC_STOPS: readonly (readonly [number, number, number])[] = [
   [100, 116, 139],

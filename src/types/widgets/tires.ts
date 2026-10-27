@@ -55,6 +55,7 @@ export default defineWidgetManifest({
         { value: 'auto', label: 'Auto' },
         { value: 'kPa', label: 'kPa' },
         { value: 'psi', label: 'psi' },
+        { value: 'bar', label: 'bar' },
       ],
     },
     tempOptimal: {
@@ -80,10 +81,10 @@ export default defineWidgetManifest({
       type: 'enum',
       label: 'Temperature Mode',
       description:
-        'Average is the slow temperature the GT3 dash shows; Real is the tread surface temperature that jumps within seconds, as on the GTP dash. Both are estimated for every car',
+        'Carcass is the temperature the GT3 dash shows; Tread is the surface temperature that jumps within seconds, as on the GTP dash. Both are estimated for every car',
       options: [
-        { value: 'average', label: 'Average' },
-        { value: 'real', label: 'Real' },
+        { value: 'average', label: 'Carcass' },
+        { value: 'real', label: 'Tread' },
       ],
     },
     wearMode: {

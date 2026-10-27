@@ -16,6 +16,8 @@ export interface ThermalParams {
   loadTransfer: number;
   /** Heat on the front tires per unit of speed times braking deceleration. */
   brakeHeat: number;
+  /** Rear brake heat as a multiple of the front's per unit of braking force; 1 is the same tire law, 0 none. */
+  rearBrake?: number;
   /** Heat on the driven rear tires per unit of speed times acceleration. */
   accelHeat: number;
   /** Heat on every tire per unit of speed cubed (thousands): aerodynamic load. */
@@ -78,7 +80,7 @@ export interface ScrubParams {
  * Names the set of constants below. Saved calibrations were learned against
  * this model, so change it whenever the numbers change.
  */
-export const MODEL_VERSION = '2026-10-26-v44';
+export const MODEL_VERSION = '2026-10-27-v50';
 
 /**
  * The surface-temperature model for cars whose dash shows the tread surface,
@@ -125,6 +127,25 @@ export interface SurfaceParams {
   frontCoolSpeed: number;
   rearTau: number;
   rearCoolSpeed: number;
+  /** Surface and carcass exchange heat: coupling, carcass gain and carcass cooling per second. */
+  carcassCouple?: number;
+  carcassGain?: number;
+  carcassCool?: number;
+  /** Heat per second per m/s and per m/s2 of vertical load above `bankFrom` (banking). */
+  bankHeat?: number;
+  bankFrom?: number;
+  /** Heat per second per m/s of speed above `rollFrom`: rolling and aero. */
+  rollHeat?: number;
+  rollFrom?: number;
+  /** When set, a wheel's cornering share is its measured load to this power, else the loadTransfer split. */
+  loadExp?: number;
+  /** Rear heat from cornering load. */
+  rearCornering?: number;
+  /** Heat from braking while cornering. */
+  combinedHeat?: number;
+  /** Share of the heat that shows at once and fades in `flashTau` seconds, and that time. */
+  flashShare?: number;
+  flashTau?: number;
 }
 
 export interface TireProfile {
@@ -179,23 +200,26 @@ const LEGACY_THERMAL: ThermalParams = {
 };
 
 /**
- * Fitted against cockpit-dash readings of the hottest zone of each tire on a
- * Ferrari 296 GT3: four skidpad runs (left and right turns, full lock and
- * alternating turns, 4.9 to 5.4 C RMS over all four tires) and the Nordschleife race (1.1 C at three
- * points: the grid, mid-race and the stop). One temperature, as the dash shows
- * it: lateral load, braking, drive, aero and scrub all heat it, and it cools to
- * the air faster at speed. shortcut: one car, recheck on another; wheelspin
- * (spinHeat) is from the earlier burnout fit and not part of this one.
+ * One law for all four tires and every car: the same cornering heat on both
+ * axles (outside tires more), braking heat on both axles in the ratio of the
+ * brake bias, aero, scrub and banking; no per-axle or per-car factor. Fitted
+ * to the Ferrari 296 GT3 and Cadillac V-Series.R together, against the pit-stop
+ * readings, the gas temperature implied by the live hot pressure in the .ibt
+ * recordings (nine first stints) and the Ferrari skidpad dash (4.9 C RMS), with
+ * the warm tire on a grid held at 43 C for a minute. The held-out runs fit as
+ * well as the earlier per-axle form. shortcut: wheelspin, scrub, banking and
+ * slide heat are not part of this fit.
  */
 export const GT3_THERMAL: ThermalParams = {
-  heat: 0.00354,
-  cool: 0.000792,
-  coolSpeed: 5.46,
-  rearShare: 0.589,
-  loadTransfer: 0.556,
-  brakeHeat: 0.00126,
-  accelHeat: 0.00245,
-  aeroHeat: 0.000314,
+  heat: 0.00286,
+  cool: 0.000552,
+  coolSpeed: 4.33,
+  rearShare: 1,
+  loadTransfer: 0.536,
+  brakeHeat: 0.00258,
+  rearBrake: 1,
+  accelHeat: 0,
+  aeroHeat: 0.000192,
   coldBoost: 0,
   coldBelow: 60,
   spinHeat: 0.0022,
@@ -212,7 +236,7 @@ export const GT3_THERMAL: ThermalParams = {
   // Race start at Nordschleife: the dash held 43-44 C for the minute on the grid
   // and the first minute rolling while one node cooled 5 C; with a carcass under
   // the tread the first minutes fit to 0.5 / 2.2 C (from 1.1 / 3.7).
-  carcass: { k: 0.00567, kc: 0.0463, cool: 0.00182 },
+  carcass: { k: 0.000587, kc: 0.0249, cool: 0.0103 },
 };
 
 /** Scales every source of heat, keeping the cooling. */
@@ -241,29 +265,41 @@ export const DEFAULT_PROFILE: TireProfile = {
  * recall near 0.7 on both the skidpad and Monza. Good for a warning, not for the number.
  */
 const CADILLAC_SURFACE: SurfaceParams = {
-  frontRest: 16.56,
-  rearRest: 13.29,
-  frontScrub: 0.2864,
-  frontSlide: 0.3371,
-  rearSlide: 0.7973,
-  frontCornering: 0.0199,
-  loadTransfer: 0.1707,
-  rearSpin: 0.1213,
-  frontBrake: 0.02782,
-  frontPedal: 0.6285,
-  rearBrake: 0.01548,
-  fastShare: 0.465,
-  fastCool: 0.863,
-  fastCoolSpeed: 0.0017,
-  slowCool: 0.0065,
-  slowCoolSpeed: 0.022,
-  fastToTire: 0.909,
-  slowToTire: 0.187,
+  frontRest: 0,
+  rearRest: 0,
+  frontScrub: 0.2026,
+  frontSlide: 1.645,
+  rearSlide: 2.159,
+  frontCornering: 0.004148,
+  loadTransfer: 0.2089,
+  rearSpin: 0.488,
+  frontBrake: 0.02013,
+  frontPedal: 0.06244,
+  rearBrake: 0.0221,
+  fastShare: 0.439,
+  fastCool: 0.04491,
+  fastCoolSpeed: 0.00004438,
+  slowCool: 0.0003094,
+  slowCoolSpeed: 0.01663,
+  fastToTire: 0.1022,
+  slowToTire: 0.08448,
   discFull: 25,
-  frontTau: 14.9,
-  frontCoolSpeed: 0.0113,
-  rearTau: 77.18,
-  rearCoolSpeed: 0.001735,
+  frontTau: 76.73,
+  frontCoolSpeed: 0.0049,
+  rearTau: 77.67,
+  rearCoolSpeed: 0.00478,
+  carcassCouple: 0.1043,
+  carcassGain: 0.00756,
+  carcassCool: 0.000009679,
+  bankHeat: 0.001845,
+  bankFrom: 0.5089,
+  rollHeat: 0.1016,
+  loadExp: 1,
+  rearCornering: 0.0008039,
+  rollFrom: 1.002,
+  combinedHeat: 0.00104,
+  flashShare: 0.09267,
+  flashTau: 1.158,
 };
 
 /**

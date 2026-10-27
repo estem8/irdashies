@@ -14,6 +14,7 @@ import { SessionVisibility } from '../components/SessionVisibility';
 import { SettingDivider } from '../components/SettingDivider';
 import { SettingProps, settingPropFor } from '../components/SettingProp';
 import { SettingsSection } from '../components/SettingSection';
+import { TireTempModePicker } from '../components/TireTempModePicker';
 
 const SETTING_ID = 'tires';
 const SettingProp = settingPropFor(SETTING_ID);
@@ -104,7 +105,10 @@ export const TiresSettings = () => {
               <SettingProp path="background.opacity" />
               <SettingProp path="units" />
               <SettingProp path="pressureUnits" />
-              <SettingProp path="tempMode" />
+              <TireTempModePicker
+                value={settings.config.tempMode}
+                onChange={(tempMode) => handleConfigChange({ tempMode })}
+              />
               <SettingProp path="wearMode" />
               <SettingProp path="tempOptimal" />
               <SettingProp path="tempRange" />

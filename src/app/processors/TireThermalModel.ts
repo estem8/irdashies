@@ -41,6 +41,8 @@ export interface ThermalInput {
   /** How fast the front and rear axle slide sideways beyond cornering, m/s. */
   slideFront?: number;
   slideRear?: number;
+  /** Front share of the braking force, 0 to 1, from the brake bias setting. */
+  brakeBias?: number;
 }
 
 /**
@@ -149,6 +151,7 @@ export class TireThermalModel {
     vertical = GRAVITY,
     slideFront = 0,
     slideRear = 0,
+    brakeBias = 0.5,
   }: ThermalInput): void {
     if (!(dt > 0)) return;
     const par = this.params;
@@ -182,9 +185,11 @@ export class TireThermalModel {
       const load = cornering * 0.25 * (1 + outside * par.loadTransfer);
       const driving =
         par.heat * speed * load * (front ? 1 : par.rearShare) +
-        (front
-          ? par.brakeHeat * speed * braking
-          : par.accelHeat * speed * accel) +
+        par.brakeHeat *
+          speed *
+          braking *
+          (front ? 1 : ((par.rearBrake ?? 0) * (1 - brakeBias)) / brakeBias) +
+        (front ? 0 : par.accelHeat * speed * accel) +
         aero +
         banked +
         (par.slide ?? 0) * (front ? slideFront : slideRear) +

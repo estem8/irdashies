@@ -7,7 +7,7 @@ import type {
   TireSnapshot,
 } from '@irdashies/types';
 import { SdkDump } from './sdkDump';
-import { slideOf } from './YawGrip';
+import { slideOf, slipAngles } from './YawGrip';
 import { startTyreRun, stamp, tyreFile, tyreLog } from '../tyreLog';
 import {
   calibrationKey,
@@ -18,6 +18,7 @@ import {
 import { TireSurfaceModel } from './TireSurfaceModel';
 import {
   DEFAULT_PROFILE,
+  GT3_THERMAL,
   MODEL_VERSION,
   profileFor,
   type TireProfile,
@@ -67,6 +68,9 @@ const zones = (
 
 type Zones = [number, number, number];
 
+/** Tread remaining, percent, below which a tire has run: a new set reads 100. */
+const USED_BELOW = 99.9;
+
 /** PitSvFlags bits that order a tire change, per corner. */
 const TIRE_CHANGE_BIT: Record<TireCorner, number> = {
   lf: 0x1,
@@ -104,6 +108,13 @@ const offsets = (z: Zones): Zones => {
 /** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
 /** Used for ambient when the frame carries neither air nor track temperature. */
 const DEFAULT_AMBIENT = 25;
+/**
+ * Share of the track-over-air temperature that the tire exchanges heat with:
+ * the road is not air, so on a hot track (40 C against 24 C air) the tire
+ * runs warmer than air alone predicts. Fitted on Red Bull Ring, Monza,
+ * Virginia and Daytona dash readings, one value for every car.
+ */
+const TRACK_SHARE = 0.3;
 
 const SETUP_CORNERS: Record<string, TireCorner> = {
   LeftFront: 'lf',
@@ -434,7 +445,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       // The model's start value shows from the first frame: a new session's
       // frozen reading is the last session's (59-69 C on a race grid whose
       // tires start near 44 C), and it is only an estimate once driving.
-      const modelled = this.thermal.mean(corner);
+      const modelled = this.carcassOf(corner);
       // The zone spread seen at the last reading builds up as the tire heats,
       // so it is applied in proportion to how far this tire has warmed.
       const warmed =
@@ -462,19 +473,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ...pressureOf(
           frame,
           corner,
-          this.thermal.active &&
-            st.refTemp !== undefined &&
-            this.thermal.carcassOf(corner) !== undefined
-            ? {
-                carcass: this.thermal.carcassOf(corner) as number,
-                start: st.refTemp,
-              }
+          this.real?.active && st.refTemp !== undefined
+            ? { carcass: this.real.gas(corner), start: st.refTemp }
             : undefined
         ),
         ...this.loadOf(frame, corner),
         ...(this.real?.active && {
           tempReal: Array(3).fill(
-            Math.round(this.real.temp(corner, ambient))
+            Math.round(this.real.temp(corner))
           ) as unknown as Zones,
         }),
         ...(this.dashShowsSurface &&
@@ -530,6 +536,42 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     return rest ? { load: Math.round((travel / rest) * 10) / 10 } : {};
   }
 
+  /** Every wheel's load against its standstill load, where the car reports shock travel. */
+  private loads(frame: Telemetry): Partial<Record<TireCorner, number>> {
+    const out: Partial<Record<TireCorner, number>> = {};
+    for (const [corner] of CORNERS) {
+      const prefix = PREFIX[corner];
+      const travel =
+        number(frame, `${prefix}shockDefl`) ??
+        number(frame, `${prefix}SHshockDefl`);
+      const rest = this.rest[corner];
+      if (travel !== undefined && travel > 0 && rest)
+        out[corner] = travel / rest;
+    }
+    return out;
+  }
+
+  /** The front share of the braking force from the brake bias setting (a percentage), 0.5 where the car has none. */
+  private brakeBias(frame: Telemetry): number {
+    const bias = number(frame, 'dcBrakeBias');
+    return bias !== undefined && bias > 20 && bias < 80 ? bias / 100 : 0.5;
+  }
+
+  /**
+   * The temperature the GT3 dash shows, the hottest zone of the carcass, from
+   * the bulk node of the tire model. Cars on other models keep the slow
+   * thermal model.
+   */
+  private carcassOf(corner: TireCorner): number | undefined {
+    if (
+      this.real?.active &&
+      !this.dashShowsSurface &&
+      this.profile.thermal === GT3_THERMAL
+    )
+      return this.real.dash(corner);
+    return this.thermal.mean(corner);
+  }
+
   /** Feeds the thermal model one frame of driving. */
   private stepThermal(frame: Telemetry): void {
     const time = number(frame, 'SessionTime');
@@ -580,37 +622,55 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       tyreLog(
         `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}` +
           (this.real?.active
-            ? ` R=${CORNERS.map(([c]) => this.real?.temp(c, this.ambient(frame)).toFixed(1)).join('/')}`
+            ? ` R=${CORNERS.map(([c]) => this.real?.temp(c).toFixed(1)).join('/')}`
             : '')
       );
     }
-    const slide = slideOf(
-      number(frame, 'VelocityX') ?? number(frame, 'Speed') ?? 0,
-      number(frame, 'VelocityY') ?? 0,
-      number(frame, 'YawRate') ?? 0
+    const speed = number(frame, 'Speed') ?? 0;
+    const forward = number(frame, 'VelocityX') ?? speed;
+    const sideways = number(frame, 'VelocityY') ?? 0;
+    const yaw = number(frame, 'YawRate') ?? 0;
+    const slide = slideOf(forward, sideways, yaw);
+    const slip = slipAngles(
+      number(frame, 'SteeringWheelAngle') ?? 0,
+      speed,
+      forward,
+      sideways,
+      yaw
     );
     const input = {
       dt,
-      speed: number(frame, 'Speed') ?? 0,
+      speed,
       lateral: number(frame, 'LatAccel') ?? 0,
       longitudinal: number(frame, 'LongAccel') ?? 0,
       driveSlip,
       ambient: this.ambient(frame),
       steering: Math.abs(number(frame, 'SteeringWheelAngle') ?? 0),
       yawRate: Math.abs(number(frame, 'YawRate') ?? 0),
+      torque: Math.abs(number(frame, 'SteeringWheelTorque') ?? 0),
+      throttle: number(frame, 'Throttle') ?? 0,
       vertical: number(frame, 'VertAccel'),
       brake: number(frame, 'Brake') ?? 0,
       slideFront: slide.front,
       slideRear: slide.rear,
+      slipFront: slip.front,
+      slipRear: slip.rear,
     };
-    this.thermal.step(input);
-    this.real?.step(input);
+    this.thermal.step({ ...input, brakeBias: this.brakeBias(frame) });
+    this.real?.step({ ...input, ambient: this.surfaceAmbient(frame) });
   }
 
   private ambient(frame: Telemetry): number {
     return (
       number(frame, 'AirTemp') ?? number(frame, 'TrackTemp') ?? DEFAULT_AMBIENT
     );
+  }
+
+  /** What the surface and bulk nodes cool toward: air pulled toward the road. */
+  private surfaceAmbient(frame: Telemetry): number {
+    const air = this.ambient(frame);
+    const track = number(frame, 'TrackTemp');
+    return track === undefined ? air : air + TRACK_SHARE * (track - air);
   }
 
   /** Completed laps plus the fraction of the current one. */
@@ -649,7 +709,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       st.fresh = true;
       this.thermal.set(corner, ambient + this.freshOffset);
       st.refTemp = ambient + this.freshOffset;
-      this.real?.resetTread(corner, ambient + this.freshOffset, ambient);
+      this.real?.resetTread(corner, ambient + this.freshOffset);
     }
     if (late) tyreLog(`[TireDiag] SERVICE late tire change bits=${late}`);
     this.service = undefined;
@@ -674,6 +734,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const gainsBefore = JSON.stringify(this.thermal.gains());
     const flags = requestedChanges(frame) || this.orderedBits;
     const ambient = this.ambient(frame);
+    // Starting in the box with the crew at work: the tires ordered are being
+    // swapped now, and the reading is the old ones; followService resets them
+    // when the stop ends.
+    if (seeding && flag(frame, 'PitstopActive') === 1)
+      this.service = { applied: 0, running: true };
 
     for (const [corner] of CORNERS) {
       const reading = readings[corner];
@@ -694,15 +759,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         // The sim reports fresh tires as one value across the zones (34.6 C
         // at 18.6 C air, matching the dash), so an even reading is the real
         // start and also teaches the offset used for later fresh sets.
+        // Tires with mileage are the ones on the car, so their reading is real:
+        // joining a session in progress, not the frozen one of a new session.
+        const used = Math.min(...reading) < USED_BELOW;
+        let start = used
+          ? peak(temp)
+          : Math.min(peak(temp), this.profile.staleStart);
         if (Math.max(...temp) - Math.min(...temp) < 1) {
           this.freshOffset = Math.min(30, Math.max(0, peak(temp) - ambient));
-          this.thermal.set(corner, peak(temp));
-        } else {
-          this.thermal.set(
-            corner,
-            Math.min(peak(temp), this.profile.staleStart)
-          );
+          start = peak(temp);
         }
+        this.thermal.set(corner, start);
+        // The surface model would otherwise start at its resting level over the air.
+        this.real?.resetTread(corner, start);
         seeded.refTemp = this.thermal.mean(corner);
         continue;
       }
@@ -747,7 +816,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       );
       if (changed) {
         st.refTemp = ambient + this.freshOffset;
-        this.real?.resetTread(corner, ambient + this.freshOffset, ambient);
+        this.real?.resetTread(corner, ambient + this.freshOffset);
       }
       st.tempOffset = offsets(temp);
       st.fresh = changed;

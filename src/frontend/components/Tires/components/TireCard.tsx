@@ -17,7 +17,7 @@ interface TireCardProps {
   side: 'left' | 'right';
   tire?: TireCornerSnapshot;
   fahrenheit: boolean;
-  pressureUnit: 'kPa' | 'psi';
+  pressureUnit: 'kPa' | 'psi' | 'bar';
   optimal: number;
   range: number;
   limit: number;
