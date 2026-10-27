@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tire viewer</title>
+<style>
+html,body{margin:0;height:100%;background:#0f172a;color:#e2e8f0;font:13px system-ui,sans-serif}
+#bar{display:flex;gap:16px;align-items:center;padding:8px 12px;background:#1e293b}
+button{background:#334155;color:#e2e8f0;border:0;padding:6px 14px;border-radius:4px;cursor:pointer}
+button:hover{background:#475569}
+.k{display:inline-flex;align-items:center;gap:6px}.k i{display:inline-block;width:18px;height:3px}
+html,body{overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+#grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:8px}
+.cell{position:relative;min-width:0;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;background:#111827;border-radius:4px}
+#scroll{flex:none;overflow-x:scroll;overflow-y:hidden;height:18px;margin:0 8px 8px}
+#scroll div{height:1px}
+#msg{padding:12px;color:#f87171;white-space:pre-wrap}
+</style></head><body>
+<div id="app"><div id="bar"><button id="open">Open .ibt</button><span id="name">drop an .ibt file here</span>
+<span class="k"><i style="background:#94a3b8"></i>ibt tread (mean of 3 zones)</span>
+<span class="k"><i style="background:#34d399"></i>ibt carcass middle (stops only)</span>
+<span class="k"><i style="background:#fb923c"></i>Real (tread model)</span>
+<span class="k"><i style="background:#22d3ee"></i>Dash (carcass model)</span>
+<span style="margin-left:auto">wheel: zoom, drag: pan, double click: reset</span></div>
+<div id="msg"></div><div id="grid"></div><div id="scroll"><div></div></div></div>
+<script src="renderer.js"></script></body></html>
