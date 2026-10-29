@@ -102,6 +102,7 @@ export const TireCard = memo(
         value={formatPressure(tire.pressure, pressureUnit)}
         unit={pressureUnit}
         hot={tire.pressureHot === true}
+        estimated={tire.pressureEstimated === true}
       />
     );
 

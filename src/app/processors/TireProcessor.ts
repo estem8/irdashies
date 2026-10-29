@@ -250,7 +250,11 @@ const pressureOf = (
   if (cold === undefined || cold <= 0) return {};
   if (gas) {
     const estimated = (cold * (KELVIN + gas.carcass)) / (KELVIN + gas.start);
-    return { pressure: Math.round(estimated * 10) / 10, pressureHot: true };
+    return {
+      pressure: Math.round(estimated * 10) / 10,
+      pressureHot: true,
+      pressureEstimated: true,
+    };
   }
   return { pressure: Math.round(cold * 10) / 10 };
 };
@@ -263,6 +267,8 @@ const sameCorner = (a: TireCornerSnapshot, b: TireCornerSnapshot) =>
   a.toe === b.toe &&
   a.toeDeg === b.toeDeg &&
   a.pressure === b.pressure &&
+  a.pressureHot === b.pressureHot &&
+  a.pressureEstimated === b.pressureEstimated &&
   a.disc === b.disc &&
   (a.tempReal ?? []).join() === (b.tempReal ?? []).join() &&
   a.load === b.load &&

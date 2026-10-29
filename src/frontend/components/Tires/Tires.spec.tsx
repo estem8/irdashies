@@ -105,4 +105,31 @@ describe('Tires', () => {
     render(<Tires />);
     expect(screen.queryByText('Temps from last stop')).toBeNull();
   });
+
+  it('draws an estimated pressure with a ~ and leaves measured and cold ones plain', () => {
+    vi.mocked(Context.useTrackStateSelector).mockReturnValue(true);
+    withConfig({});
+    const zones = { temp: [60, 61, 62], wear: [90, 80, 70] };
+    vi.mocked(Context.useTireSnapshot).mockReturnValue({
+      version: 1,
+      slip: { abs: false, tc: 0, spin: 0, lock: 0, under: 0, over: 0 },
+      corners: {
+        lf: {
+          ...zones,
+          pressure: 160,
+          pressureHot: true,
+          pressureEstimated: true,
+        },
+        rf: { ...zones, pressure: 175, pressureHot: true },
+        lr: { ...zones, pressure: 158.6 },
+      },
+    } as never);
+    const { container } = render(<Tires />);
+    const text = (title: string) =>
+      container.querySelector(`[title="${title}"]`)?.textContent ?? '';
+    expect(text('Hot pressure (estimated)')).toMatch(/^~/);
+    expect(text('Hot pressure')).not.toContain('~');
+    expect(text('Cold set pressure')).not.toContain('~');
+    expect(text('Hot pressure')).not.toBe('');
+  });
 });

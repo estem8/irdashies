@@ -216,6 +216,17 @@ describe('TireProcessor', () => {
       p.onFrame(frame({ ...tires(44, 1), ...cold }, 0));
       expect(p.snapshot().corners.rf?.pressure).toBe(158.6);
       expect(p.snapshot().corners.rf?.pressureHot).toBeUndefined();
+      expect(p.snapshot().corners.rf?.pressureEstimated).toBeUndefined();
+    });
+
+    it('does not call a hot pressure the sim sends an estimate', () => {
+      const p = new TireProcessor();
+      p.init(session);
+      p.onFrame(frame({ ...tires(44, 1), ...cold, RFpressure: 175.2 }, 0));
+      const rf = p.snapshot().corners.rf;
+      expect(rf?.pressure).toBe(175.2);
+      expect(rf?.pressureHot).toBe(true);
+      expect(rf?.pressureEstimated).toBeUndefined();
     });
 
     it('estimates the hot pressure from the carcass temperature once driving', () => {
@@ -224,6 +235,7 @@ describe('TireProcessor', () => {
       for (let i = 0; i < 15 * 240; i++) p.onFrame(drive(70, 14, i / 15));
       const rf = p.snapshot().corners.rf;
       expect(rf?.pressureHot).toBe(true);
+      expect(rf?.pressureEstimated).toBe(true);
       // Hotter tires, higher pressure: 10 C of gas is about 3 percent
       expect(rf?.pressure).toBeGreaterThan(158.6 * 1.03);
     });
