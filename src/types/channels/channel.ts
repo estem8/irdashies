@@ -283,6 +283,8 @@ export interface TireCornerSnapshot {
    * Tread-surface temperature as the GTP dash shows it: it jumps within
    * seconds of braking, cornering, wheelspin or a slide and falls back as fast.
    * Estimated for every car, whichever of `temp` and this its own dash shows.
+   * The model has one surface value per tire, so the three entries are always
+   * equal; they only keep the shape of `temp`. It carries no zone spread.
    */
   tempReal?: readonly [number, number, number];
   /**

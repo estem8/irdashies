@@ -68,6 +68,8 @@ const zones = (
 
 type Zones = [number, number, number];
 
+const sameInEveryZone = (value: number): Zones => [value, value, value];
+
 /** Tread remaining, percent, below which a tire has run: a new set reads 100. */
 const USED_BELOW = 99.9;
 
@@ -484,10 +486,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
             : undefined
         ),
         ...this.loadOf(frame, corner),
+        // One surface node per tire: it has no zone spread, so the three
+        // entries are the same number, kept only to match the shape of `temp`.
         ...(this.real?.active && {
-          tempReal: Array(3).fill(
-            Math.round(this.real.temp(corner))
-          ) as unknown as Zones,
+          tempReal: sameInEveryZone(Math.round(this.real.temp(corner))),
         }),
         ...(this.dashShowsSurface &&
           this.real?.active && {
