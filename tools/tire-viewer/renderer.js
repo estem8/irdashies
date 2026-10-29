@@ -80,11 +80,11 @@ function draw(fromBar) {
     g.save(); g.beginPath(); g.rect(m.l, m.t, W, H); g.clip();
     // ibt carcass middle refreshes only at stops: draw as a stepped line
     g.strokeStyle = '#34d399'; g.lineWidth = 1; g.setLineDash([4, 3]); g.beginPath();
-    for (let i = a; i < b; i++) { const v = cr.carcass[i]; if (!(v > -50)) continue; i === a ? g.moveTo(X(data.t[i]), Y(v)) : g.lineTo(X(data.t[i]), Y(v)); }
+    for (let i = a; i < b; i++) { const v = cr.carcass[i]; if (!(v > -50)) continue; if (i === a) g.moveTo(X(data.t[i]), Y(v)); else g.lineTo(X(data.t[i]), Y(v)); }
     g.stroke(); g.setLineDash([]);
     for (const [s, col, lw] of SERIES) {
       g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); let on = false;
-      for (let i = a; i < b; i++) { const v = cr[s][i]; if (!(v > -50 && v < 400)) { on = false; continue; } on ? g.lineTo(X(data.t[i]), Y(v)) : g.moveTo(X(data.t[i]), Y(v)); on = true; }
+      for (let i = a; i < b; i++) { const v = cr[s][i]; if (!(v > -50 && v < 400)) { on = false; continue; } if (on) g.lineTo(X(data.t[i]), Y(v)); else g.moveTo(X(data.t[i]), Y(v)); on = true; }
       g.stroke();
     }
     g.restore();

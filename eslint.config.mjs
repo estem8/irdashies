@@ -46,6 +46,11 @@ export default defineConfig([
   tseslint.configs.strict,
   tseslint.configs.stylistic,
   {
+    // The tire viewer is a standalone Electron tool written as CommonJS.
+    files: ['tools/tire-viewer/**/*.{js,cjs}'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     ...eslintReactRecommended,
     files: ['src/frontend/**/*.{ts,tsx}', 'site/src/**/*.{ts,tsx}'],
     rules: {

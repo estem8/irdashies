@@ -16,6 +16,15 @@ import {
   ChannelSnapshotStore,
 } from './frontend/context/ChannelStore/ChannelSnapshotStore';
 
+// The tires processor writes diagnostics through the tyre log, which needs
+// Electron's app; none of that is under test here.
+vi.mock('./app/tyreLog', () => ({
+  tyreLog: vi.fn(),
+  startTyreRun: vi.fn(),
+  tyreFile: vi.fn(),
+  stamp: vi.fn(() => '2026-10-26 000000'),
+}));
+
 /** Event channels publish one occurrence at a time, so they have no snapshot. */
 type EventChannelName =
   | 'session.lifecycle'
