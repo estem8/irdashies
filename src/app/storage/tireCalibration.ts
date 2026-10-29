@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
 import logger from '../logger';
-import type { TireCalibration } from '../processors/tireCalibration';
+import type { TireCalibration } from 'iracing-tire-lab/model';
 
 const FILE_NAME = 'tireCalibration.json';
 const DATA_VERSION = 1;

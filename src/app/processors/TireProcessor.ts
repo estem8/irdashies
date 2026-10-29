@@ -6,27 +6,22 @@ import type {
   TireCornerSnapshot,
   TireSnapshot,
 } from '@irdashies/types';
-import { SdkDump } from './sdkDump';
-import { slideOf, slipAngles } from './YawGrip';
-import { startTyreRun, stamp, tyreFile, tyreLog } from '../tyreLog';
 import {
   calibrationKey,
+  fromTelemetryFrame,
   isSavable,
-  startingGains,
-  type TireCalibrationStore,
-} from './tireCalibration';
-import { TireSurfaceModel } from './TireSurfaceModel';
-import {
-  DEFAULT_PROFILE,
-  GT3_THERMAL,
   MODEL_VERSION,
-  profileFor,
-  type TireProfile,
-} from './tireProfiles';
+  OverlayModel,
+  startingGains,
+  type ModelEvent,
+  type TelemetryFrame,
+  type TireCalibrationStore,
+} from 'iracing-tire-lab/model';
+import { SdkDump } from './sdkDump';
+import { startTyreRun, stamp, tyreFile, tyreLog } from '../tyreLog';
 import type { TelemetryProcessor } from './TelemetryProcessor';
 import { TireStintStats, TireTraceSecond } from './TireStintStats';
 import { NO_SLIP, SPIN_GRACE, TireSlipEstimator } from './TireSlipEstimator';
-import { TireThermalModel } from './TireThermalModel';
 
 const CORNERS: readonly [TireCorner, string][] = [
   ['lf', 'LF'],
@@ -70,53 +65,18 @@ type Zones = [number, number, number];
 
 const sameInEveryZone = (value: number): Zones => [value, value, value];
 
-/** Tread remaining, percent, below which a tire has run: a new set reads 100. */
-const USED_BELOW = 99.9;
-
-/** PitSvFlags bits that order a tire change, per corner. */
-const TIRE_CHANGE_BIT: Record<TireCorner, number> = {
-  lf: 0x1,
-  rf: 0x2,
-  lr: 0x4,
-  rr: 0x8,
-};
-
 /** A stint shorter than this is too noisy to derive a wear rate from. */
 const MIN_STINT_LAPS = 2;
 
-interface CornerState {
+/** What the overlay tracks per tire between readings; the temperature estimate is the model's. */
+interface WearState {
   /** Tread at the start of the current stint, percent. */
   baseline: Zones;
   /** Fractional lap count when the stint began. */
   baselineLap: number;
   /** Percentage points lost per lap over the last measured stint. */
   rate?: Zones;
-  /** Hottest zone at the previous reading: the zone spread is scaled against it. */
-  lastMean: number;
-  /** Fitted new at the last stop. */
-  fresh?: boolean;
-  /** Tire temperature when it was set at its cold pressure, for the pressure estimate. */
-  refTemp?: number;
-  /** How each zone differs from the tire's mean temperature at the last reading. */
-  tempOffset: Zones;
 }
-
-/** The cockpit dash shows the hottest zone of each tire, not the mean. */
-const peak = (z: Zones) => Math.max(z[0], z[1], z[2]);
-const offsets = (z: Zones): Zones => {
-  const m = peak(z);
-  return [z[0] - m, z[1] - m, z[2] - m];
-};
-/** Driven-wheel slip, m/s, below which wheelspin is ordinary traction. */
-/** Used for ambient when the frame carries neither air nor track temperature. */
-const DEFAULT_AMBIENT = 25;
-/**
- * Share of the track-over-air temperature that the tire exchanges heat with:
- * the road is not air, so on a hot track (40 C against 24 C air) the tire
- * runs warmer than air alone predicts. Fitted on Red Bull Ring, Monza,
- * Virginia and Daytona dash readings, one value for every car.
- */
-const TRACK_SHARE = 0.3;
 
 const SETUP_CORNERS: Record<string, TireCorner> = {
   LeftFront: 'lf',
@@ -205,62 +165,6 @@ const findAlignment = (
   return found;
 };
 
-/** Pit-menu checkboxes, per tire or per side, that order a tire change. */
-const TIRE_CHANGE_BOXES: readonly [string, number][] = [
-  ['dpLFTireChange', 0x1],
-  ['dpRFTireChange', 0x2],
-  ['dpLRTireChange', 0x4],
-  ['dpRRTireChange', 0x8],
-  ['dpLTireChange', 0x1 | 0x4],
-  ['dpRTireChange', 0x2 | 0x8],
-];
-
-/**
- * Which tires are being changed, as bits per TIRE_CHANGE_BIT. Read from the
- * service flags and the pit-menu boxes together, since cars use either.
- */
-const requestedChanges = (frame: Telemetry): number => {
-  let bits = (number(frame, 'PitSvFlags') ?? 0) & 0xf;
-  for (const [key, bit] of TIRE_CHANGE_BOXES) {
-    if ((number(frame, key) ?? 0) > 0) bits |= bit;
-  }
-  return bits;
-};
-
-/** The hot pressure if the sim sends one (kPa), else the cold set pressure. */
-/** Absolute zero offset: the gas law needs kelvin. */
-const KELVIN = 273.15;
-
-/**
- * The tire's pressure for the label. The sim sends only the cold set pressure
- * for most cars, so the hot one is estimated: the gas in the tire follows the
- * carcass, P = P_cold * T_carcass / T_start in kelvin, where the start is the
- * tire's temperature when it was set. Against the cockpit dash on the Ferrari
- * (Daytona and Nordschleife, 28 readings) that is within 4 kPa.
- */
-const pressureOf = (
-  frame: Telemetry,
-  corner: TireCorner,
-  gas?: { carcass: number; start: number }
-) => {
-  const prefix = PREFIX[corner];
-  const hot = number(frame, `${prefix}pressure`);
-  if (hot !== undefined && hot > 0) {
-    return { pressure: Math.round(hot * 10) / 10, pressureHot: true };
-  }
-  const cold = number(frame, `${prefix}coldPressure`);
-  if (cold === undefined || cold <= 0) return {};
-  if (gas) {
-    const estimated = (cold * (KELVIN + gas.carcass)) / (KELVIN + gas.start);
-    return {
-      pressure: Math.round(estimated * 10) / 10,
-      pressureHot: true,
-      pressureEstimated: true,
-    };
-  }
-  return { pressure: Math.round(cold * 10) / 10 };
-};
-
 /** Whether a tire would draw the same: every field a card shows, compared. */
 const sameCorner = (a: TireCornerSnapshot, b: TireCornerSnapshot) =>
   a.estimated === b.estimated &&
@@ -311,20 +215,14 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private enabled = true;
   private lastDiagTime = -Infinity;
   private lastWear = '';
-  private lastReading = '';
   private keysLogged = false;
-  private state: Partial<Record<TireCorner, CornerState>> = {};
-  private readonly thermal = new TireThermalModel();
-  /** What is known about this car's tires; the default until a session names the car. */
-  private profile: TireProfile = DEFAULT_PROFILE;
   /**
-   * The fast tread surface, run for every car beside the slow thermal model:
-   * "real" is this one, "average" the thermal one, whichever the car's own dash
-   * happens to show (the GTP dash the surface, the GT3 dash the slow one).
+   * The temperature, tread, brake disc and pressure estimate: the tire physics
+   * and the pit-stop state machine that reconciles it with the sim's readings.
+   * It lives in iracing-tire-lab, where it is measured against recordings.
    */
-  private real: TireSurfaceModel | undefined;
-  /** Whether this car's own dash shows the surface; only then is it fitted to it. */
-  private dashShowsSurface = false;
+  private model: OverlayModel;
+  private wear: Partial<Record<TireCorner, WearState>> = {};
   private profileCar: string | undefined;
   /** Where this car and track's learned gains are kept; none until a session names them. */
   private calibrationKey: string | undefined;
@@ -339,25 +237,6 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private slip = NO_SLIP;
   /** Suspension travel (m) of each corner when last standing still. */
   private rest: Partial<Record<TireCorner, number>> = {};
-  /**
-   * How far over ambient fresh tires start. It differs by car (34 C on one,
-   * 27 C on another at the same air), so it is learned from tires that were
-   * fitted fresh and barely worked before their next reading.
-   */
-  private freshOffset = DEFAULT_PROFILE.freshOffset;
-  /**
-   * A stop in progress: the tire changes already applied at the reading, and
-   * whether the service has been seen running.
-   */
-  private service: { applied: number; running: boolean } | undefined;
-  /** Tire changes requested at any time while the service ran. */
-  private pendingBits = 0;
-  /**
-   * The tire changes ordered as the car last left the track for the pits. The
-   * sim clears the flags in the box, and in some cars the service never reports
-   * as active, so by the time the reading refreshes only this still tells.
-   */
-  private orderedBits = 0;
   private alignment: Alignment = { camber: {}, toe: {}, toeDeg: {}, seen: [] };
   private loggedSetup = '';
   private readonly latest: TireSnapshot = {
@@ -373,7 +252,25 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   constructor(
     private readonly calibrations?: TireCalibrationStore,
     private readonly demo = false
-  ) {}
+  ) {
+    this.model = this.makeModel(undefined);
+  }
+
+  private makeModel(carPath: string | undefined): OverlayModel {
+    return new OverlayModel(carPath, {
+      startingGains: () => this.savedGains(),
+    });
+  }
+
+  /** The gains this car and track taught the model before, if they still apply. */
+  private savedGains() {
+    const saved =
+      this.calibrationKey === undefined
+        ? undefined
+        : this.calibrations?.load(this.calibrationKey);
+    this.calibratedStops = saved?.stops ?? 0;
+    return startingGains(saved, Date.now());
+  }
 
   init(session: Session): void {
     const car = session.DriverInfo?.Drivers?.find(
@@ -385,17 +282,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (!this.demo) startTyreRun(`${label} ${sub}`, label, car?.CarPath);
     if (car?.CarPath !== this.profileCar) {
       this.profileCar = car?.CarPath;
-      this.profile = profileFor(car?.CarPath);
-      this.thermal.configure(this.profile.thermal);
-      const surface = this.profile.surface ?? this.profile.realSurface;
-      this.real = surface ? new TireSurfaceModel(surface) : undefined;
-      this.dashShowsSurface = this.profile.surface !== undefined;
-      this.freshOffset = this.profile.freshOffset;
+      this.model = this.makeModel(car?.CarPath);
     }
     const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
     if (key !== this.calibrationKey) {
       this.calibrationKey = key;
-      this.applySavedGains();
+      this.model.applyStartingGains();
     }
     tyreLog(
       `[TireDiag] RUN car=${car?.CarScreenName} path=${car?.CarPath} track=${track}` +
@@ -414,61 +306,43 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
     // A new session starts on other tires: the reading frozen in the sim is the
     // last session's, so begin again as at a sim start (a race on the grid
-    // starts warm, see staleStart). A frame without SessionNum says nothing.
+    // starts warm). The model starts over by itself on the same signal. A frame
+    // without SessionNum says nothing.
     const sessionNum = number(frame, 'SessionNum');
     if (sessionNum !== undefined) {
       if (this.sessionNum !== undefined && sessionNum !== this.sessionNum)
-        this.clear();
+        this.clearOverlay();
       this.sessionNum = sessionNum;
     }
 
-    const temps: Partial<Record<TireCorner, Zones>> = {};
+    // The wear readings (percent) of the tires whose temperature is also read.
     const readings: Partial<Record<TireCorner, Zones>> = {};
     for (const [corner, prefix] of CORNERS) {
       const temp = zones(frame, `${prefix}tempC`, ['L', 'M', 'R']);
       const wear = zones(frame, `${prefix}wear`, ['L', 'M', 'R']);
-      if (temp && wear) {
-        temps[corner] = temp;
-        readings[corner] = wear.map((w) => w * 100) as Zones;
-      }
+      if (temp && wear) readings[corner] = wear.map((w) => w * 100) as Zones;
     }
 
     const lap = this.lapsNow(frame);
-    const ambient = this.ambient(frame);
-    this.stepThermal(frame);
-    if (flag(frame, 'OnPitRoad') !== 1)
-      this.orderedBits = requestedChanges(frame);
-    this.trackStints(frame, readings, temps, lap);
-    this.followService(frame, lap);
+    const driveSlip = this.stepSlip(frame);
+    const gainsBefore = JSON.stringify(this.model.gains());
+    const { events = [] } = this.model.step(
+      fromTelemetryFrame(frame as unknown as TelemetryFrame),
+      { driveSlip }
+    );
+    this.followEvents(events, readings, lap, gainsBefore);
 
     const corners: Partial<Record<TireCorner, TireCornerSnapshot>> = {};
     for (const [corner] of CORNERS) {
-      const temp = temps[corner];
-      const st = this.state[corner];
-      if (!temp || !st) continue;
+      const shown = this.model.shown[corner];
+      const st = this.wear[corner];
+      if (!shown || !st) continue;
       const driven = Math.max(0, lap - st.baselineLap);
       const wear = st.baseline.map((b, i) =>
         st.rate ? Math.max(0, b - st.rate[i] * driven) : b
       );
-      // The model's start value shows from the first frame: a new session's
-      // frozen reading is the last session's (59-69 C on a race grid whose
-      // tires start near 44 C), and it is only an estimate once driving.
-      const modelled = this.carcassOf(corner);
-      // The zone spread seen at the last reading builds up as the tire heats,
-      // so it is applied in proportion to how far this tire has warmed.
-      const warmed =
-        modelled !== undefined && st.lastMean > ambient + 5
-          ? Math.min(
-              1,
-              Math.max(0, (modelled - ambient) / (st.lastMean - ambient))
-            )
-          : 1;
-      const shown =
-        modelled === undefined
-          ? temp
-          : (st.tempOffset.map((o) => modelled + o * warmed) as Zones);
       const next: TireCornerSnapshot = {
-        temp: shown.map(Math.round) as Zones,
+        temp: shown.temp.map(Math.round) as Zones,
         ...(this.alignment.camber[corner] !== undefined && {
           camber: this.alignment.camber[corner],
         }),
@@ -478,24 +352,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
         ...(this.alignment.toeDeg[corner] !== undefined && {
           toeDeg: this.alignment.toeDeg[corner],
         }),
-        ...pressureOf(
-          frame,
-          corner,
-          this.real?.active && st.refTemp !== undefined
-            ? { carcass: this.real.gas(corner), start: st.refTemp }
-            : undefined
-        ),
+        ...(shown.pressure !== undefined && {
+          pressure: shown.pressure,
+          ...(shown.pressureHot && { pressureHot: true }),
+          ...(shown.pressureEstimated && { pressureEstimated: true }),
+        }),
         ...this.loadOf(frame, corner),
         // One surface node per tire: it has no zone spread, so the three
         // entries are the same number, kept only to match the shape of `temp`.
-        ...(this.real?.active && {
-          tempReal: sameInEveryZone(Math.round(this.real.temp(corner))),
+        ...(shown.tread !== undefined && {
+          tempReal: sameInEveryZone(Math.round(shown.tread)),
         }),
-        ...(this.dashShowsSurface &&
-          this.real?.active && {
-            disc: Math.round(this.real.discLevel(corner) * 20) / 20,
-          }),
-        tempEstimated: this.thermal.active && modelled !== undefined,
+        ...(shown.disc !== undefined && { disc: shown.disc }),
+        tempEstimated: shown.estimated,
         wear: wear.map(round1) as Zones,
         estimated: st.rate !== undefined,
         ...(st.rate && { wearPerLap: st.rate.map(round2) as Zones }),
@@ -559,29 +428,12 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     return out;
   }
 
-  /** The front share of the braking force from the brake bias setting (a percentage), 0.5 where the car has none. */
-  private brakeBias(frame: Telemetry): number {
-    const bias = number(frame, 'dcBrakeBias');
-    return bias !== undefined && bias > 20 && bias < 80 ? bias / 100 : 0.5;
-  }
-
   /**
-   * The temperature the GT3 dash shows, the hottest zone of the carcass, from
-   * the bulk node of the tire model. Cars on other models keep the slow
-   * thermal model.
+   * Updates the slip estimate and the diagnostics for one frame of driving, and
+   * returns the heat the driven wheels' spin adds (slip speed beyond ordinary
+   * traction, times throttle) for the model; 0 off the track.
    */
-  private carcassOf(corner: TireCorner): number | undefined {
-    if (
-      this.real?.active &&
-      !this.dashShowsSurface &&
-      this.profile.thermal === GT3_THERMAL
-    )
-      return this.real.dash(corner);
-    return this.thermal.mean(corner);
-  }
-
-  /** Feeds the thermal model one frame of driving. */
-  private stepThermal(frame: Telemetry): void {
+  private stepSlip(frame: Telemetry): number {
     const time = number(frame, 'SessionTime');
     const dt =
       time !== undefined && this.lastTime !== undefined
@@ -590,7 +442,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.lastTime = time;
     if (flag(frame, 'IsOnTrack') !== 1) {
       this.slip = NO_SLIP;
-      return;
+      return 0;
     }
     this.slip = this.slipEstimator.update(
       (key) => number(frame, key),
@@ -624,61 +476,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
       }
     }
     if (this.trace.seconds >= 1) {
-      const temps = CORNERS.map(
-        ([corner]) => this.thermal.mean(corner)?.toFixed(1) ?? '-'
-      ).join('/');
+      const shown = CORNERS.map(([corner]) => this.model.shown[corner]);
+      const temps = shown.map((s) => s?.temp[1].toFixed(1) ?? '-').join('/');
       tyreLog(
         `[TireTrace] t=${(time ?? 0).toFixed(1)} ${this.trace.flush()} T=${temps}` +
-          (this.real?.active
-            ? ` R=${CORNERS.map(([c]) => this.real?.temp(c).toFixed(1)).join('/')}`
+          (shown.some((s) => s?.tread !== undefined)
+            ? ` R=${shown.map((s) => s?.tread?.toFixed(1) ?? '-').join('/')}`
             : '')
       );
     }
-    const speed = number(frame, 'Speed') ?? 0;
-    const forward = number(frame, 'VelocityX') ?? speed;
-    const sideways = number(frame, 'VelocityY') ?? 0;
-    const yaw = number(frame, 'YawRate') ?? 0;
-    const slide = slideOf(forward, sideways, yaw);
-    const slip = slipAngles(
-      number(frame, 'SteeringWheelAngle') ?? 0,
-      speed,
-      forward,
-      sideways,
-      yaw
-    );
-    const input = {
-      dt,
-      speed,
-      lateral: number(frame, 'LatAccel') ?? 0,
-      longitudinal: number(frame, 'LongAccel') ?? 0,
-      driveSlip,
-      ambient: this.ambient(frame),
-      steering: Math.abs(number(frame, 'SteeringWheelAngle') ?? 0),
-      yawRate: Math.abs(number(frame, 'YawRate') ?? 0),
-      torque: Math.abs(number(frame, 'SteeringWheelTorque') ?? 0),
-      throttle: number(frame, 'Throttle') ?? 0,
-      vertical: number(frame, 'VertAccel'),
-      brake: number(frame, 'Brake') ?? 0,
-      slideFront: slide.front,
-      slideRear: slide.rear,
-      slipFront: slip.front,
-      slipRear: slip.rear,
-    };
-    this.thermal.step({ ...input, brakeBias: this.brakeBias(frame) });
-    this.real?.step({ ...input, ambient: this.surfaceAmbient(frame) });
-  }
-
-  private ambient(frame: Telemetry): number {
-    return (
-      number(frame, 'AirTemp') ?? number(frame, 'TrackTemp') ?? DEFAULT_AMBIENT
-    );
-  }
-
-  /** What the surface and bulk nodes cool toward: air pulled toward the road. */
-  private surfaceAmbient(frame: Telemetry): number {
-    const air = this.ambient(frame);
-    const track = number(frame, 'TrackTemp');
-    return track === undefined ? air : air + TRACK_SHARE * (track - air);
+    return driveSlip;
   }
 
   /** Completed laps plus the fraction of the current one. */
@@ -690,156 +497,51 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   }
 
   /**
-   * The reading arrives as the service starts, but which tires get changed is
-   * often settled in the pit menu while it runs: in recorded stops the flags
-   * were still clear at the reading and the tires were changed anyway. So the
-   * requested changes are collected until the service ends, and any tire
-   * ordered in that time is treated as fresh from then on.
+   * Keeps what the overlay tracks per stint, the wear baseline and its rate, in
+   * step with what the model did on this frame: the first reading starts a
+   * tire's stint, a later one (a pit stop began) closes it and opens the next,
+   * and a tire ordered changed only while the service ran starts again at 100.
    */
-  private followService(frame: Telemetry, lap: number): void {
-    if (!this.service) return;
-    const active = flag(frame, 'PitstopActive') === 1;
-    const requested = requestedChanges(frame);
-    if (active) {
-      this.service.running = true;
-      this.pendingBits |= requested;
-      return;
-    }
-    const left = flag(frame, 'OnPitRoad') !== 1;
-    if (!this.service.running && !left) return;
-    const late = this.pendingBits & ~this.service.applied;
-    const ambient = this.ambient(frame);
-    for (const [corner] of CORNERS) {
-      const st = this.state[corner];
-      if (!st || (late & TIRE_CHANGE_BIT[corner]) === 0) continue;
-      st.baseline = [100, 100, 100];
-      st.baselineLap = lap;
-      st.fresh = true;
-      this.thermal.set(corner, ambient + this.freshOffset);
-      st.refTemp = ambient + this.freshOffset;
-      this.real?.resetTread(corner, ambient + this.freshOffset);
-    }
-    if (late) tyreLog(`[TireDiag] SERVICE late tire change bits=${late}`);
-    this.service = undefined;
-    this.pendingBits = 0;
-  }
-
-  /**
-   * A reading that differs from the previous one is a refresh: it closes the
-   * stint that just ended and opens the next. The first reading after a reset
-   * only seeds the baseline, since it says nothing about a finished stint.
-   */
-  private trackStints(
-    frame: Telemetry,
+  private followEvents(
+    events: readonly ModelEvent[],
     readings: Partial<Record<TireCorner, Zones>>,
-    temps: Partial<Record<TireCorner, Zones>>,
-    lap: number
+    lap: number,
+    gainsBefore: string
   ): void {
-    const key = JSON.stringify(readings);
-    if (key === '{}' || key === this.lastReading) return;
-    const seeding = this.lastReading === '';
-    this.lastReading = key;
-    const gainsBefore = JSON.stringify(this.thermal.gains());
-    const flags = requestedChanges(frame) || this.orderedBits;
-    const ambient = this.ambient(frame);
-    // Starting in the box with the crew at work: the tires ordered are being
-    // swapped now, and the reading is the old ones; followService resets them
-    // when the stop ends.
-    if (seeding && flag(frame, 'PitstopActive') === 1)
-      this.service = { applied: 0, running: true };
-
-    for (const [corner] of CORNERS) {
+    let refreshed = false;
+    let seeded = false;
+    for (const event of events) {
+      if (event.kind === 'clear') continue;
+      const corner = event.corner;
       const reading = readings[corner];
-      const temp = temps[corner];
-      if (!reading || !temp) continue;
-      const st = this.state[corner];
-      if (seeding || !st) {
-        const seeded: CornerState = {
-          baseline: reading,
-          baselineLap: lap,
-          tempOffset: offsets(temp),
-          lastMean: peak(temp),
-        };
-        this.state[corner] = seeded;
-        // The reading frozen in the sim describes the tires last taken off, so a
-        // hot one at start-up is stale: assume fresh tires instead of heating a
-        // model from it. A cold reading is kept as it is.
-        // The sim reports fresh tires as one value across the zones (34.6 C
-        // at 18.6 C air, matching the dash), so an even reading is the real
-        // start and also teaches the offset used for later fresh sets.
-        // Tires with mileage are the ones on the car, so their reading is real:
-        // joining a session in progress, not the frozen one of a new session.
-        const used = Math.min(...reading) < USED_BELOW;
-        let start = used
-          ? peak(temp)
-          : Math.min(peak(temp), this.profile.staleStart);
-        if (Math.max(...temp) - Math.min(...temp) < 1) {
-          this.freshOffset = Math.min(30, Math.max(0, peak(temp) - ambient));
-          start = peak(temp);
+      const st = this.wear[corner];
+      if (event.kind === 'seed') {
+        seeded = true;
+        if (reading)
+          this.wear[corner] = { baseline: reading, baselineLap: lap };
+      } else if (event.kind === 'refresh') {
+        refreshed = true;
+        if (!st || !reading) continue;
+        const stintLaps = lap - st.baselineLap;
+        if (stintLaps >= MIN_STINT_LAPS) {
+          const rate = st.baseline.map(
+            (b, i) => (b - reading[i]) / stintLaps
+          ) as Zones;
+          if (rate.every((r) => r >= 0)) st.rate = rate;
         }
-        this.thermal.set(corner, start);
-        // The surface model would otherwise start at its resting level over the air.
-        this.real?.resetTread(corner, start);
-        seeded.refTemp = this.thermal.mean(corner);
-        continue;
+        st.baseline = event.changed ? [100, 100, 100] : reading;
+        st.baselineLap = lap;
+      } else if (st) {
+        st.baseline = [100, 100, 100];
+        st.baselineLap = lap;
       }
-      const stintLaps = lap - st.baselineLap;
-      if (stintLaps >= MIN_STINT_LAPS) {
-        const rate = st.baseline.map(
-          (b, i) => (b - reading[i]) / stintLaps
-        ) as Zones;
-        if (rate.every((r) => r >= 0)) st.rate = rate;
-      }
-      const changed = (flags & TIRE_CHANGE_BIT[corner]) !== 0;
-      st.baseline = changed ? [100, 100, 100] : reading;
-      st.baselineLap = lap;
-      tyreLog(
-        `[TireFit] stint=${this.stintNumber} ${corner} start=${st.lastMean.toFixed(1)}` +
-          ` end=${peak(temp).toFixed(1)} zones=${temp.map((z) => z.toFixed(1)).join('/')}` +
-          ` changed=${(flags & TIRE_CHANGE_BIT[corner]) !== 0 ? 1 : 0}` +
-          ` camber=${this.alignment.camber[corner] ?? 'n/a'}` +
-          ` ${this.stats.corner(corner.toUpperCase())}`
-      );
-      st.lastMean = peak(temp);
-      if (st.fresh && this.thermal.heated(corner) < 2) {
-        const offset = Math.min(30, Math.max(0, peak(temp) - ambient));
-        this.freshOffset = (this.freshOffset + offset) / 2;
-        tyreLog(
-          `[TireDiag] FRESH ${corner} start=${peak(temp).toFixed(1)} offset=${this.freshOffset.toFixed(1)}`
-        );
-      }
-      const predicted = this.thermal.mean(corner);
-      if (this.profile.calibrates !== false)
-        this.thermal.calibrate(corner, peak(temp));
-      tyreLog(
-        `[TireDiag] CALIB ${corner} predicted=${predicted?.toFixed(1)}` +
-          ` measured=${peak(temp).toFixed(1)} ambient=${ambient.toFixed(1)}` +
-          ` gain=${this.thermal.gainOf(corner).toFixed(2)} changed=${changed ? 1 : 0}`
-      );
-      // The reading describes the tires being removed. Fresh ones start at
-      // ambient and carry no zone spread yet.
-      this.thermal.set(
-        corner,
-        changed ? ambient + this.freshOffset : peak(temp)
-      );
-      if (changed) {
-        st.refTemp = ambient + this.freshOffset;
-        this.real?.resetTread(corner, ambient + this.freshOffset);
-      }
-      st.tempOffset = offsets(temp);
-      st.fresh = changed;
     }
-
-    if (!seeding) {
-      this.service = { applied: flags, running: false };
-      tyreLog(
-        `[TireFit] stint=${this.stintNumber} ${this.stats.summary()} sv=${flags}`
-      );
+    if (refreshed) {
+      tyreLog(`[TireFit] stint=${this.stintNumber} ${this.stats.summary()}`);
       this.stintNumber += 1;
-      if (JSON.stringify(this.thermal.gains()) !== gainsBefore)
-        this.saveGains();
+      if (JSON.stringify(this.model.gains()) !== gainsBefore) this.saveGains();
     }
-    this.stats.reset();
+    if (refreshed || seeded) this.stats.reset();
   }
 
   private changed(next: Partial<Record<TireCorner, TireCornerSnapshot>>) {
@@ -889,22 +591,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     this.clear();
   }
 
-  /** Starts the tires from what this car and track taught the model before. */
-  private applySavedGains(): void {
-    const saved =
-      this.calibrationKey === undefined || this.profile.calibrates === false
-        ? undefined
-        : this.calibrations?.load(this.calibrationKey);
-    this.calibratedStops = saved?.stops ?? 0;
-    const gains = startingGains(saved, Date.now());
-    if (gains) this.thermal.setGains(gains);
-  }
-
   private saveGains(): void {
     if (!this.calibrations || this.calibrationKey === undefined) return;
-    // A gain far from 1 means the model was wrong for this car (a burnout it
+    // A gain far from 1 means the model was wrong for the car (a burnout it
     // overheated by three times), not that the tire is unusual: keep nothing.
-    const gains = this.thermal.gains();
+    const gains = this.model.gains();
     if (!isSavable(gains)) return;
     this.calibratedStops += 1;
     this.calibrations.save(this.calibrationKey, {
@@ -915,23 +606,22 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     });
   }
 
+  /** Starts everything over, the model included. */
   private clear(): void {
+    this.clearOverlay();
+    this.model.reset();
+  }
+
+  /** What the overlay keeps beside the model; the model clears itself on a new session. */
+  private clearOverlay(): void {
     this.latest.corners = {};
     this.latest.version += 1;
     this.lastWear = '';
-    this.lastReading = '';
-    this.state = {};
+    this.wear = {};
     this.rest = {};
-    this.thermal.reset();
-    this.real?.reset();
-    this.applySavedGains();
     this.stats.reset();
     this.slipEstimator.reset();
     this.slip = NO_SLIP;
-    this.service = undefined;
-    this.pendingBits = 0;
-    this.orderedBits = 0;
-    this.freshOffset = this.profile.freshOffset;
     this.lastDiagTime = -Infinity;
     this.stintNumber = 0;
     this.lastTime = undefined;

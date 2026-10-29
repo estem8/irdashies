@@ -116,6 +116,7 @@
     "electron-log": "^5.4.4",
     "electron-squirrel-startup": "^1.0.1",
     "flag-icons": "^7.5.0",
+    "iracing-tire-lab": "git+https://github.com/estem8/iracing-tire-lab.git#v0.2.0",
     "js-yaml": "^5.4.3",
     "posthog-node": "^5.55.1",
     "react": "^19.3.0",

@@ -28,7 +28,7 @@ import { SectorTimingProcessor } from './SectorTimingProcessor';
 import { SessionBarProcessor } from './SessionBarProcessor';
 import { CarSystemsProcessor } from './CarSystemsProcessor';
 import { TireProcessor } from './TireProcessor';
-import type { TireCalibrationStore } from './tireCalibration';
+import type { TireCalibrationStore } from 'iracing-tire-lab/model';
 import { SessionTimingProcessor } from './SessionTimingProcessor';
 import { StandingsProcessor } from './StandingsProcessor';
 import { TrackStateProcessor } from './TrackStateProcessor';
