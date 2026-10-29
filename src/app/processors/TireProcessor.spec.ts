@@ -280,6 +280,8 @@ describe('TireProcessor', () => {
       for (let i = 0; i < 30; i++) p.onFrame(drive(60, 10, i / 15));
       const rf = p.snapshot().corners.rf;
       expect(rf?.tempReal).toBeDefined();
+      // one surface value per tire: the three zones are the same number
+      expect(new Set(rf?.tempReal).size).toBe(1);
       expect(rf?.temp).toBeDefined();
     });
   });
