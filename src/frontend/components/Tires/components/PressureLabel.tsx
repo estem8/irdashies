@@ -25,9 +25,10 @@ export const PressureLabel = ({
     }
   >
     <span
-      className={`text-[0.9em] font-bold tabular-nums ${hot ? 'text-white' : 'text-sky-300'}`}
+      className={`relative text-[0.9em] font-bold tabular-nums ${hot ? 'text-white' : 'text-sky-300'}`}
     >
-      {estimated ? '~' : ''}
+      {/* Out of the flow, so the number keeps the width of its column. */}
+      {estimated && <span className="absolute right-full">~</span>}
       {value}
     </span>
     <span className="text-[0.55em] font-bold uppercase text-white/50">
