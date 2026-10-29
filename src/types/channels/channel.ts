@@ -303,7 +303,10 @@ export interface TireCornerSnapshot {
   estimated: boolean;
   /** Percentage points lost per lap, from the last stint on these tires. */
   wearPerLap?: readonly [number, number, number];
-  /** Tire pressure in kPa: the hot reading if the sim sends one, else the cold set pressure. */
+  /**
+   * Tire pressure in kPa: the warm value if the sim sends one or the car has
+   * driven (see `pressureEstimated`), else the cold set pressure.
+   */
   pressure?: number;
   /**
    * Vertical load on this tire as its suspension travel relative to standing
@@ -316,8 +319,14 @@ export interface TireCornerSnapshot {
    * it), in steps of 0.05. Only for cars with a surface model.
    */
   disc?: number;
-  /** True when `pressure` is a live hot reading, not the cold set pressure. */
+  /** True when `pressure` is the warm value, not the cold set pressure. */
   pressureHot?: boolean;
+  /**
+   * True when the warm `pressure` is estimated from the carcass temperature
+   * with the gas law, not a reading from the sim. Absent for a sim reading and
+   * for the cold set pressure.
+   */
+  pressureEstimated?: boolean;
 }
 
 /**
