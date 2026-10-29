@@ -92,7 +92,7 @@ export const replay = (path: string, options: ReplayOptions = {}): Replay => {
     speed: [],
     corners: Object.fromEntries(
       KEYS.map((k) => [k, { tread: [], carcass: [], real: [], dash: [] }])
-    ) as Replay['corners'],
+    ) as unknown as Replay['corners'],
   };
   const records = Math.min(
     sub.sessionRecordCount,
