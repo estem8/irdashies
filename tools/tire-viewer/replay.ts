@@ -1,5 +1,6 @@
 import fs from 'fs';
 import type { Session, Telemetry } from '@irdashies/types';
+import type { OverlayModel } from 'iracing-tire-lab/model';
 import { TireProcessor } from '../../src/app/processors/TireProcessor';
 import {
   parseDiskSubHeader,
@@ -76,12 +77,12 @@ export const replay = (path: string, options: ReplayOptions = {}): Replay => {
     DriverInfo: { DriverCarIdx: 0, Drivers: [{ CarIdx: 0, CarPath: car }] },
     WeekendInfo: { TrackName: 'viewer', SubSessionID: 1 },
   } as unknown as Session);
-  const real = () =>
-    (
-      p as unknown as {
-        real?: { dash(c: string): number; temp(c: string): number };
-      }
-    ).real;
+  // What the processor's model shows for a tire: the tread surface and the
+  // carcass the dash shows (the hottest zone). The model is private to it.
+  const shown = (k: string) =>
+    (p as unknown as { model: OverlayModel }).model.shown[
+      k as 'lf' | 'rf' | 'lr' | 'rr'
+    ];
   const byName = new Map(
     vars.filter((v) => v.count === 1).map((v) => [v.name, v])
   );
@@ -120,15 +121,15 @@ export const replay = (path: string, options: ReplayOptions = {}): Replay => {
     p.onFrame(frame as unknown as Telemetry);
     out.t.push(val.SessionTime);
     out.speed.push(val.Speed * 3.6);
-    const r = real();
     CORNERS.forEach((c, j) => {
       const k = KEYS[j];
       out.corners[k].tread.push(
         (val[`${c}tempL`] + val[`${c}tempM`] + val[`${c}tempR`]) / 3
       );
       out.corners[k].carcass.push(val[`${c}tempCM`]);
-      out.corners[k].real.push(r?.temp(k) ?? NaN);
-      out.corners[k].dash.push(r?.dash(k) ?? NaN);
+      const s = shown(k);
+      out.corners[k].real.push(s?.tread ?? NaN);
+      out.corners[k].dash.push(s ? Math.max(...s.temp) : NaN);
     });
   }
   return out;

@@ -1,4 +1,4 @@
-// Copied from iracing-tire-lab, tests/golden/stimulus.ts (v0.2.0); keep in step with tireProcessorGolden.json.gz.
+// Copied from iracing-tire-lab, tests/golden/stimulus.ts (v0.2.1); keep in step with tireProcessorGolden.json.gz (the same tag).
 /**
  * A synthetic drive, made of sines, with no recording behind it. It stands in
  * for the 15 Hz ticks the overlay's TireProcessor receives: the step alternates

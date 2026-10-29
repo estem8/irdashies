@@ -228,6 +228,8 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private calibrationKey: string | undefined;
   /** Stops already counted in the saved calibration. */
   private calibratedStops = 0;
+  /** The model's gains as of the last stop, to tell whether a stop changed them. */
+  private gainsKey = '';
   private readonly stats = new TireStintStats();
   private readonly trace = new TireTraceSecond();
   private readonly sdkDump = new SdkDump();
@@ -254,12 +256,17 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     private readonly demo = false
   ) {
     this.model = this.makeModel(undefined);
+    this.rememberGains();
   }
 
   private makeModel(carPath: string | undefined): OverlayModel {
     return new OverlayModel(carPath, {
       startingGains: () => this.savedGains(),
     });
+  }
+
+  private rememberGains(): void {
+    this.gainsKey = JSON.stringify(this.model.gains());
   }
 
   /** The gains this car and track taught the model before, if they still apply. */
@@ -280,15 +287,19 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     const sub = session.WeekendInfo?.SubSessionID ?? 0;
     const label = `${car?.CarPath ?? 'car'} ${track}`;
     if (!this.demo) startTyreRun(`${label} ${sub}`, label, car?.CarPath);
+    const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
     if (car?.CarPath !== this.profileCar) {
       this.profileCar = car?.CarPath;
+      // The new model asks for its starting gains as it is made, so the key it
+      // asks under, and the stops counted for it, must be this car's already.
+      this.calibrationKey = key;
+      this.calibratedStops = 0;
       this.model = this.makeModel(car?.CarPath);
-    }
-    const key = car?.CarPath ? calibrationKey(car.CarPath, track) : undefined;
-    if (key !== this.calibrationKey) {
+    } else if (key !== this.calibrationKey) {
       this.calibrationKey = key;
       this.model.applyStartingGains();
     }
+    this.rememberGains();
     tyreLog(
       `[TireDiag] RUN car=${car?.CarScreenName} path=${car?.CarPath} track=${track}` +
         ` subsession=${sub} airTemp=${session.WeekendInfo?.TrackAirTemp}`
@@ -325,12 +336,11 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
 
     const lap = this.lapsNow(frame);
     const driveSlip = this.stepSlip(frame);
-    const gainsBefore = JSON.stringify(this.model.gains());
     const { events = [] } = this.model.step(
       fromTelemetryFrame(frame as unknown as TelemetryFrame),
       { driveSlip }
     );
-    this.followEvents(events, readings, lap, gainsBefore);
+    this.followEvents(events, readings, lap);
 
     const corners: Partial<Record<TireCorner, TireCornerSnapshot>> = {};
     for (const [corner] of CORNERS) {
@@ -505,13 +515,16 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private followEvents(
     events: readonly ModelEvent[],
     readings: Partial<Record<TireCorner, Zones>>,
-    lap: number,
-    gainsBefore: string
+    lap: number
   ): void {
     let refreshed = false;
     let seeded = false;
     for (const event of events) {
-      if (event.kind === 'clear') continue;
+      if (event.kind === 'clear') {
+        // The model started over and asked for its starting gains again.
+        this.rememberGains();
+        continue;
+      }
       const corner = event.corner;
       const reading = readings[corner];
       const st = this.wear[corner];
@@ -539,7 +552,10 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
     if (refreshed) {
       tyreLog(`[TireFit] stint=${this.stintNumber} ${this.stats.summary()}`);
       this.stintNumber += 1;
-      if (JSON.stringify(this.model.gains()) !== gainsBefore) this.saveGains();
+      // Only a stop can teach the model, so the gains are compared here, not every frame.
+      const gains = JSON.stringify(this.model.gains());
+      if (gains !== this.gainsKey) this.saveGains();
+      this.gainsKey = gains;
     }
     if (refreshed || seeded) this.stats.reset();
   }
@@ -610,6 +626,7 @@ export class TireProcessor implements TelemetryProcessor<TireSnapshot> {
   private clear(): void {
     this.clearOverlay();
     this.model.reset();
+    this.rememberGains();
   }
 
   /** What the overlay keeps beside the model; the model clears itself on a new session. */

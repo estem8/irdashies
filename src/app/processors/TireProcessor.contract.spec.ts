@@ -20,7 +20,8 @@ vi.mock('../tyreLog', () => ({
  * physics here), on a synthetic drive with a session change and a tire change.
  * Per car and variant, per tire, one entry per frame: the rounded tread
  * temperature, the middle zone of the shown temperature, the brake disc level
- * and the pressure.
+ * and the pressure, plus the middle zone of the wear and whether the wear and
+ * the temperature are estimates (what this processor itself keeps).
  */
 type Columns = Record<string, (number | null)[]>;
 const golden = JSON.parse(
@@ -67,6 +68,16 @@ describe('TireProcessor contract with the pre-extraction output', () => {
           expect(got?.pressure ?? null, `pressure ${c} ${i}`).toBe(
             cols[`${c}.pressure`][i]
           );
+          expect(got?.wear[1] ?? null, `wear ${c} ${i}`).toBe(
+            cols[`${c}.wear`][i]
+          );
+          expect(got ? Number(got.estimated) : null, `est ${c} ${i}`).toBe(
+            cols[`${c}.estimated`][i]
+          );
+          expect(
+            got ? Number(got.tempEstimated) : null,
+            `tempEst ${c} ${i}`
+          ).toBe(cols[`${c}.tempEstimated`][i]);
         }
       });
     });
