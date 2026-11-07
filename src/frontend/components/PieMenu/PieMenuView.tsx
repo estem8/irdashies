@@ -22,6 +22,7 @@ import {
 import type { PieIconName } from '@irdashies/types';
 import {
   PIE_DIRECTIONS,
+  PIE_ACTIONS,
   getPieItems,
   pieCenter,
   type CompoundStyle,
@@ -396,12 +397,12 @@ const SectorBody = ({
   const status =
     item.action === 'tiresAll' ? (
       <OnOff x={x} y={y + 16} on={service.anyTireChange} />
-    ) : item.action === 'fuelAuto' ? (
-      <OnOff x={x} y={y + 16} on={service.fuelOn} />
     ) : item.action === 'compoundDry' && service.styles.dry ? (
       <Chip x={x} y={y + 16} style={service.styles.dry} />
     ) : item.action === 'compoundWet' && service.styles.wet ? (
       <Chip x={x} y={y + 16} style={service.styles.wet} />
+    ) : item.action === 'fuelAuto' ? (
+      <OnOff x={x} y={y + 16} on={service.fuelOn} />
     ) : null;
   return (
     <g>
@@ -440,6 +441,14 @@ const MainCenter = ({ service }: { service: PitServiceView }) => {
         : fuelMargin >= 0
           ? 'fill-amber-500'
           : 'fill-red-500';
+  const fuelAccent =
+    fuelMargin === undefined
+      ? '#64748b'
+      : fuelMargin >= 1
+        ? '#4ade80'
+        : fuelMargin >= 0
+          ? '#fbbf24'
+          : '#f87171';
   const short =
     fuelMargin !== undefined && fuelMargin < 0 && lapUsage
       ? `short ${(-fuelMargin * lapUsage).toFixed(1)} L`
@@ -492,8 +501,9 @@ const MainCenter = ({ service }: { service: PitServiceView }) => {
         x2={34}
         y1={-4}
         y2={-4}
-        className="stroke-slate-600"
-        strokeWidth={1.5}
+        stroke={fuelAccent}
+        strokeOpacity={0.55}
+        strokeWidth={2}
       />
       {service.stopInProgress ? (
         <g>
@@ -701,6 +711,28 @@ const ResultBody = ({
   service: PitServiceView;
 }) => {
   const light = 'text-slate-200';
+  if (feedback === 'clear') {
+    return (
+      <g className="pointer-events-none">
+        <CheckCircleIcon
+          x={-22}
+          y={-34}
+          size={44}
+          weight="fill"
+          className="text-green-400"
+        />
+        <text
+          y={27}
+          fontSize={12}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="fill-slate-100 font-bold"
+        >
+          Pit options cleared
+        </text>
+      </g>
+    );
+  }
   if (feedback === 'tires') {
     const size = 40;
     const spots = [
@@ -797,6 +829,7 @@ export interface PieMenuViewProps {
   selected?: PieDirection;
   /** Settings editor: makes the sides clickable and draws empty ones. */
   onSelect?: (direction: PieDirection) => void;
+  onDropAction?: (direction: PieDirection, action: import('@irdashies/types').PieActionId) => void;
   /** Settings editor: the side the pointer is over. */
   onHighlight?: (direction: PieDirection | undefined) => void;
   /** The sim did not take the last pick. */
@@ -811,6 +844,7 @@ export const PieMenuView = memo(
     highlight,
     selected,
     onSelect,
+    onDropAction,
     onHighlight,
     unapplied = false,
   }: PieMenuViewProps) => {
@@ -819,7 +853,7 @@ export const PieMenuView = memo(
     // instead of being swapped for another one.
     const ringState: PieState = result
       ? state.entry
-        ? { level: 'sub', entry: state.entry }
+        ? { level: 'sub', entry: state.entry, path: state.path }
         : { level: 'root' }
       : state;
     const items = getPieItems(ringState, config);
@@ -832,7 +866,9 @@ export const PieMenuView = memo(
     );
     // A new key replays the quick fade-in when another menu comes up.
     const ringKey =
-      ringState.level === 'sub' ? `sub-${ringState.entry}` : 'root';
+      ringState.level === 'sub'
+        ? `sub-${(ringState.path ?? [ringState.entry]).join('-')}`
+        : 'root';
     const centerKey = pieCenter(state, config).kind;
 
     return (
@@ -850,6 +886,12 @@ export const PieMenuView = memo(
               <g
                 key={direction}
                 onClick={onSelect ? () => onSelect(direction) : undefined}
+                onDragOver={onDropAction ? (event) => event.preventDefault() : undefined}
+                onDrop={onDropAction ? (event) => {
+                  event.preventDefault();
+                  const action = event.dataTransfer.getData('application/x-piemenu-action') as import('@irdashies/types').PieActionId;
+                  if (PIE_ACTIONS[action]) onDropAction(direction, action);
+                } : undefined}
                 onMouseEnter={
                   onHighlight ? () => onHighlight(direction) : undefined
                 }
@@ -873,12 +915,12 @@ export const PieMenuView = memo(
                       ? 'fill-slate-950/40 stroke-slate-600'
                       : isBack
                         ? hot
-                          ? 'fill-slate-700/70 stroke-slate-600'
-                          : 'fill-slate-950/55 stroke-slate-700/50'
+                      ? 'fill-slate-700/80 stroke-slate-600'
+                          : 'fill-slate-800/90 stroke-slate-700/70'
                         : hot
-                          ? 'fill-slate-700/95 stroke-slate-500'
-                          : 'fill-slate-950/90 stroke-slate-600/85',
-                    onSelect && !hot ? 'hover:fill-slate-800/90' : '',
+                          ? 'fill-slate-700 stroke-slate-500'
+                          : 'fill-slate-800/95 stroke-slate-700/80',
+                    onSelect && !hot ? 'hover:fill-slate-700/90' : '',
                   ].join(' ')}
                 />
                 {hot && item && !isBack && (
@@ -889,14 +931,14 @@ export const PieMenuView = memo(
                       a - HALF + 3,
                       a + HALF - 3
                     )}
-                    className="fill-slate-200 pointer-events-none"
+                    className="fill-green-400 pointer-events-none"
                   />
                 )}
                 {item &&
                   (isBack ? (
                     <g>
                       <Glyph
-                        Svg={ListIcon}
+                        Svg={ArrowUUpLeftIcon}
                         x={x}
                         y={y - 6}
                         size={20}
@@ -910,7 +952,7 @@ export const PieMenuView = memo(
                         dominantBaseline="middle"
                         className={`${hot ? 'fill-slate-300' : 'fill-slate-400'} font-bold pointer-events-none`}
                       >
-                        Menu
+                        Back
                       </text>
                     </g>
                   ) : (
@@ -926,7 +968,7 @@ export const PieMenuView = memo(
             );
           })}
         </Appear>
-        <circle r={INNER} className="fill-slate-900/95" />
+        <circle r={INNER} className="fill-slate-800/95 stroke-slate-700" strokeWidth={1} />
         <Appear key={result ? `result-${result}` : centerKey}>
           {result ? (
             <g>

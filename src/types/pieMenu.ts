@@ -7,8 +7,13 @@ export const PIE_ACTION_IDS = [
   'none',
   'back',
   'submenu',
+  'pitClear',
   'tearoff',
   'repair',
+  'tireLF',
+  'tireRF',
+  'tireLR',
+  'tireRR',
   'tiresAll',
   'tiresLeft',
   'tiresRight',
@@ -50,12 +55,14 @@ export interface PieSlotConfig {
   label?: string;
   /** Icon of a submenu slot; other actions have their own. */
   icon?: PieIconName;
+  /** Optional fuel amount (litres) or tire pressure (kPa) for this slot. */
+  fuelAmount?: number;
+  tirePressureKpa?: number;
+  sub?: Record<PieDirection, PieSlotConfig>;
 }
 
 /** A slot of the main ring; it may open a submenu of its own. */
-export interface PieRootSlotConfig extends PieSlotConfig {
-  sub?: Record<PieDirection, PieSlotConfig>;
-}
+export type PieRootSlotConfig = PieSlotConfig;
 
 /** Pit commands the Pie Menu may send; the same checkboxes as `#lf rf$` chat. */
 export const PIE_PIT_COMMANDS = [
@@ -78,7 +85,7 @@ export type PiePitCommandName = (typeof PIE_PIT_COMMANDS)[number];
 
 export interface PiePitCommand {
   command: PiePitCommandName;
-  /** Litres for `fuel` (0 keeps the amount in the pit menu); compound index for `tc`. */
+  /** Litres for fuel, kPa for tires, or compound index for `tc`. */
   value?: number;
 }
 

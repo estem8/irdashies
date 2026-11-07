@@ -216,7 +216,7 @@ export enum PitCommand {
   ClearFR,
   /** Uncheck add fuel */
   ClearFuel,
-  /** Select the tire compound, passing its index as the parameter */
+  /** Select the tire compound by its session index. */
   TC,
 }
 

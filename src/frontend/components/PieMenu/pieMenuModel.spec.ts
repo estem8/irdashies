@@ -47,18 +47,12 @@ describe('stepPieMenu', () => {
     expect(stepPieMenu(root, 'left', config).state.entry).toBe('left');
   });
 
-  it('puts replace all on the left, Dry above and Wet below', () => {
+  it('exposes direct tire and fuel pit commands', () => {
     expect(
       stepPieMenu(tires, 'left', config, context).commands.map((c) => c.command)
     ).toEqual(['lf', 'rf', 'lr', 'rr']);
-    expect(stepPieMenu(tires, 'up', config, context).commands[0]).toEqual({
-      command: 'tc',
-      value: 0,
-    });
-    expect(stepPieMenu(tires, 'down', config, context).commands[0]).toEqual({
-      command: 'tc',
-      value: 1,
-    });
+    expect(stepPieMenu(tires, 'up', config, context).commands[0]).toEqual({ command: 'tc', value: 0 });
+    expect(stepPieMenu(tires, 'down', config, context).commands[0]).toEqual({ command: 'tc', value: 1 });
   });
 
   it('goes back to the main menu on the opposite side', () => {
@@ -137,17 +131,10 @@ describe('the pilot flows', () => {
     expect(cancelled.state.level).toBe('result');
   });
 
-  it('goes wet with left then down, checking all four tires', () => {
+  it('changes to the wet compound and requests all tires', () => {
     const opened = stepPieMenu(INITIAL_PIE_STATE, 'left', config, context);
     const wet = stepPieMenu(opened.state, 'down', config, context);
-    expect(wet.commands.map((c) => c.command)).toEqual([
-      'tc',
-      'lf',
-      'rf',
-      'lr',
-      'rr',
-    ]);
-    expect(wet.commands[0]).toEqual({ command: 'tc', value: 1 });
+    expect(wet.commands.map((c) => c.command)).toEqual(['tc', 'lf', 'rf', 'lr', 'rr']);
   });
 });
 
@@ -186,22 +173,6 @@ describe('fuel steps and taking a compound back', () => {
     ]);
   });
 
-  it('takes the change back when the same compound is picked again', () => {
-    const wetPlanned: PieContext = {
-      ...context,
-      flags: PIT_SV_FLAGS.lf | PIT_SV_FLAGS.rf,
-      plannedCompound: 1,
-      currentCompound: 0,
-    };
-    expect(commandsFor('compoundWet', wetPlanned, 10)).toEqual([
-      { command: 'tc', value: 0 },
-      { command: 'clearTires' },
-    ]);
-    expect(commandsFor('compoundDry', wetPlanned, 10)).toEqual([
-      { command: 'tc', value: 0 },
-    ]);
-  });
-
   it('puts Remove fuel on the left of the default fuel menu', () => {
     expect(stepPieMenu(fuel, 'left', config, fuelOn(25)).commands).toEqual([
       { command: 'fuel', value: 15 },
@@ -235,16 +206,9 @@ describe('commandsFor', () => {
     ]);
   });
 
-  it('checks all four tires with a compound only when none is checked', () => {
-    const checked = { ...context, flags: PIT_SV_FLAGS.rf };
-    expect(commandsFor('compoundWet', checked, 10)).toEqual([
-      { command: 'tc', value: 1 },
-    ]);
-    expect(commandsFor('compoundWet', context, 10)).toHaveLength(5);
-  });
-
-  it('sends nothing for a compound the session does not have', () => {
-    expect(commandsFor('compoundWet', EMPTY_PIE_CONTEXT, 10)).toEqual([]);
+  it('sends individual tire commands and clear-all directly', () => {
+    expect(commandsFor('tireLF', EMPTY_PIE_CONTEXT, 10, undefined, 210)).toEqual([{ command: 'lf', value: 210 }]);
+    expect(commandsFor('pitClear', EMPTY_PIE_CONTEXT, 10)).toEqual([{ command: 'clear' }]);
   });
 
   it('toggles auto fuel, using the litres to finish when known', () => {

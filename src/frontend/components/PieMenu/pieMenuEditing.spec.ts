@@ -36,9 +36,13 @@ describe('pie menu editing', () => {
     expect(back.left.sub?.up.action).toBe('compoundDry');
   });
 
-  it('does not offer a submenu inside a submenu', () => {
+  it('allows submenus at any depth', () => {
     const all = ['none', 'submenu', 'repair'] as const;
-    expect(actionsFor(all, null)).toContain('submenu');
-    expect(actionsFor(all, 'left')).not.toContain('submenu');
+    expect(actionsFor(all)).toContain('submenu');
+  });
+
+  it('edits arbitrarily nested submenu slots', () => {
+    const nested = setPieSlot(menu, ['left', 'right'], 'right', { action: 'repair' });
+    expect(getPieSlot(nested, ['left', 'right'], 'right').action).toBe('repair');
   });
 });

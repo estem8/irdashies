@@ -48,7 +48,9 @@ type Leaf = string | number | boolean;
 
 /** Dotted paths to the leaf values of a config, e.g. `'background.opacity'`. */
 export type ConfigPath<T> = {
-  [K in keyof T & string]-?: NonNullable<T[K]> extends Leaf
+  [K in keyof T & string]-?: K extends 'sub'
+    ? never
+    : NonNullable<T[K]> extends Leaf
     ? K
     : NonNullable<T[K]> extends readonly unknown[]
       ? never
