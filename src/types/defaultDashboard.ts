@@ -1,7 +1,4 @@
-import {
-  DEFAULT_SETTINGS_THEME,
-  type GeneralSettingsType,
-} from './dashboardLayout';
+import type { GeneralSettingsType } from './dashboardLayout';
 import type { TypedDashboardWidget, WidgetConfigMap } from './widgetConfigs';
 import { WIDGET_MANIFESTS, getWidgetManifest } from './widgets';
 
@@ -24,7 +21,6 @@ export const defaultDashboard: {
     fontSize: 'sm',
     fontWeight: 'normal',
     colorPalette: 'black',
-    settingsTheme: DEFAULT_SETTINGS_THEME,
     showOnlyWhenOnTrack: true,
     highlightColor: 960745,
     skipTaskbar: true,
@@ -34,6 +30,7 @@ export const defaultDashboard: {
     closeToTray: true,
     compactMode: 'off' as const,
     overlayAlwaysOnTop: true,
+    overlayWindowMode: 'display',
     enableNetworkAccess: false,
     enableWebServer: true,
     editMode: {

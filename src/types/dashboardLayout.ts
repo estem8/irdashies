@@ -103,57 +103,12 @@ export type FontSize =
   | '8xl'
   | '9xl';
 
-export const SETTINGS_THEMES = ['classic', 'carbon', 'red'] as const;
-export type SettingsTheme = (typeof SETTINGS_THEMES)[number];
-/** Classic is the original look of the settings window. */
-export const DEFAULT_SETTINGS_THEME: SettingsTheme = 'classic';
-
-/** Persisted config is untrusted: unknown values get the default theme. */
-export const resolveSettingsTheme = (value: unknown): SettingsTheme =>
-  SETTINGS_THEMES.includes(value as SettingsTheme)
-    ? (value as SettingsTheme)
-    : DEFAULT_SETTINGS_THEME;
-
-/** Native window-control colours per settings theme: slate-700 / slate-300
- *  of each .settings-theme-* in theme.css (kept in sync by a spec). */
-export const SETTINGS_TITLE_BAR: Record<
-  SettingsTheme,
-  { color: string; symbolColor: string }
-> = {
-  classic: { color: '#314158', symbolColor: '#cad5e2' },
-  carbon: { color: '#17181b', symbolColor: '#a7aab0' },
-  red: { color: '#1b1e23', symbolColor: '#9aa1ab' },
-};
-
 export interface GeneralSettingsType {
   fontType?: FontType;
   fontSize?: FontSize;
   fontWeight?:
     'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold';
-  colorPalette?:
-    | 'default'
-    | 'black'
-    | 'red'
-    | 'orange'
-    | 'amber'
-    | 'yellow'
-    | 'lime'
-    | 'green'
-    | 'emerald'
-    | 'teal'
-    | 'cyan'
-    | 'sky'
-    | 'blue'
-    | 'indigo'
-    | 'violet'
-    | 'purple'
-    | 'fuchsia'
-    | 'pink'
-    | 'rose'
-    | 'zinc'
-    | 'stone';
-  /** Look of the settings window only; overlays use colorPalette. */
-  settingsTheme?: SettingsTheme;
+  colorPalette?: 'default' | 'black' | 'zinc' | 'stone';
   showOnlyWhenOnTrack?: boolean;
   highlightColor?: number;
   skipTaskbar?: boolean;
@@ -170,6 +125,8 @@ export interface GeneralSettingsType {
   simulator?: SimulatorPreference;
   compactMode?: 'off' | 'compact' | 'ultra';
   overlayAlwaysOnTop?: boolean;
+  /** Experimental individual windows while locked; unset retains display windows. */
+  overlayWindowMode?: 'display' | 'widget';
   enableNetworkAccess?: boolean;
   /**
    * Controls the built-in component/OBS web server (see app/webserver).

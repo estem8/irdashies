@@ -68,7 +68,10 @@ vi.mock('electron', () => ({
   Notification: vi.fn(),
   screen: {
     getAllDisplays: vi.fn(() => []),
-    getPrimaryDisplay: vi.fn(() => ({ id: 1, bounds: {} })),
+    getPrimaryDisplay: vi.fn(() => ({
+      id: 1,
+      workArea: { x: 0, y: 0, width: 1920, height: 1040 },
+    })),
   },
 }));
 
@@ -90,10 +93,6 @@ vi.mock('./storage/simWidgetSupport', () => ({
     message: 'This widget is not compatible with the running sim',
     disabledWidgets: { iracing: [], lmu: [] },
   }),
-}));
-vi.mock('./windowBounds', () => ({
-  loadWindowBounds: vi.fn(() => undefined),
-  ensureWindowOnScreen: vi.fn(),
 }));
 vi.mock('./logger', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -125,6 +124,28 @@ describe('OverlayManager running state', () => {
     manager.publishMessage('runningState', true);
 
     expect(runningStateSends(window)).toEqual([['runningState', true]]);
+  });
+
+  it('seeds the cached session to the settings window before it is shown', () => {
+    // It subscribes before ready-to-show reveals it, and LMU republishes the
+    // session only when its signature changes, so the seed is its one copy.
+    const manager = new OverlayManager();
+    manager.setRendererDataSubscriptions({
+      has: vi.fn(() => true),
+      hasAny: vi.fn(() => false),
+    });
+    manager.publishMessage('sessionData', { revision: 1 });
+    manager.createSettingsWindow();
+    const window = settingsWindow();
+    if (!window) throw new Error('no settings window was created');
+    window.shown = false;
+    window.webContents.send.mockClear();
+
+    const sender = window.webContents as unknown as Electron.WebContents;
+    expect(manager.seedSessionData(sender)).toBe(true);
+    expect(window.webContents.send).toHaveBeenCalledWith('sessionData', {
+      revision: 1,
+    });
   });
 
   it('still withholds the telemetry inspector stream', () => {

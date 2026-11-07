@@ -36,6 +36,7 @@ const mockEmitDashboardUpdated = vi.hoisted(() => vi.fn());
 
 vi.mock('./dashboardEvents', () => ({
   emitDashboardUpdated: mockEmitDashboardUpdated,
+  emitDashboardsSaved: vi.fn(),
 }));
 
 describe('dashboards', () => {
@@ -54,6 +55,86 @@ describe('dashboards', () => {
       }
       // For 'dashboards' key and others, return null by default
       return null;
+    });
+  });
+
+  describe('Twitch Chat to Stream Chat migration', () => {
+    it('migrates twitchchat next to a null entry instead of throwing', () => {
+      const result = withDashboardDefaults({
+        ...defaultDashboard,
+        widgets: [
+          null,
+          { id: 'twitchchat', enabled: true, config: { channel: 'old' } },
+        ] as unknown as typeof defaultDashboard.widgets,
+      });
+
+      expect(result.widgets.some((w) => w.id === 'twitchchat')).toBe(false);
+      const streamChats = result.widgets.filter((w) => w.id === 'streamchat');
+      expect(streamChats).toHaveLength(1);
+      expect(streamChats[0].enabled).toBe(true);
+      expect(streamChats[0].config).toMatchObject({
+        twitch: { channel: 'old' },
+      });
+    });
+
+    it('migrates twitchchat in withDashboardDefaults, as used for inactive profiles and imports', () => {
+      const layout = { x: 5, y: 6, width: 300, height: 200 };
+      const result = withDashboardDefaults({
+        ...defaultDashboard,
+        widgets: [
+          {
+            id: 'twitchchat',
+            enabled: true,
+            layout,
+            config: { channel: 'oldchannel' },
+          },
+        ],
+      });
+
+      expect(result.widgets.some((w) => w.id === 'twitchchat')).toBe(false);
+      const streamChats = result.widgets.filter((w) => w.id === 'streamchat');
+      expect(streamChats).toHaveLength(1);
+      expect(streamChats[0].enabled).toBe(true);
+      expect(streamChats[0].layout).toEqual(layout);
+      expect(streamChats[0].config).toMatchObject({
+        twitch: { channel: 'oldchannel' },
+      });
+    });
+
+    it('loads a saved twitchchat widget as streamchat with its settings', () => {
+      const layout = { x: 11, y: 22, width: 333, height: 444 };
+      const saved = {
+        ...defaultDashboard,
+        widgets: [
+          ...defaultDashboard.widgets.filter((w) => w.id !== 'streamchat'),
+          {
+            id: 'twitchchat',
+            enabled: true,
+            layout,
+            config: { fontSize: 24, channel: 'oldchannel' },
+          },
+        ],
+      };
+      mockReadData.mockImplementation((key: string) => {
+        if (key === 'currentProfile') return 'default';
+        if (key === 'profiles')
+          return { default: { id: 'default', name: 'Default' } };
+        if (key === 'dashboards') return { default: saved };
+        return null;
+      });
+
+      const result = getOrCreateDefaultDashboard();
+
+      expect(result.widgets.some((w) => w.id === 'twitchchat')).toBe(false);
+      const streamChats = result.widgets.filter((w) => w.id === 'streamchat');
+      expect(streamChats).toHaveLength(1);
+      expect(streamChats[0].enabled).toBe(true);
+      expect(streamChats[0].layout).toEqual(layout);
+      expect(streamChats[0].config).toMatchObject({
+        display: { fontSize: 24, showPlatformIcons: true },
+        twitch: { channel: 'oldchannel' },
+        youtube: { channel: '' },
+      });
     });
   });
 
@@ -732,6 +813,32 @@ describe('dashboards', () => {
     });
   });
 
+  describe('custom instance defaults', () => {
+    const layout = { x: 20, y: 40, width: 400, height: 300 };
+
+    it('fills a second instance from the defaults of its type', () => {
+      const migrated = withDashboardDefaults({
+        widgets: [
+          {
+            id: 'standings-g1',
+            type: 'standings',
+            enabled: true,
+            placement: 'gantry',
+            layout,
+            config: { background: { opacity: 40 } },
+          },
+        ],
+      });
+      const instance = migrated.widgets.find((w) => w.id === 'standings-g1');
+      const defaults = defaultDashboard.widgets.find(
+        (w) => w.id === 'standings'
+      )?.config as Record<string, unknown>;
+      expect(instance?.config?.background).toEqual({ opacity: 40 });
+      expect(instance?.config?.displayOrder).toEqual(defaults.displayOrder);
+      expect(instance?.placement).toBe('gantry');
+    });
+  });
+
   describe('Radar tuning migration', () => {
     it('drops the pole-side learning tuning and keeps the rest', () => {
       const radarDefaults = defaultDashboard.widgets.find(
@@ -896,6 +1003,49 @@ describe('dashboards', () => {
         ...defaultDashboard.generalSettings,
         fontSize: 'sm',
       });
+    });
+    it('removes legacy settingsTheme and persists palette normalization idempotently', () => {
+      const dashboard = {
+        ...defaultDashboard,
+        generalSettings: {
+          ...defaultDashboard.generalSettings,
+          settingsTheme: 'legacy',
+          colorPalette: 'legacy-palette',
+        },
+      } as unknown as DashboardLayout;
+      mockReadData.mockImplementation((key: string) => {
+        if (key === 'currentProfile') return 'default';
+        if (key === 'profiles')
+          return { default: { id: 'default', name: 'Default' } };
+        if (key === 'dashboards') return { default: dashboard };
+        return null;
+      });
+
+      getOrCreateDefaultDashboard();
+
+      const firstWrite = mockWriteData.mock.calls.find(
+        ([key]) => key === 'dashboards'
+      )?.[1] as Record<string, DashboardLayout>;
+      expect(firstWrite.default.generalSettings).not.toHaveProperty(
+        'settingsTheme'
+      );
+      expect(firstWrite.default.generalSettings?.colorPalette).toBe('default');
+
+      mockReadData.mockImplementation((key: string) => {
+        if (key === 'currentProfile') return 'default';
+        if (key === 'profiles')
+          return { default: { id: 'default', name: 'Default' } };
+        if (key === 'dashboards') return firstWrite;
+        return null;
+      });
+      mockWriteData.mockReset();
+
+      getOrCreateDefaultDashboard();
+
+      expect(mockWriteData).not.toHaveBeenCalled();
+      expect(getDashboard('default')?.generalSettings?.colorPalette).toBe(
+        'default'
+      );
     });
   });
 

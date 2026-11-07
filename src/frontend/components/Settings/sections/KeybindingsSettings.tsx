@@ -168,6 +168,16 @@ interface KeyRecorderProps {
 const KeyRecorder = ({ actionId, entry, onUpdated }: KeyRecorderProps) => {
   const [recording, setRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [registrationError, setRegistrationError] = useState<string>();
+  const refreshRegistrationError = useCallback(() => {
+    window.keybindingsBridge
+      ?.getRegistrationErrors?.()
+      .then((errors) => setRegistrationError(errors[actionId]))
+      .catch((err: unknown) =>
+        logger.error('Failed to load shortcut registration status:', err)
+      );
+  }, [actionId]);
+  useEffect(refreshRegistrationError, [refreshRegistrationError, entry]);
   const recorderRef = useRef<HTMLButtonElement>(null);
   // First input (key or pad) during recording wins; later ones are ignored until
   // recording restarts. Guards the async gap before listeners are torn down.
@@ -183,7 +193,8 @@ const KeyRecorder = ({ actionId, entry, onUpdated }: KeyRecorderProps) => {
     setRecording(false);
     bindingInProgressRef.current = false;
     await window.keybindingsBridge?.stopRecording();
-  }, []);
+    refreshRegistrationError();
+  }, [refreshRegistrationError]);
 
   useEffect(() => {
     if (!recording) return;
@@ -202,8 +213,12 @@ const KeyRecorder = ({ actionId, entry, onUpdated }: KeyRecorderProps) => {
             description: entryRef.current.description,
           }
         );
-        setError(null);
-        onUpdated(result);
+        if ('error' in result) {
+          setError(`${formatAccelerator(accelerator)}: ${result.error}`);
+        } else {
+          setError(null);
+          onUpdated(result);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Failed to set keybinding'
@@ -278,22 +293,24 @@ const KeyRecorder = ({ actionId, entry, onUpdated }: KeyRecorderProps) => {
       const result = await window.keybindingsBridge.resetKeybinding(actionId);
       setError(null);
       onUpdated(result);
+      refreshRegistrationError();
     } catch (err) {
       logger.error('Failed to reset keybinding:', err);
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex max-w-[280px] shrink-0 flex-wrap items-center justify-end gap-2">
       <button
         ref={recorderRef}
+        aria-label={`Change shortcut for ${entry.label}`}
         type="button"
         onClick={recording ? undefined : startRecording}
         className={[
           'px-3 py-1.5 rounded text-sm font-mono min-w-[120px] text-center transition-all cursor-pointer',
           recording
             ? 'bg-accent-600/30 border border-accent-400 text-accent-300 animate-pulse'
-            : 'bg-slate-700 border border-slate-600 text-white hover:bg-slate-600',
+            : 'bg-slate-700 border border-settings-boundary text-white hover:bg-settings-hover',
         ].join(' ')}
       >
         {recording
@@ -312,7 +329,14 @@ const KeyRecorder = ({ actionId, entry, onUpdated }: KeyRecorderProps) => {
           <ArrowCounterClockwiseIcon size={14} />
         </button>
       )}
-      {error && <span className="text-xs text-red-400">{error}</span>}
+      {!recording && (error || registrationError) && (
+        <span
+          role="status"
+          className="basis-full text-right text-xs text-amber-300"
+        >
+          {error || registrationError}
+        </span>
+      )}
     </div>
   );
 };
@@ -324,8 +348,8 @@ interface BindingRowProps {
 }
 
 export const BindingRow = ({ actionId, entry, onUpdated }: BindingRowProps) => (
-  <div className="flex items-center justify-between px-4 py-3 rounded bg-slate-700/50 hover:bg-slate-700/70 transition-colors">
-    <div className="flex flex-col gap-0.5">
+  <div className="flex items-center justify-between gap-4 px-4 py-3 rounded bg-slate-700/50 hover:bg-slate-700/70 transition-colors">
+    <div className="flex min-w-0 flex-col gap-0.5">
       <span className="text-sm font-medium text-white">{entry.label}</span>
       <span className="text-xs text-slate-400">{entry.description}</span>
     </div>
@@ -375,10 +399,12 @@ export const KeybindingsSettings = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-none p-4 bg-slate-700 rounded">
-        <div className="flex items-center justify-between">
+      <div className="flex-none border-b border-slate-700 px-1 pb-5 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl mb-1">Key Bindings</h2>
+            <h2 className="mb-1 text-xl font-semibold tracking-tight text-white">
+              Key Bindings
+            </h2>
             <p className="text-slate-400 text-sm">
               Customize keyboard shortcuts. Click a binding then press a new key
               combination, or hold two or more controller buttons together for a
@@ -388,7 +414,7 @@ export const KeybindingsSettings = () => {
           <button
             type="button"
             onClick={handleResetAll}
-            className="text-xs text-slate-300 hover:text-white bg-slate-600 hover:bg-slate-500 rounded px-3 py-1.5 transition-colors cursor-pointer whitespace-nowrap"
+            className="min-h-9 rounded-md border border-settings-boundary bg-slate-800 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-accent-400 cursor-pointer whitespace-nowrap"
           >
             Reset All
           </button>

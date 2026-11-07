@@ -25,7 +25,7 @@ import { GarageCoverSettings } from './sections/GarageCoverSettings';
 import { ProfileSettings } from './sections/ProfileSettings';
 import { FlagSettings } from './sections/FlagSettings';
 import { CarSetupSettings } from './sections/CarSetupSettings';
-import { TwitchChatSettings } from './sections/TwitchChatSettings';
+import { StreamChatSettings } from './sections/StreamChatSettings';
 import { DriverTagsSettings } from './sections/DriverTagsSettings';
 import { KeybindingsSettings } from './sections/KeybindingsSettings';
 import { LapTimeLogSettings } from './sections/LapTimeLogSettings';
@@ -68,7 +68,7 @@ export const WIDGET_SETTINGS: Record<
   radar: RadarSettings,
   garagecover: GarageCoverSettings,
   flag: FlagSettings,
-  twitchchat: TwitchChatSettings,
+  streamchat: StreamChatSettings,
   laptimelog: LapTimeLogSettings,
   infobar: InformationBarSettings,
   slowcarahead: SlowCarAheadSettings,

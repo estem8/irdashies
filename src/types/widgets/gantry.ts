@@ -4,6 +4,7 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'gantry',
   name: 'The Gantry',
+  category: 'Broadcast & Streaming',
   menuLabel: 'Gantry',
   enabled: false,
   layout: {
@@ -29,6 +30,8 @@ export default defineWidgetManifest({
       yAxisMode: 'trace',
       lapWindow: 75,
       autoPin: true,
+      axisFit: 'shown',
+      gapMaxSeconds: 0,
     },
     window: {
       alwaysOnTop: false,
@@ -37,6 +40,9 @@ export default defineWidgetManifest({
       enabled: false,
       arrangement: 'row',
       panels: [],
+    },
+    standings: {
+      source: 'builtin',
     },
   },
   properties: {

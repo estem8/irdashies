@@ -1,6 +1,9 @@
 import { ipcMain, webContents } from 'electron';
-import type { KeybindingActionId } from '@irdashies/types';
-import { DEFAULT_KEYBINDINGS } from '@irdashies/types';
+import type {
+  KeybindingActionId,
+  KeybindingUpdateResult,
+} from '@irdashies/types';
+import { DEFAULT_KEYBINDINGS, KEYBINDING_MESSAGES } from '@irdashies/types';
 import {
   isBareKeyAccelerator,
   isGamepadBinding,
@@ -10,16 +13,21 @@ import {
 } from '@irdashies/shared';
 import {
   getKeybindings,
+  findKeybindingConflict,
+  KeybindingConflictError,
   updateKeybinding,
   resetKeybinding,
   resetAllKeybindings,
+  persistKeybindingMigrations,
 } from '../storage/keybindings';
 import { KeybindingManager } from '../keybindingManager';
 import { rebuildTaskbarMenu } from '../setupTaskbar';
 import logger from '../logger';
 
 /** Throw if `actionId` is not a known static action or a valid widget toggle. */
-function assertSupportedAction(actionId: KeybindingActionId): void {
+function assertSupportedAction(actionId: unknown): void {
+  if (typeof actionId !== 'string')
+    throw new Error('Invalid keybinding action');
   const isStatic = Object.hasOwn(DEFAULT_KEYBINDINGS, actionId);
   if (
     !isStatic &&
@@ -44,7 +52,6 @@ function assertValidAccelerator(accelerator: string): void {
     );
   }
 }
-
 /**
  * Register the IPC handlers backing the keybindings settings UI: read/update/
  * reset bindings and the record-mode lifecycle that captures keyboard or gamepad
@@ -53,6 +60,14 @@ function assertValidAccelerator(accelerator: string): void {
 export function setupKeybindingsBridge(
   keybindingManager: KeybindingManager
 ): void {
+  persistKeybindingMigrations().catch((error) =>
+    logger.warn('[Keybindings] Could not persist migrated bindings:', error)
+  );
+
+  ipcMain.handle('keybindings:registrationErrors', () =>
+    keybindingManager.getRegistrationErrors()
+  );
+
   ipcMain.handle('keybindings:get', () => {
     return getKeybindings();
   });
@@ -64,11 +79,41 @@ export function setupKeybindingsBridge(
       actionId: KeybindingActionId,
       accelerator: string,
       meta?: { label: string; description: string }
-    ) => {
+    ): KeybindingUpdateResult => {
       try {
         assertSupportedAction(actionId);
-        // An empty accelerator means "unbind" — nothing to validate.
-        if (accelerator) assertValidAccelerator(accelerator);
+        if (
+          typeof accelerator !== 'string' ||
+          (meta !== undefined &&
+            (!meta ||
+              typeof meta.label !== 'string' ||
+              typeof meta.description !== 'string'))
+        ) {
+          throw new Error('Invalid keybinding arguments');
+        }
+        const conflict = findKeybindingConflict(
+          getKeybindings(),
+          actionId,
+          accelerator
+        );
+        if (conflict !== undefined) {
+          return {
+            error: `Shortcut already bound to "${conflict}" in irDashies. Choose another combination.`,
+          };
+        }
+        if (accelerator) {
+          if (isGamepadBinding(accelerator)) {
+            if (!parseGamepadTokens(accelerator)) {
+              return {
+                error: 'Invalid controller button. Choose another button.',
+              };
+            }
+          } else {
+            const result = KeybindingManager.checkAccelerator(accelerator);
+            if (result !== 'available')
+              return { error: KEYBINDING_MESSAGES[result] };
+          }
+        }
 
         const result = updateKeybinding(actionId, accelerator, meta);
         keybindingManager.reloadBindings();
@@ -76,6 +121,8 @@ export function setupKeybindingsBridge(
 
         return result;
       } catch (err) {
+        if (err instanceof KeybindingConflictError)
+          return { error: err.message };
         logger.error('Failed to update keybinding:', err);
         throw err;
       }
@@ -83,6 +130,7 @@ export function setupKeybindingsBridge(
   );
 
   ipcMain.handle('keybindings:reset', (_, actionId: KeybindingActionId) => {
+    assertSupportedAction(actionId);
     const result = resetKeybinding(actionId);
     keybindingManager.reloadBindings();
     rebuildTaskbarMenu();

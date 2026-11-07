@@ -46,6 +46,19 @@ git cherry-pick -n <hash>           # Partial: then reset/checkout unwanted file
 
 When opening a PR, follow `.github/pull_request_template.md` exactly. Fill in the **Description** and **Screenshots** (Before / After) sections, tick the matching **Type of Change** box, and only check **Checklist** items you've actually done — don't tick iRacing testing if you only verified in Storybook.
 
+**Every visual change requires screenshots.** Show the updated UI to the user in
+the final response and upload actual screenshots as GitHub attachments in the PR
+body. Include Before / After images when changing existing UI, and at least an
+After image for new UI. A prose description, Storybook link, or local file path
+does not satisfy this requirement. Verify the uploaded images render in the PR.
+
+Keep review media outside the repository and never commit screenshots just to
+host them. If the installed GitHub CLI lacks `--attach`, check the current
+official release and use an updated CLI (a verified portable release is fine)
+before falling back to an authenticated browser upload. If uploads remain
+blocked, keep the visual PR in draft, report the exact blocker, and do not claim
+publication is complete until screenshots are attached.
+
 ---
 
 ## Project Structure
@@ -171,8 +184,14 @@ export default defineWidgetManifest({
 });
 
 // src/frontend/components/MyWidget/widget.ts — component
+import { lazyWidget } from '@irdashies/domain/lazyWidget';
 import type { WidgetModule } from '@irdashies/domain';
-export default { id: 'mywidget', component: MyWidget } satisfies WidgetModule;
+export default {
+  id: 'mywidget',
+  component: lazyWidget(() =>
+    import('./MyWidget').then((module) => ({ default: module.MyWidget }))
+  ),
+} satisfies WidgetModule;
 ```
 
 ---
@@ -321,7 +340,7 @@ Widgets are auto-discovered from their manifest and `widget.ts`; only the config
 
 1. Add the config type to `WidgetConfigMap` in `src/types/widgetConfigs.ts`
 2. Create the manifest `src/types/widgets/<id>.ts` (`defineWidgetManifest`: name, menu label, enabled, layout, default config)
-3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`
+3. Create the widget folder `src/frontend/components/MyWidget/` with `MyWidget.tsx`, `widget.ts` (`export default { id, component } satisfies WidgetModule`, or an array when the folder hosts several widgets), `widgetRuntimeDefinition.ts` and `MyWidget.stories.tsx`. Use `lazyWidget` from `@irdashies/domain/lazyWidget` for the component, as above: registration is eager, implementation loading is deferred until the widget renders.
 4. Create `Settings/sections/MyWidgetSettings.tsx` and add one line to `WIDGET_SETTINGS` in `src/frontend/components/Settings/SettingsLoader.tsx`
 
 Standard single-value settings are described once in the manifest's `properties` (label, limits, options), keyed by config path. On the settings page, wrap the rows in `<SettingProps widget="mywidget" ...>` and render them with `const SettingProp = settingPropFor('mywidget')`, then `<SettingProp path="background.opacity" />`. TypeScript checks both sides against the widget's config type: a path that isn't in the config, or a spec that doesn't fit the value (for example a slider on a boolean), fails to compile.

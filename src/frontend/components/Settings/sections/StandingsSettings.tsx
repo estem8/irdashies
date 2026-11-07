@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import { WidgetScaleSettings } from '../components/WidgetScaleSettings';
 import {
   StandingsWidgetSettings,
   SettingsTabType,
   getWidgetDefaultConfig,
 } from '@irdashies/types';
 import { useDashboard } from '@irdashies/context';
+import { copyOverlayToGantryStandings } from './gantryStandingsEdits';
 import { TabButton } from '../components/TabButton';
 import { SortableList } from '../../SortableList';
 import { DraggableSettingItem } from '../components/DraggableSettingItem';
 import { BadgeFormatPreview } from '../components/BadgeFormatPreview';
+import { FormatSelect } from '../components/FormatSelect';
+import { type StandingsBadgeFormat } from '@irdashies/types';
 import { DriverNamePreview } from '../components/DriverNamePreview';
 import { DEFAULT_SESSION_BAR_DISPLAY_ORDER } from '../sessionBarConstants';
 import { SessionVisibility } from '../components/SessionVisibility';
@@ -34,6 +36,27 @@ interface SortableSetting {
   configKey: keyof StandingsWidgetSettings['config'];
   hasSubSetting?: boolean;
 }
+
+/**
+ * The iRacing rating formats, in the order the dropdown lists them.
+ *
+ * Named here rather than inline so the list is not duplicated between
+ * the two widgets that offer it.
+ */
+const IRACING_BADGE_FORMATS = [
+  'license-color-fullrating-combo',
+  'fullrating-color-no-license',
+  'rating-color-no-license',
+  'license-color-fullrating-bw',
+  'license-color-rating-bw',
+  'rating-only-color-rating-bw',
+  'license-color-rating-bw-no-license',
+  'license-bw-rating-bw',
+  'rating-only-bw-rating-bw',
+  'license-bw-rating-bw-no-license',
+  'rating-bw-no-license',
+  'fullrating-bw-no-license',
+] as const;
 
 const sortableSettings: SortableSetting[] = [
   { id: 'position', label: 'Position', configKey: 'position' },
@@ -64,7 +87,7 @@ const sortableSettings: SortableSetting[] = [
     hasSubSetting: true,
   },
   { id: 'driverTag', label: 'Driver Tag', configKey: 'driverTag' },
-  { id: 'badge', label: 'Driver Badge', configKey: 'badge' },
+  { id: 'badge', label: 'Rating', configKey: 'badge' },
   {
     id: 'iratingChange',
     label: 'iRating Change',
@@ -104,6 +127,12 @@ const sortableSettings: SortableSetting[] = [
     configKey: 'lapCount',
   },
   { id: 'pushToPass', label: 'Push to Pass', configKey: 'pushToPass' },
+  { id: 'trackLimits', label: 'Track Limits', configKey: 'trackLimits' },
+  {
+    id: 'lmuVirtualEnergy',
+    label: 'LMU Virtual Energy',
+    configKey: 'lmuVirtualEnergy',
+  },
 ];
 
 const defaultConfig = getWidgetDefaultConfig('standings');
@@ -213,6 +242,10 @@ const DisplaySettingsList = ({
                 )}
               </>
             )}
+            {setting.configKey === 'interval' &&
+              settings.config.interval.enabled && (
+                <SettingProp path="interval.displayMode" variant="compact" />
+              )}
             {setting.hasSubSetting &&
               (setting.configKey === 'gap' ||
                 setting.configKey === 'interval') &&
@@ -224,54 +257,42 @@ const DisplaySettingsList = ({
               )}
             {setting.configKey === 'badge' &&
               (configValue as { enabled: boolean }).enabled && (
-                <div className="mt-3">
-                  <div className="flex flex-wrap gap-3 justify-end">
-                    {(
-                      [
-                        'license-color-fullrating-combo',
-                        'fullrating-color-no-license',
-                        'rating-color-no-license',
-                        'license-color-fullrating-bw',
-                        'license-color-rating-bw',
-                        'rating-only-color-rating-bw',
-                        'license-color-rating-bw-no-license',
-                        'license-bw-rating-bw',
-                        'rating-only-bw-rating-bw',
-                        'license-bw-rating-bw-no-license',
-                        'rating-bw-no-license',
-                        'fullrating-bw-no-license',
-                      ] as const
-                    ).map((format) => (
-                      <BadgeFormatPreview
-                        key={format}
-                        format={format}
-                        selected={
-                          (
-                            configValue as {
-                              enabled: boolean;
-                              badgeFormat: string;
-                            }
-                          ).badgeFormat === format
-                        }
-                        onClick={() => {
-                          const cv = settings.config[setting.configKey] as {
-                            enabled: boolean;
-                            badgeFormat: string;
-                            [key: string]: unknown;
-                          };
-                          handleConfigChange({
-                            [setting.configKey]: { ...cv, badgeFormat: format },
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
+                // One line, indented like the compact sub-settings
+                // above (pl-8), since these belong to Rating rather
+                // than standing on their own. Wraps rather than
+                // overflowing a narrow settings panel.
+                <div className="mt-2 flex flex-wrap items-center gap-4 pl-8">
+                  <FormatSelect
+                    label="iRacing"
+                    value={
+                      (configValue as { badgeFormat: StandingsBadgeFormat })
+                        .badgeFormat
+                    }
+                    options={IRACING_BADGE_FORMATS}
+                    renderOption={(format) => (
+                      <BadgeFormatPreview format={format} />
+                    )}
+                    onChange={(badgeFormat) => {
+                      const cv = settings.config[setting.configKey] as Record<
+                        string,
+                        unknown
+                      >;
+                      handleConfigChange({
+                        [setting.configKey]: { ...cv, badgeFormat },
+                      });
+                    }}
+                  />
                 </div>
               )}
             {setting.configKey === 'driverName' &&
               (configValue as { enabled: boolean }).enabled && (
                 <div className="mt-3">
-                  <div className="flex flex-wrap gap-3 justify-end">
+                  <p className="mb-2 text-sm text-slate-400">Name format</p>
+                  <div
+                    role="group"
+                    aria-label="Driver name format"
+                    className="grid grid-cols-2 gap-2 xl:grid-cols-3"
+                  >
                     {(
                       [
                         'name-middlename-surname',
@@ -286,12 +307,12 @@ const DisplaySettingsList = ({
                         key={format}
                         format={format}
                         selected={
-                          (
+                          ((
                             configValue as {
                               enabled: boolean;
                               nameFormat: string;
                             }
-                          ).nameFormat === format
+                          ).nameFormat ?? 'name-middlename-surname') === format
                         }
                         onClick={() => {
                           const cv = settings.config[setting.configKey] as {
@@ -363,7 +384,7 @@ const DisplaySettingsList = ({
                         },
                       });
                     }}
-                    className="bg-slate-700 text-white rounded-md px-2 py-1"
+                    className="settings-field"
                   >
                     <option value="full">1:42.123</option>
                     <option value="mixed">1:42.1</option>
@@ -381,27 +402,44 @@ const DisplaySettingsList = ({
   );
 };
 
-export const StandingsSettings = () => {
-  const { currentDashboard } = useDashboard();
-  const savedSettings = currentDashboard?.widgets.find(
-    (w) => w.id === SETTING_ID
-  ) as StandingsWidgetSettings | undefined;
+const buildItemsOrder = (saved: string[] | undefined) => {
+  const validIds = new Set(sortableSettings.map((s) => s.id));
+  const filtered = (saved ?? []).filter((id) => validIds.has(id));
+  const present = new Set(filtered);
+  const missing = sortableSettings
+    .filter((s) => !present.has(s.id))
+    .map((s) => s.id);
+  return [...filtered, ...missing];
+};
+
+const StandingsSettingsPage = ({ widgetId }: { widgetId: string }) => {
+  const { currentDashboard, onDashboardUpdated } = useDashboard();
+  const savedWidget = currentDashboard?.widgets.find((w) => w.id === widgetId);
+  const savedSettings = savedWidget as StandingsWidgetSettings | undefined;
+  const isGantryOnly = savedWidget?.placement === 'gantry';
   const [settings, setSettings] = useState<StandingsWidgetSettings>({
     enabled: savedSettings?.enabled ?? false,
     config:
       (savedSettings?.config as StandingsWidgetSettings['config']) ??
       defaultConfig,
   });
-  const [itemsOrder, setItemsOrder] = useState(() => {
-    const validIds = new Set(sortableSettings.map((s) => s.id));
-    const saved = settings.config.displayOrder ?? [];
-    const filtered = saved.filter((id) => validIds.has(id));
-    const present = new Set(filtered);
-    const missing = sortableSettings
-      .filter((s) => !present.has(s.id))
-      .map((s) => s.id);
-    return [...filtered, ...missing];
-  });
+  const [itemsOrder, setItemsOrder] = useState(() =>
+    buildItemsOrder(settings.config.displayOrder)
+  );
+
+  // Re-seed when the saved widget changes under us, such as after copying the
+  // overlay's settings in.
+  const [prevSaved, setPrevSaved] = useState(savedSettings);
+  if (JSON.stringify(savedSettings) !== JSON.stringify(prevSaved)) {
+    setPrevSaved(savedSettings);
+    if (savedSettings) {
+      setSettings({
+        enabled: savedSettings.enabled ?? false,
+        config: savedSettings.config,
+      });
+      setItemsOrder(buildItemsOrder(savedSettings.config?.displayOrder));
+    }
+  }
 
   // Tab state with persistence
   const [activeTab, setActiveTab] = useState<SettingsTabType>(
@@ -412,17 +450,21 @@ export const StandingsSettings = () => {
     localStorage.setItem('standingsTab', activeTab);
   }, [activeTab]);
 
+  const shownTab: SettingsTabType =
+    isGantryOnly && activeTab === 'visibility' ? 'display' : activeTab;
+
   if (!currentDashboard) {
     return <>Loading...</>;
   }
 
   return (
     <BaseSettingsSection
-      title="Standings"
+      title={isGantryOnly ? `Standings - ${widgetId}` : 'Standings'}
       description="Configure how the standings widget appears and behaves."
       settings={settings}
       onSettingsChange={setSettings}
-      widgetId={SETTING_ID}
+      widgetId={widgetId}
+      hidePositionReset={isGantryOnly}
     >
       {(handleConfigChange) => {
         const handleDisplayOrderChange = (newOrder: string[]) => {
@@ -437,8 +479,31 @@ export const StandingsSettings = () => {
             onChange={handleConfigChange}
           >
             <div className="space-y-4">
+              {isGantryOnly && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
+                    className="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                    title="Only shown in the Gantry, never on the overlay."
+                  >
+                    Gantry
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      currentDashboard &&
+                      onDashboardUpdated?.(
+                        copyOverlayToGantryStandings(currentDashboard, widgetId)
+                      )
+                    }
+                    title="Replace this layout with the overlay Standings settings"
+                    className="px-3 py-1 text-xs rounded border transition-colors bg-slate-700 hover:bg-settings-hover text-slate-200 border-settings-boundary"
+                  >
+                    Copy settings from overlay
+                  </button>
+                </div>
+              )}
               {/* Tabs */}
-              <div className="flex border-b border-slate-700/50">
+              <div className="flex flex-wrap gap-1 border-b border-slate-700 pb-1">
                 <TabButton
                   id="display"
                   activeTab={activeTab}
@@ -474,24 +539,25 @@ export const StandingsSettings = () => {
                 >
                   Styling
                 </TabButton>
-                <TabButton
-                  id="visibility"
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                >
-                  Visibility
-                </TabButton>
+                {!isGantryOnly && (
+                  <TabButton
+                    id="visibility"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                  >
+                    Visibility
+                  </TabButton>
+                )}
               </div>
 
               <div>
                 {/* DISPLAY TAB */}
-                {activeTab === 'display' && (
+                {shownTab === 'display' && (
                   <>
-                    <WidgetScaleSettings
-                      widgetId={SETTING_ID}
-                      className="px-4"
-                    />
-                    <SettingsSection title="Display Order">
+                    <SettingsSection title="Display" scaleWidgetId={widgetId}>
+                      <h4 className="text-md font-medium text-slate-200">
+                        Display Order
+                      </h4>
                       <DisplaySettingsList
                         itemsOrder={itemsOrder}
                         onReorder={handleDisplayOrderChange}
@@ -514,7 +580,7 @@ export const StandingsSettings = () => {
                 )}
 
                 {/* OPTIONS TAB */}
-                {activeTab === 'options' && (
+                {shownTab === 'options' && (
                   <>
                     <SettingsSection title="Multiclass Standings">
                       <SettingProp path="customClassOrdering" />
@@ -532,6 +598,9 @@ export const StandingsSettings = () => {
                         <SettingProp path="driverStandings.topDriverDivider" />
                       )}
 
+                      {isGantryOnly && (
+                        <SettingProp path="driverStandings.showAll" />
+                      )}
                       <SettingProp path="useLivePosition" />
                       <SettingProp path="radio.persistenceSeconds" />
                     </SettingsSection>
@@ -542,7 +611,7 @@ export const StandingsSettings = () => {
                       <SettingProp path="titleBar.enabled" />
 
                       {settings.config.titleBar.enabled && (
-                        <SettingsSection>
+                        <SettingsSection variant="inline">
                           <SettingProp path="titleBar.progressBar.enabled" />
                         </SettingsSection>
                       )}
@@ -553,17 +622,18 @@ export const StandingsSettings = () => {
                     <SettingsSection title="Background">
                       <SettingProp path="background.opacity" />
                       <SettingProp path="foreground.opacity" />
+                      <SettingProp path="driverRow.opacity" />
                     </SettingsSection>
                   </>
                 )}
 
                 {/* HEADER TAB */}
-                {activeTab === 'header' && (
+                {shownTab === 'header' && (
                   <SettingsSection title="Header Bar">
                     <SettingProp path="headerBar.enabled" />
 
                     {settings.config.headerBar.enabled && (
-                      <SettingsSection>
+                      <SettingsSection variant="inline">
                         <SessionBarItemsList
                           items={settings.config.headerBar.displayOrder}
                           onReorder={(newOrder) => {
@@ -630,12 +700,12 @@ export const StandingsSettings = () => {
                 )}
 
                 {/* FOOTER TAB */}
-                {activeTab === 'footer' && (
+                {shownTab === 'footer' && (
                   <SettingsSection title="Footer Bar">
                     <SettingProp path="footerBar.enabled" />
 
                     {settings.config.footerBar.enabled && (
-                      <SettingsSection>
+                      <SettingsSection variant="inline">
                         <SessionBarItemsList
                           items={settings.config.footerBar.displayOrder}
                           onReorder={(newOrder) => {
@@ -702,8 +772,8 @@ export const StandingsSettings = () => {
                 )}
 
                 {/* STYLING TAB */}
-                {activeTab === 'styling' && (
-                  <>
+                {shownTab === 'styling' && (
+                  <div className="space-y-5">
                     <SettingsSection title="Class Header">
                       <SettingToggleRow
                         title="Class Name Background"
@@ -856,14 +926,12 @@ export const StandingsSettings = () => {
                         {(settings.config.classHeaderStyle?.estimatedLaps
                           ?.enabled ??
                           false) && (
-                          <div className="ml-2 pl-4 border-l-2 border-slate-600">
+                          <div className="ml-2 pl-4 border-l-2 border-settings-boundary">
                             <SettingProp path="classHeaderStyle.estimatedLaps.numLaps" />
                           </div>
                         )}
                       </div>
                     </SettingsSection>
-
-                    <SettingDivider />
 
                     <SettingsSection title="Columns">
                       <SettingToggleRow
@@ -884,8 +952,6 @@ export const StandingsSettings = () => {
                       />
                     </SettingsSection>
 
-                    <SettingDivider />
-
                     <SettingsSection title="Driver Position">
                       <SettingToggleRow
                         title="Position Background"
@@ -904,8 +970,6 @@ export const StandingsSettings = () => {
                         }
                       />
                     </SettingsSection>
-
-                    <SettingDivider />
 
                     <SettingsSection title="Car Number">
                       <SettingToggleRow
@@ -947,8 +1011,6 @@ export const StandingsSettings = () => {
                         }
                       />
                     </SettingsSection>
-
-                    <SettingDivider />
 
                     <SettingsSection title="Badges">
                       <SettingToggleRow
@@ -996,11 +1058,11 @@ export const StandingsSettings = () => {
                         }
                       />
                     </SettingsSection>
-                  </>
+                  </div>
                 )}
 
                 {/* VISIBILITY TAB */}
-                {activeTab === 'visibility' && (
+                {shownTab === 'visibility' && (
                   <SettingsSection title="Session Visibility">
                     <SessionVisibility
                       sessionVisibility={settings.config.sessionVisibility}
@@ -1020,3 +1082,9 @@ export const StandingsSettings = () => {
     </BaseSettingsSection>
   );
 };
+
+export const StandingsSettings = ({
+  widgetId = SETTING_ID,
+}: {
+  widgetId?: string;
+}) => <StandingsSettingsPage key={widgetId} widgetId={widgetId} />;

@@ -1,21 +1,41 @@
 import { PostHog } from 'posthog-node';
 import type { EventMessage, IdentifyMessage } from 'posthog-node';
-import { screen } from 'electron';
+import { app, screen } from 'electron';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import type { DashboardLayout } from '@irdashies/types';
 import { readData, writeData } from './storage/storage';
+import {
+  readRadarPoleSideReportHash,
+  writeRadarPoleSideReportHash,
+} from './storage/radarPoleSideReportHash';
 import { getAnalyticsOptOut } from './storage/analytics';
+import { serializeLogArgs, MAX_LOG_JSON_LENGTH } from '@irdashies/types';
+import { createLogPathScrubber } from './analytics/logMessage';
 import logger from './logger';
 import type ElectronLog from 'electron-log';
 import type { LogMessage } from 'electron-log';
 import { readPitLaneCalibrationForAnalytics } from './analytics/pitLaneCalibration';
+import {
+  MAX_POLE_SIDE_PROPERTIES_BYTES,
+  buildRadarPoleSideReport,
+} from './analytics/radarPoleSideReport';
+import {
+  loadRadarPoleSideOverrides,
+  radarPoleSideOverrides,
+} from './storage/radarPoleSideOverrides';
 import {
   readPitLaneAnalyticsCheckpoint,
   writePitLaneAnalyticsCheckpoint,
 } from './storage/pitLaneAnalyticsCheckpoint';
 
 declare const POSTHOG_KEY: string;
+
+/**
+ * How long after the last flip the radar pole side report goes out, so a
+ * burst of key presses is one report and nothing waits for the next launch.
+ */
+const POLE_SIDE_REPORT_DELAY_MS = 60 * 1000;
 
 const DEDUP_WINDOW_MS = 60 * 60 * 1000;
 const DEDUP_KEY_LENGTH = 30;
@@ -78,8 +98,14 @@ export class PostHogProvider implements AnalyticsProvider {
 
 export class Analytics {
   private provider: AnalyticsProvider | null = null;
+  private userId: string | undefined;
+  private pendingUserId: string | undefined;
   private pitLaneCalibrationAttempted = false;
   private pitLaneCalibrationTask: Promise<void> | undefined;
+  private radarPoleSideTask: Promise<void> | undefined;
+  private poleSideEvent: { hash: string; uuid: string } | undefined;
+  private radarPoleSideTimer: ReturnType<typeof setTimeout> | undefined;
+  private watchingRadarPoleSides = false;
 
   constructor(provider?: AnalyticsProvider) {
     if (provider) {
@@ -122,6 +148,7 @@ export class Analytics {
   }
 
   shutdown(shutdownTimeoutMs?: number): void {
+    clearTimeout(this.radarPoleSideTimer);
     if (this.provider) {
       this.provider.shutdown(shutdownTimeoutMs);
     }
@@ -132,44 +159,77 @@ export class Analytics {
   }
 
   private getOrCreateUserId(): string {
-    let userId = readData<string>('userId');
-    if (!userId) {
-      userId = crypto.randomUUID();
+    if (this.userId) return this.userId;
+    let userId = this.pendingUserId ?? readData<string>('userId');
+    if (this.pendingUserId || !userId) {
+      userId ||= crypto.randomUUID();
+      // writeData updates its memory cache before writing to disk. Retain a
+      // failed candidate only for a persistence retry, never for identify/logs.
+      this.pendingUserId = userId;
       writeData('userId', userId);
+      this.pendingUserId = undefined;
     }
+    this.userId = userId;
     return userId;
   }
 
-  setupLogTransport(): void {
-    if (!this.provider) return;
+  setupLogTransport(version: string): void {
+    if (!this.provider || getAnalyticsOptOut()) return;
+
+    // Resolve identity before installing the transport: storage diagnostics
+    // must not recursively request identity. Reuse it later in init/identify.
+    let userId: string;
+    let scrub: (text: string) => string;
+    try {
+      userId = this.getOrCreateUserId();
+      scrub = createLogPathScrubber(app.getPath('userData'), os.homedir());
+    } catch {
+      // Optional analytics must not break startup or log through itself.
+      return;
+    }
 
     const lastSent = new Map<string, number>();
+    let forwarding = false;
 
     const transport = ((message: LogMessage) => {
-      const text = message.data
-        .map((d: unknown) => (typeof d === 'string' ? d : JSON.stringify(d)))
-        .join(' ');
+      if (forwarding) return;
+      forwarding = true;
+      try {
+        if (getAnalyticsOptOut()) return;
+        const data = serializeLogArgs(message.data, scrub);
+        const text = data
+          .map((d) => (typeof d === 'string' ? d : JSON.stringify(d)))
+          .join(' ')
+          .slice(0, MAX_LOG_JSON_LENGTH);
 
-      const key = `${message.level}:${text.slice(0, DEDUP_KEY_LENGTH)}`;
-      const now = Date.now();
-      const last = lastSent.get(key);
-      if (last !== undefined && now - last < DEDUP_WINDOW_MS) return;
-      lastSent.set(key, now);
+        const key = `${message.level}:${text.slice(0, DEDUP_KEY_LENGTH)}`;
+        const now = Date.now();
+        const last = lastSent.get(key);
+        if (last !== undefined && now - last < DEDUP_WINDOW_MS) return;
+        lastSent.set(key, now);
 
-      if (lastSent.size > DEDUP_MAX_ENTRIES) {
-        for (const [k, t] of lastSent) {
-          if (now - t >= DEDUP_WINDOW_MS) lastSent.delete(k);
+        if (lastSent.size > DEDUP_MAX_ENTRIES) {
+          for (const [k, t] of lastSent) {
+            if (now - t >= DEDUP_WINDOW_MS) lastSent.delete(k);
+          }
         }
-      }
 
-      // Not the nicest way to do this, but avoids having to implement OTEL to get logging in posthog
-      this.capture({
-        event: 'log_message',
-        properties: {
-          level: message.level,
-          message: text,
-        },
-      });
+        // Not the nicest way to do this, but avoids having to implement OTEL to get logging in posthog
+        this.capture({
+          distinctId: userId,
+          event: 'log_message',
+          properties: {
+            version,
+            level: message.level,
+            message: text,
+            data,
+          },
+        });
+      } catch {
+        // Serialization/provider failures must not affect local logging.
+      } finally {
+        forwarding = false;
+      }
     }) as ElectronLog.Transport;
     transport.level = 'warn';
     transport.transforms = [];
@@ -214,6 +274,90 @@ export class Analytics {
     ).catch(() => {
       logger.warn('[Analytics] Could not publish pit lane calibration');
     });
+    // After the pit lane report, so startup does one thing at a time.
+    this.radarPoleSideTask ??= this.pitLaneCalibrationTask.then(() =>
+      this.captureRadarPoleSides(userId, version)
+    );
+    this.reportRadarPoleSidesAfterFlips(userId, version);
+  }
+
+  /**
+   * A flip is reported a minute after the last one rather than at the next
+   * launch. If the app closes first, the launch still sends it, since the
+   * acknowledged hash was never recorded.
+   */
+  private reportRadarPoleSidesAfterFlips(
+    userId: string,
+    version: string
+  ): void {
+    if (this.watchingRadarPoleSides) return;
+    this.watchingRadarPoleSides = true;
+    radarPoleSideOverrides.onChange(() => {
+      clearTimeout(this.radarPoleSideTimer);
+      this.radarPoleSideTimer = setTimeout(() => {
+        this.radarPoleSideTask = (
+          this.radarPoleSideTask ?? Promise.resolve()
+        ).then(() => this.captureRadarPoleSides(userId, version));
+      }, POLE_SIDE_REPORT_DELAY_MS);
+      this.radarPoleSideTimer.unref?.();
+    });
+  }
+
+  waitForRadarPoleSideUpload(): Promise<void> {
+    return this.radarPoleSideTask ?? Promise.resolve();
+  }
+
+  /**
+   * Reports the pole sides the player corrected with the radar key, once per
+   * change, in the background. A revert to the table is reported too, but
+   * nothing is sent for an installation that never corrected anything.
+   */
+  private async captureRadarPoleSides(
+    userId: string,
+    version: string
+  ): Promise<void> {
+    try {
+      if (!this.provider || getAnalyticsOptOut()) return;
+      // An unreadable file would look like every correction was reverted.
+      if (!(await loadRadarPoleSideOverrides())) return;
+      const report = buildRadarPoleSideReport(
+        radarPoleSideOverrides.snapshot(),
+        version
+      );
+      const stored = await readRadarPoleSideReportHash();
+      const last =
+        typeof stored === 'string' && /^[0-9a-f]{64}$/.test(stored)
+          ? stored
+          : undefined;
+      if (report.properties.track_count === 0 && last === undefined) return;
+      if (last === report.hash) return;
+      if (
+        Buffer.byteLength(JSON.stringify(report.properties), 'utf8') >
+        MAX_POLE_SIDE_PROPERTIES_BYTES
+      ) {
+        logger.warn('[Analytics] Skipping oversized radar pole side report');
+        return;
+      }
+      // The same report keeps its event id across retries, so a send whose
+      // acknowledgement was lost is not counted twice while the app runs.
+      if (this.poleSideEvent?.hash !== report.hash) {
+        this.poleSideEvent = { hash: report.hash, uuid: crypto.randomUUID() };
+      }
+      // The player may have opted out while the file load was pending.
+      if (getAnalyticsOptOut()) return;
+      await this.provider.captureConfirmed({
+        distinctId: userId,
+        event: 'radar_pole_side',
+        uuid: this.poleSideEvent.uuid,
+        properties: report.properties,
+      });
+      // Recorded only after PostHog acknowledged it, so a failure retries.
+      if (!getAnalyticsOptOut()) {
+        await writeRadarPoleSideReportHash(report.hash);
+      }
+    } catch {
+      logger.warn('[Analytics] Could not publish radar pole side report');
+    }
   }
 
   waitForCalibrationUpload(): Promise<void> {

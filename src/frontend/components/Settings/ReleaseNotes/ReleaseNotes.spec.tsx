@@ -15,6 +15,14 @@ import { ReleaseNotesSettings } from './ReleaseNotesSettings';
 import { ReleaseNotesStatusProvider } from './ReleaseNotesStatusContext';
 import type { ReactElement } from 'react';
 
+// Heavier than most tests: each renders Markdown (micromark, parse5 for raw
+// HTML, the sanitizer) and some the whole Settings menu, about 0.5-1 s on a
+// developer machine. These files run early, while the Windows CI runner is
+// still starting every worker, and there two of them took 10.9 s and 16.9 s
+// and failed the default 10 s timeout with nothing wrong. A longer budget for
+// this file only; vi.setConfig applies to the current test file.
+vi.setConfig({ testTimeout: 30_000 });
+
 const render = (element: ReactElement) =>
   renderRaw(element, { wrapper: ReleaseNotesStatusProvider });
 
@@ -53,6 +61,32 @@ afterEach(() => {
 });
 
 describe('safe release notes rendering', () => {
+  it('shortens bare pull request URLs while preserving their destination and named links', () => {
+    const url = 'https://github.com/tariknz/irdashies/pull/1234';
+    render(
+      <ReleaseNotesPanel
+        version="2.1.0"
+        state={{
+          ...ready,
+          cached: true,
+          release: {
+            ...release,
+            body: `- Fixed overlays in ${url}\n\n[Details](${url})`,
+          },
+        }}
+      />
+    );
+    const link = screen.getByRole('link', { name: '#1234' });
+    expect(link).toHaveAttribute('href', url);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      url
+    );
+    expect(screen.queryByText('Showing saved release notes.')).toBeNull();
+  });
+
   it('renders Markdown features, blocks unsafe HTML/URLs and untrusted media', () => {
     const { container } = render(
       <ReleaseNotesPanel

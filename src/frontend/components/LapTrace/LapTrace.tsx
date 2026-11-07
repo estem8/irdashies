@@ -8,7 +8,8 @@ import {
 import {
   trackStateSelectors,
   useDrivingState,
-  useLapTraceRecordingProgress,
+  useLapTraceInvalidReason,
+  useLapTraceRecordingPercent,
   useLapTraceStore,
   useSessionVisibility,
   useTrackStateSelector,
@@ -25,6 +26,7 @@ import {
   LastCornerPanel,
   LAST_CORNER_DEFAULT_FONT_SIZE,
 } from './components/LastCornerPanel';
+import { invalidLapMessage } from './invalidLapMessage';
 import { useLapTraceSettings } from './hooks/useLapTraceSettings';
 import {
   useLastCornerComparison,
@@ -38,6 +40,29 @@ export type LapTraceProps = Partial<LapTraceConfig> & {
 
 /** Stable identity so the countdown's effects do not restart every render. */
 const EMPTY_CUE_POINTS = new Float32Array(0);
+
+/**
+ * The bar towards a first reference. Its own component so that only it
+ * re-renders as the lap is driven, and only while it is on screen: the lap
+ * store publishes the lap in progress every few metres for the whole session,
+ * reference or not.
+ */
+const RecordingProgress = () => {
+  const percent = useLapTraceRecordingPercent();
+  return (
+    <>
+      <div className="w-2/3 h-1 bg-slate-700/60 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-amber-400 rounded-full"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span className="text-slate-500 text-[10px] tabular-nums">
+        Recording {percent}%
+      </span>
+    </>
+  );
+};
 
 /**
  * Plots a saved reference lap's inputs against position on track, in a window
@@ -55,7 +80,7 @@ export const LapTrace = (props: LapTraceProps) => {
   const referenceLap = useLapTraceStore((s) => s.referenceLap);
   const referenceError = useLapTraceStore((s) => s.referenceError);
   const trackLengthM = useLapTraceStore((s) => s.trackLengthM);
-  const recordingProgress = useLapTraceRecordingProgress();
+  const invalidReason = useLapTraceInvalidReason();
 
   // Changes essentially never, so this costs no per-frame renders.
   const displayUnits = useTrackStateSelector(trackStateSelectors.displayUnits);
@@ -228,19 +253,20 @@ export const LapTrace = (props: LapTraceProps) => {
           <span className="text-slate-400 text-xs">
             {referenceError ?? 'Drive a clean lap to record a reference'}
           </span>
-          {!referenceError && trackLengthM > 0 && (
-            <>
-              <div className="w-2/3 h-1 bg-slate-700/60 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-amber-400 rounded-full"
-                  style={{ width: `${Math.round(recordingProgress * 100)}%` }}
-                />
-              </div>
-              <span className="text-slate-500 text-[10px] tabular-nums">
-                Recording {Math.round(recordingProgress * 100)}%
+          {/* A reference that failed to load is the more serious problem and
+              keeps the line above to itself; below it goes either the live
+              recording progress or, once the lap in progress has been written
+              off, why it can no longer be recorded. Showing a bar fill towards
+              a reference that will never be saved is the thing to avoid. */}
+          {!referenceError &&
+            trackLengthM > 0 &&
+            (invalidReason ? (
+              <span className="text-slate-500 text-[10px]">
+                {invalidLapMessage(invalidReason)}
               </span>
-            </>
-          )}
+            ) : (
+              <RecordingProgress />
+            ))}
         </div>
       )}
     </div>

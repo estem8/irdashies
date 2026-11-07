@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { BaseSettingsSection } from '../components/BaseSettingsSection';
-import { WidgetScaleSettings } from '../components/WidgetScaleSettings';
 import { useDashboard } from '@irdashies/context';
 import {
   RelativeWidgetSettings,
@@ -11,6 +10,8 @@ import { TabButton } from '../components/TabButton';
 import { SortableList } from '../../SortableList';
 import { DraggableSettingItem } from '../components/DraggableSettingItem';
 import { BadgeFormatPreview } from '../components/BadgeFormatPreview';
+import { FormatSelect } from '../components/FormatSelect';
+import { type RelativeBadgeFormat } from '@irdashies/types';
 import { DEFAULT_SESSION_BAR_DISPLAY_ORDER } from '../sessionBarConstants';
 import { SessionVisibility } from '../components/SessionVisibility';
 import { DriverNamePreview } from '../components/DriverNamePreview';
@@ -32,6 +33,28 @@ interface SortableSetting {
   configKey: keyof RelativeWidgetSettings['config'];
   hasSubSetting?: boolean;
 }
+
+/**
+ * The iRacing rating formats Relative supports, in the order the dropdown
+ * lists them.
+ *
+ * Checked against RelativeBadgeFormat, which leaves out
+ * `rating-only-color-rating-bw`: Standings offers that one, Relative cannot
+ * draw it, and a stored value outside the type is not normalised away.
+ */
+const IRACING_BADGE_FORMATS = [
+  'license-color-fullrating-combo',
+  'fullrating-color-no-license',
+  'rating-color-no-license',
+  'license-color-fullrating-bw',
+  'license-color-rating-bw',
+  'license-color-rating-bw-no-license',
+  'license-bw-rating-bw',
+  'rating-only-bw-rating-bw',
+  'license-bw-rating-bw-no-license',
+  'rating-bw-no-license',
+  'fullrating-bw-no-license',
+] as const satisfies readonly RelativeBadgeFormat[];
 
 const sortableSettings: SortableSetting[] = [
   { id: 'position', label: 'Position', configKey: 'position' },
@@ -57,7 +80,7 @@ const sortableSettings: SortableSetting[] = [
     hasSubSetting: true,
   },
   { id: 'driverTag', label: 'Driver Tag', configKey: 'driverTag' },
-  { id: 'badge', label: 'Driver Badge', configKey: 'badge' },
+  { id: 'badge', label: 'Rating', configKey: 'badge' },
   { id: 'iratingChange', label: 'iRating Change', configKey: 'iratingChange' },
   {
     id: 'positionChange',
@@ -75,6 +98,12 @@ const sortableSettings: SortableSetting[] = [
     hasSubSetting: true,
   },
   { id: 'pushToPass', label: 'Push to Pass', configKey: 'pushToPass' },
+  { id: 'trackLimits', label: 'Track Limits', configKey: 'trackLimits' },
+  {
+    id: 'lmuVirtualEnergy',
+    label: 'LMU Virtual Energy',
+    configKey: 'lmuVirtualEnergy',
+  },
 ];
 
 const defaultConfig = getWidgetDefaultConfig('relative');
@@ -127,54 +156,42 @@ const DisplaySettingsList = ({
           >
             {setting.configKey === 'badge' &&
               (configValue as { enabled: boolean }).enabled && (
-                <div className="mt-3">
-                  <div className="flex flex-wrap gap-3 justify-end">
-                    {(
-                      [
-                        'license-color-fullrating-combo',
-                        'fullrating-color-no-license',
-                        'rating-color-no-license',
-                        'license-color-fullrating-bw',
-                        'license-color-rating-bw',
-                        'rating-only-color-rating-bw',
-                        'license-color-rating-bw-no-license',
-                        'license-bw-rating-bw',
-                        'rating-only-bw-rating-bw',
-                        'license-bw-rating-bw-no-license',
-                        'rating-bw-no-license',
-                        'fullrating-bw-no-license',
-                      ] as const
-                    ).map((format) => (
-                      <BadgeFormatPreview
-                        key={format}
-                        format={format}
-                        selected={
-                          (
-                            configValue as {
-                              enabled: boolean;
-                              badgeFormat: string;
-                            }
-                          ).badgeFormat === format
-                        }
-                        onClick={() => {
-                          const cv = settings.config[setting.configKey] as {
-                            enabled: boolean;
-                            badgeFormat: string;
-                            [key: string]: unknown;
-                          };
-                          handleConfigChange({
-                            [setting.configKey]: { ...cv, badgeFormat: format },
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
+                // One line, indented like the compact sub-settings
+                // above (pl-8), since these belong to Rating rather
+                // than standing on their own. Wraps rather than
+                // overflowing a narrow settings panel.
+                <div className="mt-2 flex flex-wrap items-center gap-4 pl-8">
+                  <FormatSelect
+                    label="iRacing"
+                    value={
+                      (configValue as { badgeFormat: RelativeBadgeFormat })
+                        .badgeFormat
+                    }
+                    options={IRACING_BADGE_FORMATS}
+                    renderOption={(format) => (
+                      <BadgeFormatPreview format={format} />
+                    )}
+                    onChange={(badgeFormat) => {
+                      const cv = settings.config[setting.configKey] as Record<
+                        string,
+                        unknown
+                      >;
+                      handleConfigChange({
+                        [setting.configKey]: { ...cv, badgeFormat },
+                      });
+                    }}
+                  />
                 </div>
               )}
             {setting.configKey === 'driverName' &&
               (configValue as { enabled: boolean }).enabled && (
                 <div className="mt-3">
-                  <div className="flex flex-wrap gap-3 justify-end">
+                  <p className="mb-2 text-sm text-slate-400">Name format</p>
+                  <div
+                    role="group"
+                    aria-label="Driver name format"
+                    className="grid grid-cols-2 gap-2 xl:grid-cols-3"
+                  >
                     {(
                       [
                         'name-middlename-surname',
@@ -189,12 +206,12 @@ const DisplaySettingsList = ({
                         key={format}
                         format={format}
                         selected={
-                          (
+                          ((
                             configValue as {
                               enabled: boolean;
                               nameFormat: string;
                             }
-                          ).nameFormat === format
+                          ).nameFormat ?? 'name-middlename-surname') === format
                         }
                         onClick={() => {
                           const cv = settings.config[setting.configKey] as {
@@ -240,7 +257,7 @@ const DisplaySettingsList = ({
                         },
                       });
                     }}
-                    className="bg-slate-700 text-white rounded-md px-2 py-1"
+                    className="settings-field"
                   >
                     <option value="full">1:42.123</option>
                     <option value="mixed">1:42.1</option>
@@ -359,7 +376,7 @@ export const RelativeSettings = () => {
           >
             <div className="space-y-4">
               {/* Tabs */}
-              <div className="flex border-b border-slate-700/50">
+              <div className="flex flex-wrap gap-1 border-b border-slate-700 pb-1">
                 <TabButton
                   id="display"
                   activeTab={activeTab}
@@ -408,8 +425,10 @@ export const RelativeSettings = () => {
                 {/* DISPLAY TAB */}
                 {activeTab === 'display' && (
                   <>
-                    <WidgetScaleSettings widgetId="relative" className="px-4" />
-                    <SettingsSection title="Display Order">
+                    <SettingsSection title="Display" scaleWidgetId="relative">
+                      <h4 className="text-md font-medium text-slate-200">
+                        Display Order
+                      </h4>
                       <DisplaySettingsList
                         itemsOrder={itemsOrder}
                         onReorder={handleDisplayOrderChange}
@@ -446,7 +465,7 @@ export const RelativeSettings = () => {
                       <SettingProp path="titleBar.enabled" />
 
                       {settings.config.titleBar.enabled && (
-                        <SettingsSection>
+                        <SettingsSection variant="inline">
                           <SettingProp path="titleBar.progressBar.enabled" />
                         </SettingsSection>
                       )}
@@ -473,7 +492,7 @@ export const RelativeSettings = () => {
                     <SettingProp path="headerBar.enabled" />
 
                     {settings.config.headerBar.enabled && (
-                      <SettingsSection>
+                      <SettingsSection variant="inline">
                         <SessionBarItemsList
                           items={settings.config.headerBar.displayOrder}
                           onReorder={(newOrder) => {
@@ -545,7 +564,7 @@ export const RelativeSettings = () => {
                     <SettingProp path="footerBar.enabled" />
 
                     {settings.config.footerBar.enabled && (
-                      <SettingsSection>
+                      <SettingsSection variant="inline">
                         <SessionBarItemsList
                           items={settings.config.footerBar.displayOrder}
                           onReorder={(newOrder) => {
@@ -613,26 +632,20 @@ export const RelativeSettings = () => {
 
                 {/* STYLING TAB */}
                 {activeTab === 'styling' && (
-                  <>
+                  <div className="space-y-5">
                     <SettingsSection title="Driver Position">
                       <SettingProp path="stylingOptions.driverPosition.background" />
                     </SettingsSection>
-
-                    <SettingDivider />
 
                     <SettingsSection title="Car Number">
                       <SettingProp path="stylingOptions.driverNumber.background" />
                       <SettingProp path="stylingOptions.driverNumber.border" />
                     </SettingsSection>
 
-                    <SettingDivider />
-
                     <SettingsSection title="Badges">
                       <SettingProp path="stylingOptions.badge" />
                       <SettingProp path="stylingOptions.statusBadges" />
                     </SettingsSection>
-
-                    <SettingDivider />
 
                     <SettingsSection title="Flag Contour">
                       <SettingProp path="stylingOptions.flagContour.enabled" />
@@ -640,7 +653,7 @@ export const RelativeSettings = () => {
                         <SettingProp path="stylingOptions.flagContour.borderWidth" />
                       )}
                     </SettingsSection>
-                  </>
+                  </div>
                 )}
 
                 {/* VISIBILITY TAB */}

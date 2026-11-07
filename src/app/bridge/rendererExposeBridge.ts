@@ -45,6 +45,9 @@ import type {
   PieMenuInput,
   TapeReplayBridge,
 } from '@irdashies/types';
+// The module itself, not the barrel: preload needs this one list, not every
+// default the types package exports.
+import { RENDERER_PERF_MEASURE_NAMES } from '../../types/performance';
 
 export function exposeBridge() {
   defineBridge<TapeReplayBridge>('tapeReplayBridge', {
@@ -71,12 +74,7 @@ export function exposeBridge() {
     defineBridge<RendererPerfBridge>('rendererPerfBridge', {
       recordMeasure: (name, durationMs) => {
         if (!isRendererPerfMetricsEnabled()) return;
-        if (
-          name !== 'trackMapAnimationFrame' &&
-          name !== 'standingsPlayerGaps' &&
-          name !== 'standingsFinalTiming'
-        )
-          return;
+        if (!RENDERER_PERF_MEASURE_NAMES.includes(name)) return;
         if (!Number.isFinite(durationMs) || durationMs < 0) return;
         recordRendererMeasure(name, durationMs);
       },
@@ -384,8 +382,10 @@ export function exposeBridge() {
     },
   } as FuelCalculatorBridge);
 
-  contextBridge.exposeInMainWorld('keybindingsBridge', {
+  defineBridge<KeybindingsBridge>('keybindingsBridge', {
     getKeybindings: () => ipcRenderer.invoke('keybindings:get'),
+    getRegistrationErrors: () =>
+      ipcRenderer.invoke('keybindings:registrationErrors'),
     updateKeybinding: (
       actionId: KeybindingActionId,
       accelerator: string,
@@ -403,13 +403,13 @@ export function exposeBridge() {
       return () =>
         ipcRenderer.removeListener('keybindings:gamepadCaptured', handler);
     },
-  } as KeybindingsBridge);
+  });
 
   // Used only by the hidden WebHID host renderer (src/hidHost.ts) to forward
   // controller button presses to the main process.
   contextBridge.exposeInMainWorld('gamepadHost', {
-    sendButton: (token: string, down: boolean) =>
-      ipcRenderer.send('gamepad:button', token, down),
+    sendButton: (token: string, down: boolean, initial: boolean) =>
+      ipcRenderer.send('gamepad:button', token, down, initial),
   } satisfies GamepadHostBridge);
 
   contextBridge.exposeInMainWorld('personalBestBridge', {
