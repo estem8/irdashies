@@ -22,6 +22,7 @@ import { migrateLegacyStreamChat } from './streamChatMigration';
 const DASHBOARDS_KEY = 'dashboards';
 const PROFILES_KEY = 'profiles';
 const CURRENT_PROFILE_KEY = 'currentProfile';
+const PIE_MENU_ENABLE_MIGRATION_KEY = 'pieMenuEnableMigrationV1';
 
 const GANTRY_THRESHOLDS_VERSION = 3;
 const GANTRY_THRESHOLD_KEYS = [
@@ -220,8 +221,7 @@ export const withDashboardDefaults = (
       !storedWidgets.find((widget) => widget.id === defaultWidget.id)
   );
 
-  const savedColorPalette: unknown =
-    dashboard.generalSettings?.colorPalette;
+  const savedColorPalette: unknown = dashboard.generalSettings?.colorPalette;
   const generalSettings: DashboardLayout['generalSettings'] & {
     settingsTheme?: unknown;
   } = {
@@ -286,25 +286,34 @@ export const getOrCreateDefaultDashboardForProfile = (profileId: string) => {
 
 /**
  * Fills in what stored dashboards predate (see withDashboardDefaults) for
- * every inactive profile, so a profile saved by an older version doesn't hand
- * its widgets and settings pages missing values. The active profile is filled
- * in as it loads (getOrCreateDefaultDashboard), and a profile as it becomes
- * active (setCurrentProfile). Runs in memory and writes once; it never stops
- * startup over bad stored data.
+ * every profile before windows start, so older profiles have current widgets
+ * and settings. Also enables Pie Menu once for existing profiles; later opt-
+ * outs remain respected. Bad stored data never stops startup.
  */
 export const applyDefaultsToAllProfiles = () => {
   try {
     const dashboards = listDashboards();
-    const currentProfileId = getCurrentProfileId();
     const updated = { ...dashboards };
     let changed = false;
+    const enablePieMenuForExistingProfiles =
+      readData<boolean>(PIE_MENU_ENABLE_MIGRATION_KEY) !== true;
     for (const profile of listProfiles()) {
       const id: unknown = profile?.id;
-      if (typeof id !== 'string' || id === currentProfileId) continue;
+      if (typeof id !== 'string') continue;
       const dashboard = dashboards[id];
       if (typeof dashboard !== 'object' || dashboard === null) continue;
       try {
-        const next = withDashboardDefaults(dashboard);
+        let next = withDashboardDefaults(dashboard);
+        if (enablePieMenuForExistingProfiles) {
+          next = {
+            ...next,
+            widgets: next.widgets.map((widget) =>
+              widget.id === 'piemenu' && !widget.enabled
+                ? { ...widget, enabled: true }
+                : widget
+            ),
+          };
+        }
         if (JSON.stringify(next) !== JSON.stringify(dashboard)) {
           updated[id] = next;
           changed = true;
@@ -317,8 +326,13 @@ export const applyDefaultsToAllProfiles = () => {
         );
       }
     }
-    // Inactive profiles only, so there is nothing to emit.
+    // This runs before windows are created, so updating the active profile is
+    // safe too. Existing users get the newly added menu once; later opt-outs
+    // remain respected.
     if (changed) writeData(DASHBOARDS_KEY, updated);
+    if (enablePieMenuForExistingProfiles) {
+      writeData(PIE_MENU_ENABLE_MIGRATION_KEY, true);
+    }
   } catch (error) {
     logger.warn('[applyDefaultsToAllProfiles] Skipped:', error);
   }

@@ -3,7 +3,7 @@ import { defineWidgetManifest } from './types';
 export default defineWidgetManifest({
   id: 'piemenu',
   name: 'Pie Menu',
-  enabled: false,
+  enabled: true,
   layout: {
     x: 760,
     y: 340,

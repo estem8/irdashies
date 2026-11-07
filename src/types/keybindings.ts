@@ -142,4 +142,34 @@ export const DEFAULT_KEYBINDINGS: KeybindingsMap = {
       'Swap the pole line side on the radar for the current track and remember it',
     isDefault: true,
   },
+  'pie-menu:open': {
+    accelerator: 'Alt+P',
+    label: 'Pie Menu: Open / Close',
+    description: 'Show or hide the Pie Menu',
+    isDefault: true,
+  },
+  'pie-menu:up': {
+    accelerator: 'Alt+Up',
+    label: 'Pie Menu: Up',
+    description: 'Choose the up side of the Pie Menu',
+    isDefault: true,
+  },
+  'pie-menu:right': {
+    accelerator: 'Alt+Right',
+    label: 'Pie Menu: Right',
+    description: 'Choose the right side of the Pie Menu',
+    isDefault: true,
+  },
+  'pie-menu:down': {
+    accelerator: 'Alt+Down',
+    label: 'Pie Menu: Down',
+    description: 'Choose the down side of the Pie Menu',
+    isDefault: true,
+  },
+  'pie-menu:left': {
+    accelerator: 'Alt+Left',
+    label: 'Pie Menu: Left',
+    description: 'Choose the left side of the Pie Menu',
+    isDefault: true,
+  },
 };
