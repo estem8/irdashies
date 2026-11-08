@@ -62,7 +62,9 @@ export type PluginSnapshots<K extends PublicChannelName> = Partial<{
 }>;
 
 export type PluginSettingSpec =
+  /** The host renders boolean settings with its standard switch control. */
   | { key: string; type: 'boolean'; label: string }
+  /** The host renders bounded numbers (both min and max) as range sliders. */
   | {
       key: string;
       type: 'number';

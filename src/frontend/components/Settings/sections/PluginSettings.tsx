@@ -25,15 +25,11 @@ const SettingField = ({
     'min-h-9 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100';
   if (setting.type === 'boolean') {
     return (
-      <label className="flex min-h-10 items-center justify-between gap-4 text-sm text-slate-200">
-        <span>{setting.label}</span>
-        <input
-          type="checkbox"
-          checked={value === true}
-          onChange={(event) => onChange(event.currentTarget.checked)}
-          className="h-4 w-4 accent-sky-500"
-        />
-      </label>
+      <SettingToggleRow
+        title={setting.label}
+        enabled={value === true}
+        onToggle={(enabled) => onChange(enabled)}
+      />
     );
   }
   if (setting.type === 'select') {
@@ -232,9 +228,6 @@ export const PluginSettings = ({
           >
             Add to dashboard
           </button>
-        )}
-        {existing && (
-          <p className="text-xs text-slate-400">Added to dashboard</p>
         )}
       </section>
       <section className="flex min-h-64 flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900">

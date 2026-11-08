@@ -80,6 +80,15 @@ weather-widget.zip
 
 `defaultConfig` is the single source of default values; settings specs describe controls and constraints, not duplicate defaults.
 
+Settings are data-only declarations. The host renders them with the same
+controls and visual patterns used by built-in widget settings; plugins do not
+provide custom settings JSX or CSS. Boolean settings use the host's standard
+switch. A number with both `min` and `max` uses the host's range slider and
+shows its current value; an unbounded number uses a numeric field. `step` sets
+the slider increment. Select and text settings use the host's standard fields.
+Widget enabled state belongs to the dashboard instance and is controlled by
+the host; it is not a plugin config setting.
+
 ### Manifest rules
 
 `settings` is a restricted v1 schema for host-rendered controls (`boolean`, `number`, `select`, and `text`). The host validates values against the manifest at load and update boundaries; unsupported schema types reject the manifest.

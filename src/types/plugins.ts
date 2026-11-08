@@ -26,11 +26,13 @@ export type PublicChannelName = (typeof PUBLIC_PLUGIN_CHANNELS)[number];
 export type PublicChannelPayloads = Pick<ChannelPayloads, PublicChannelName>;
 
 export type PluginSettingSpec =
+  /** The host renders boolean settings with its standard switch control. */
   | {
       key: string;
       type: 'boolean';
       label: string;
     }
+  /** The host renders bounded numbers (both min and max) as range sliders. */
   | {
       key: string;
       type: 'number';

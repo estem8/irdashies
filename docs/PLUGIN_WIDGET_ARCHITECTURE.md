@@ -140,14 +140,21 @@ validation; the host then updates the dashboard through the normal persistence
 path.
 
 `PluginSettings.tsx` renders boolean, number, select and text controls from the
-manifest and a direct shared-renderer preview. Default values come only from
-`defaultConfig`. Existing saved config is normalized at load/render/update
-boundaries. `dashboards.ts` merges installed plugin defaults when loading a
-dashboard. If a package is missing, the saved widget type, instance ID and
-config remain; UI entry points render an unavailable state instead of deleting
-the widget. This is essential for reinstalling a package without losing user
-layout or preferences. Any future breaking config schema requires an explicit
-dashboard-load migration under architecture rule R8.2.
+manifest using the same host controls as built-in widgets. Boolean settings use
+the shared switch; bounded numbers use a range slider, with `min`, `max` and
+`step` defining its range. Unbounded numbers use a numeric field. Plugins
+declare control data only and cannot replace the host settings UI. Widget
+enabled state is dashboard-instance state managed by the host, separate from
+plugin config. The settings preview renders the same plugin component at its
+declared initial size with preview snapshots kept separate from live telemetry.
+Default values come only from `defaultConfig`. Existing saved config is
+normalized at load/render/update boundaries. `dashboards.ts` merges installed
+plugin defaults when loading a dashboard. If a package is missing, the saved
+widget type, instance ID and config remain; UI entry points render an
+unavailable state instead of deleting the widget. This is essential for
+reinstalling a package without losing user layout or preferences. Any future
+breaking config schema requires an explicit dashboard-load migration under
+architecture rule R8.2.
 
 `src/widgetPreview.tsx` iframe preview is not plugin-capable in the current
 implementation. Gantry and Dock do not host plugin widgets. Those are scope

@@ -76,8 +76,13 @@ widget in `dist/`.
 characters. The package filename does not set identity. `defaultConfig` owns
 all defaults; each setting key must exist there. Settings support `boolean`,
 `number`, `select`, and `text`. Values and patches are validated by the host.
-The host chooses the widget's initial position and owns its size, placement,
-visibility, and saved configuration.
+The host renders boolean settings as the standard irDashies switch. A number
+with `min` and `max` is rendered as a range slider; use `step` for its
+increment. A number without both bounds is rendered as a numeric field. Select
+and text settings use the standard host fields. Plugin authors declare labels
+and constraints only; custom settings components are not part of API v1. The
+host chooses the widget's initial position and owns its size, placement,
+enabled state, and saved configuration.
 
 Declare only channels exported in `PUBLIC_PLUGIN_CHANNELS` in
 `src/types/plugins.ts`. v1 accepts snapshots, not lifecycle/event channels or
