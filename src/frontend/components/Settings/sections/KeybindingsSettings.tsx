@@ -14,7 +14,7 @@ import {
 } from '@irdashies/shared';
 import { useDashboard } from '@irdashies/context';
 import logger from '@irdashies/utils/logger';
-import { widgetItems, widgetLabel } from '../menuItems';
+import { getWidgetMenuItems, widgetLabel } from '../menuItems';
 
 const HAT_DIRECTION_LABELS: Record<string, string> = {
   up: 'Up',
@@ -359,7 +359,7 @@ export const BindingRow = ({ actionId, entry, onUpdated }: BindingRowProps) => (
 export const KeybindingsSettings = () => {
   const [bindings, setBindings] = useState<KeybindingsMap | null>(null);
   const { currentDashboard } = useDashboard();
-
+  const widgetItems = getWidgetMenuItems();
   useEffect(() => {
     window.keybindingsBridge?.getKeybindings().then(setBindings);
   }, []);

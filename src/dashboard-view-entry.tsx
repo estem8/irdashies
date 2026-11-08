@@ -1,3 +1,4 @@
+import { initializeWidgetPlugins } from './frontend/pluginRegistry';
 import './frontend/index.css';
 import './frontend/theme.css';
 import logger from './frontend/utils/logger';
@@ -29,6 +30,34 @@ async function initializeDashboardView() {
   const bridge = new WebSocketBridge();
 
   await bridge.connect(wsUrl);
+  let referrerOrigin = window.location.origin;
+  if (document.referrer) {
+    try {
+      referrerOrigin = new URL(document.referrer).origin;
+    } catch {
+      referrerOrigin = '';
+    }
+  }
+  const pluginAssetOrigin = bridge.getPluginAssetOrigin();
+  let trustedPluginOrigin: boolean;
+  try {
+    const assetUrl = pluginAssetOrigin ? new URL(pluginAssetOrigin) : undefined;
+    const pageUrl = new URL(window.location.href);
+    trustedPluginOrigin =
+      assetUrl?.origin === referrerOrigin &&
+      assetUrl.protocol === pageUrl.protocol &&
+      assetUrl.hostname === pageUrl.hostname;
+  } catch {
+    trustedPluginOrigin = false;
+  }
+  if (trustedPluginOrigin) {
+    await initializeWidgetPlugins(bridge);
+  } else {
+    logger.error(
+      '[DashboardView] Refusing plugin assets from an untrusted origin'
+    );
+    await initializeWidgetPlugins();
+  }
   window.irsdkBridge = bridge;
   window.channelBridge = bridge;
   window.pitLaneBridge = bridge;

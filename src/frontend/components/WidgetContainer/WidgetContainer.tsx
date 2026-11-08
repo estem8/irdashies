@@ -175,7 +175,7 @@ export const WidgetContainer = memo(
       pointerEvents: editMode ? 'auto' : 'none',
     };
 
-    const widgetName = getWidgetName(id);
+    const widgetName = getWidgetName(widget.type ?? id);
 
     return (
       <div style={containerStyle} data-widget-id={id}>

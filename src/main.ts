@@ -3,6 +3,10 @@ import { setupWidgetPreviewBridge } from './app/bridge/widgetPreviewBridge';
 import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
 import { setupReleaseNotesBridge } from './app/bridge/releaseNotesBridge';
 import log from './app/logger';
+import path from 'node:path';
+import { WIDGET_ORDER } from '@irdashies/types';
+import { scanInstalledWidgetPlugins } from './app/plugins/pluginLoader';
+import { setupWidgetPluginBridge } from './app/bridge/widgetPluginBridge';
 import {
   iRacingSDKSetup,
   getCurrentBridge,
@@ -424,6 +428,18 @@ void app.whenReady().then(async () => {
 
   // Every profile, not only the active one: switching profiles reads them as
   // stored.
+  // Plugin defaults are read from the in-memory registry by storage. Populate
+  // it before filling saved dashboards; discovery is async and does no work in
+  // the storage default path itself.
+  try {
+    await scanInstalledWidgetPlugins(
+      path.join(app.getPath('userData'), 'plugins'),
+      WIDGET_ORDER
+    );
+  } catch (error) {
+    log.warn('[Plugins] Startup scan failed', error);
+  }
+  setupWidgetPluginBridge();
   applyDefaultsToAllProfiles();
   // Resolve benchmark metadata before metrics reporting starts so every
   // interval carries the same active-widget workload description.

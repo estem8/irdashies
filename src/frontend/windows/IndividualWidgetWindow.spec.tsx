@@ -28,6 +28,7 @@ vi.mock('../WidgetIndex', () => ({
   getWidget: () => (props: { title?: string }) => (
     <div>{props.title ?? 'Widget content'}</div>
   ),
+  getWidgetRenderProps: (_type: string, _id: string, config: object) => config,
 }));
 
 const widget = (type = 'flag'): DashboardWidget => ({

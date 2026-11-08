@@ -15,7 +15,7 @@ import { WIDGET_CATEGORIES, widgetDisabledMessage } from '@irdashies/types';
 import {
   generalItems,
   toolItems,
-  widgetItems,
+  getWidgetMenuItems,
   bottomItems,
   menuHasToggle,
   type MenuItem,
@@ -146,6 +146,7 @@ export const SettingsMenu = ({
   const supportConfig = useSimWidgetSupport();
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState('');
+  const widgetItems = getWidgetMenuItems();
   const appPage = [...generalItems, ...bottomItems].some(
     (item) => item.to === pathname
   );
@@ -214,7 +215,7 @@ export const SettingsMenu = ({
       item.label.toLowerCase().includes(searchQuery) ||
       item.category?.toLowerCase().includes(searchQuery)
   );
-  const categories = [...WIDGET_CATEGORIES, 'Tools']
+  const categories = [...WIDGET_CATEGORIES, 'Plugins', 'Tools']
     .map((category) => ({
       category,
       items: visibleItems.filter((item) => item.category === category),

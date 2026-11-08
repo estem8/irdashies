@@ -68,7 +68,7 @@ vi.mock('./menuItems', () => ({
   bottomItems: [{ to: '/settings/about', path: '/about', label: 'About' }],
   menuHasToggle: (widgetType: string, ids: string[]) =>
     ids.includes(widgetType),
-  widgetItems: [
+  getWidgetMenuItems: () => [
     {
       to: '/settings/standings',
       path: '/standings',

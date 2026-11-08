@@ -15,8 +15,9 @@ import {
   SessionTimingUpdater,
   isGantryOnly,
 } from '@irdashies/context';
-import { getWidget } from '../../WidgetIndex';
+import { getWidget, getWidgetRenderProps } from '../../WidgetIndex';
 import { getWidgetName } from '../../constants/widgetNames';
+import { UnavailableWidget } from '../UnavailableWidget';
 import { ResizeIcon, XIcon } from '@phosphor-icons/react';
 import type { DashboardWidget } from '@irdashies/types';
 import { isWidgetDisabledForSim } from '@irdashies/types';
@@ -117,12 +118,7 @@ const DashboardWidgetItem = memo(
     }, []);
 
     const WidgetComponent = getWidget(widget.type || widget.id);
-    if (!WidgetComponent) {
-      return null;
-    }
-
-    const widgetName = getWidgetName(widget.id);
-
+    const widgetName = getWidgetName(widget.type || widget.id);
     const containerStyle: CSSProperties = {
       position: 'absolute',
       left: localLayout.x,
@@ -174,11 +170,21 @@ const DashboardWidgetItem = memo(
               }
             `}</style>
             <div className="widget-content w-full h-full">
-              <WidgetRuntimeProvider widgetType={widget.type || widget.id}>
-                <WidgetScale scale={widget.scale}>
-                  <WidgetComponent {...widget.config} />
-                </WidgetScale>
-              </WidgetRuntimeProvider>
+              {WidgetComponent ? (
+                <WidgetRuntimeProvider widgetType={widget.type || widget.id}>
+                  <WidgetScale scale={widget.scale}>
+                    <WidgetComponent
+                      {...getWidgetRenderProps(
+                        widget.type || widget.id,
+                        widget.id,
+                        widget.config
+                      )}
+                    />
+                  </WidgetScale>
+                </WidgetRuntimeProvider>
+              ) : (
+                <UnavailableWidget name={widgetName} />
+              )}
             </div>
           </div>
         </div>
@@ -215,7 +221,7 @@ const SoloWidgetView = ({ widgetId, widgets }: SoloWidgetViewProps) => {
     : undefined;
   const hiddenWidgetIds = useHiddenWidgetIds();
 
-  if (!widget || !WidgetComponent) {
+  if (!widget) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
         <div className="text-center">
@@ -240,7 +246,19 @@ const SoloWidgetView = ({ widgetId, widgets }: SoloWidgetViewProps) => {
         {!hiddenWidgetIds.has(widget.id) && (
           <WidgetRuntimeProvider widgetType={widget.type || widget.id}>
             <WidgetScale scale={widget.scale}>
-              <WidgetComponent {...widget.config} />
+              {WidgetComponent ? (
+                <WidgetComponent
+                  {...getWidgetRenderProps(
+                    widget.type || widget.id,
+                    widget.id,
+                    widget.config
+                  )}
+                />
+              ) : (
+                <UnavailableWidget
+                  name={getWidgetName(widget.type || widget.id)}
+                />
+              )}
             </WidgetScale>
           </WidgetRuntimeProvider>
         )}

@@ -40,6 +40,11 @@ vi.mock('../logger', () => ({
   default: { info: vi.fn(), error: vi.fn() },
 }));
 
+const pluginMocks = vi.hoisted(() => ({ list: vi.fn() }));
+vi.mock('../plugins/pluginLoader', () => ({
+  getInstalledWidgetPlugins: pluginMocks.list,
+}));
+
 class Client extends EventEmitter {
   readyState: number = WebSocket.OPEN;
   send = vi.fn<(message: string) => void>();
@@ -436,6 +441,52 @@ describe('browser Inspector serialization demand', () => {
     bus.publish('session.lifecycle', { type: 'disconnect' });
     expect(ordinary.messages('channel')).toHaveLength(1);
     bus.dispose();
+  });
+});
+
+describe('browser plugin metadata request', () => {
+  it('returns installed manifests without exposing local package paths', () => {
+    const manifest = {
+      manifestVersion: 1,
+      id: 'author.weather-widget',
+      name: 'Weather Widget',
+      version: '1.0.0',
+      apiVersion: 1,
+      entry: 'dist/index.js',
+      widget: { name: 'Weather' },
+      requires: { channels: [] },
+    };
+    pluginMocks.list.mockReturnValue([
+      {
+        manifest,
+        entryUrl: 'file:///home/user/plugins/weather/index.js',
+        styleUrls: ['file:///home/user/plugins/weather/index.css'],
+      },
+    ]);
+
+    const { connect } = setup();
+    const client = connect();
+    client.send.mockClear();
+    client.emit(
+      'message',
+      Buffer.from(
+        JSON.stringify({
+          type: 'getInstalledPlugins',
+          requestId: 'plugin-list-1',
+          data: { path: '/arbitrary/renderer/path' },
+        })
+      )
+    );
+
+    const response = client.send.mock.calls
+      .map(([raw]) => JSON.parse(raw) as Record<string, unknown>)
+      .find((message) => message.type === 'getInstalledPlugins');
+    expect(response).toEqual({
+      type: 'getInstalledPlugins',
+      requestId: 'plugin-list-1',
+      data: [manifest],
+    });
+    expect(JSON.stringify(response)).not.toContain('file:');
   });
 });
 

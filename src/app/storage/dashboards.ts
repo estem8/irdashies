@@ -18,6 +18,7 @@ import { app } from 'electron';
 import { randomUUID, createHash } from 'node:crypto';
 import logger from '../logger';
 import { migrateLegacyStreamChat } from './streamChatMigration';
+import { getInstalledPluginManifest } from '../plugins/pluginLoader';
 
 const DASHBOARDS_KEY = 'dashboards';
 const PROFILES_KEY = 'profiles';
@@ -220,8 +221,7 @@ export const withDashboardDefaults = (
       !storedWidgets.find((widget) => widget.id === defaultWidget.id)
   );
 
-  const savedColorPalette: unknown =
-    dashboard.generalSettings?.colorPalette;
+  const savedColorPalette: unknown = dashboard.generalSettings?.colorPalette;
   const generalSettings: DashboardLayout['generalSettings'] & {
     settingsTheme?: unknown;
   } = {
@@ -244,11 +244,14 @@ export const withDashboardDefaults = (
     generalSettings,
     widgets: [...storedWidgets, ...missingWidgets].map((widget) => {
       // A second instance (id `fuel-2`, type `fuel`) takes its type's defaults.
+      const widgetType = widget.type || widget.id;
       const defaultWidget = defaultDashboard.widgets.find(
-        (w) => w.id === (widget.type || widget.id)
+        (w) => w.id === widgetType
       );
-      if (!defaultWidget?.config) return widget;
-      const defaults = defaultWidget.config as Record<string, unknown>;
+      const defaults =
+        defaultWidget?.config ??
+        getInstalledPluginManifest(widgetType)?.widget.defaultConfig;
+      if (!defaults) return widget;
       const merged = deepMergeConfig(defaults, widget.config) as Record<
         string,
         unknown

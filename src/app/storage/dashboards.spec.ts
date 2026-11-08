@@ -13,6 +13,10 @@ import {
 import { defaultDashboard } from '@irdashies/types';
 import { DashboardLayout } from '@irdashies/types';
 
+const mockGetInstalledPluginManifest = vi.hoisted(() => vi.fn());
+vi.mock('../plugins/pluginLoader', () => ({
+  getInstalledPluginManifest: mockGetInstalledPluginManifest,
+}));
 const mockReadData = vi.hoisted(() => vi.fn());
 const mockWriteData = vi.hoisted(() => vi.fn());
 
@@ -44,6 +48,8 @@ describe('dashboards', () => {
     mockReadData.mockReset();
     mockWriteData.mockReset();
     mockEmitDashboardUpdated.mockReset();
+    mockGetInstalledPluginManifest.mockReset();
+    mockGetInstalledPluginManifest.mockReturnValue(undefined);
     mockLoggerWarn.mockReset();
     // Setup intelligent mock for readData that handles different keys
     mockReadData.mockImplementation((key: string) => {
@@ -138,6 +144,56 @@ describe('dashboards', () => {
     });
   });
 
+  describe('installed plugin dashboard defaults', () => {
+    const pluginWidget = {
+      id: 'weather-1',
+      type: 'author.weather-widget',
+      enabled: true,
+      layout: { x: 1, y: 2, width: 240, height: 320 },
+      config: { units: 'imperial', panel: { compact: true } },
+    };
+
+    it('merges installed defaults while preserving saved plugin values', () => {
+      mockGetInstalledPluginManifest.mockReturnValue({
+        widget: {
+          defaultConfig: {
+            units: 'metric',
+            showWind: true,
+            panel: { compact: false, showAlerts: true },
+          },
+        },
+      });
+
+      const dashboard = withDashboardDefaults({
+        ...defaultDashboard,
+        widgets: [pluginWidget] as unknown as typeof defaultDashboard.widgets,
+      });
+
+      expect(
+        dashboard.widgets.find((widget) => widget.id === 'weather-1')?.config
+      ).toEqual({
+        units: 'imperial',
+        showWind: true,
+        panel: { compact: true, showAlerts: true },
+      });
+      expect(mockGetInstalledPluginManifest).toHaveBeenCalledWith(
+        'author.weather-widget'
+      );
+    });
+
+    it('leaves saved plugin config untouched when the plugin is absent or invalid', () => {
+      mockGetInstalledPluginManifest.mockReturnValue(undefined);
+
+      const dashboard = withDashboardDefaults({
+        ...defaultDashboard,
+        widgets: [pluginWidget] as unknown as typeof defaultDashboard.widgets,
+      });
+
+      expect(
+        dashboard.widgets.find((widget) => widget.id === 'weather-1')?.config
+      ).toEqual(pluginWidget.config);
+    });
+  });
   describe('createDefaultDashboardIfNotExists', () => {
     it('should create default dashboard if none exists', () => {
       // Mock readData to return null for dashboards, but 'default' for currentProfile

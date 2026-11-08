@@ -1,3 +1,4 @@
+import { getInstalledWidgetPlugin } from '../pluginRegistry';
 import type { WidgetId } from '@irdashies/types';
 import { WIDGET_MANIFESTS } from '@irdashies/types';
 
@@ -15,5 +16,9 @@ export const WIDGET_NAMES = Object.fromEntries(
  * @returns The friendly display name, or the ID itself if not found
  */
 export function getWidgetName(widgetId: string): string {
-  return WIDGET_NAMES[widgetId as WidgetId] || widgetId;
+  return (
+    getInstalledWidgetPlugin(widgetId)?.manifest.widget.name ??
+    WIDGET_NAMES[widgetId as WidgetId] ??
+    widgetId
+  );
 }

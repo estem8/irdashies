@@ -422,3 +422,47 @@ describe('WebSocketBridge pit lane calibration', () => {
     bridge.stop();
   });
 });
+
+describe('WebSocketBridge installed plugin lookup', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('maps validated manifests to same-origin plugin asset URLs', async () => {
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const bridge = new WebSocketBridge();
+    const connecting = bridge.connect('http://localhost:3000');
+    const socket = FakeWebSocket.latest as FakeWebSocket;
+    socket.onopen?.();
+    await connecting;
+
+    const pluginsPromise = bridge.getInstalledPlugins();
+    expect(JSON.parse(socket.sent.at(-1) ?? '{}')).toMatchObject({
+      type: 'getInstalledPlugins',
+    });
+    const manifest = {
+      manifestVersion: 1,
+      id: 'author.weather-widget',
+      name: 'Weather Widget',
+      version: '1.0.0',
+      apiVersion: 1,
+      entry: 'dist/index.js',
+      styles: ['dist/widget.css'],
+      widget: { name: 'Weather' },
+      requires: { channels: ['session-bar.snapshot'] },
+    };
+    socket.reply('getInstalledPlugins', [manifest]);
+
+    await expect(pluginsPromise).resolves.toEqual([
+      {
+        manifest,
+        entryUrl:
+          'http://localhost:3000/plugin-assets/author.weather-widget/dist/index.js',
+        styleUrls: [
+          'http://localhost:3000/plugin-assets/author.weather-widget/dist/widget.css',
+        ],
+      },
+    ]);
+    expect(bridge.getPluginAssetOrigin()).toBe('http://localhost:3000');
+    bridge.stop();
+  });
+});

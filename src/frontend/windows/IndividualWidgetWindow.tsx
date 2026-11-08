@@ -15,13 +15,15 @@ import {
 } from '@irdashies/context';
 import { WidgetScale } from '@irdashies/domain/widgetPresentation/WidgetScale';
 import { widgetUpdaterNeeds } from '@irdashies/domain/widgetUpdaterNeeds';
-import { getWidget } from '../WidgetIndex';
-import { ErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
+import { getWidgetName } from '../constants/widgetNames';
+import { getWidget, getWidgetRenderProps } from '../WidgetIndex';
+import { UnavailableWidget } from '../components/UnavailableWidget';
 import { HideUIWrapper } from '../components/HideUIWrapper/HideUIWrapper';
 import { ProfileSwitchOverlay } from '../components/ProfileSwitchOverlay/ProfileSwitchOverlay';
 import { RendererDataProviders } from '../components/RendererDataProviders/RendererDataProviders';
 import { ThemeManager } from '../components/ThemeManager/ThemeManager';
 import { WidgetRuntimeProvider } from '../widgetRuntime';
+import { ErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 
 const LapTraceUpdater = lazy(() =>
   import('../components/OverlayContainer/LapTraceUpdater').then((module) => ({
@@ -51,7 +53,7 @@ export const IndividualWidgetView = ({
   const type = widget.type ?? widget.id;
   const Widget = getWidget(type);
   const needs = widgetUpdaterNeeds(widget);
-  if (!Widget || hidden.has(widget.id)) return null;
+  if (hidden.has(widget.id)) return null;
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <WidgetRuntimeProvider widgetType={type}>
@@ -72,7 +74,13 @@ export const IndividualWidgetView = ({
           <WidgetScale scale={widget.scale}>
             {running || widget.alwaysEnabled ? (
               <ErrorBoundary label={`widget:${type}`} resetAfterMs={2000}>
-                <Widget {...widget.config} />
+                {Widget ? (
+                  <Widget
+                    {...getWidgetRenderProps(type, widget.id, widget.config)}
+                  />
+                ) : (
+                  <UnavailableWidget name={getWidgetName(type)} />
+                )}
               </ErrorBoundary>
             ) : null}
           </WidgetScale>

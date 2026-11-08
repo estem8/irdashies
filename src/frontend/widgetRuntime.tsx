@@ -1,3 +1,4 @@
+import { getPluginRuntimeDefinition } from './pluginRegistry';
 import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import type { ChannelName } from '@irdashies/types';
 
@@ -42,7 +43,10 @@ const DEFAULT_DEFINITION: WidgetRuntimeDefinition = {
 
 export const getWidgetRuntimeDefinition = (
   widgetType: string
-): WidgetRuntimeDefinition => definitions.get(widgetType) ?? DEFAULT_DEFINITION;
+): WidgetRuntimeDefinition =>
+  definitions.get(widgetType) ??
+  getPluginRuntimeDefinition(widgetType) ??
+  DEFAULT_DEFINITION;
 
 /**
  * Only `id` and `type` are read when resolving what a widget needs, so these

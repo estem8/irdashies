@@ -1,3 +1,4 @@
+import { getInstalledWidgetPlugins } from '../../pluginRegistry';
 import {
   SlidersHorizontalIcon,
   UsersIcon,
@@ -17,7 +18,7 @@ export interface MenuItem {
   path: string;
   label: string;
   widgetType?: string;
-  category?: WidgetCategory | 'Tools';
+  category?: WidgetCategory | 'Tools' | 'Plugins';
   /** Widgets that share this item's page; it shows On while any of them is. */
   groupTypes?: string[];
   icon?: Icon;
@@ -76,6 +77,18 @@ export const widgetItems: MenuItem[] = WIDGET_MANIFESTS.map(
   })
 ).sort((a, b) => a.label.localeCompare(b.label));
 
+export const getWidgetMenuItems = (): MenuItem[] =>
+  [
+    ...widgetItems,
+    ...getInstalledWidgetPlugins().map(({ manifest }) => ({
+      to: `/settings/${manifest.id}`,
+      path: `/${manifest.id}`,
+      label: manifest.widget.name,
+      widgetType: manifest.id,
+      category: 'Plugins' as const,
+    })),
+  ].sort((a, b) => a.label.localeCompare(b.label));
+
 /**
  * Whether the settings menu offers a switch for this widget: it is listed
  * there on its own and exists in the dashboard. The widget's page leaves its
@@ -86,7 +99,7 @@ export const menuHasToggle = (
   dashboardWidgetIds: readonly string[]
 ): boolean =>
   dashboardWidgetIds.includes(widgetType) &&
-  widgetItems.some(
+  getWidgetMenuItems().some(
     (item) =>
       item.widgetType === widgetType && !item.hideInMenu && !item.groupTypes
   );
@@ -113,7 +126,7 @@ export const bottomItems: MenuItem[] = [
  */
 export function widgetLabel(widgetType: string): string {
   return (
-    widgetItems.find((item) => item.widgetType === widgetType)?.label ??
-    widgetType
+    getWidgetMenuItems().find((item) => item.widgetType === widgetType)
+      ?.label ?? widgetType
   );
 }

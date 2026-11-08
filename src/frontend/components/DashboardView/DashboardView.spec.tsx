@@ -8,6 +8,7 @@ const dashboard = {
   widgets: [
     { id: 'carsystems', enabled: true, config: { fontSize: 14 } },
     { id: 'standings', enabled: true, scale: 125, config: {} },
+    { id: 'author.missing', enabled: true, config: { retained: 'value' } },
     // Disabled for the desktop overlays, but still addressable by URL.
     { id: 'weather', enabled: false, config: {} },
     // A second instance: its own id, with the component named by `type`.
@@ -45,6 +46,7 @@ vi.mock('../../WidgetIndex', () => ({
       standings: () => <div>standings widget</div>,
       weather: () => <div>weather widget</div>,
     })[id],
+  getWidgetRenderProps: (_type: string, _id: string, config: object) => config,
 }));
 
 vi.mock('../../widgetRuntime', () => ({
@@ -54,11 +56,15 @@ vi.mock('../../widgetRuntime', () => ({
 }));
 
 describe('DashboardView solo widget mode', () => {
-  it('draws every enabled widget when no widget is named', () => {
+  it('draws enabled widgets and keeps missing-plugin data intact', () => {
     render(<DashboardView />);
 
     expect(screen.getByText('car systems widget')).toBeInTheDocument();
     expect(screen.getByText('standings widget')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'author.missing is unavailable'
+    );
+    expect(dashboard.widgets[2]?.config).toEqual({ retained: 'value' });
   });
 
   it('draws only the named widget', () => {

@@ -1,3 +1,4 @@
+import { getInstalledWidgetPlugin } from '../../pluginRegistry';
 import { ReleaseNotesSettings } from './ReleaseNotes/ReleaseNotesSettings';
 import type { ComponentType } from 'react';
 import { useParams } from 'react-router-dom';
@@ -41,6 +42,7 @@ import { BattleSettings } from './sections/BattleSettings';
 import { BroadcastSettingsPage } from './sections/BroadcastGroupSettings';
 import { GantrySettings } from './sections/GantrySettings';
 import { SettingsPreviewContext } from '@irdashies/domain/widgetPreview/settingsPreviewContext';
+import { PluginSettings } from './sections/PluginSettings';
 
 /**
  * Settings page per widget type. Telemetry Inspector has none of its own: its
@@ -120,8 +122,20 @@ export const SettingsLoader = ({ previewMode }: SettingsLoaderProps = {}) => {
       </SettingsPreviewContext>
     );
 
+  const plugin = type ? getInstalledWidgetPlugin(type) : undefined;
+  if (plugin)
+    return (
+      <PluginSettings
+        plugin={plugin}
+        widgetId={widget?.id ?? plugin.manifest.id}
+        previewMode={previewMode}
+      />
+    );
+
   return widget ? (
-    <div className="text-red-400">No settings available for {type}</div>
+    <div className="text-amber-300">
+      {type} is unavailable. Its dashboard settings are preserved.
+    </div>
   ) : (
     <div className="text-slate-400">Select a widget to edit</div>
   );

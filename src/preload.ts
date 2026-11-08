@@ -6,12 +6,14 @@ import { exposeInMainWorld } from './app/rendererExpose';
 import { startRendererPerfMetrics } from './app/rendererPerfMetrics';
 import { exposeChannelBridge } from './app/bridge/channelRendererBridge';
 import { exposeWidgetPreviewBridge } from './app/bridge/widgetPreviewRendererBridge';
+import { exposeWidgetPluginBridge } from './app/bridge/widgetPluginRendererBridge';
 
 startRendererPerfMetrics();
 exposeBridge();
 exposeInMainWorld();
 exposeChannelBridge();
 exposeWidgetPreviewBridge();
+exposeWidgetPluginBridge();
 exposeStorageStatusBridge();
 
 // Local-only feature bridges (git-excluded src/local/). Empty glob => no-op.

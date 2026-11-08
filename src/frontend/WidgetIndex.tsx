@@ -1,4 +1,7 @@
-import type { ElementType } from 'react';
+import type { ComponentType, ElementType } from 'react';
+import type { PluginWidgetProps } from '../types/plugins';
+import { PluginWidgetHost } from './PluginWidgetHost';
+import { getInstalledWidgetPlugin } from './pluginRegistry';
 import type { WidgetModule } from '@irdashies/domain';
 import { WIDGET_MANIFESTS, type WidgetId } from '@irdashies/types';
 
@@ -22,15 +25,36 @@ export const WIDGET_MAP = Object.fromEntries(
   modules.map((m: WidgetModule) => [m.id, m.component])
 ) as Record<WidgetId, ElementType>;
 
+const externalWidgets = new Map<string, ComponentType<PluginWidgetProps>>();
+
+export const isExternalWidget = (id: string): boolean =>
+  getInstalledWidgetPlugin(id) !== undefined;
+
 /**
- * Looks up a widget component by id. Accepts a raw string because dashboard
- * config is user-supplied and may contain unknown ids; returns undefined
- * when no widget is registered for that id.
- *
- * Uses Object.hasOwn so prototype-chain keys (e.g. "__proto__", "toString")
- * never resolve to truthy non-component values that React would try to render.
+ * Looks up a widget component by id. Built-in IDs remain statically typed;
+ * external IDs exist only in the runtime plugin registry.
  */
-export const getWidget = (id: string) =>
-  Object.hasOwn(WIDGET_MAP, id)
-    ? (WIDGET_MAP[id as WidgetId] as (typeof WIDGET_MAP)[WidgetId])
-    : undefined;
+export const getWidget = (id: string): ElementType | undefined => {
+  if (Object.hasOwn(WIDGET_MAP, id))
+    return WIDGET_MAP[id as WidgetId] as (typeof WIDGET_MAP)[WidgetId];
+
+  const plugin = getInstalledWidgetPlugin(id);
+  if (!plugin) return undefined;
+  let component = externalWidgets.get(id);
+  if (!component) {
+    component = (props) => <PluginWidgetHost plugin={plugin} {...props} />;
+    externalWidgets.set(id, component);
+  }
+  return component;
+};
+
+/** Built-ins keep their established config-as-props API; plugins receive v1 props. */
+export const getWidgetRenderProps = (
+  type: string,
+  widgetId: string,
+  config: Readonly<Record<string, unknown>> | undefined,
+  preview = false
+): Record<string, unknown> =>
+  isExternalWidget(type)
+    ? { widgetId, config: config ?? {}, preview }
+    : { ...(config ?? {}) };

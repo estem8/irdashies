@@ -52,6 +52,7 @@ vi.mock('../../WidgetIndex', () => ({
       return <div data-testid={`widget-${type}`} />;
     };
   },
+  isExternalWidget: () => false,
 }));
 
 vi.mock('@irdashies/utils/logger', () => ({

@@ -21,6 +21,7 @@ import { loadSimWidgetSupport } from '../storage/simWidgetSupport';
 import logger from '../logger';
 import { getHiddenWidgets, onWidgetHiddenChanged } from '../widgetVisibility';
 import type { ChannelBus } from '../bridge/channelBridge';
+import { getInstalledWidgetPlugins } from '../plugins/pluginLoader';
 
 // Export current state so it can be accessed by other parts of the app
 export let currentDashboard: DashboardLayout | null = null;
@@ -196,6 +197,21 @@ export function createBridgeProxy(
         const parsed = JSON.parse(message.toString());
 
         switch (parsed.type) {
+          case 'getInstalledPlugins': {
+            const { requestId } = parsed;
+            if (typeof requestId !== 'string' || requestId.length > 128) break;
+            const manifests = getInstalledWidgetPlugins().map(
+              ({ manifest }) => manifest
+            );
+            ws.send(
+              JSON.stringify({
+                type: 'getInstalledPlugins',
+                requestId,
+                data: manifests,
+              })
+            );
+            break;
+          }
           case 'pitLane:getData':
           case 'pitLane:updateData':
           case 'pitLane:getCurrentTrack':

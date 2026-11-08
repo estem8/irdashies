@@ -15,7 +15,7 @@ import {
 import { widgetDisabledMessage } from '@irdashies/types';
 import {
   generalItems,
-  widgetItems,
+  getWidgetMenuItems,
   bottomItems,
   menuHasToggle,
   type MenuItem,
@@ -140,6 +140,7 @@ export const ResearchMenu = ({
   const supportConfig = useSimWidgetSupport();
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState('');
+  const widgetItems = getWidgetMenuItems();
   const appPage = generalItems.some((item) => pathname === item.to);
   const overlayPage = widgetItems.some((item) => pathname === item.to);
   const contextual = variant === 'contextual' || variant === 'dedicated';
@@ -153,7 +154,7 @@ export const ResearchMenu = ({
     if (appPage) lastApp.current = pathname;
     else if (widgetItems.some((item) => item.to === pathname))
       lastOverlay.current = pathname;
-  }, [appPage, pathname]);
+  }, [appPage, pathname, widgetItems]);
   const showApp =
     variant === 'grouped' ||
     (variant === 'split' && appPage) ||

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { X as XIcon } from '@phosphor-icons/react';
 import {
   useDashboard,
   useRunningState,
@@ -11,8 +12,9 @@ import {
 } from '@irdashies/context';
 import type { WidgetLayout } from '@irdashies/types';
 import { WidgetContainer } from '../WidgetContainer';
-import { getWidget } from '../../WidgetIndex';
-import { XIcon } from '@phosphor-icons/react';
+import { getWidgetName } from '../../constants/widgetNames';
+import { getWidget, getWidgetRenderProps } from '../../WidgetIndex';
+import { UnavailableWidget } from '../UnavailableWidget';
 import { ErrorBoundary } from '../ErrorBoundary/ErrorBoundary';
 import { PushToPassUpdater } from './PushToPassUpdater';
 import { PitLapUpdater } from './PitLapUpdater';
@@ -127,9 +129,6 @@ export const OverlayContainer = memo(() => {
         }
 
         const WidgetComponent = getWidget(widget.type || widget.id);
-        if (!WidgetComponent) {
-          return null;
-        }
 
         return (
           <WidgetContainer
@@ -148,7 +147,19 @@ export const OverlayContainer = memo(() => {
                 resetAfterMs={2000}
               >
                 <WidgetRuntimeProvider widgetType={widget.type || widget.id}>
-                  <WidgetComponent {...widget.config} />
+                  {WidgetComponent ? (
+                    <WidgetComponent
+                      {...getWidgetRenderProps(
+                        widget.type || widget.id,
+                        widget.id,
+                        widget.config
+                      )}
+                    />
+                  ) : (
+                    <UnavailableWidget
+                      name={getWidgetName(widget.type || widget.id)}
+                    />
+                  )}
                 </WidgetRuntimeProvider>
               </ErrorBoundary>
             ) : null}

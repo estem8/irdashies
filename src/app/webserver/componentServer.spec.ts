@@ -29,6 +29,12 @@ vi.mock('./bridgeProxy', () => ({
 }));
 
 const getDashboard = vi.fn();
+
+const readPluginAsset = vi.fn();
+vi.mock('../plugins/pluginLoader', () => ({
+  readInstalledWidgetPluginAsset: (...args: unknown[]) =>
+    readPluginAsset(...args),
+}));
 vi.mock('../storage/dashboards', () => ({
   getDashboard: (...args: unknown[]) => getDashboard(...args),
   getCurrentProfileId: () => 'test-profile',
@@ -129,6 +135,40 @@ describe('startComponentServer web server flag', () => {
   it('stays disabled even when network access is on', async () => {
     await startWith({ enableWebServer: false, enableNetworkAccess: true });
     expect(listen).not.toHaveBeenCalled();
+  });
+});
+
+describe('browser plugin asset route', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await startWith({ enableWebServer: true });
+  });
+
+  it('serves only the requested validated plugin asset with its MIME type', async () => {
+    readPluginAsset.mockResolvedValue(Buffer.from('plugin code'));
+
+    const response = await request(
+      '/plugin-assets/author.weather-widget/dist/index.js'
+    );
+
+    expect(readPluginAsset).toHaveBeenCalledExactlyOnceWith(
+      'author.weather-widget',
+      'dist/index.js'
+    );
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('application/javascript');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.body).toBe('plugin code');
+  });
+
+  it('returns 404 for missing or invalid plugin assets', async () => {
+    readPluginAsset.mockResolvedValue(undefined);
+
+    const response = await request(
+      '/plugin-assets/author.weather-widget/../outside.js'
+    );
+
+    expect(response.statusCode).toBe(404);
   });
 });
 

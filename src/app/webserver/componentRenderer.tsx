@@ -16,6 +16,12 @@ import {
   type Session,
   type Telemetry,
 } from '../../types';
+import {
+  getPluginGlobalExport,
+  type InstalledWidgetPlugin,
+  type WidgetPluginBridge,
+  type WidgetPluginManifest,
+} from '../../types/plugins';
 import logger from '../../frontend/utils/logger';
 import { validateImageDataUrl } from '@irdashies/utils/imageDataUrl';
 
@@ -32,7 +38,12 @@ const debugLog = (...args: any[]) => {
  * Web-based bridge that connects to the WebSocket server
  */
 export class WebSocketBridge
-  implements IrSdkBridge, TelemetryInspectorBridge, ChannelBridge, PitLaneBridge
+  implements
+    IrSdkBridge,
+    TelemetryInspectorBridge,
+    ChannelBridge,
+    PitLaneBridge,
+    WidgetPluginBridge
 {
   private socket: WebSocket | null;
   private telemetryCallbacks: Set<(data: Telemetry) => void>;
@@ -612,6 +623,69 @@ export class WebSocketBridge
 
   async getAvailableSimulators(): Promise<ActiveSimulator[]> {
     return this.request<ActiveSimulator[]>('getAvailableSimulators', []);
+  }
+
+  getPluginAssetOrigin(): string | undefined {
+    if (!this.wsUrl) return undefined;
+    try {
+      const url = new URL(this.wsUrl);
+      if (url.username || url.password) return undefined;
+      if (url.protocol === 'ws:') url.protocol = 'http:';
+      else if (url.protocol === 'wss:') url.protocol = 'https:';
+      if (url.protocol !== 'http:' && url.protocol !== 'https:')
+        return undefined;
+      return url.origin;
+    } catch {
+      return undefined;
+    }
+  }
+
+  getInstalledPlugins(): Promise<InstalledWidgetPlugin[]> {
+    const origin = this.getPluginAssetOrigin();
+    if (!origin) return Promise.resolve([]);
+    return this.request<WidgetPluginManifest[]>('getInstalledPlugins', []).then(
+      (manifests) => {
+        if (!Array.isArray(manifests)) return [];
+        return manifests.flatMap((manifest) => {
+          try {
+            const globalName = getPluginGlobalExport(manifest.id);
+            if (!globalName || manifest.entry !== 'dist/index.js') return [];
+            const assetUrl = (relativePath: string) => {
+              const parts = relativePath.split('/');
+              if (
+                parts.some(
+                  (part) =>
+                    part.length === 0 ||
+                    part === '.' ||
+                    part === '..' ||
+                    part.includes('\\') ||
+                    [...part].some(
+                      (char) =>
+                        char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127
+                    )
+                )
+              ) {
+                throw new Error('Invalid plugin asset path');
+              }
+              const packagePath = parts.map(encodeURIComponent).join('/');
+              return new URL(
+                `/plugin-assets/${encodeURIComponent(manifest.id)}/${packagePath}`,
+                origin
+              ).href;
+            };
+            return [
+              {
+                manifest,
+                entryUrl: assetUrl(manifest.entry),
+                styleUrls: (manifest.styles ?? []).map(assetUrl),
+              },
+            ];
+          } catch {
+            return [];
+          }
+        });
+      }
+    );
   }
 
   onSimulatorChanged(

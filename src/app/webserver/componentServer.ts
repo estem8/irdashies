@@ -10,6 +10,7 @@ import type {
 import logger from '../logger';
 import { currentDashboard } from './bridgeProxy';
 import { getGarageCoverImageAsDataUrl } from '../storage/dashboards';
+import { readInstalledWidgetPluginAsset } from '../plugins/pluginLoader';
 
 const DEFAULT_PORT = 3000;
 const FALLBACK_PORTS = [3001, 3002, 3003, 3004, 3005];
@@ -306,7 +307,30 @@ export async function startComponentServer(
     }
 
     const url = new URL(req.url, `http://${req.headers.host}`);
+
     const pathname = url.pathname;
+    const pluginAssetMatch = pathname.match(/^\/plugin-assets\/([^/]+)\/(.+)$/);
+    if (pluginAssetMatch && req.method === 'GET') {
+      try {
+        const pluginId = decodeURIComponent(pluginAssetMatch[1]);
+        const assetPath = decodeURIComponent(pluginAssetMatch[2]);
+        const asset = await readInstalledWidgetPluginAsset(pluginId, assetPath);
+        if (!asset) {
+          res.statusCode = 404;
+          res.end('Not Found');
+          return;
+        }
+        res.setHeader('Content-Type', getMimeType(assetPath));
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Cache-Control', 'no-store');
+        res.statusCode = 200;
+        res.end(asset);
+      } catch {
+        res.statusCode = 404;
+        res.end('Not Found');
+      }
+      return;
+    }
 
     if (
       !isDev &&
@@ -380,7 +404,7 @@ export async function startComponentServer(
     // with a deprecation page pointing at /dashboard. Single widgets are a real
     // route again under /widget/<id>, so redirect instead of breaking links
     // people already saved in OBS.
-    const componentMatch = pathname.match(/^\/component\/([a-zA-Z0-9_-]+)$/);
+    const componentMatch = pathname.match(/^\/component\/([a-zA-Z0-9_.-]+)$/);
     if (componentMatch && req.method === 'GET') {
       res.statusCode = 302;
       res.setHeader(
@@ -393,7 +417,7 @@ export async function startComponentServer(
 
     // A widget renamed in a release keeps its saved browser-source links: the
     // stored instance was migrated to the new id, so send the old URL there.
-    const legacyWidgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_-]+)$/);
+    const legacyWidgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_.-]+)$/);
     if (
       legacyWidgetMatch &&
       req.method === 'GET' &&
@@ -412,7 +436,7 @@ export async function startComponentServer(
     // overlay on one page, /widget/<id> draws exactly one filling the window.
     // The single-widget form is what VR overlay hosts such as OpenKneeboard
     // want, since each of their tabs shows one page and is sized by hand.
-    const widgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_-]+)$/);
+    const widgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_.-]+)$/);
     if ((pathname === '/dashboard' || widgetMatch) && req.method === 'GET') {
       const wsUrl = `http://${SERVER_IP}:${actualPort}`;
       const debug = url.searchParams.get('debug') || 'false';

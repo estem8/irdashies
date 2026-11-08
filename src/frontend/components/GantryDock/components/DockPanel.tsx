@@ -9,7 +9,7 @@ import {
   GANTRY_DOCK_PANEL_LABELS,
   type ResolvedDockPanel,
 } from '@irdashies/types';
-import { getWidget } from '../../../WidgetIndex';
+import { getWidget, isExternalWidget } from '../../../WidgetIndex';
 import { WidgetScale } from '@irdashies/domain/widgetPresentation/WidgetScale';
 import { WidgetRuntimeProvider } from '../../../widgetRuntime';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
@@ -136,8 +136,12 @@ export const DockPanelContent = memo(
     }
 
     const type = widgetType(resolved);
+    if (isExternalWidget(type))
+      return (
+        <PanelMessage message="Plugins are only available on the overlay." />
+      );
     const Widget = getWidget(type);
-    if (!Widget) return null;
+    if (!Widget) return <PanelMessage message="Widget is unavailable." />;
 
     if (!running && !resolved.widget.alwaysEnabled) {
       return <PanelMessage message="Waiting for iRacing." />;

@@ -5,6 +5,7 @@ import { OverlayContainer } from './OverlayContainer';
 vi.mock('../../WidgetIndex', () => ({
   WIDGET_MAP: {},
   getWidget: vi.fn(() => undefined),
+  getWidgetRenderProps: () => ({}),
 }));
 vi.mock('@irdashies/context', () => ({
   useDashboard: vi.fn(),

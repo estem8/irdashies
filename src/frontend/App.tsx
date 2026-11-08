@@ -1,3 +1,4 @@
+import { initializeWidgetPlugins } from './pluginRegistry';
 import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
@@ -48,4 +49,6 @@ const App = () => {
 const el = document.getElementById('app');
 if (!el) throw new Error('No #app element found');
 export default App;
-createRoot(el).render(<App />);
+const root = createRoot(el);
+root.render(<div className="p-4 text-slate-300">Loading widgets…</div>);
+void initializeWidgetPlugins().then(() => root.render(<App />));
