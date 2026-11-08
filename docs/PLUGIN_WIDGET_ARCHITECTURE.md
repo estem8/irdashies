@@ -144,8 +144,9 @@ manifest using the same host controls as built-in widgets. Boolean settings use
 the shared switch; bounded numbers use a range slider, with `min`, `max` and
 `step` defining its range. Unbounded numbers use a numeric field. Plugins
 declare control data only and cannot replace the host settings UI. Widget
-enabled state is dashboard-instance state managed by the host, separate from
-plugin config. The settings preview renders the same plugin component at its
+enabled state is dashboard-instance state managed only by the core widget
+controls, separate from plugin config and the plugin settings page. The
+settings preview renders the same plugin component at its
 declared initial size with preview snapshots kept separate from live telemetry.
 Default values come only from `defaultConfig`. Existing saved config is
 normalized at load/render/update boundaries. `dashboards.ts` merges installed

@@ -87,7 +87,7 @@ switch. A number with both `min` and `max` uses the host's range slider and
 shows its current value; an unbounded number uses a numeric field. `step` sets
 the slider increment. Select and text settings use the host's standard fields.
 Widget enabled state belongs to the dashboard instance and is controlled by
-the host; it is not a plugin config setting.
+the core widget controls; it is not a plugin setting or plugin config field.
 
 ### Manifest rules
 

@@ -82,7 +82,7 @@ increment. A number without both bounds is rendered as a numeric field. Select
 and text settings use the standard host fields. Plugin authors declare labels
 and constraints only; custom settings components are not part of API v1. The
 host chooses the widget's initial position and owns its size, placement,
-enabled state, and saved configuration.
+enabled state through the core widget controls, and saved configuration.
 
 Declare only channels exported in `PUBLIC_PLUGIN_CHANNELS` in
 `src/types/plugins.ts`. v1 accepts snapshots, not lifecycle/event channels or

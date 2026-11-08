@@ -147,17 +147,6 @@ export const PluginSettings = ({
       previewMode,
     ]
   );
-  const setEnabled = (enabled: boolean) => {
-    if (!existing || !currentDashboard || !onDashboardUpdated || previewMode)
-      return;
-    onDashboardUpdated({
-      ...currentDashboard,
-      widgets: currentDashboard.widgets.map((widget) =>
-        widget.id === existing.id ? { ...widget, enabled } : widget
-      ),
-    });
-  };
-
   const addWidget = () => {
     if (!currentDashboard || !onDashboardUpdated || previewMode || existing)
       return;
@@ -199,14 +188,6 @@ export const PluginSettings = ({
           </p>
         </header>
         <div className="space-y-3">
-          {existing && !previewMode && (
-            <SettingToggleRow
-              title="Enabled"
-              description="Show this plugin on the dashboard."
-              enabled={existing.enabled}
-              onToggle={setEnabled}
-            />
-          )}
           {plugin.manifest.widget.settings.map((setting) => (
             <SettingField
               key={setting.key}
