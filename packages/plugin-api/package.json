@@ -1,0 +1,21 @@
+{
+  "name": "@irdashies/plugin-api",
+  "version": "1.0.0",
+  "description": "Public TypeScript contract for irDashies widget plugins",
+  "license": "MIT",
+  "type": "module",
+  "types": "./release/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./release/index.d.ts",
+      "import": "./release/index.js"
+    }
+  },
+  "files": ["release"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

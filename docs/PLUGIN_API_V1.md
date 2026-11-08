@@ -1,6 +1,10 @@
 # irDashies Widget Plugin API v1
 
-**Status:** Proposed contract. This document defines the first external widget package boundary; it does not implement the loader.
+**Status:** Proposed v1 contract. The `widget-plugins` branch implements the host loader and renderer integration; author SDK packaging and packaged-Electron runtime proof remain open. See [`PLUGIN_WIDGET_ARCHITECTURE.md`](./PLUGIN_WIDGET_ARCHITECTURE.md) for implementation status and phase acceptance criteria.
+
+Plugin authors: start with the [widget plugin development guide](./PLUGIN_WIDGET_DEVELOPMENT.md).
+The TypeScript package source lives in `packages/plugin-api`; it is buildable
+and packable from a checkout but is not published to npm yet.
 
 ## Goal
 
@@ -90,6 +94,12 @@ weather-widget.zip
 - All externally installed widgets appear under the host-owned Plugins menu category in v1. Plugins cannot add arbitrary navigation or menu sections.
 
 The example channel list demonstrates the contract shape, not a complete Weather data contract. The current built-in Weather runtime definition requests `session-bar.snapshot` and `track-state.snapshot`, but a plugin can consume only fields included in the public typed payloads. A dedicated public weather snapshot may be required before migrating the current Weather implementation.
+
+The host's current public channel allowlist is `PUBLIC_PLUGIN_CHANNELS` in
+`src/types/plugins.ts`. It contains only snapshot channels; lifecycle events,
+race-control event channels, replay context and stream-chat snapshots are not
+admitted. This allowlist is the source to keep aligned with the distributable
+author SDK when that package is published.
 
 ## Runtime entry contract
 

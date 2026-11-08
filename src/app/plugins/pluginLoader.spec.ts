@@ -144,6 +144,7 @@ describe('plugin ZIP startup loader', () => {
 
   it.each([
     ['event channel', ['session.lifecycle']],
+    ['private snapshot channel', ['replay.context']],
     ['unknown channel', ['missing.snapshot']],
   ])(
     'rejects manifests declaring an unsupported %s',

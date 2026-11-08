@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { getPluginGlobalExport } from './plugins';
+import { getPluginGlobalExport, PUBLIC_PLUGIN_CHANNELS } from './plugins';
+import { PUBLIC_PLUGIN_CHANNELS as SDK_PUBLIC_PLUGIN_CHANNELS } from '../../packages/plugin-api/src';
+
+describe('PUBLIC_PLUGIN_CHANNELS', () => {
+  it('contains only the explicitly supported public plugin channels', () => {
+    expect(PUBLIC_PLUGIN_CHANNELS).toContain('session-bar.snapshot');
+    expect(PUBLIC_PLUGIN_CHANNELS).toContain('track-state.snapshot');
+    expect(PUBLIC_PLUGIN_CHANNELS).not.toContain('replay.context');
+    expect(PUBLIC_PLUGIN_CHANNELS).not.toContain('session.lifecycle');
+  });
+
+  it('matches the author SDK channel list', () => {
+    expect(PUBLIC_PLUGIN_CHANNELS).toEqual(SDK_PUBLIC_PLUGIN_CHANNELS);
+  });
+});
 
 describe('getPluginGlobalExport', () => {
   it('derives valid JavaScript identifiers without collapsing ID separators', () => {

@@ -42,7 +42,7 @@ const plugin: InstalledWidgetPlugin = {
         },
       ],
     },
-    requires: { channels: ['track-state.snapshot', 'session.lifecycle'] },
+    requires: { channels: ['track-state.snapshot'] },
   },
   entryUrl: 'file:///user-data/plugins/author.example-widget/dist/index.js',
   styleUrls: [],

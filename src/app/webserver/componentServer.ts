@@ -417,7 +417,9 @@ export async function startComponentServer(
 
     // A widget renamed in a release keeps its saved browser-source links: the
     // stored instance was migrated to the new id, so send the old URL there.
-    const legacyWidgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_.-]+)$/);
+    const legacyWidgetMatch = pathname.match(
+      /^\/widget\/([a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)?)$/
+    );
     if (
       legacyWidgetMatch &&
       req.method === 'GET' &&
@@ -436,7 +438,9 @@ export async function startComponentServer(
     // overlay on one page, /widget/<id> draws exactly one filling the window.
     // The single-widget form is what VR overlay hosts such as OpenKneeboard
     // want, since each of their tabs shows one page and is sized by hand.
-    const widgetMatch = pathname.match(/^\/widget\/([a-zA-Z0-9_.-]+)$/);
+    const widgetMatch = pathname.match(
+      /^\/widget\/([a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)?)$/
+    );
     if ((pathname === '/dashboard' || widgetMatch) && req.method === 'GET') {
       const wsUrl = `http://${SERVER_IP}:${actualPort}`;
       const debug = url.searchParams.get('debug') || 'false';

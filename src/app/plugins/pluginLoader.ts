@@ -12,6 +12,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { channelRegistry } from '../../types/channels';
+import { PUBLIC_PLUGIN_CHANNELS } from '../../types/plugins';
 import type {
   InstalledWidgetPlugin,
   PluginSettingSpec,
@@ -282,6 +283,9 @@ const validateManifest = (value: unknown): WidgetPluginManifest => {
     !value.requires.channels.every((channel) => {
       if (
         typeof channel !== 'string' ||
+        !PUBLIC_PLUGIN_CHANNELS.includes(
+          channel as (typeof PUBLIC_PLUGIN_CHANNELS)[number]
+        ) ||
         !Object.hasOwn(channelRegistry, channel)
       ) {
         return false;

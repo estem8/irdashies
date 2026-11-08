@@ -16,7 +16,7 @@ vi.mock('@irdashies/context', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('../../PluginWidgetHost', () => ({
+vi.mock('../../../PluginWidgetHost', () => ({
   PluginWidgetHost: ({
     config,
     preview,

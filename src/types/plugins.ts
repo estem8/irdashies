@@ -1,4 +1,29 @@
-import type { ChannelName } from './channels';
+import type { ChannelName, ChannelPayloads } from './channels';
+
+/** Snapshot channels included in the stable plugin author API. */
+export const PUBLIC_PLUGIN_CHANNELS = [
+  'blind-spot.snapshot',
+  'car-speeds.snapshot',
+  'car-systems.snapshot',
+  'driver-controls.snapshot',
+  'fuel.projection',
+  'lap-times.snapshot',
+  'lap-log.snapshot',
+  'lap-history.snapshot',
+  'reference-laps.snapshot',
+  'radar.snapshot',
+  'radio.snapshot',
+  'relative-gaps.snapshot',
+  'sector-timing.snapshot',
+  'session-timing.snapshot',
+  'session-bar.snapshot',
+  'standings.snapshot',
+  'track-state.snapshot',
+  'lap-trace.sample',
+] as const satisfies readonly ChannelName[];
+
+export type PublicChannelName = (typeof PUBLIC_PLUGIN_CHANNELS)[number];
+export type PublicChannelPayloads = Pick<ChannelPayloads, PublicChannelName>;
 
 export type PluginSettingSpec =
   | {
@@ -42,7 +67,7 @@ export interface WidgetPluginManifest {
     settings: readonly PluginSettingSpec[];
   };
   requires: {
-    channels: readonly ChannelName[];
+    channels: readonly PublicChannelName[];
   };
 }
 

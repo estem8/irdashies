@@ -213,7 +213,7 @@ describe('single-widget routes', () => {
   });
 
   it('does not serve a widget page for an id it would not accept', async () => {
-    for (const path of ['/widget/', '/widget/a.b', '/widget/a/b']) {
+    for (const path of ['/widget/', '/widget/a..b', '/widget/a/b']) {
       const res = await request(path);
 
       expect(res.body, path).not.toContain('<iframe');
