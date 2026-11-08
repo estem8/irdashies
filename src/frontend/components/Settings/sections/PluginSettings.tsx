@@ -4,6 +4,8 @@ import type {
   InstalledWidgetPlugin,
   PluginSettingSpec,
 } from '../../../../types/plugins';
+import { SettingSliderRow } from '../components/SettingSliderRow';
+import { SettingToggleRow } from '../components/SettingToggleRow';
 import { PluginWidgetHost } from '../../../PluginWidgetHost';
 import {
   applyPluginConfigPatch,
@@ -53,6 +55,21 @@ const SettingField = ({
     );
   }
   if (setting.type === 'number') {
+    if (setting.min !== undefined && setting.max !== undefined) {
+      return (
+        <SettingSliderRow
+          title={setting.label}
+          value={typeof value === 'number' ? value : setting.min}
+          min={setting.min}
+          max={setting.max}
+          step={setting.step ?? 1}
+          units={
+            setting.key.toLowerCase().includes('opacity') ? '%' : undefined
+          }
+          onChange={onChange}
+        />
+      );
+    }
     return (
       <label className="flex flex-col gap-1 text-sm text-slate-200">
         <span>{setting.label}</span>
@@ -134,6 +151,16 @@ export const PluginSettings = ({
       previewMode,
     ]
   );
+  const setEnabled = (enabled: boolean) => {
+    if (!existing || !currentDashboard || !onDashboardUpdated || previewMode)
+      return;
+    onDashboardUpdated({
+      ...currentDashboard,
+      widgets: currentDashboard.widgets.map((widget) =>
+        widget.id === existing.id ? { ...widget, enabled } : widget
+      ),
+    });
+  };
 
   const addWidget = () => {
     if (!currentDashboard || !onDashboardUpdated || previewMode || existing)
@@ -176,6 +203,14 @@ export const PluginSettings = ({
           </p>
         </header>
         <div className="space-y-3">
+          {existing && !previewMode && (
+            <SettingToggleRow
+              title="Enabled"
+              description="Show this plugin on the dashboard."
+              enabled={existing.enabled}
+              onToggle={setEnabled}
+            />
+          )}
           {plugin.manifest.widget.settings.map((setting) => (
             <SettingField
               key={setting.key}
@@ -207,14 +242,22 @@ export const PluginSettings = ({
           Preview · {plugin.manifest.widget.defaultLayout.width} ×{' '}
           {plugin.manifest.widget.defaultLayout.height}
         </div>
-        <div className="min-h-64 flex-1 overflow-hidden">
-          <PluginWidgetHost
-            plugin={plugin}
-            widgetId={existing?.id ?? widgetId}
-            config={config}
-            preview
-            onConfigChange={persistConfig}
-          />
+        <div className="flex min-h-64 flex-1 items-center justify-center overflow-auto bg-slate-950/70 p-4">
+          <div
+            className="shrink-0 overflow-hidden"
+            style={{
+              width: plugin.manifest.widget.defaultLayout.width,
+              height: plugin.manifest.widget.defaultLayout.height,
+            }}
+          >
+            <PluginWidgetHost
+              plugin={plugin}
+              widgetId={existing?.id ?? widgetId}
+              config={config}
+              preview
+              onConfigChange={persistConfig}
+            />
+          </div>
         </div>
       </section>
     </div>

@@ -274,8 +274,27 @@ export const PluginWidgetHost = ({
   const onConfigChange = onConfigChangeOverride ?? persistConfigChange;
 
   const readonlySnapshots = useMemo(
-    () => Object.freeze({ ...snapshots }),
-    [snapshots]
+    () =>
+      Object.freeze(
+        preview
+          ? {
+              ...snapshots,
+              'session-bar.snapshot': {
+                displayUnits: 1,
+                trackWetness: 2,
+                airTemp: 22,
+                trackTemp: 31,
+                windVelocity: 4.2,
+                windDirection: 1.1,
+                windYaw: 0.25,
+                relativeHumidity: 0.58,
+                precipitation: 0.08,
+              },
+              'track-state.snapshot': { isOnTrack: true },
+            }
+          : snapshots
+      ),
+    [preview, snapshots]
   );
 
   return (
