@@ -278,7 +278,6 @@ export const PluginWidgetHost = ({
       Object.freeze(
         preview
           ? {
-              ...snapshots,
               'session-bar.snapshot': {
                 displayUnits: 1,
                 trackWetness: 2,
@@ -291,6 +290,9 @@ export const PluginWidgetHost = ({
                 precipitation: 0.08,
               },
               'track-state.snapshot': { isOnTrack: true },
+              // These values only keep the settings preview populated until
+              // the active preview/demo channel snapshots arrive.
+              ...snapshots,
             }
           : snapshots
       ),

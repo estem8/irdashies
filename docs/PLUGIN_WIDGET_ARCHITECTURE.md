@@ -146,8 +146,12 @@ the shared switch; bounded numbers use a range slider, with `min`, `max` and
 declare control data only and cannot replace the host settings UI. Widget
 enabled state is dashboard-instance state managed only by the core widget
 controls, separate from plugin config and the plugin settings page. The
-settings preview renders the same plugin component at its
-declared initial size with preview snapshots kept separate from live telemetry.
+settings preview renders the same plugin component at its declared or saved
+widget size. It uses the shared pan, zoom and resize controls; resizing changes
+only the preview frame, and Reset restores the saved dimensions. Sample
+snapshots seed the preview until channel snapshots arrive; active Preview
+telemetry always takes precedence and keeps the plugin in sync with built-in
+widgets.
 Default values come only from `defaultConfig`. Existing saved config is
 normalized at load/render/update boundaries. `dashboards.ts` merges installed
 plugin defaults when loading a dashboard. If a package is missing, the saved
