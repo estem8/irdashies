@@ -7,12 +7,19 @@ import { cpus, release } from 'node:os';
 import { setTimeout as sleep } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
+import { terminateCaptureChild } from './terminateCaptureChild.mjs';
 import { readWidgetInputRequirements } from '../widgetInputMetadata.ts';
 
 const matrix = process.argv[2] ?? 'normal-final-r1';
+const smoke = process.argv[3] === 'smoke';
+if (process.argv[3] && !smoke) throw new Error('Expected optional smoke mode');
+const durationSeconds = smoke ? 90 : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
-await mkdir(out, { recursive: true });
+await mkdir(out);
+const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
+  encoding: 'utf8',
+}).trim();
 const sourceRoot = resolve('perf-results/long-matrix-sources');
 const sources = JSON.parse(
   await readFile(resolve(sourceRoot, 'manifest.json'), 'utf8')
@@ -35,9 +42,28 @@ const ids = JSON.parse(seed)
   .sort();
 const widgetInputRequirements = await readWidgetInputRequirements();
 const print = (data) => process.stdout.write(JSON.stringify(data) + '\n');
+print({
+  stage: 'controller',
+  pid: process.pid,
+  matrix,
+  smoke,
+  durationSeconds,
+});
 const hash = (data) => createHash('sha256').update(data).digest('hex');
 const electron = `process.getBuiltinModule('module').createRequire(process.cwd()+'/package.json')('electron')`;
 const results = [];
+let restorationSafe = true;
+const cancellation = new AbortController();
+const activeConnections = new Set();
+const requestStop = () => {
+  cancellation.abort(new Error('Capture cancelled'));
+  // Interrupt pending CDP requests (for example a surface capture) as well as
+  // timers, so cancellation does not wait for their regular 60-second timeout.
+  for (const connection of activeConnections) connection.ws.close();
+};
+process.once('SIGINT', requestStop);
+process.once('SIGTERM', requestStop);
+const wait = (ms) => sleep(ms, undefined, { signal: cancellation.signal });
 const copySources = async (variant) => {
   for (const source of sources) {
     const data = await readFile(resolve(sourceRoot, variant, source.file));
@@ -63,12 +89,16 @@ const ensurePortsFree = async () => {
   }
 };
 try {
-  for (const [sequence, variant] of [
-    ['a1', 'baseline'],
-    ['b1', 'candidate'],
-    ['b2', 'candidate'],
-    ['a2', 'baseline'],
-  ]) {
+  const phases = smoke
+    ? [['smoke', 'candidate']]
+    : [
+        ['a1', 'baseline'],
+        ['b1', 'candidate'],
+        ['b2', 'candidate'],
+        ['a2', 'baseline'],
+      ];
+  for (const [sequence, variant] of phases) {
+    cancellation.signal.throwIfAborted();
     await ensurePortsFree();
     await copySources(variant);
     const runId = `${matrix}-${sequence}`;
@@ -130,15 +160,16 @@ try {
           IRDASHIES_TELEMETRY_REPLAY_LOOP: '0',
           IRDASHIES_TELEMETRY_REPLAY_SPEED: '1',
           PERF_METRICS: '1',
+          PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
           PERF_SCENARIO: 'reconstructed-ten-widget-final',
-          PERF_DURATION_SECONDS: '420',
+          PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
           PERF_LOG_PATH: resolve(folder, 'metrics.log'),
           PERF_REPLAY_VISIBLE_WIDGETS: '1',
           PERF_WIDGET_TYPES: ids.join(','),
-          PERF_BUILD: `02e8e07e-${variant}`,
+          PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
             target: 'dev',
             simulatorMode: 'replay',
@@ -150,12 +181,13 @@ try {
             telemetryDelivery: 'on',
             telemetryPayload: 'allowlisted',
             replayVisibleWidgets: true,
+            tapeControlsVisibility: 'hidden-fixed-at-creation',
           }),
         },
       }
     );
     const exit = new Promise((resolve) =>
-      child.on('exit', (code, signal) => {
+      child.on('close', (code, signal) => {
         exited = true;
         resolve({ code, signal });
       })
@@ -171,7 +203,7 @@ try {
         if (pos < 0) break;
         const line = buffer.slice(0, pos);
         buffer = buffer.slice(pos + 1);
-        if (line.includes('Completed fixed 420s capture'))
+        if (line.includes(`Completed fixed ${durationSeconds}s capture`))
           completedMarker = true;
         for (const [marker, receive] of [
           [
@@ -208,13 +240,16 @@ try {
     child.stdout.on('data', accept);
     child.stderr.on('data', accept);
     const connections = [];
+    let browserPid;
+    let phaseError;
+    let cleanupError;
     const privateSamples = [];
     let stopMemory = false;
     let sampler;
     try {
       for (let i = 0; i < 180 && !topology; i++) {
         if (exited) throw new Error('Early app exit');
-        await sleep(1000);
+        await wait(1000);
       }
       assert.ok(
         topology?.complete && !topology?.timedOut,
@@ -226,12 +261,14 @@ try {
       ).json();
       const main = await CDP.connect(inspectorTargets[0].webSocketDebuggerUrl);
       connections.push(main);
+      activeConnections.add(main);
+      cancellation.signal.throwIfAborted();
       assert.equal(await main.evaluate('process.env.PERF_RUN_ID'), runId);
-      // Auxiliary controls are always hidden, after ready-to-show has fired.
-      await sleep(5000);
-      await main.evaluate(
-        `(() => {for(const w of ${electron}.BrowserWindow.getAllWindows()){if(w.webContents.getURL().endsWith('#/tape-replay')){w.on('show',()=>w.hide());w.hide();}}return true;})()`
-      );
+      browserPid = await main.evaluate('process.pid');
+      assert.ok(Number.isInteger(browserPid) && browserPid > 1);
+      // The explicit capture flag fixes bounds/visibility at creation, so
+      // first-paint timing cannot change auxiliary startup state between runs.
+      await wait(1000);
       const pages = await (
         await fetch('http://127.0.0.1:9222/json/list')
       ).json();
@@ -239,6 +276,8 @@ try {
       assert.ok(page, 'Missing overlay');
       const overlay = await CDP.connect(page.webSocketDebuggerUrl);
       connections.push(overlay);
+      activeConnections.add(overlay);
+      cancellation.signal.throwIfAborted();
       const inventory = await main.evaluate(
         `(async()=>({versions:process.versions,gpuFeatures:${electron}.app.getGPUFeatureStatus(),gpu:await ${electron}.app.getGPUInfo('basic'),displays:${electron}.screen.getAllDisplays().map(d=>({id:d.id,bounds:d.bounds,workArea:d.workArea,scaleFactor:d.scaleFactor,displayFrequency:d.displayFrequency}))}))()`
       );
@@ -284,7 +323,7 @@ try {
           await sleep(10000);
         }
       })();
-      await sleep(Math.max(0, origin + 40000 - Date.now()));
+      await wait(Math.max(0, origin + 40000 - Date.now()));
       const screenshot = await overlay.call('Page.captureScreenshot', {
         format: 'png',
       });
@@ -293,7 +332,7 @@ try {
         Buffer.from(screenshot.data, 'base64')
       );
       const windowsExpression = `${electron}.BrowserWindow.getAllWindows().map(w=>({id:w.id,pid:w.webContents.getOSProcessId(),url:w.webContents.getURL(),bounds:w.getBounds(),visible:w.isVisible()}))`;
-      await sleep(Math.max(0, origin + 55000 - Date.now()));
+      await wait(Math.max(0, origin + 55000 - Date.now()));
       const windows = await main.evaluate(windowsExpression);
       const ui = await overlay.evaluate(
         `(async()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus()}))()`
@@ -309,6 +348,25 @@ try {
           .filter((w) => w.url.endsWith('#/tape-replay'))
           .every((w) => !w.visible)
       );
+      const controls = windows.filter((w) => w.url.endsWith('#/tape-replay'));
+      assert.equal(controls.length, 1);
+      assert.deepEqual(controls[0].bounds, {
+        x: 0,
+        y: 0,
+        width: 620,
+        height: 104,
+      });
+      const startupControls = topology.windows.filter(
+        (w) => w.role === 'other'
+      );
+      assert.equal(startupControls.length, 1);
+      assert.equal(startupControls[0].visible, false);
+      assert.deepEqual(startupControls[0].bounds, {
+        x: 0,
+        y: 0,
+        width: 620,
+        height: 104,
+      });
       await writeFile(
         resolve(folder, 'preflight.json'),
         JSON.stringify({ origin, windows, ui }, null, 2)
@@ -323,7 +381,7 @@ try {
       let nextProgress = origin + 90000;
       while (!exited) {
         if (completedMarker) for (const c of connections) c.ws.close();
-        if (Date.now() > origin + 450000)
+        if (Date.now() > origin + (durationSeconds + 30) * 1000)
           throw new Error('Capture shutdown deadline exceeded');
         if (Date.now() >= nextProgress) {
           print({
@@ -334,10 +392,11 @@ try {
           });
           nextProgress += 30000;
         }
-        await sleep(1000);
+        await wait(1000);
       }
       const status = await exit;
       assert.equal(status.code, 0, 'Capture failed');
+      assert.ok(completedMarker, 'Missing fixed-duration completion marker');
       results.push({
         runId,
         sequence,
@@ -351,16 +410,26 @@ try {
         JSON.stringify(results, null, 2)
       );
       print({ stage: 'complete', runId, status });
+    } catch (error) {
+      phaseError = error;
     } finally {
       stopMemory = true;
-      for (const c of connections) c.ws.close();
+      for (const c of connections) {
+        activeConnections.delete(c);
+        c.ws.close();
+      }
       if (!exited) {
-        try {
-          process.kill(-child.pid, 'SIGTERM');
-        } catch {
-          /* Startup polling and best-effort cleanup may race process shutdown. */
+        const stopped = await terminateCaptureChild({
+          childPid: child.pid,
+          browserPid,
+          exit,
+        });
+        if (!stopped.terminated) {
+          restorationSafe = false;
+          cleanupError = new Error(
+            `Capture child termination unverified: ${stopped.errors.join('; ')}`
+          );
         }
-        await Promise.race([exit, sleep(15000)]);
       }
       if (sampler) await sampler;
       await writeFile(
@@ -369,13 +438,53 @@ try {
       );
       consoleFile.end();
     }
-    await sleep(3000);
+    if (cleanupError)
+      throw new AggregateError(
+        [phaseError, cleanupError].filter(Boolean),
+        'Capture cleanup failed'
+      );
+    if (phaseError) throw phaseError;
+    await wait(3000);
+  }
+} catch (error) {
+  if (cancellation.signal.aborted) {
+    await writeFile(
+      resolve(out, 'cancelled.json'),
+      JSON.stringify(
+        {
+          at: new Date().toISOString(),
+          completedRuns: results.length,
+          reason: 'Controller received SIGINT/SIGTERM',
+          error: String(error),
+          childTerminationVerified: restorationSafe,
+        },
+        null,
+        2
+      )
+    );
+    process.exitCode = restorationSafe ? 130 : 1;
+  } else {
+    throw error;
   }
 } finally {
-  await copySources('candidate');
+  if (restorationSafe) await copySources('candidate');
+  else
+    await writeFile(
+      resolve(out, 'restoration-blocked.json'),
+      JSON.stringify(
+        {
+          reason:
+            'Capture child termination is unverified; do not rewrite source used by a potentially live child',
+        },
+        null,
+        2
+      )
+    );
+  process.removeListener('SIGINT', requestStop);
+  process.removeListener('SIGTERM', requestStop);
   print({
     stage: 'matrix-ended',
     completedRuns: results.length,
-    candidateRestored: true,
+    candidateRestored: restorationSafe,
   });
 }

@@ -1,9 +1,31 @@
 # Perf checkpoint — 2026-11-12
 
 Goal: finish `perf`. **Not complete.** User requested a GitHub checkpoint before
-usage limits. No long A/B capture has started, and no capture process remains
-running. Windows/iRacing access is unavailable, confirmed by the user; do not
+usage limits. Long capture R2 completed A1 and B1, but its process handle is
+now missing, B2 is incomplete and A2 is absent. The matrix is not accepted.
+Candidate source is restored (the six measured files match HEAD).
+Windows/iRacing access is unavailable, confirmed by the user; do not
 claim game FPS or Windows acceptance.
+
+## Latest execution status
+
+- `perf-results/normal-final-r2/runs.json` records A1 and B1 completing with
+  exit 0. Both preflights show a visible 1549 × 1014 overlay at DPR 1 and
+  hidden 620 × 104 tape controls at (0, 0). B2 has partial logs only.
+- The previous R1 pilot was rejected because auxiliary controls differed in
+  placement/first-paint state. A benchmark-only two-flag guard now keeps the
+  controls hidden at creation; ordinary application behavior is preserved.
+- The current controller has abortable CDP/waits, requires the duration marker,
+  and verifies child termination before restoring sources. Its cleanup helper
+  has deterministic shutdown/error tests. These latest cleanup changes were
+  made after R2 started and are not validated by that partial run.
+- Windows CI passed for candidate checkpoint `50657bdd`:
+  https://github.com/estem8/irdashies/actions/runs/43101017184
+  Tests, lint and Storybook succeeded; release/signing were skipped. This does
+  not verify iRacing presentation or the subsequent capture-tool changes.
+- Next: inspect partial logs for renderer/channel loss before another matrix;
+  B2's final log contains no overlay renderer and zero channel activity, so
+  it must not contribute performance acceptance evidence.
 
 ## Current candidate
 
@@ -36,10 +58,10 @@ diagnostic controls are only in the capture tool, not production code.
 3. Inspect `tools/perf/capture/long-matrix.mjs`, then run:
 
    ```bash
-   node tools/perf/capture/long-matrix.mjs normal-final-r1
+   node tools/perf/capture/long-matrix.mjs normal-final-r3
    ```
 
-   This **new orchestration script is prepared, linted, but has not been run**.
+   Use a fresh output directory; do not overwrite the partial R2 evidence.
    It temporarily swaps six source files, launches four isolated 420-second
    captures in A–B–B–A order, keeps auxiliary tape controls hidden, checks
    viewport/source, and restores candidate source in `finally`. Reserve about
@@ -87,5 +109,6 @@ diagnostic controls are only in the capture tool, not production code.
 
 Validation before checkpoint: 358 affected renderer tests in 47 files passed;
 the standalone trace-attribution suite has 10 passing tests; TypeScript and
-ESLint passed for the application candidate. Capture scripts are experimental
-diagnostic tooling; the long-run controller still needs its first execution.
+ESLint passed for the application candidate. Six tape-control tests also pass.
+Capture scripts are experimental diagnostic tooling; the revised controller
+still needs a complete four-run acceptance execution.
