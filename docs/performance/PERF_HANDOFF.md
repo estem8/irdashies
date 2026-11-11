@@ -26,6 +26,15 @@ claim game FPS or Windows acceptance.
 - Next: inspect partial logs for renderer/channel loss before another matrix;
   B2's final log contains no overlay renderer and zero channel activity, so
   it must not contribute performance acceptance evidence.
+- Follow-up: B2 logs record `Display 73 overlay window closed` at 01:10:49,
+  approximately 48 seconds after origin. No adjacent renderer-crash message
+  establishes the cause. The controller now rejects early overlay CDP closure,
+  writes `failed.json` for non-cancellation failures, and rejects calls made
+  after a CDP socket has closed without waiting for the request timeout.
+- `normal-recovery-smoke-r1` completed its 90-second candidate run with exit 0,
+  duration marker, matched preflight and source restoration. The CDP and child
+  shutdown helper test files pass, as does ESLint for these controller changes.
+  This is a smoke check, not a repeated performance acceptance comparison.
 
 ## Current candidate
 

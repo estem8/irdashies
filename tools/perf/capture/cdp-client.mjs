@@ -32,6 +32,8 @@ export class CDP {
     return new CDP(ws);
   }
   call(method, params = {}) {
+    if (this.ws.readyState !== WebSocket.OPEN)
+      return Promise.reject(new Error(`CDP unavailable: ${method}`));
     const id = ++this.serial;
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {

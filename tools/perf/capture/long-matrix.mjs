@@ -275,6 +275,14 @@ try {
       const page = pages.find((p) => /:\d+\/$/.test(p.url));
       assert.ok(page, 'Missing overlay');
       const overlay = await CDP.connect(page.webSocketDebuggerUrl);
+      let overlayDisconnected;
+      overlay.ws.addEventListener('close', (event) => {
+        overlayDisconnected = {
+          at: new Date().toISOString(),
+          code: event.code,
+          reason: event.reason,
+        };
+      });
       connections.push(overlay);
       activeConnections.add(overlay);
       cancellation.signal.throwIfAborted();
@@ -380,6 +388,10 @@ try {
       });
       let nextProgress = origin + 90000;
       while (!exited) {
+        assert.ok(
+          !overlayDisconnected || completedMarker,
+          `Overlay disconnected before completion: ${JSON.stringify(overlayDisconnected)}`
+        );
         if (completedMarker) for (const c of connections) c.ws.close();
         if (Date.now() > origin + (durationSeconds + 30) * 1000)
           throw new Error('Capture shutdown deadline exceeded');
@@ -464,6 +476,19 @@ try {
     );
     process.exitCode = restorationSafe ? 130 : 1;
   } else {
+    await writeFile(
+      resolve(out, 'failed.json'),
+      JSON.stringify(
+        {
+          at: new Date().toISOString(),
+          completedRuns: results.length,
+          error: String(error),
+          childTerminationVerified: restorationSafe,
+        },
+        null,
+        2
+      )
+    );
     throw error;
   }
 } finally {
