@@ -120,6 +120,8 @@ export function startRendererPerfMetrics(): void {
       telemetryCallbackMs: callbackTimes.summarize(),
       channelCallbackMs: channelTimes.summarize(),
       trackMapAnimationFrameMs: measured('trackMapAnimationFrame'),
+      trackMapCommitDrawMs: measured('trackMapCommitDraw'),
+      trackMapRafDrawMs: measured('trackMapRafDraw'),
       inputTraceFrameMs: measured('inputTraceFrame'),
       radarFrameMs: measured('radarFrame'),
       standingsFinalTimingMs: measured('standingsFinalTiming'),

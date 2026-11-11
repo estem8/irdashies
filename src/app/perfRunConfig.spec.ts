@@ -7,6 +7,7 @@ import {
   parsePerfVisibilityPhases,
   perfRunSimulator,
   updatePerfDashboardMetadata,
+  updatePerfSourceMetadata,
 } from './perfRunConfig';
 
 const dashboard: DashboardLayout = {
@@ -208,5 +209,22 @@ describe('perfRunSimulator', () => {
   it('passes the caller choice through for live runs', () => {
     expect(perfRunSimulator('lmu', false)).toEqual({ simulator: 'lmu' });
     expect(perfRunSimulator(undefined, false)).toEqual({});
+  });
+});
+
+describe('updatePerfSourceMetadata', () => {
+  it.each(['mock', 'tape', 'sdk-replay', 'live'] as const)(
+    'records the selected %s source in perf runs',
+    (sourceKind) => {
+      const env: NodeJS.ProcessEnv = { PERF_METRICS: '1' };
+      updatePerfSourceMetadata(sourceKind, env);
+      expect(env.PERF_SOURCE_KIND).toBe(sourceKind);
+    }
+  );
+
+  it('does not publish source metadata outside perf runs', () => {
+    const env: NodeJS.ProcessEnv = { PERF_SOURCE_KIND: 'existing' };
+    updatePerfSourceMetadata('mock', env);
+    expect(env.PERF_SOURCE_KIND).toBe('existing');
   });
 });

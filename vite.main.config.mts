@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { perfStartupChunk } from './tools/perf/bootstrapChunks.mts';
 
 // Get git hash
 const getGitHash = () => {
@@ -29,6 +30,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: ['bufferutil', 'utf-8-validate'],
+      output: {
+        // Keep the startup side effect outside the entry body: shared storage
+        // chunks otherwise evaluate before an inlined userData initializer.
+        manualChunks: perfStartupChunk,
+      },
     },
   },
   resolve: {

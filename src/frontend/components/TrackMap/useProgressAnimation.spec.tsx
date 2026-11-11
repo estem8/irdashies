@@ -155,16 +155,22 @@ describe('useProgressAnimation', () => {
     expect(drawCount).toBeGreaterThan(2);
   });
 
-  it('records RAF work in renderer performance metrics', () => {
+  it('partitions commit and RAF draws without duplicating work', () => {
     const recordMeasure = vi.fn();
     window.rendererPerfBridge = { recordMeasure };
+    let clock = 0;
+    let drawCount = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => clock);
 
     const Harness = ({ progress }: { progress: number }) => {
       const stableDrivers = useRef([{ progress }]);
       if (stableDrivers.current[0].progress !== progress) {
         stableDrivers.current = [{ progress }];
       }
-      useProgressAnimation(stableDrivers.current, () => undefined);
+      useProgressAnimation(stableDrivers.current, () => {
+        drawCount += 1;
+        clock += 1;
+      });
       return null;
     };
 
@@ -172,10 +178,26 @@ describe('useProgressAnimation', () => {
     view.rerender(<Harness progress={0.3} />);
     act(() => callbacks.shift()?.(20));
 
-    expect(recordMeasure).toHaveBeenCalledWith(
-      'trackMapAnimationFrame',
-      expect.any(Number)
+    const durationsByName = new Map<string, number[]>();
+    for (const [name, duration] of recordMeasure.mock.calls) {
+      const samples = durationsByName.get(name) ?? [];
+      samples.push(duration);
+      durationsByName.set(name, samples);
+    }
+
+    const combined = durationsByName.get('trackMapAnimationFrame') ?? [];
+    const commitDraws = durationsByName.get('trackMapCommitDraw') ?? [];
+    const rafDraws = durationsByName.get('trackMapRafDraw') ?? [];
+    expect(drawCount).toBe(3);
+    expect(combined).toHaveLength(drawCount);
+    expect(commitDraws).toHaveLength(2);
+    expect(rafDraws).toHaveLength(1);
+    expect(combined.reduce((sum, sample) => sum + sample, 0)).toBe(
+      commitDraws.reduce((sum, sample) => sum + sample, 0) +
+        rafDraws.reduce((sum, sample) => sum + sample, 0)
     );
+    expect(commitDraws).toEqual([1, 1]);
+    expect(rafDraws).toEqual([1]);
     delete window.rendererPerfBridge;
   });
 

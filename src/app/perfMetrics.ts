@@ -14,6 +14,8 @@ import type { NumericSampleStats, Telemetry } from '@irdashies/types';
 import type { ChannelBusMetricsSnapshot } from './bridge/channelBridge';
 import { FixedSampleBuffer } from '../shared/performanceSamples';
 import logger from './logger';
+import { ProcessCpuTimeTracker } from './processCpuTime';
+import type { PerfSourceKind } from './perfRunConfig';
 
 export interface SectionStats {
   count: number;
@@ -26,11 +28,16 @@ export interface SectionStats {
 
 export interface ProcessMetrics {
   pid: number;
+  creationTime?: number;
   type: string;
   name?: string;
   cpuPercent: number;
   memoryMB: number;
   privateMemoryMB?: number;
+  /** Available only after two valid samples for this exact PID lifetime. */
+  cpuTimeMs?: number;
+  cpuTimeMsPerSecond?: number;
+  cpuSampleIntervalMs?: number;
 }
 
 export interface PerfReport {
@@ -93,6 +100,37 @@ const PROCESSOR_CHANNELS: Readonly<Record<string, string>> = {
 
 const DEFAULT_REPORT_INTERVAL_MS = 10_000;
 export const PERF_MAIN_LOG_PREFIX = '[PerfMetrics:JSON] ';
+
+export const parsePerfSourceKind = (
+  value: string | undefined
+): PerfSourceKind | undefined =>
+  value === 'mock' ||
+  value === 'tape' ||
+  value === 'sdk-replay' ||
+  value === 'live'
+    ? value
+    : undefined;
+
+export const isSyntheticPerfSource = (
+  sourceKind: PerfSourceKind | undefined
+): boolean =>
+  sourceKind === 'mock' ||
+  sourceKind === 'tape' ||
+  sourceKind === 'sdk-replay';
+
+export const resolvePerfSimulatorMode = (
+  sourceKind: PerfSourceKind | undefined,
+  requestedMode: unknown
+): unknown => {
+  if (sourceKind === 'mock') return 'mock';
+  if (sourceKind === 'tape' || sourceKind === 'sdk-replay') return 'replay';
+  if (sourceKind === 'live') {
+    return requestedMode === 'replay' || requestedMode === 'live'
+      ? requestedMode
+      : 'live';
+  }
+  return requestedMode;
+};
 
 export const sumCompletePrivateMemoryMB = (
   privateBytes: readonly (number | undefined)[]
@@ -162,6 +200,8 @@ export class TelemetryPerfMetrics {
   private _enabled: boolean;
   private previousChannelPublications: Readonly<Record<string, number>> = {};
   private previousChannelDeliveries: Readonly<Record<string, number>> = {};
+  private processCpuTime = new ProcessCpuTimeTracker();
+  private lastSourceKind: string | undefined;
 
   constructor(
     enabled?: boolean,
@@ -203,6 +243,7 @@ export class TelemetryPerfMetrics {
       this.reportTimer = null;
     }
     this.eventLoopDelay.disable();
+    this.processCpuTime.reset();
     if (activePerfMetrics === this) setActivePerfMetrics(null);
   }
 
@@ -224,12 +265,14 @@ export class TelemetryPerfMetrics {
     }
     this.lastTickTime = now;
     this.tickCount++;
+    const sourceKind = this.syncSourceKind();
     if (telemetry) {
-      this.observeIRacing(telemetry);
+      if (!isSyntheticPerfSource(sourceKind)) this.observeIRacing(telemetry);
     }
   }
 
   report(): PerfReport {
+    this.syncSourceKind();
     const now = performance.now();
 
     const cpuUsage = process.cpuUsage(this.lastCpuUsage);
@@ -318,8 +361,18 @@ export class TelemetryPerfMetrics {
       const activeWidgetTypes = JSON.parse(
         process.env.PERF_ACTIVE_WIDGET_TYPES ?? '[]'
       ) as unknown;
+      const sourceKind = this.sourceKind();
       return {
         ...metadata,
+        ...(sourceKind
+          ? {
+              sourceKind,
+              simulatorMode: resolvePerfSimulatorMode(
+                sourceKind,
+                metadata.simulatorMode
+              ),
+            }
+          : {}),
         overlayWindowMode: process.env.PERF_ACTIVE_WINDOW_MODE ?? 'display',
         activeWidgetTypes: Array.isArray(activeWidgetTypes)
           ? activeWidgetTypes.filter(
@@ -330,6 +383,22 @@ export class TelemetryPerfMetrics {
     } catch {
       return undefined;
     }
+  }
+
+  private sourceKind(): PerfSourceKind | undefined {
+    return parsePerfSourceKind(process.env.PERF_SOURCE_KIND);
+  }
+
+  private syncSourceKind(): PerfSourceKind | undefined {
+    const sourceKind = this.sourceKind();
+    if (sourceKind !== this.lastSourceKind) {
+      this.iracingFrameRate.reset();
+      this.iracingCpuForeground.reset();
+      this.iracingCpuBackground.reset();
+      this.iracingGpuUsage.reset();
+      this.lastSourceKind = sourceKind;
+    }
+    return sourceKind;
   }
 
   private channelMetrics(
@@ -389,6 +458,14 @@ export class TelemetryPerfMetrics {
       const processes: ProcessMetrics[] = [];
       let totalCpu = 0;
       let totalMemory = 0;
+      const cpuDeltas = this.processCpuTime.observe(
+        metrics.map((metric) => ({
+          pid: metric.pid,
+          creationTime: metric.creationTime,
+          cumulativeCPUUsage: metric.cpu.cumulativeCPUUsage,
+        })),
+        performance.now()
+      );
       const totalPrivateMemory = sumCompletePrivateMemoryMB(
         metrics.map((metric) => metric.memory.privateBytes)
       );
@@ -432,11 +509,13 @@ export class TelemetryPerfMetrics {
 
         processes.push({
           pid: metric.pid,
+          creationTime: metric.creationTime,
           type: metric.type,
           name,
           cpuPercent,
           memoryMB,
           privateMemoryMB,
+          ...cpuDeltas.get(metric.pid),
         });
       }
 
@@ -449,6 +528,7 @@ export class TelemetryPerfMetrics {
         totalPrivateMemory,
       };
     } catch {
+      this.processCpuTime.observe([], performance.now());
       return {
         processes: [],
         totalCpu: 0,

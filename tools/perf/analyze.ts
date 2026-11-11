@@ -10,6 +10,7 @@ const MAIN_PREFIX = '[PerfMetrics:JSON] ';
 const RENDERER_PREFIX = '[PerfRenderer:JSON] ';
 const VISIBILITY_PREFIX = '[PerfVisibility:JSON] ';
 const ORIGIN_PREFIX = '[PerfRunOrigin:JSON] ';
+const RUNTIME_TOPOLOGY_PREFIX = '[PerfRunTopology:JSON] ';
 const MIN_ANALYSIS_SECONDS = 300;
 const MIN_PRIVATE_OBSERVATIONS = 2;
 const MIN_PRIVATE_SPAN_RATIO = 0.8;
@@ -48,11 +49,15 @@ interface MainPerfSample {
   };
   processes?: {
     pid: number;
+    creationTime?: number;
     type: string;
     name?: string;
     cpuPercent: number;
     memoryMB: number;
     privateMemoryMB?: number;
+    cpuTimeMs?: number;
+    cpuTimeMsPerSecond?: number;
+    cpuSampleIntervalMs?: number;
   }[];
 }
 
@@ -69,11 +74,32 @@ interface RunOriginMarker {
   runId: string;
 }
 
+interface RuntimeTopologyMarker {
+  timestamp: string;
+  runId: string;
+  complete: boolean;
+  timedOut: boolean;
+  topologyChanged: boolean;
+  processMetricsAvailable: boolean;
+  snapshotErrors?: string[];
+  windows: {
+    id: number;
+    rendererPid: number;
+    route: string;
+    role: 'display' | 'widget' | 'gantry' | 'settings' | 'other';
+    bounds: { x: number; y: number; width: number; height: number };
+    visible: boolean;
+    ready: boolean;
+  }[];
+  processCounts: Record<string, number>;
+}
+
 export interface PerfCapture {
   main: MainPerfSample[];
   renderer: RendererPerfSample[];
   visibility?: VisibilityMarker[];
   origins?: RunOriginMarker[];
+  runtimeTopologies?: RuntimeTopologyMarker[];
 }
 
 export interface AnalysisWindow {
@@ -92,6 +118,7 @@ export interface PerfSummary {
     endSeconds?: number;
   };
   scenarioMetadata: Record<string, unknown>;
+  runtimeTopology?: RuntimeTopologyMarker;
   visibilityPhases: VisibilityMarker[];
   phaseEvidence: {
     index: number;
@@ -131,9 +158,14 @@ export interface PerfSummary {
   };
   processes: {
     pid: number;
+    creationTime?: number;
     type: string;
     name: string;
     averageCpuPercent: number;
+    sampledCpuTimeMs?: number;
+    cpuSampledIntervalMs?: number;
+    averageCpuTimeMsPerSecond?: number;
+    cpuSampleCount: number;
     averageMemoryMB: number;
     peakMemoryMB: number;
     memorySlopeMBPerMinute: number;
@@ -175,6 +207,12 @@ export interface PerfSummary {
     trackMapAnimationFrameRateHz: number;
     trackMapAnimationFrameP99MeanMs: number;
     trackMapAnimationFrameP99WorstMs: number;
+    trackMapCommitDrawRateHz: number | null;
+    trackMapCommitDrawP99MeanMs: number | null;
+    trackMapCommitDrawP99WorstMs: number | null;
+    trackMapRafDrawRateHz: number | null;
+    trackMapRafDrawP99MeanMs: number | null;
+    trackMapRafDrawP99WorstMs: number | null;
     inputTraceFrameRateHz: number;
     inputTraceFrameP99MeanMs: number;
     inputTraceFrameP99WorstMs: number;
@@ -217,6 +255,7 @@ export interface PerfSummary {
   >;
   evidence: {
     runOriginAvailable: boolean;
+    runtimeTopologyAvailable: boolean;
     privateMemoryAvailable: boolean;
     privateMemorySampleCount: number;
     privateMemorySpanSeconds: number;
@@ -243,6 +282,12 @@ export interface PerfComparison {
     eventLoopP99Ms: number;
     trackMapAnimationFrameRateHz: number;
     trackMapAnimationFrameP99Ms: number;
+    trackMapCommitDrawRateHz: number | null;
+    trackMapCommitDrawP99Ms: number | null;
+    trackMapCommitDrawP99WorstMs: number | null;
+    trackMapRafDrawRateHz: number | null;
+    trackMapRafDrawP99Ms: number | null;
+    trackMapRafDrawP99WorstMs: number | null;
     inputTraceFrameRateHz: number;
     inputTraceFrameP99Ms: number;
     radarFrameRateHz: number;
@@ -277,6 +322,7 @@ export function parsePerfLog(contents: string): PerfCapture {
     renderer: [],
     visibility: [],
     origins: [],
+    runtimeTopologies: [],
   };
   for (const line of contents.split(/\r?\n/)) {
     const main = extractJson<MainPerfSample>(line, MAIN_PREFIX);
@@ -298,7 +344,16 @@ export function parsePerfLog(contents: string): PerfCapture {
     }
 
     const origin = extractJson<RunOriginMarker>(line, ORIGIN_PREFIX);
-    if (origin) capture.origins?.push(origin);
+    if (origin) {
+      capture.origins?.push(origin);
+      continue;
+    }
+
+    const runtimeTopology = extractJson<RuntimeTopologyMarker>(
+      line,
+      RUNTIME_TOPOLOGY_PREFIX
+    );
+    if (runtimeTopology) capture.runtimeTopologies?.push(runtimeTopology);
   }
   return capture;
 }
@@ -351,6 +406,22 @@ function summarizeRendererMeasure(
     ),
     p99WorstMs: maximum(stats.map((entry) => entry.p99)),
   };
+}
+
+/** Missing measure fields mean unobserved (often a legacy log), unlike a
+ * reported interval with count=0, which is evidence of an idle loop. */
+function summarizeOptionalRendererMeasure(
+  renderer: RendererPerfSample[],
+  select: (sample: RendererPerfSample) => NumericSampleStats | undefined
+): {
+  rateHz: number | null;
+  p99MeanMs: number | null;
+  p99WorstMs: number | null;
+} {
+  if (!renderer.some((sample) => select(sample) !== undefined)) {
+    return { rateHz: null, p99MeanMs: null, p99WorstMs: null };
+  }
+  return summarizeRendererMeasure(renderer, select);
 }
 
 function linearSlopePerMinute(
@@ -583,6 +654,14 @@ export function summarizeCapture(
     renderer
       .filter((sample) => sample.trackMapAnimationFrameMs !== undefined)
       .reduce((sum, sample) => sum + sample.intervalMs, 0) / 1000;
+  const trackMapCommitDraw = summarizeOptionalRendererMeasure(
+    renderer,
+    (sample) => sample.trackMapCommitDrawMs
+  );
+  const trackMapRafDraw = summarizeOptionalRendererMeasure(
+    renderer,
+    (sample) => sample.trackMapRafDrawMs
+  );
   const inputTraceFrame = summarizeRendererMeasure(
     renderer,
     (sample) => sample.inputTraceFrameMs
@@ -623,8 +702,10 @@ export function summarizeCapture(
     ),
   ].sort();
   const processGroups = new Map<
-    number,
+    string,
     {
+      pid: number;
+      creationTime?: number;
       type: string;
       name: string;
       samples: {
@@ -633,18 +714,27 @@ export function summarizeCapture(
         memoryMB: number;
         privateMemoryMB: number;
       }[];
+      cpuTimeMs: number;
+      cpuSampledIntervalMs: number;
+      cpuSampleCount: number;
     }
   >();
   for (const sample of effectiveMain) {
     for (const process of sample.processes ?? []) {
-      let group = processGroups.get(process.pid);
+      const groupKey = `${process.pid}:${process.creationTime ?? 'legacy'}`;
+      let group = processGroups.get(groupKey);
       if (!group) {
         group = {
+          pid: process.pid,
+          creationTime: process.creationTime,
           type: process.type,
           name: process.name ?? process.type,
           samples: [],
+          cpuTimeMs: 0,
+          cpuSampledIntervalMs: 0,
+          cpuSampleCount: 0,
         };
-        processGroups.set(process.pid, group);
+        processGroups.set(groupKey, group);
       }
       group.samples.push({
         timestamp: sample.timestamp,
@@ -652,6 +742,44 @@ export function summarizeCapture(
         memoryMB: process.memoryMB,
         privateMemoryMB: process.privateMemoryMB ?? 0,
       });
+    }
+  }
+  for (const sample of capture.main) {
+    const sampleEnd = Date.parse(sample.timestamp);
+    for (const process of sample.processes ?? []) {
+      const groupKey = `${process.pid}:${process.creationTime ?? 'legacy'}`;
+      let group = processGroups.get(groupKey);
+      if (!group) {
+        group = {
+          pid: process.pid,
+          creationTime: process.creationTime,
+          type: process.type,
+          name: process.name ?? process.type,
+          samples: [],
+          cpuTimeMs: 0,
+          cpuSampledIntervalMs: 0,
+          cpuSampleCount: 0,
+        };
+        processGroups.set(groupKey, group);
+      }
+      const cpuIntervalMs = process.cpuSampleIntervalMs;
+      const cpuTimeMs = process.cpuTimeMs;
+      if (
+        group &&
+        Number.isFinite(sampleEnd) &&
+        typeof cpuIntervalMs === 'number' &&
+        Number.isFinite(cpuIntervalMs) &&
+        cpuIntervalMs > 0 &&
+        typeof cpuTimeMs === 'number' &&
+        Number.isFinite(cpuTimeMs) &&
+        cpuTimeMs >= 0 &&
+        sampleEnd - cpuIntervalMs >= analysisStart &&
+        sampleEnd <= analysisEnd
+      ) {
+        group.cpuTimeMs += cpuTimeMs;
+        group.cpuSampledIntervalMs += cpuIntervalMs;
+        group.cpuSampleCount++;
+      }
     }
   }
 
@@ -676,6 +804,14 @@ export function summarizeCapture(
     metadataEntries.length === effectiveMain.length &&
     serializedMetadata.size === 1;
   const scenarioMetadata = metadataEntries[0] ?? {};
+  const runtimeTopologyMarkers = (capture.runtimeTopologies ?? []).filter(
+    (marker) =>
+      marker.runId === effectiveMain[0].runId &&
+      Number.isFinite(Date.parse(marker.timestamp))
+  );
+  const runtimeTopology = runtimeTopologyMarkers.at(-1);
+  const runtimeTopologyAvailable =
+    runtimeTopologyMarkers.length === 1 && runtimeTopology?.complete === true;
   const activeWidgetTypes = Array.isArray(scenarioMetadata.activeWidgetTypes)
     ? scenarioMetadata.activeWidgetTypes.filter(
         (value): value is string => typeof value === 'string'
@@ -880,6 +1016,9 @@ export function summarizeCapture(
     ...(!scenarioMetadataConsistent
       ? ['scenario metadata is missing or inconsistent']
       : []),
+    ...(runtimeTopologyMarkers.length > 0 && !runtimeTopologyAvailable
+      ? ['runtime topology marker is incomplete or ambiguous']
+      : []),
     ...(!durationSufficient
       ? ['analysis duration is shorter than five minutes']
       : []),
@@ -906,6 +1045,7 @@ export function summarizeCapture(
       endSeconds: analysisWindow.endSeconds,
     },
     scenarioMetadata,
+    ...(runtimeTopology ? { runtimeTopology } : {}),
     // Keep the complete schedule in the summary. The first visibility marker
     // is normally emitted before the first interval report, so filtering by
     // sample timestamps would incorrectly drop the opening phase.
@@ -1054,14 +1194,24 @@ export function summarizeCapture(
           : []
       ),
     },
-    processes: [...processGroups.entries()]
-      .map(([pid, group]) => ({
-        pid,
+    processes: [...processGroups.values()]
+      .map((group) => ({
+        pid: group.pid,
+        creationTime: group.creationTime,
         type: group.type,
         name: group.name,
         averageCpuPercent: average(
           group.samples.map((sample) => sample.cpuPercent)
         ),
+        sampledCpuTimeMs:
+          group.cpuSampleCount > 0 ? group.cpuTimeMs : undefined,
+        cpuSampledIntervalMs:
+          group.cpuSampleCount > 0 ? group.cpuSampledIntervalMs : undefined,
+        averageCpuTimeMsPerSecond:
+          group.cpuSampleCount > 0
+            ? group.cpuTimeMs / (group.cpuSampledIntervalMs / 1000)
+            : undefined,
+        cpuSampleCount: group.cpuSampleCount,
         averageMemoryMB: average(
           group.samples.map((sample) => sample.memoryMB)
         ),
@@ -1184,6 +1334,12 @@ export function summarizeCapture(
       trackMapAnimationFrameP99WorstMs: maximum(
         trackMapAnimationFrames.map((stats) => stats.p99)
       ),
+      trackMapCommitDrawRateHz: trackMapCommitDraw.rateHz,
+      trackMapCommitDrawP99MeanMs: trackMapCommitDraw.p99MeanMs,
+      trackMapCommitDrawP99WorstMs: trackMapCommitDraw.p99WorstMs,
+      trackMapRafDrawRateHz: trackMapRafDraw.rateHz,
+      trackMapRafDrawP99MeanMs: trackMapRafDraw.p99MeanMs,
+      trackMapRafDrawP99WorstMs: trackMapRafDraw.p99WorstMs,
       inputTraceFrameRateHz: inputTraceFrame.rateHz,
       inputTraceFrameP99MeanMs: inputTraceFrame.p99MeanMs,
       inputTraceFrameP99WorstMs: inputTraceFrame.p99WorstMs,
@@ -1213,6 +1369,7 @@ export function summarizeCapture(
     widgetInputs,
     evidence: {
       runOriginAvailable,
+      runtimeTopologyAvailable,
       privateMemoryAvailable,
       privateMemorySampleCount,
       privateMemorySpanSeconds,
@@ -1228,9 +1385,53 @@ export function summarizeCapture(
   };
 }
 
+function hasMeasuredGameTelemetry(summary: PerfSummary): boolean {
+  return (
+    !['mock', 'tape', 'sdk-replay'].includes(
+      String(summary.scenarioMetadata.sourceKind)
+    ) && summary.iracing.averageFps > 0
+  );
+}
+
+function normalizedRuntimeTopology(marker: RuntimeTopologyMarker): string {
+  const windows = marker.windows
+    .map(({ role, bounds }) => ({ role, bounds }))
+    .sort((left, right) => {
+      const leftKey = JSON.stringify(left);
+      const rightKey = JSON.stringify(right);
+      return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0;
+    });
+  return JSON.stringify(windows);
+}
+
+function runtimeTopologiesMatch(
+  baseline: PerfSummary,
+  candidate: PerfSummary
+): boolean | undefined {
+  if (
+    !baseline.evidence.runtimeTopologyAvailable ||
+    !candidate.evidence.runtimeTopologyAvailable ||
+    !baseline.runtimeTopology ||
+    !candidate.runtimeTopology
+  ) {
+    return undefined;
+  }
+  return (
+    normalizedRuntimeTopology(baseline.runtimeTopology) ===
+    normalizedRuntimeTopology(candidate.runtimeTopology)
+  );
+}
+
 function percentChange(baseline: number, candidate: number): number {
   if (baseline === 0) return 0;
   return ((candidate - baseline) / baseline) * 100;
+}
+
+function optionalDelta(
+  baseline: number | null,
+  candidate: number | null
+): number | null {
+  return baseline === null || candidate === null ? null : candidate - baseline;
 }
 
 /** Compute candidate-minus-baseline deltas for the summary metrics. */
@@ -1238,6 +1439,8 @@ export function compareSummaries(
   baseline: PerfSummary,
   candidate: PerfSummary
 ): PerfComparison {
+  const gameTelemetryAvailable =
+    hasMeasuredGameTelemetry(baseline) && hasMeasuredGameTelemetry(candidate);
   const averageFpsPercent = percentChange(
     baseline.iracing.averageFps,
     candidate.iracing.averageFps
@@ -1248,6 +1451,7 @@ export function compareSummaries(
   );
   const comparisonConclusive =
     baseline.evidence.conclusive && candidate.evidence.conclusive;
+  const runtimeTopologyMatch = runtimeTopologiesMatch(baseline, candidate);
   const verdict = (passed: boolean): boolean | null =>
     comparisonConclusive ? passed : null;
   const evidenceTarget = (target: string): string =>
@@ -1282,6 +1486,30 @@ export function compareSummaries(
       trackMapAnimationFrameP99Ms:
         candidate.renderer.trackMapAnimationFrameP99MeanMs -
         baseline.renderer.trackMapAnimationFrameP99MeanMs,
+      trackMapCommitDrawRateHz: optionalDelta(
+        baseline.renderer.trackMapCommitDrawRateHz,
+        candidate.renderer.trackMapCommitDrawRateHz
+      ),
+      trackMapCommitDrawP99Ms: optionalDelta(
+        baseline.renderer.trackMapCommitDrawP99MeanMs,
+        candidate.renderer.trackMapCommitDrawP99MeanMs
+      ),
+      trackMapCommitDrawP99WorstMs: optionalDelta(
+        baseline.renderer.trackMapCommitDrawP99WorstMs,
+        candidate.renderer.trackMapCommitDrawP99WorstMs
+      ),
+      trackMapRafDrawRateHz: optionalDelta(
+        baseline.renderer.trackMapRafDrawRateHz,
+        candidate.renderer.trackMapRafDrawRateHz
+      ),
+      trackMapRafDrawP99Ms: optionalDelta(
+        baseline.renderer.trackMapRafDrawP99MeanMs,
+        candidate.renderer.trackMapRafDrawP99MeanMs
+      ),
+      trackMapRafDrawP99WorstMs: optionalDelta(
+        baseline.renderer.trackMapRafDrawP99WorstMs,
+        candidate.renderer.trackMapRafDrawP99WorstMs
+      ),
       inputTraceFrameRateHz:
         candidate.renderer.inputTraceFrameRateHz -
         baseline.renderer.inputTraceFrameRateHz,
@@ -1309,16 +1537,36 @@ export function compareSummaries(
     },
     checks: [
       {
+        name: 'Runtime window and process topology',
+        passed: runtimeTopologyMatch ?? null,
+        actual:
+          runtimeTopologyMatch === undefined
+            ? Number.NaN
+            : Number(!runtimeTopologyMatch),
+        target:
+          runtimeTopologyMatch === undefined
+            ? 'n/a: runtime topology marker unavailable'
+            : 'matching window roles/counts and bounds',
+      },
+      {
         name: 'iRacing average FPS regression',
-        passed: verdict(averageFpsPercent >= -2),
+        passed: gameTelemetryAvailable
+          ? verdict(averageFpsPercent >= -2)
+          : null,
         actual: averageFpsPercent,
-        target: evidenceTarget('>= -2%'),
+        target: gameTelemetryAvailable
+          ? evidenceTarget('>= -2%')
+          : 'n/a: measured game telemetry unavailable',
       },
       {
         name: 'iRacing sampled FPS p1 regression',
-        passed: verdict(onePercentLowFpsPercent >= -5),
+        passed: gameTelemetryAvailable
+          ? verdict(onePercentLowFpsPercent >= -5)
+          : null,
         actual: onePercentLowFpsPercent,
-        target: evidenceTarget('>= -5%'),
+        target: gameTelemetryAvailable
+          ? evidenceTarget('>= -5%')
+          : 'n/a: measured game telemetry unavailable',
       },
       {
         name: 'Telemetry processing p99',
@@ -1348,12 +1596,16 @@ export function compareSummaries(
   };
 }
 
-function format(value: number, digits = 2): string {
-  return Number.isFinite(value) ? value.toFixed(digits) : 'n/a';
+function format(value: number | null | undefined, digits = 2): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : 'n/a';
 }
 
 /** Format the summary as a Markdown report. */
 export function summaryMarkdown(summary: PerfSummary): string {
+  const gameValue = (value: number, suffix = '') =>
+    hasMeasuredGameTelemetry(summary) ? `${format(value)}${suffix}` : 'n/a';
   const sections = Object.entries(summary.sections)
     .map(
       ([name, stats]) =>
@@ -1363,7 +1615,7 @@ export function summaryMarkdown(summary: PerfSummary): string {
   const processes = summary.processes
     .map(
       (process) =>
-        `| ${process.name} | ${format(process.averageCpuPercent)}% | ${format(process.averageMemoryMB)} | ${format(process.memorySlopeMBPerMinute)} | ${format(process.averagePrivateMemoryMB)} | ${format(process.privateMemorySlopeMBPerMinute)} |`
+        `| ${process.name} | ${format(process.averageCpuPercent)}% | ${process.cpuSampleCount} | ${format(process.sampledCpuTimeMs, 3)} | ${format(process.averageCpuTimeMsPerSecond, 3)} | ${format(process.cpuSampledIntervalMs === undefined ? undefined : process.cpuSampledIntervalMs / 1000, 2)} | ${format(process.averageMemoryMB)} | ${format(process.memorySlopeMBPerMinute)} | ${format(process.averagePrivateMemoryMB)} | ${format(process.privateMemorySlopeMBPerMinute)} |`
     )
     .join('\n');
   const channels = Object.entries(summary.channels)
@@ -1398,6 +1650,25 @@ export function summaryMarkdown(summary: PerfSummary): string {
         `| ${phase.index} | ${phase.visibility} | ${format(phase.startSeconds)} | ${format(phase.durationSeconds)} | ${phase.sampleCount} | ${phase.expectedBehaviorSatisfied ? 'PASS' : 'INCONCLUSIVE'} | ${phase.reasons.join('; ')} |`
     )
     .join('\n');
+  const runtimeTopology = summary.runtimeTopology
+    ? [
+        `Snapshot: ${summary.runtimeTopology.complete ? 'complete' : 'INCOMPLETE'} at ${summary.runtimeTopology.timestamp}`,
+        'Startup-only snapshot; later runtime window/process changes are not tracked.',
+        `Topology changed during startup wait: ${summary.runtimeTopology.topologyChanged ? 'yes' : 'no'}`,
+        `Runtime process counts: ${JSON.stringify(summary.runtimeTopology.processCounts)}`,
+        ...(summary.runtimeTopology.snapshotErrors?.length
+          ? [
+              `Snapshot errors: ${summary.runtimeTopology.snapshotErrors.join('; ')}`,
+            ]
+          : []),
+        '| Role | Route | Bounds | Renderer PID | Visible | Ready |',
+        '| --- | --- | --- | ---: | --- | --- |',
+        ...summary.runtimeTopology.windows.map(
+          (window) =>
+            `| ${window.role} | ${window.route || '(empty)'} | ${window.bounds.x},${window.bounds.y} ${window.bounds.width}x${window.bounds.height} | ${window.rendererPid} | ${window.visible ? 'yes' : 'no'} | ${window.ready ? 'yes' : 'no'} |`
+        ),
+      ].join('\n')
+    : 'No runtime topology marker (legacy log or marker not emitted).';
   const evidenceStatus = summary.evidence.conclusive
     ? 'CONCLUSIVE'
     : `INCONCLUSIVE — ${summary.evidence.inconclusiveReasons.join('; ')}`;
@@ -1413,13 +1684,18 @@ export function summaryMarkdown(summary: PerfSummary): string {
 - Evidence: **${evidenceStatus}**
 - Scenario metadata: \`${JSON.stringify(summary.scenarioMetadata)}\`
 
+CPU ms/s is sampled CPU time per wall-clock second for each process; 1000 ms/s
+corresponds to one fully occupied CPU core. CPU% uses Electron's normalization.
+Renderer frame-time fields below are requestAnimationFrame callback intervals,
+not rendering durations or screen presentation intervals.
+
 | Metric | Result |
 | --- | ---: |
-| iRacing average FPS | ${format(summary.iracing.averageFps)} |
-| iRacing sampled FPS p1 mean | ${format(summary.iracing.meanOnePercentLowFps)} |
-| iRacing worst sampled FPS | ${format(summary.iracing.worstFps)} |
-| iRacing foreground CPU | ${format(summary.iracing.averageCpuForeground)}% |
-| iRacing GPU usage | ${format(summary.iracing.averageGpuUsage)}% |
+| iRacing average FPS | ${gameValue(summary.iracing.averageFps)} |
+| iRacing sampled FPS p1 mean | ${gameValue(summary.iracing.meanOnePercentLowFps)} |
+| iRacing worst sampled FPS | ${gameValue(summary.iracing.worstFps)} |
+| iRacing foreground CPU | ${gameValue(summary.iracing.averageCpuForeground, '%')} |
+| iRacing GPU usage | ${gameValue(summary.iracing.averageGpuUsage, '%')} |
 | irDashies app CPU | ${format(summary.app.averageCpuPercent)}% |
 | Average renderer / main / GPU CPU | ${format(summary.app.averageRendererCpuPercent)}% / ${format(summary.app.averageMainCpuPercent)}% / ${format(summary.app.averageGpuCpuPercent)}% |
 | irDashies peak memory | ${format(summary.app.peakMemoryMB)} MB |
@@ -1444,6 +1720,10 @@ export function summaryMarkdown(summary: PerfSummary): string {
 | Radar frame p99, mean / worst interval | ${format(summary.renderer.radarFrameP99MeanMs, 3)} / ${format(summary.renderer.radarFrameP99WorstMs, 3)} ms |
 | Track-map animation frames / second | ${format(summary.renderer.trackMapAnimationFrameRateHz)} |
 | Track-map animation-frame p99, mean / worst interval | ${format(summary.renderer.trackMapAnimationFrameP99MeanMs, 3)} / ${format(summary.renderer.trackMapAnimationFrameP99WorstMs, 3)} ms |
+| Track-map commit draws / second | ${format(summary.renderer.trackMapCommitDrawRateHz)} |
+| Track-map commit-draw p99, mean / worst interval | ${format(summary.renderer.trackMapCommitDrawP99MeanMs, 3)} / ${format(summary.renderer.trackMapCommitDrawP99WorstMs, 3)} ms |
+| Track-map rAF draws / second | ${format(summary.renderer.trackMapRafDrawRateHz)} |
+| Track-map rAF-draw p99, mean / worst interval | ${format(summary.renderer.trackMapRafDrawP99MeanMs, 3)} / ${format(summary.renderer.trackMapRafDrawP99WorstMs, 3)} ms |
 | Lap Trace plot frames / second | ${format(summary.renderer.lapTraceFrameRateHz)} |
 | Lap Trace plot frame p99, mean / worst interval | ${format(summary.renderer.lapTraceFrameP99MeanMs, 3)} / ${format(summary.renderer.lapTraceFrameP99WorstMs, 3)} ms |
 | Lap Trace brake-cue steps / second | ${format(summary.renderer.lapTraceBrakeCueRateHz)} |
@@ -1475,6 +1755,10 @@ ${visibility}
 | ---: | --- | ---: | ---: | ---: | --- | --- |
 ${phaseEvidence}
 
+## Runtime topology
+
+${runtimeTopology}
+
 ## Timed hot-path sections
 
 | Section | Operations | Average | Mean interval p99 | Worst interval p99 |
@@ -1483,8 +1767,8 @@ ${sections}
 
 ## Process breakdown
 
-| Process | Average CPU | Average working set MB | Working-set slope MB/min | Average private MB | Private slope MB/min |
-| --- | ---: | ---: | ---: | ---: | ---: |
+| Process | Average CPU | CPU samples | Sampled CPU ms | CPU ms/s | Sampled duration s | Average working set MB | Working-set slope MB/min | Average private MB | Private slope MB/min |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 ${processes}
 `;
 }
@@ -1492,6 +1776,10 @@ ${processes}
 /** Format the comparison as a Markdown table. */
 export function comparisonMarkdown(comparison: PerfComparison): string {
   const { baseline, candidate, delta } = comparison;
+  const gameDelta = (value: number) =>
+    hasMeasuredGameTelemetry(baseline) && hasMeasuredGameTelemetry(candidate)
+      ? `${format(value)}%`
+      : 'n/a';
   const evidenceStatus =
     baseline.evidence.conclusive && candidate.evidence.conclusive
       ? 'CONCLUSIVE'
@@ -1511,8 +1799,8 @@ export function comparisonMarkdown(comparison: PerfComparison): string {
 
 | Delta | Result |
 | --- | ---: |
-| iRacing average FPS | ${format(delta.averageFpsPercent)}% |
-| iRacing sampled FPS p1 mean | ${format(delta.onePercentLowFpsPercent)}% |
+| iRacing average FPS | ${gameDelta(delta.averageFpsPercent)} |
+| iRacing sampled FPS p1 mean | ${gameDelta(delta.onePercentLowFpsPercent)} |
 | irDashies app CPU | ${format(delta.appCpuPercent)} percentage points |
 | irDashies peak memory | ${format(delta.peakMemoryMB)} MB |
 | processTelemetry p99 mean | ${format(delta.processTelemetryP99Ms)} ms |
@@ -1523,6 +1811,10 @@ export function comparisonMarkdown(comparison: PerfComparison): string {
 | Radar frame p99 mean | ${format(delta.radarFrameP99Ms, 3)} ms |
 | Track-map animation frames / second | ${format(delta.trackMapAnimationFrameRateHz)} Hz |
 | Track-map animation-frame p99 mean | ${format(delta.trackMapAnimationFrameP99Ms, 3)} ms |
+| Track-map commit draws / second | ${format(delta.trackMapCommitDrawRateHz)} Hz |
+| Track-map commit-draw p99 mean / worst delta | ${format(delta.trackMapCommitDrawP99Ms, 3)} / ${format(delta.trackMapCommitDrawP99WorstMs, 3)} ms |
+| Track-map rAF draws / second | ${format(delta.trackMapRafDrawRateHz)} Hz |
+| Track-map rAF-draw p99 mean / worst delta | ${format(delta.trackMapRafDrawP99Ms, 3)} / ${format(delta.trackMapRafDrawP99WorstMs, 3)} ms |
 | Lap Trace plot frames / second | ${format(delta.lapTraceFrameRateHz)} Hz |
 | Lap Trace plot frame p99 mean | ${format(delta.lapTraceFrameP99Ms, 3)} ms |
 | Lap Trace brake-cue steps / second | ${format(delta.lapTraceBrakeCueRateHz)} Hz |

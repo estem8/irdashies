@@ -22,6 +22,8 @@ export interface RendererPerfSample {
   telemetryCallbackMs?: NumericSampleStats;
   channelCallbackMs?: NumericSampleStats;
   trackMapAnimationFrameMs?: NumericSampleStats;
+  trackMapCommitDrawMs?: NumericSampleStats;
+  trackMapRafDrawMs?: NumericSampleStats;
   inputTraceFrameMs?: NumericSampleStats;
   radarFrameMs?: NumericSampleStats;
   standingsPlayerGapsMs?: NumericSampleStats;
@@ -38,6 +40,8 @@ export interface RendererPerfSample {
 /** Every measure the renderer may report; the preload bridge drops any other. */
 export const RENDERER_PERF_MEASURE_NAMES = [
   'trackMapAnimationFrame',
+  'trackMapCommitDraw',
+  'trackMapRafDraw',
   'inputTraceFrame',
   'radarFrame',
   'standingsPlayerGaps',

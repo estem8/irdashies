@@ -1,3 +1,4 @@
+import './app/perfUserData';
 import { setupStorageStatusBridge } from './app/bridge/storageStatusBridge';
 import { setupWidgetPreviewBridge } from './app/bridge/widgetPreviewBridge';
 import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
@@ -106,6 +107,7 @@ import {
   getPerfRunConfig,
   updatePerfDashboardMetadata,
   PERF_CAPTURE_ORIGIN_LOG_PREFIX,
+  PERF_RUNTIME_TOPOLOGY_LOG_PREFIX,
   PERF_VISIBILITY_LOG_PREFIX,
 } from './app/perfRunConfig';
 import { ChannelBus, setupChannelBridge } from './app/bridge/channelBridge';
@@ -115,6 +117,7 @@ import { PerfHeapProfiler } from './app/perfHeapProfiler';
 import { createBeforeQuitHandler } from './app/shutdownCoordinator';
 import { monitorDevParent } from './app/devParentMonitor';
 import { flushSettingsWindowMovementOnShutdown } from './app/trackWindowMovement';
+import { capturePerfRuntimeTopology } from './app/perfRuntimeTopology';
 
 const safeErrorDetails = (error: unknown) => {
   const code =
@@ -559,8 +562,68 @@ void app.whenReady().then(async () => {
       `${PERF_CAPTURE_ORIGIN_LOG_PREFIX}${JSON.stringify({
         timestamp: captureOrigin,
         runId: process.env.PERF_RUN_ID ?? 'manual',
+        sourceKind: process.env.PERF_SOURCE_KIND,
+        userDataPath: app.getPath('userData'),
+        windows: BrowserWindow.getAllWindows()
+          .filter((window) => !window.isDestroyed())
+          .map((window) => ({
+            id: window.id,
+            rendererPid: window.webContents.getOSProcessId(),
+            title: window.getTitle(),
+            route: window.webContents.getURL(),
+            bounds: window.getBounds(),
+            visible: window.isVisible(),
+          })),
       })}`
     );
+    capturePerfRuntimeTopology({
+      runId: process.env.PERF_RUN_ID ?? 'manual',
+      getWindows: () =>
+        BrowserWindow.getAllWindows().map((window) => {
+          const webContents = window.webContents;
+          const onReadinessChange = (listener: () => void) => {
+            webContents.on('did-finish-load', listener);
+            webContents.on('did-stop-loading', listener);
+            webContents.on('render-process-gone', listener);
+            webContents.on('destroyed', listener);
+            window.on('closed', listener);
+            return () => {
+              webContents.off('did-finish-load', listener);
+              webContents.off('did-stop-loading', listener);
+              webContents.off('render-process-gone', listener);
+              webContents.off('destroyed', listener);
+              window.off('closed', listener);
+            };
+          };
+          return {
+            id: window.id,
+            isDestroyed: () =>
+              window.isDestroyed() || webContents.isDestroyed(),
+            read: () => ({
+              id: window.id,
+              rendererPid: webContents.getOSProcessId(),
+              route: webContents.getURL(),
+              bounds: window.getBounds(),
+              visible: window.isVisible(),
+              loaded:
+                !webContents.isLoadingMainFrame() &&
+                webContents.getURL() !== '' &&
+                webContents.getURL() !== 'about:blank',
+              loading: webContents.isLoadingMainFrame(),
+            }),
+            onReadinessChange,
+          };
+        }),
+      getProcessTypes: () => app.getAppMetrics().map((metric) => metric.type),
+      writeMarker: (marker) =>
+        log.info(
+          `${PERF_RUNTIME_TOPOLOGY_LOG_PREFIX}${JSON.stringify(marker)}`
+        ),
+      onBeforeQuit: (listener) => {
+        app.once('before-quit', listener);
+        return () => app.removeListener('before-quit', listener);
+      },
+    });
     const heapProfilePath = process.env.PERF_HEAP_PROFILE_PATH;
     if (heapProfilePath && perfRun.durationSeconds <= 0) {
       log.error(

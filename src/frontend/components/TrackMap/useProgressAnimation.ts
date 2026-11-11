@@ -182,7 +182,11 @@ export const useProgressAnimation = (
     if (!interpolator) return;
     const drawCommittedAppearance = () =>
       draw(interpolator.getValues(), interpolator.getCount());
-    perfMetrics.measure('trackMapAnimationFrame', drawCommittedAppearance);
+    perfMetrics.measure(
+      'trackMapAnimationFrame',
+      drawCommittedAppearance,
+      'trackMapCommitDraw'
+    );
   });
 
   useLayoutEffect(() => {
@@ -205,7 +209,8 @@ export const useProgressAnimation = (
       lastDrawRef.current = now;
       const active = perfMetrics.measure(
         'trackMapAnimationFrame',
-        measuredFrame
+        measuredFrame,
+        'trackMapRafDraw'
       );
       frameRef.current = active ? requestAnimationFrame(frame) : 0;
     };
@@ -217,7 +222,11 @@ export const useProgressAnimation = (
     lastDrawRef.current = now;
     const drawSnapshot = () =>
       drawRef.current(interpolator.getValues(), interpolator.getCount());
-    perfMetrics.measure('trackMapAnimationFrame', drawSnapshot);
+    perfMetrics.measure(
+      'trackMapAnimationFrame',
+      drawSnapshot,
+      'trackMapCommitDraw'
+    );
     if (active && frameRef.current === 0) {
       frameRef.current = requestAnimationFrame(frame);
     }

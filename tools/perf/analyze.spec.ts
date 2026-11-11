@@ -86,7 +86,25 @@ const capture = (
     visibility: 'visible' | 'hidden';
     durationSeconds: number;
   }[] = [],
-  originSeconds = 0
+  originSeconds = 0,
+  runtimeTopologies: {
+    timestamp: string;
+    runId: string;
+    complete: boolean;
+    timedOut: boolean;
+    topologyChanged: boolean;
+    processMetricsAvailable: boolean;
+    windows: {
+      id: number;
+      rendererPid: number;
+      route: string;
+      role: 'display' | 'widget' | 'gantry' | 'settings' | 'other';
+      bounds: { x: number; y: number; width: number; height: number };
+      visible: boolean;
+      ready: boolean;
+    }[];
+    processCounts: Record<string, number>;
+  }[] = []
 ) => ({
   main,
   renderer: [] as RendererPerfSample[],
@@ -97,6 +115,7 @@ const capture = (
       runId: 'run',
     },
   ],
+  runtimeTopologies,
 });
 
 const conclusiveSamples = (fps = 100) =>
@@ -105,6 +124,37 @@ const conclusiveSamples = (fps = 100) =>
   );
 
 describe('performance analysis', () => {
+  it.each(['mock', 'tape', 'sdk-replay'])(
+    'does not present %s fixture FPS as measured game performance',
+    (sourceKind) => {
+      const samples = [0, 60, 120].map((seconds) => ({
+        ...mainSample(seconds, 100),
+        scenarioMetadata: {
+          ...mainSample(seconds, 100).scenarioMetadata,
+          sourceKind,
+        },
+      }));
+      const summary = summarizeCapture(capture(samples), 0);
+      summary.evidence.conclusive = true;
+      const comparison = compareSummaries(summary, summary);
+
+      expect(summaryMarkdown(summary)).toContain(
+        '| iRacing average FPS | n/a |'
+      );
+      expect(comparisonMarkdown(comparison)).toContain(
+        '| iRacing average FPS | n/a |'
+      );
+      expect(
+        comparison.checks.slice(0, 2).every((check) => check.passed === null)
+      ).toBe(true);
+      expect(
+        comparison.checks.find(
+          ({ name }) => name === 'iRacing average FPS regression'
+        )?.target
+      ).toContain('unavailable');
+    }
+  );
+
   it('parses structured records mixed with normal logs', () => {
     const main = mainSample(5, 100, 100, 100, 5000);
     const contents = [
@@ -123,6 +173,143 @@ describe('performance analysis', () => {
     });
   });
 
+  it('parses and reports runtime topology markers', () => {
+    const marker = {
+      timestamp: new Date(1000).toISOString(),
+      runId: 'run',
+      complete: true,
+      timedOut: false,
+      topologyChanged: false,
+      processMetricsAvailable: true,
+      windows: [
+        {
+          id: 1,
+          rendererPid: 400,
+          route: 'http://localhost:5173/#/overlay-widget',
+          role: 'widget' as const,
+          bounds: { x: 10, y: 20, width: 300, height: 200 },
+          visible: true,
+          ready: true,
+        },
+      ],
+      processCounts: { Browser: 1, GPU: 1, Tab: 1, Utility: 2 },
+    };
+    const parsed = parsePerfLog(
+      `[PerfRunTopology:JSON] ${JSON.stringify(marker)}`
+    );
+    const summary = summarizeCapture(
+      capture(conclusiveSamples(), [], 0, [marker]),
+      0
+    );
+
+    expect(parsed.runtimeTopologies).toEqual([marker]);
+    expect(summary.evidence.runtimeTopologyAvailable).toBe(true);
+    expect(summary.runtimeTopology?.windows[0]).toMatchObject({
+      role: 'widget',
+      route: 'http://localhost:5173/#/overlay-widget',
+      bounds: { x: 10, y: 20, width: 300, height: 200 },
+    });
+    expect(summaryMarkdown(summary)).toContain('## Runtime topology');
+    expect(summaryMarkdown(summary)).toContain(
+      '| widget | http://localhost:5173/#/overlay-widget | 10,20 300x200 | 400 | yes | yes |'
+    );
+  });
+
+  it('compares normalized window topology and ignores volatile identifiers', () => {
+    const makeTopology = (
+      id: number,
+      rendererPid: number,
+      route: string,
+      visible: boolean,
+      utilityCount: number,
+      width = 300
+    ) => ({
+      timestamp: new Date(1000).toISOString(),
+      runId: 'run',
+      complete: true,
+      timedOut: false,
+      topologyChanged: false,
+      processMetricsAvailable: true,
+      windows: [
+        {
+          id,
+          rendererPid,
+          route,
+          role: 'display' as const,
+          bounds: { x: 10, y: 20, width, height: 200 },
+          visible,
+          ready: true,
+        },
+      ],
+      processCounts: {
+        Browser: 1,
+        GPU: 1,
+        Tab: 1,
+        Utility: utilityCount,
+      },
+    });
+    const baseline = summarizeCapture(
+      capture(conclusiveSamples(), [], 0, [
+        makeTopology(1, 400, 'http://localhost:5173/#/overlay', true, 2),
+      ]),
+      0
+    );
+    const candidate = summarizeCapture(
+      capture(conclusiveSamples(), [], 0, [
+        makeTopology(98, 990, 'http://localhost:9999/#/overlay', false, 5),
+      ]),
+      0
+    );
+    const matching = compareSummaries(baseline, candidate).checks.find(
+      ({ name }) => name === 'Runtime window and process topology'
+    );
+    const changedBounds = summarizeCapture(
+      capture(conclusiveSamples(), [], 0, [
+        makeTopology(98, 990, 'http://localhost:9999/#/overlay', false, 2, 400),
+      ]),
+      0
+    );
+    const mismatch = compareSummaries(baseline, changedBounds).checks.find(
+      ({ name }) => name === 'Runtime window and process topology'
+    );
+
+    expect(matching?.passed).toBe(true);
+    expect(mismatch?.passed).toBe(false);
+  });
+
+  it('keeps legacy topology unknown and marks incomplete new evidence', () => {
+    const legacy = summarizeCapture(capture(conclusiveSamples()), 0);
+    const legacyTopologyCheck = compareSummaries(legacy, legacy).checks.find(
+      ({ name }) => name === 'Runtime window and process topology'
+    );
+    const incomplete = summarizeCapture(
+      capture(conclusiveSamples(), [], 0, [
+        {
+          timestamp: new Date(1000).toISOString(),
+          runId: 'run',
+          complete: false,
+          timedOut: true,
+          topologyChanged: false,
+          processMetricsAvailable: true,
+          windows: [],
+          processCounts: { Browser: 1 },
+        },
+      ]),
+      0
+    );
+
+    expect(legacy.evidence.conclusive).toBe(true);
+    expect(legacy.evidence.runtimeTopologyAvailable).toBe(false);
+    expect(legacyTopologyCheck?.passed).toBeNull();
+    expect(summaryMarkdown(legacy)).toContain(
+      'No runtime topology marker (legacy log or marker not emitted).'
+    );
+    expect(incomplete.evidence.conclusive).toBe(false);
+    expect(incomplete.evidence.inconclusiveReasons).toContain(
+      'runtime topology marker is incomplete or ambiguous'
+    );
+  });
+
   it('summarizes memory slope and telemetry metrics', () => {
     const summary = summarizeCapture(
       capture([mainSample(0, 100), mainSample(60, 102), mainSample(120, 104)]),
@@ -136,6 +323,139 @@ describe('performance analysis', () => {
     expect(summary.widgetInputs.standings.inputs['standings.snapshot']).toEqual(
       expect.objectContaining({ observed: true })
     );
+  });
+
+  it('weights per-process CPU time and excludes intervals crossing the window', () => {
+    const samples = [
+      // Starts before the 30-second analysis window and must be excluded.
+      {
+        ...mainSample(31, 100, 100, 100, 1000),
+        processes: [
+          {
+            pid: 10,
+            type: 'Browser',
+            cpuPercent: 99,
+            memoryMB: 10,
+            cpuTimeMs: 500,
+            cpuSampleIntervalMs: 5000,
+          },
+        ],
+      },
+      {
+        ...mainSample(40, 100, 100, 100, 1000),
+        processes: [
+          {
+            pid: 10,
+            type: 'Browser',
+            cpuPercent: 1,
+            memoryMB: 10,
+            cpuTimeMs: 20,
+            cpuSampleIntervalMs: 4000,
+          },
+        ],
+      },
+      {
+        ...mainSample(50, 100, 100, 100, 1000),
+        processes: [
+          {
+            pid: 10,
+            type: 'Browser',
+            cpuPercent: 1,
+            memoryMB: 10,
+            cpuTimeMs: 120,
+            cpuSampleIntervalMs: 10000,
+          },
+        ],
+      },
+      // Ends after the analysis window and must be excluded.
+      {
+        ...mainSample(65, 100, 100, 100, 1000),
+        processes: [
+          {
+            pid: 10,
+            type: 'Browser',
+            cpuPercent: 1,
+            memoryMB: 10,
+            cpuTimeMs: 900,
+            cpuSampleIntervalMs: 5000,
+          },
+        ],
+      },
+    ];
+    const summary = summarizeCapture(capture(samples), 0, {
+      startSeconds: 30,
+      endSeconds: 60,
+    });
+    const process = summary.processes.find(({ pid }) => pid === 10);
+
+    expect(process).toEqual(
+      expect.objectContaining({
+        cpuSampleCount: 2,
+        sampledCpuTimeMs: 140,
+        cpuSampledIntervalMs: 14_000,
+        averageCpuTimeMsPerSecond: 10,
+      })
+    );
+    expect(summaryMarkdown(summary)).toContain(
+      '| Browser | 33.67% | 2 | 140.000 | 10.000 | 14.00 |'
+    );
+    expect(comparisonMarkdown(compareSummaries(summary, summary))).toContain(
+      '| irDashies app CPU |'
+    );
+    expect(summaryMarkdown(summary)).toContain('| irDashies app CPU |');
+    expect(summaryMarkdown(summary)).toContain(
+      '| Browser | 33.67% | 2 | 140.000 | 10.000 | 14.00 |'
+    );
+  });
+
+  it('keeps a valid zero CPU delta distinct from unsupported legacy data', () => {
+    const sample = {
+      ...mainSample(40, 100),
+      processes: [
+        {
+          pid: 10,
+          type: 'Browser',
+          cpuPercent: 0,
+          memoryMB: 10,
+          cpuTimeMs: 0,
+          cpuTimeMsPerSecond: 0,
+          cpuSampleIntervalMs: 10_000,
+        },
+        { pid: 11, type: 'Tab', cpuPercent: 0, memoryMB: 5 },
+      ],
+    };
+    const summary = summarizeCapture(capture([sample]), 0, {
+      startSeconds: 30,
+    });
+    const supported = summary.processes.find(({ pid }) => pid === 10);
+    const legacy = summary.processes.find(({ pid }) => pid === 11);
+
+    expect(supported).toEqual(
+      expect.objectContaining({
+        cpuSampleCount: 1,
+        sampledCpuTimeMs: 0,
+        cpuSampledIntervalMs: 10_000,
+        averageCpuTimeMsPerSecond: 0,
+      })
+    );
+    expect(legacy).toEqual(
+      expect.objectContaining({
+        cpuSampleCount: 0,
+      })
+    );
+    expect(legacy?.sampledCpuTimeMs).toBeUndefined();
+    expect(legacy?.cpuSampledIntervalMs).toBeUndefined();
+    expect(legacy?.averageCpuTimeMsPerSecond).toBeUndefined();
+    expect(summaryMarkdown(summary)).toContain(
+      '| Tab | 0.00% | 0 | n/a | n/a | n/a |'
+    );
+    const serializedLegacy = JSON.parse(JSON.stringify(legacy)) as Record<
+      string,
+      unknown
+    >;
+    expect(serializedLegacy).not.toHaveProperty('sampledCpuTimeMs');
+    expect(serializedLegacy).not.toHaveProperty('cpuSampledIntervalMs');
+    expect(serializedLegacy).not.toHaveProperty('averageCpuTimeMsPerSecond');
   });
 
   it('summarizes renderer telemetry callback cost and rate', () => {
@@ -156,6 +476,8 @@ describe('performance analysis', () => {
         frameTimeMs: stats(16),
         telemetryCallbackMs: stats(0.2, { count: 100, p99: 0.7 }),
         trackMapAnimationFrameMs: stats(0.4, { count: 250, p99: 1.1 }),
+        trackMapCommitDrawMs: stats(0.3, { count: 50, p99: 0.8 }),
+        trackMapRafDrawMs: stats(0.2, { count: 100, p99: 0.6 }),
         framesOver25Ms: 0,
         framesOver50Ms: 0,
       },
@@ -167,6 +489,16 @@ describe('performance analysis', () => {
     expect(summary.renderer.trackMapAnimationFrameRateHz).toBe(50);
     expect(summary.renderer.trackMapAnimationFrameP99MeanMs).toBe(1.1);
     expect(summary.renderer.trackMapAnimationFrameP99WorstMs).toBe(1.1);
+    expect(summary.renderer.trackMapCommitDrawRateHz).toBe(10);
+    expect(summary.renderer.trackMapCommitDrawP99MeanMs).toBe(0.8);
+    expect(summary.renderer.trackMapRafDrawRateHz).toBe(20);
+    expect(summary.renderer.trackMapRafDrawP99MeanMs).toBe(0.6);
+    expect(summaryMarkdown(summary)).toContain(
+      '| Track-map commit draws / second | 10.00 |'
+    );
+    expect(summaryMarkdown(summary)).toContain(
+      '| Track-map rAF-draw p99, mean / worst interval | 0.600 / 0.600 ms |'
+    );
 
     const candidate = {
       ...summary,
@@ -174,14 +506,143 @@ describe('performance analysis', () => {
         ...summary.renderer,
         trackMapAnimationFrameRateHz: 60,
         trackMapAnimationFrameP99MeanMs: 1.6,
+        trackMapCommitDrawRateHz: 15,
+        trackMapCommitDrawP99MeanMs: 0.5,
+        trackMapCommitDrawP99WorstMs: 1.2,
+        trackMapRafDrawRateHz: 30,
+        trackMapRafDrawP99MeanMs: 0.4,
+        trackMapRafDrawP99WorstMs: 0.9,
       },
     };
     const comparison = compareSummaries(summary, candidate);
     expect(comparison.delta.trackMapAnimationFrameRateHz).toBe(10);
     expect(comparison.delta.trackMapAnimationFrameP99Ms).toBeCloseTo(0.5);
+    expect(comparison.delta.trackMapCommitDrawRateHz).toBe(5);
+    expect(comparison.delta.trackMapCommitDrawP99Ms).toBeCloseTo(-0.3);
+    expect(comparison.delta.trackMapCommitDrawP99WorstMs).toBeCloseTo(0.4);
+    expect(comparison.delta.trackMapRafDrawRateHz).toBe(10);
+    expect(comparison.delta.trackMapRafDrawP99Ms).toBeCloseTo(-0.2);
+    expect(comparison.delta.trackMapRafDrawP99WorstMs).toBeCloseTo(0.3);
     expect(comparisonMarkdown(comparison)).toContain(
       '| Track-map animation-frame p99 mean | 0.500 ms |'
     );
+    expect(comparisonMarkdown(comparison)).toContain(
+      '| Track-map commit draws / second | 5.00 Hz |'
+    );
+  });
+
+  it('keeps new Track Map breakdowns unavailable for old logs', () => {
+    const input = capture([mainSample(5, 100, 100, 100, 5000)]);
+    const oldRendererSample: RendererPerfSample = {
+      schemaVersion: 1,
+      timestamp: new Date(5000).toISOString(),
+      runId: 'run',
+      scenario: 'full',
+      pid: 1,
+      route: '/',
+      visibilityState: 'visible',
+      intervalMs: 5000,
+      frameTimeMs: stats(16),
+      trackMapAnimationFrameMs: stats(0.4, { count: 250, p99: 1.1 }),
+      framesOver25Ms: 0,
+      framesOver50Ms: 0,
+    };
+    input.renderer = [oldRendererSample];
+    const oldLogSummary = summarizeCapture(input, 0);
+    expect(oldLogSummary.renderer.trackMapCommitDrawRateHz).toBeNull();
+    expect(oldLogSummary.renderer.trackMapRafDrawRateHz).toBeNull();
+    expect(summaryMarkdown(oldLogSummary)).toContain(
+      '| Track-map commit draws / second | n/a |'
+    );
+
+    const idleInput = capture([mainSample(5, 100, 100, 100, 5000)]);
+    idleInput.renderer = [
+      {
+        ...oldRendererSample,
+        trackMapCommitDrawMs: stats(0, { count: 0, p99: 0 }),
+        trackMapRafDrawMs: stats(0, { count: 0, p99: 0 }),
+      },
+    ];
+    const idleSummary = summarizeCapture(idleInput, 0);
+    expect(idleSummary.renderer.trackMapCommitDrawRateHz).toBe(0);
+    expect(idleSummary.renderer.trackMapRafDrawP99MeanMs).toBe(0);
+
+    const candidate = {
+      ...oldLogSummary,
+      renderer: {
+        ...oldLogSummary.renderer,
+        trackMapCommitDrawRateHz: 10,
+        trackMapCommitDrawP99MeanMs: 0.8,
+        trackMapCommitDrawP99WorstMs: 0.8,
+        trackMapRafDrawRateHz: 40,
+        trackMapRafDrawP99MeanMs: 0.5,
+        trackMapRafDrawP99WorstMs: 0.5,
+      },
+    };
+    const comparison = compareSummaries(oldLogSummary, candidate);
+    expect(comparison.delta.trackMapCommitDrawRateHz).toBeNull();
+    expect(comparison.delta.trackMapRafDrawP99Ms).toBeNull();
+    expect(comparisonMarkdown(comparison)).toContain(
+      '| Track-map commit draws / second | n/a Hz |'
+    );
+  });
+
+  it('keeps reused PIDs in separate process lifetime groups', () => {
+    const samples = [
+      {
+        ...mainSample(40, 100),
+        processes: [
+          {
+            pid: 42,
+            creationTime: 1001,
+            type: 'Browser',
+            name: 'Old lifetime',
+            cpuPercent: 4,
+            memoryMB: 10,
+            cpuTimeMs: 40,
+            cpuSampleIntervalMs: 10_000,
+          },
+        ],
+      },
+      {
+        ...mainSample(50, 100),
+        processes: [
+          {
+            pid: 42,
+            creationTime: 2002,
+            type: 'Tab',
+            name: 'New lifetime',
+            cpuPercent: 6,
+            memoryMB: 20,
+            cpuTimeMs: 90,
+            cpuSampleIntervalMs: 10_000,
+          },
+        ],
+      },
+    ];
+    const summary = summarizeCapture(capture(samples), 0, {
+      startSeconds: 30,
+    });
+
+    expect(summary.processes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pid: 42,
+          creationTime: 1001,
+          name: 'Old lifetime',
+          sampledCpuTimeMs: 40,
+          cpuSampleCount: 1,
+        }),
+        expect.objectContaining({
+          pid: 42,
+          creationTime: 2002,
+          name: 'New lifetime',
+          sampledCpuTimeMs: 90,
+          cpuSampleCount: 1,
+        }),
+      ])
+    );
+    expect(summary.processes).toHaveLength(2);
   });
 
   it('reports Input and Radar measures without diluting them with unrelated windows', () => {
@@ -307,7 +768,11 @@ describe('performance analysis', () => {
 
     const comparison = compareSummaries(baseline, candidate);
     expect(comparison.delta.averageFpsPercent).toBe(-10);
-    expect(comparison.checks[0].passed).toBe(false);
+    expect(
+      comparison.checks.find(
+        ({ name }) => name === 'iRacing average FPS regression'
+      )?.passed
+    ).toBe(false);
   });
 
   it('anchors fixed windows to the explicit origin and includes overlapping intervals', () => {
