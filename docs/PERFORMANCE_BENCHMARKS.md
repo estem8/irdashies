@@ -64,6 +64,46 @@ the same seed. Verify visible content after startup settles, especially when
 prove content visibility or input coverage. The [full saved-profile capture
 report](./performance/2026-11-01-main-full-profile.md) records a worked example.
 
+### Diagnosis is not acceptance
+
+Use short traces, subtree isolation and delivery/store suppression to identify
+where work occurs. Their deltas include the downstream work they stop; they
+are not achieved optimizations. A microbenchmark or a removed
+`compositeFailed` warning also does not prove lower application CPU. Reserve
+long, repeated normal-operation A/B runs for validating a concrete candidate.
+
+Before the measured interval, verify and record:
+
+- Exact source/build state, seed and fixture hashes, playback position/speed,
+  active widget instances/settings and actual visible content.
+- Window roles, bounds, visibility, DPR and renderer cadence. Include auxiliary
+  windows such as tape controls; normalize their startup/show state before
+  measurement instead of changing comparison rules after a mismatch appears.
+- Comparable required channel/input activity, event delivery and lifecycle
+  behavior. Reduced work caused by frozen data or missing samples is not a win.
+- Instrumentation mode. Tracing, V8/React profiling and heap collection add
+  work; do not mix them into the ordinary CPU acceptance run or run unrelated
+  tests/builds alongside local measurements.
+
+Report process CPU in ms/s, distinguish rAF scheduling from presentation, and
+keep trace wall duration separate from accumulated CPU time. GPU-process CPU
+is not GPU-engine utilization. Do not double-count nested spans or add
+overlapping thread durations as frame time. Missing memory/coverage metrics
+must remain unavailable, not zero or a passed gate.
+
+Capture controllers must use isolated profiles, preserve raw artifacts and
+source manifests, and restore temporary source/runtime changes on success,
+failure and cancellation. Verify child termination and candidate source hashes
+before starting another run. An existing output directory or lock file is not
+proof that a capture is still running. Reject confounded comparisons and retain
+the reason; a passing command or `--allow-inconclusive` cannot override that.
+
+For repeated static graphics, inspect layer count as well as CPU/memory before
+forcing GPU promotion. For continuous motion, inspect layout/paint and verify
+that replacing layout animation preserves actual rendered positions, timing,
+clipping and hide/show at the supported widget scales and DPR. Keep effects
+that are needed for appearance unless a measured alternative preserves them.
+
 ## Controlled replay benchmark
 
 Use a replay with a representative field size and the same fixed cockpit camera
@@ -127,7 +167,9 @@ npm run perf:run -- --mode full --scenario channels-on --duration-seconds 420 --
 
 The off run still records processor executions and channel publications. It
 suppresses snapshot seeding, coalescing timers, structured cloning, IPC sends,
-and renderer callbacks, making the on/off delta attributable to delivery.
+and renderer callbacks, as well as the reactive downstream selector/React/paint
+work those callbacks would trigger. The on/off delta therefore does not isolate
+IPC transport cost and is not an achieved optimization.
 
 ### 3. Full dashboard
 

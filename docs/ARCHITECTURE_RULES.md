@@ -214,6 +214,9 @@ are derived from these. Only the settings section still needs one line in
 - **R13.1** New high-frequency code paths must include a `perfMetrics.measure('<name>', fn)` wrap so they show up in the existing perf overlay.
 - **R13.2** Per-frame allocations (new arrays / objects per tick) in hot paths are forbidden without a benchmark in the PR. Reuse buffers; mutate in place inside processors.
 - **R13.3** A new widget MUST be checked with React DevTools Profiler at full grid before merge. Cell-component re-renders per second are documented in the PR description.
+- **R13.4** Do not force a compositor layer for every repeated static sprite, icon or row by default (`translateZ(0)`, `transform-gpu`, permanent `will-change`). Introducing or retaining that promotion as an optimization requires full-grid evidence of benefit, including layer count and application CPU/memory cost. Layer count alone does not establish a win; check image quality at the supported widget scales and DPR.
+- **R13.5** For visual motion that does not need to reflow surrounding content, prefer `transform`/`opacity` to animating `top`, `left`, `width` or `height`. Preserve geometry, interpolation, transition suppression and hide/show behavior; verify resizing, widget scale and DPR. A transform or a compositing-warning fix is a candidate, not proof of lower total cost.
+- **R13.6** Separate performance diagnosis from acceptance. Microbenchmarks, React render duration, trace spans and modes that suppress delivery/rendering cannot establish an application-wide improvement. Validate claims with matched, repeated, normal-operation A/B runs following [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md), retaining required samples, precision, event ordering and lifecycle behavior. If evidence is missing or confounded, label the change experimental/unverified. Claim game FPS/frame-time improvements only from actual simulator presentation evidence.
 
 ---
 
@@ -243,6 +246,8 @@ Run through this list before opening any PR. LLM agents: include a filled copy i
 [ ] R10.1 — native code null-checks pointers and bounds-checks indices
 [ ] R11.1 — logging uses the project logger and literal level names
 [ ] R13.1 — high-frequency code is wrapped in perfMetrics
+[ ] R13.4/R13.5 — repeated static layers and motion costs are justified; visual geometry, scaling and lifecycle behavior are preserved
+[ ] R13.6 — performance claims have matched normal-operation evidence; diagnostic suppression and missing gates are explicitly identified
 [ ] R14.1 — new processors and selectors have *.spec.ts coverage
 [ ] Storybook story exists for any new visual component
 [ ] PR description includes: architecture impact (affected rules/layers, or "None") and before/after perf numbers if hot-path
