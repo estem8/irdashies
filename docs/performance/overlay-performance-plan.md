@@ -4,6 +4,11 @@ Date: 2026-11-11. Branch: `perf`.
 Base: `tariknz/irdashies`, `main`,
 `94f0264170c61b34bac61a57c296484e8f4d8c03`.
 
+Latest continuation instructions: [PERF_HANDOFF.md](PERF_HANDOFF.md).
+The static-logo layer reduction and equivalent blind-spot translation are
+implemented candidates. Long normal-run A/B has not started. Windows access
+is unavailable; the overall plan is not complete.
+
 Status: profile isolation, source attribution, CPU-time sampling, SDK spans,
 and runtime topology are implemented. Stages C/D are implemented and reviewed;
 four 420-second Linux tape captures have completed in A–B–B–A order.
@@ -23,6 +28,21 @@ blocked, while preserving subscriptions and processor demand. It identifies
 the expensive downstream update path; it is not an optimization or a game FPS
 result. The unproven Weather experiment was reverted. Earlier five-widget
 results are scoped diagnostics, not coverage of the full catalog.
+
+Follow-up: the [session-array fast-path report](2026-11-11-session-array-fast-path.md)
+records a small identical-reference comparator saving with unchanged IPC-clone
+semantics. This microbenchmark does not validate total application CPU or
+complete the downstream trace/acceptance work below.
+The subsequent [plain-record comparison report](2026-11-11-session-record-comparison.md)
+records reduced temporary allocation and a 14–15% local comparison-time saving
+for equal full-field fixture clones in two runs. Total application impact
+remains unmeasured; the compositor investigation is still the next priority.
+
+The [reconstructed ten-widget attribution](2026-11-11-shared-renderer-attribution.md)
+restores tape playback and adds two complete group/DOM trace runs with loss-free
+CDP completion. Mask removal and an HTML wind-arrow experiment show no supported
+gain. Blind-spot `top` animation is the next drawing candidate. The original
+saved seed remains unavailable; the new workload is documented separately.
 
 Architecture constraints: [ARCHITECTURE_RULES.md](../ARCHITECTURE_RULES.md).
 

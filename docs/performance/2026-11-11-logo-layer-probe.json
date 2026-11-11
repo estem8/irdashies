@@ -1,0 +1,242 @@
+[
+  {
+    "phase": "full1",
+    "retainedMainIntervals": 2,
+    "retainedRendererIntervals": 2,
+    "seconds": 10.015214700000012,
+    "renderSeconds": 10.0015,
+    "cpuMsPerSecond": {
+      "overlay": 553.1797725827684,
+      "Browser": 248.6317097409937,
+      "GPU": 179.73374878819786,
+      "other-renderer": 143.78709469983826,
+      "Utility": 10.983753009932096
+    },
+    "totalCpuMsPerSecond": 1136.3160788217303,
+    "tickHz": 60.00869856539364,
+    "rafPerSecond": 58.69119632055192,
+    "rafP99IntervalMeanMs": 33.30000000000291,
+    "rafOver25Percent": 2.385008517887564,
+    "draws": {
+      "trackMapAnimationFrameMs": {
+        "perSecond": 78.88816677498376,
+        "timedMsPerSecond": 13.737939311655076
+      },
+      "trackMapCommitDrawMs": {
+        "perSecond": 20.196970454431835,
+        "timedMsPerSecond": 5.409188622507561
+      },
+      "trackMapRafDrawMs": {
+        "perSecond": 58.69119632055192,
+        "timedMsPerSecond": 8.328750689147514
+      },
+      "inputTraceFrameMs": {
+        "perSecond": 54.39184122381643,
+        "timedMsPerSecond": 5.559166124019689
+      },
+      "radarFrameMs": {
+        "perSecond": 54.1918712193171,
+        "timedMsPerSecond": 35.80462930463573
+      }
+    },
+    "publications": {
+      "session.lifecycle": 0,
+      "replay.context": 0,
+      "raceControl.sessionId": 0,
+      "track-state.snapshot": 24.962021033857585,
+      "reference-laps.snapshot": 0,
+      "lap-trace.sample": 60.00869856539364,
+      "sector-timing.snapshot": 0,
+      "standings.snapshot": 4.992404206771518,
+      "session-timing.snapshot": 4.992404206771518,
+      "blind-spot.snapshot": 16.67463005061687,
+      "session-bar.snapshot": 4.992404206771518,
+      "lap-log.snapshot": 25.061869117993016,
+      "radio.snapshot": 0,
+      "driver-controls.snapshot": 60.00869856539364,
+      "relative-gaps.snapshot": 4.992404206771518,
+      "radar.snapshot": 25.061869117993016
+    },
+    "sessionPublishSamples": 0
+  },
+  {
+    "phase": "demoted-logos1",
+    "retainedMainIntervals": 2,
+    "retainedRendererIntervals": 2,
+    "seconds": 10.0003119,
+    "renderSeconds": 10,
+    "cpuMsPerSecond": {
+      "overlay": 477.98762266315,
+      "Browser": 248.99348838639358,
+      "other-renderer": 145.99602853028077,
+      "GPU": 159.99595426649785,
+      "Utility": 15.999629555892215
+    },
+    "totalCpuMsPerSecond": 1048.9727234022143,
+    "tickHz": 59.99812865836714,
+    "rafPerSecond": 59.2,
+    "rafP99IntervalMeanMs": 25.05000000000291,
+    "rafOver25Percent": 1.1824324324324325,
+    "draws": {
+      "trackMapAnimationFrameMs": {
+        "perSecond": 79.5,
+        "timedMsPerSecond": 11.959999999403953
+      },
+      "trackMapCommitDrawMs": {
+        "perSecond": 20.3,
+        "timedMsPerSecond": 4.849999999441207
+      },
+      "trackMapRafDrawMs": {
+        "perSecond": 59.2,
+        "timedMsPerSecond": 7.1099999999627475
+      },
+      "inputTraceFrameMs": {
+        "perSecond": 55.3,
+        "timedMsPerSecond": 5.349999999068677
+      },
+      "radarFrameMs": {
+        "perSecond": 56.2,
+        "timedMsPerSecond": 30.73999999957159
+      }
+    },
+    "publications": {
+      "session.lifecycle": 0,
+      "replay.context": 0,
+      "raceControl.sessionId": 0,
+      "track-state.snapshot": 24.999220274319644,
+      "reference-laps.snapshot": 0,
+      "lap-trace.sample": 59.99812865836714,
+      "sector-timing.snapshot": 0.09999688109727858,
+      "standings.snapshot": 4.999844054863929,
+      "session-timing.snapshot": 4.999844054863929,
+      "blind-spot.snapshot": 12.399613256062544,
+      "session-bar.snapshot": 4.999844054863929,
+      "lap-log.snapshot": 24.999220274319644,
+      "radio.snapshot": 0,
+      "driver-controls.snapshot": 59.99812865836714,
+      "relative-gaps.snapshot": 4.999844054863929,
+      "radar.snapshot": 24.999220274319644
+    },
+    "sessionPublishSamples": 0
+  },
+  {
+    "phase": "full2",
+    "retainedMainIntervals": 2,
+    "retainedRendererIntervals": 2,
+    "seconds": 10.01467009999999,
+    "renderSeconds": 10.003099999999627,
+    "cpuMsPerSecond": {
+      "overlay": 536.217791391227,
+      "Browser": 238.65159158548568,
+      "GPU": 179.73767662813285,
+      "other-renderer": 134.80290064460567,
+      "Utility": 9.985460462816286
+    },
+    "totalCpuMsPerSecond": 1099.3954207122674,
+    "tickHz": 60.01196185184379,
+    "rafPerSecond": 58.781777648931026,
+    "rafP99IntervalMeanMs": 33.30000000000291,
+    "rafOver25Percent": 2.0408163265306123,
+    "draws": {
+      "trackMapAnimationFrameMs": {
+        "perSecond": 79.07548659915722,
+        "timedMsPerSecond": 10.356789395716122
+      },
+      "trackMapCommitDrawMs": {
+        "perSecond": 20.293708950226186,
+        "timedMsPerSecond": 3.738840959991721
+      },
+      "trackMapRafDrawMs": {
+        "perSecond": 58.781777648931026,
+        "timedMsPerSecond": 6.6179484357244025
+      },
+      "inputTraceFrameMs": {
+        "perSecond": 56.38252141836241,
+        "timedMsPerSecond": 5.3383451135179225
+      },
+      "radarFrameMs": {
+        "perSecond": 55.98264537993431,
+        "timedMsPerSecond": 28.04130719532929
+      }
+    },
+    "publications": {
+      "session.lifecycle": 0,
+      "replay.context": 0,
+      "raceControl.sessionId": 0,
+      "track-state.snapshot": 25.06323198804125,
+      "reference-laps.snapshot": 0,
+      "lap-trace.sample": 60.01196185184379,
+      "sector-timing.snapshot": 0,
+      "standings.snapshot": 4.992675694828934,
+      "session-timing.snapshot": 4.992675694828934,
+      "blind-spot.snapshot": 18.472900070867055,
+      "session-bar.snapshot": 4.992675694828934,
+      "lap-log.snapshot": 24.963378474144672,
+      "radio.snapshot": 0,
+      "driver-controls.snapshot": 60.01196185184379,
+      "relative-gaps.snapshot": 4.992675694828934,
+      "radar.snapshot": 24.963378474144672
+    },
+    "sessionPublishSamples": 0
+  },
+  {
+    "phase": "demoted-logos2",
+    "retainedMainIntervals": 2,
+    "retainedRendererIntervals": 2,
+    "seconds": 10.000085200000001,
+    "renderSeconds": 10.000299999999815,
+    "cpuMsPerSecond": {
+      "overlay": 473.99965984138703,
+      "Browser": 246.99951759845325,
+      "GPU": 155.99947266468777,
+      "other-renderer": 136.99980881362333,
+      "Utility": 12.99990841403501
+    },
+    "totalCpuMsPerSecond": 1026.9983673321865,
+    "tickHz": 59.99948880435538,
+    "rafPerSecond": 58.09825705228951,
+    "rafP99IntervalMeanMs": 33.30000000001746,
+    "rafOver25Percent": 3.098106712564544,
+    "draws": {
+      "trackMapAnimationFrameMs": {
+        "perSecond": 78.19765407037934,
+        "timedMsPerSecond": 12.449626513346873
+      },
+      "trackMapCommitDrawMs": {
+        "perSecond": 20.09939701808983,
+        "timedMsPerSecond": 4.6298611049865
+      },
+      "trackMapRafDrawMs": {
+        "perSecond": 58.09825705228951,
+        "timedMsPerSecond": 7.8197654083603725
+      },
+      "inputTraceFrameMs": {
+        "perSecond": 53.39839804805955,
+        "timedMsPerSecond": 5.5298341043995505
+      },
+      "radarFrameMs": {
+        "perSecond": 53.39839804805955,
+        "timedMsPerSecond": 33.848984528881516
+      }
+    },
+    "publications": {
+      "session.lifecycle": 0,
+      "replay.context": 0,
+      "raceControl.sessionId": 0,
+      "track-state.snapshot": 24.99978700181474,
+      "reference-laps.snapshot": 0,
+      "lap-trace.sample": 59.99948880435538,
+      "sector-timing.snapshot": 0.09999914800725897,
+      "standings.snapshot": 4.999957400362948,
+      "session-timing.snapshot": 4.999957400362948,
+      "blind-spot.snapshot": 12.999889240943666,
+      "session-bar.snapshot": 4.999957400362948,
+      "lap-log.snapshot": 24.99978700181474,
+      "radio.snapshot": 0,
+      "driver-controls.snapshot": 59.99948880435538,
+      "relative-gaps.snapshot": 4.999957400362948,
+      "radar.snapshot": 24.99978700181474
+    },
+    "sessionPublishSamples": 0
+  }
+]
