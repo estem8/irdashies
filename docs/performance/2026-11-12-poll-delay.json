@@ -1,0 +1,204 @@
+{
+  "scope": "Bounded timer-wrapper diagnostics, not normal CPU acceptance; no causal claim about the historical mismatch",
+  "relativeTickDeltaPercent": 0.357342722725984,
+  "runs": [
+    {
+      "mode": "display",
+      "source": "005a539fc451ca5dde8d3590a411867000dc0ee3",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceBefore": {
+        "sourceKind": "tape",
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ],
+        "status": {
+          "position": 56.0048013,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "sourceAfter": {
+        "sourceKind": "tape",
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ],
+        "status": {
+          "position": 156.18001,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "intervals": 19,
+      "tickHz": 59.451120357047195,
+      "polls": 5702,
+      "ticks": 5649,
+      "activeMaxDemandHz": [60],
+      "plannedDelayMs": {
+        "count": 6008,
+        "mean": 6.847112633155874,
+        "p50": 4.899566666669369,
+        "p95": 15.911666666662011,
+        "p99": 16.05496666667265,
+        "max": 23.914999999993597,
+        "min": 0
+      },
+      "actualDelayMs": {
+        "count": 6008,
+        "mean": 6.607299617177001,
+        "p50": 4.506500000003143,
+        "p95": 15.51600000000326,
+        "p99": 16.723299999997835,
+        "max": 24.122200000012526,
+        "min": 0.07610000000568107
+      },
+      "signedDifferenceMs": {
+        "count": 6008,
+        "mean": -0.23981301597887208,
+        "p50": -0.22896666665716836,
+        "p95": 0.6790333333240888,
+        "p99": 1.3769000000029337,
+        "max": 4.585099999996601,
+        "min": -1.9772666666346304
+      },
+      "pollsWithPlannedDelayAbove60HzPeriod": 58,
+      "artifacts": {
+        "console.log": "f47f4d1265bc263d52209fe9f4873abed79d1a766d66aecafc58562f6c173caf",
+        "result.json": "bcde47cbd6ff974d9216c550c2801446d5eee61f9b82ee4d9a725e4965452729",
+        "poll-delay.json": "35c5e7cdfc5f41cb0b4521e9c6edadf2675e2252e77af5dff8f431d7e67cdaa3"
+      }
+    },
+    {
+      "mode": "widget",
+      "source": "005a539fc451ca5dde8d3590a411867000dc0ee3",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceBefore": {
+        "sourceKind": "tape",
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ],
+        "status": {
+          "position": 56.0908849,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "sourceAfter": {
+        "sourceKind": "tape",
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ],
+        "status": {
+          "position": 156.2554104,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "intervals": 19,
+      "tickHz": 59.66356460922217,
+      "polls": 5701,
+      "ticks": 5670,
+      "activeMaxDemandHz": [60],
+      "plannedDelayMs": {
+        "count": 6006,
+        "mean": 6.670435847485947,
+        "p50": 4.957566666688461,
+        "p95": 15.778966666667355,
+        "p99": 15.947666666669345,
+        "max": 23.912100000001374,
+        "min": 0
+      },
+      "actualDelayMs": {
+        "count": 6006,
+        "mean": 6.5315349483848175,
+        "p50": 4.802499999997963,
+        "p95": 15.318899999983842,
+        "p99": 16.032099999996717,
+        "max": 23.867199999993318,
+        "min": 0.10809999999764841
+      },
+      "signedDifferenceMs": {
+        "count": 6006,
+        "mean": -0.1389008991011291,
+        "p50": -0.16246666667090537,
+        "p95": 0.9861333333440889,
+        "p99": 1.7693333333348455,
+        "max": 5.127533333337244,
+        "min": -1.961966666664619
+      },
+      "pollsWithPlannedDelayAbove60HzPeriod": 32,
+      "artifacts": {
+        "console.log": "83e2dbd54b111ed5092cec280595641a3543db03f84dc1abde37e453bf89bb74",
+        "result.json": "f82ab474125dc3307f296b339bc7f406d8826674bd0df983020a1f638afc5d92",
+        "poll-delay.json": "6cd770e9941a4776168768cffffd9f076d3fe1fe9439958e9515b3fa4c1737ba"
+      }
+    }
+  ]
+}

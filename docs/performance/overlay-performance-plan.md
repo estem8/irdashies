@@ -113,11 +113,19 @@ G work and reusable delivery checks are not additional queue items.
       actual 144/240 Hz, physical high-DPI quality and additional occlusion/hotkey
       modes remain unavailable/unverified; no new Map scheduler or app CPU/FPS
       gain is claimed. Continue with F-3 rather than repeating these checks.
-- [ ] **F-3 — compare window-mode cost with matched input cadence.** Next:
-      diagnose the known 56.22/53.23 Hz mismatch before another long comparison.
-      Completion: repeated matched A/B CPU/memory evidence with equal geometry,
-      source cadence and workload, or a documented blocker. Existing geometry
-      verification is complete and must not be redone as the task's sole result.
+- [ ] **F-3 — compare window-mode cost with matched input cadence.**
+      The [bounded poll-delay diagnostic](2026-11-12-poll-delay.md) completed two
+      180-second runs: display/widget ticks 59.451/59.664 Hz, 0.357% difference,
+      active demand 60 Hz. The old 56.22/53.23 gap is not reproduced at that
+      magnitude; current display inventory differs, and the timer wrapper adds
+      diagnostic work, so no historical cause or normal CPU result is claimed.
+      Checks: source/seed/display matches, duration markers, bounded timer guards,
+      script syntax/TypeScript/ESLint and report hashes. Next: remove the wrapper
+      and run normal display→widget→widget→display at 420 seconds each. Predeclared
+      gate: identical source/seed/tape/DPI/per-instance screen geometry and paired
+      mean incoming cadence difference at most 0.5%, with required publications
+      present. Reject mismatch rather than relax the gate. Existing geometry
+      checks alone do not close this task; overhead remains unquantified.
 - [ ] **A-1 — packaged Windows and simulator presentation acceptance.**
       Blocked: Windows/iRacing access is unavailable. Completion: same-target
       packaged A/B and actual simulator presentation evidence under the declared
