@@ -20,6 +20,11 @@ const overhead = process.argv[3] === 'overhead';
 const identity = process.argv[3] === 'identity';
 const overheadSmoke = overhead && process.argv[4] === 'smoke';
 const gantryDiagnostic = process.env.PERF_GANTRY_DIAGNOSTIC === '1';
+const lapTimesDiagnostic = process.env.PERF_LAP_TIMES_DIAGNOSTIC === '1';
+assert.ok(
+  !lapTimesDiagnostic || (probe && !gantryDiagnostic),
+  'Lap-times diagnostic requires independent probe mode'
+);
 assert.ok(!gantryDiagnostic || probe, 'Gantry diagnostic requires probe mode');
 assert.ok(!process.argv[4] || overheadSmoke, 'Unexpected fourth argument');
 const nativeMemoryDiagnostic =
@@ -78,6 +83,19 @@ if (gantryDiagnostic) {
   // diagnostic layout inside the ten-widget extent so overlay geometry stays
   // identical to the other lifecycle probes.
   gantry.layout = { x: 0, y: 0, width: 1400, height: 800 };
+}
+if (lapTimesDiagnostic) {
+  for (const id of ['standings', 'relative']) {
+    const widget = seedDashboard.dashboards.default.widgets.find(
+      (w) => w.id === id
+    );
+    assert.ok(widget?.enabled, `Missing enabled ${id} fixture`);
+    widget.config.lapTimeDeltas.enabled = true;
+    widget.config.avgLapTime.enabled = true;
+  }
+  seedDashboard.dashboards.default.widgets.find(
+    (w) => w.id === 'standings'
+  ).config.classHeaderStyle.estimatedLaps.enabled = true;
 }
 const seed = JSON.stringify(seedDashboard);
 const sourceScript = await readFile(new URL(import.meta.url), 'utf8');
@@ -202,6 +220,7 @@ try {
           seedSha256: hash(seed),
           collection,
           gantryDiagnostic,
+          lapTimesDiagnostic,
           overheadSmoke,
           startupTopologyTimeoutMs: 30000,
           clock: { timebase: 'performance.now', maxWallDriftMs: 2000 },
@@ -213,18 +232,20 @@ try {
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: gantryDiagnostic
-            ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
-            : identity
-              ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
-              : overhead
-                ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
-                  collection
-                : nativeMemoryDiagnostic
-                  ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
-                  : memory
-                    ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-                    : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: lapTimesDiagnostic
+            ? 'Feature-enabled lap-times subscription/store diagnostic; not CPU acceptance'
+            : gantryDiagnostic
+              ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
+              : identity
+                ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
+                : overhead
+                  ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+                    collection
+                  : nativeMemoryDiagnostic
+                    ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+                    : memory
+                      ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+                      : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -272,17 +293,19 @@ try {
           PERF_HEAP_PROFILE_PATH: '',
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: gantryDiagnostic
-            ? 'gantry-lifecycle-diagnostic'
-            : identity
-              ? 'map-identity-diagnostic'
-              : overhead
-                ? 'metrics-collection-overhead'
-                : nativeMemoryDiagnostic
-                  ? 'native-memory-diagnostic'
-                  : memory
-                    ? 'settings-memory-diagnostic'
-                    : 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: lapTimesDiagnostic
+            ? 'lap-times-feature-diagnostic'
+            : gantryDiagnostic
+              ? 'gantry-lifecycle-diagnostic'
+              : identity
+                ? 'map-identity-diagnostic'
+                : overhead
+                  ? 'metrics-collection-overhead'
+                  : nativeMemoryDiagnostic
+                    ? 'native-memory-diagnostic'
+                    : memory
+                      ? 'settings-memory-diagnostic'
+                      : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
@@ -293,6 +316,7 @@ try {
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
             gantryDiagnostic,
+            lapTimesDiagnostic,
             mapIdentityDiagnostic: identity,
             metricsCollectionOverhead: overhead,
             collection,
