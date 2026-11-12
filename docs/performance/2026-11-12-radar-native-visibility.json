@@ -1,0 +1,436 @@
+{
+  "scope": "Repeated native minimize drawing A-B-B-A; not CPU/memory/presentation acceptance",
+  "resumed": true,
+  "results": [
+    {
+      "name": "a1",
+      "variant": "baseline",
+      "runId": "radar-minimize-abba-r2-a1",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceSha256": "23fbafd6fef827dd111a4ef6517367b4ba5f06fe4f4920ca32f82b1b3d9f77b9",
+      "startNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794505878667,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "endNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794505878667,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "seconds": 15.00971789999999,
+      "draws": {
+        "radarFrame": 898,
+        "trackMapRafDraw": 0,
+        "trackMapCommitDraw": 0,
+        "inputTraceFrame": 0
+      },
+      "artifacts": {
+        "drawing.json": "2fc7a9897405c7584bfe3e95488681efd0ec811a48636710f277889b62877031",
+        "result.json": "3b971ab53d8b0791b4d3e0c3bfe40e801e0f6144bc037f1c106c68449d40583e",
+        "console.log": "05ce1b45ac0164dd0b6446ce5c3a1cb67c89045578e24740d25b04ae851c5922"
+      }
+    },
+    {
+      "name": "b1",
+      "variant": "candidate",
+      "runId": "radar-minimize-abba-r2-b1",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceSha256": "131189c9f42bd85eb1b72dbc70c2cc5f6d7fa55470d98000dac62a4fbfccd5f1",
+      "startNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794505979414,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "endNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794505979414,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "seconds": 15.0062166,
+      "draws": {
+        "radarFrame": 0,
+        "trackMapRafDraw": 0,
+        "trackMapCommitDraw": 0,
+        "inputTraceFrame": 0
+      },
+      "artifacts": {
+        "drawing.json": "39b7fd40792a44c42c402ab5157632ac8e49970b6f88a7db4df8da7a27678599",
+        "result.json": "7934949d0a49e4169e7d26cb42c01177e88b6019fc31d463845a808812c23c47",
+        "console.log": "0c677a36062bfce6b46b89b30a16e7b66e4ebe6d412cb10d8482b0a879812f1b"
+      }
+    },
+    {
+      "name": "b2",
+      "variant": "candidate",
+      "runId": "radar-minimize-abba-r2-b2",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceSha256": "131189c9f42bd85eb1b72dbc70c2cc5f6d7fa55470d98000dac62a4fbfccd5f1",
+      "startNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794506080140,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "endNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794506080140,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "seconds": 15.006990999999994,
+      "draws": {
+        "radarFrame": 0,
+        "trackMapRafDraw": 0,
+        "trackMapCommitDraw": 0,
+        "inputTraceFrame": 0
+      },
+      "artifacts": {
+        "drawing.json": "7bc737232d4d6bfae65ad4371ff83fe2cbca09931c9edbbcb5d1bd0555f4d399",
+        "result.json": "56febcad55cebff6f9def7e8d9366ef7bca443a0277a6c54d8e004b9a6200b28",
+        "console.log": "7e53293f8c5df2f8ec33017a0fd5b7e0b453201de4dafd694d56c2c5a69fa4e2"
+      }
+    },
+    {
+      "name": "a2",
+      "variant": "baseline",
+      "runId": "radar-minimize-abba-r2-a2-retry1",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "sourceSha256": "23fbafd6fef827dd111a4ef6517367b4ba5f06fe4f4920ca32f82b1b3d9f77b9",
+      "startNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794506376824,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "endNative": {
+        "visible": false,
+        "minimized": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 2560,
+          "height": 1369
+        },
+        "events": [
+          {
+            "at": 1794506376824,
+            "kind": "event",
+            "name": "minimize",
+            "visible": false,
+            "minimized": true
+          }
+        ]
+      },
+      "seconds": 15.008142099999997,
+      "draws": {
+        "radarFrame": 899,
+        "trackMapRafDraw": 0,
+        "trackMapCommitDraw": 0,
+        "inputTraceFrame": 0
+      },
+      "artifacts": {
+        "drawing.json": "296d15f0dc6b2db0e09815fb7500e37c75487d385d4f126bcc82a2b9774c7cf2",
+        "result.json": "2bdb3c148724f9957ba271cc2fed195a054adfbdc26cf5a5f4c5bd0543a0c937",
+        "console.log": "441a2a0e50bc36eeaa1b0fb5da2c4b8c1131bb31c48fa2635955e5b5b8479505"
+      }
+    }
+  ],
+  "staticTransitions": [
+    {
+      "label": "resize",
+      "frames": 90,
+      "blankObserved": 0,
+      "firstFrame": {
+        "at": 61263.199999999255,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 1,
+        "populated": true
+      },
+      "lastFrame": {
+        "at": 62725.199999999255,
+        "width": 537,
+        "height": 323,
+        "cssWidth": 537,
+        "cssHeight": 323,
+        "dpr": 1,
+        "populated": true
+      },
+      "canvas": {
+        "width": 537,
+        "height": 323,
+        "cssWidth": 537,
+        "cssHeight": 323
+      },
+      "scale": "100",
+      "icon": null
+    },
+    {
+      "label": "scale-125",
+      "frames": 90,
+      "blankObserved": 0,
+      "firstFrame": {
+        "at": 63255.89999999851,
+        "width": 537,
+        "height": 323,
+        "cssWidth": 537,
+        "cssHeight": 323,
+        "dpr": 1,
+        "populated": true
+      },
+      "lastFrame": {
+        "at": 64722.79999999888,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 400,
+        "cssHeight": 240,
+        "dpr": 1,
+        "populated": true
+      },
+      "canvas": {
+        "width": 500,
+        "height": 300,
+        "cssWidth": 400,
+        "cssHeight": 240
+      },
+      "scale": "125",
+      "icon": null
+    },
+    {
+      "label": "colors-labels",
+      "frames": 90,
+      "blankObserved": 0,
+      "firstFrame": {
+        "at": 65237.699999999255,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 1,
+        "populated": true
+      },
+      "lastFrame": {
+        "at": 66703.5,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 1,
+        "populated": true
+      },
+      "canvas": {
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300
+      },
+      "scale": "100",
+      "icon": null
+    },
+    {
+      "label": "player-icon",
+      "frames": 90,
+      "blankObserved": 0,
+      "firstFrame": {
+        "at": 67200.39999999851,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 1,
+        "populated": true
+      },
+      "lastFrame": {
+        "at": 68667.5,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 1,
+        "populated": true
+      },
+      "canvas": {
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300
+      },
+      "scale": "100",
+      "icon": {
+        "complete": true,
+        "naturalWidth": 32,
+        "display": "block",
+        "width": 20
+      }
+    },
+    {
+      "label": "emulated-dpr-2",
+      "frames": 90,
+      "blankObserved": 0,
+      "firstFrame": {
+        "at": 69134.09999999963,
+        "width": 500,
+        "height": 300,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 2,
+        "populated": true
+      },
+      "lastFrame": {
+        "at": 70615.5,
+        "width": 1000,
+        "height": 600,
+        "cssWidth": 500,
+        "cssHeight": 300,
+        "dpr": 2,
+        "populated": true
+      },
+      "canvas": {
+        "width": 1000,
+        "height": 600,
+        "cssWidth": 500,
+        "cssHeight": 300
+      },
+      "scale": "100",
+      "icon": null
+    }
+  ],
+  "staticArtifacts": {
+    "drawing.json": "5d3624e2511132db8788438fef690e0ede4867083477e09c84524c6714417117",
+    "result.json": "bc990c88a690a310f17d66a5ff0cf2de85eda831832c60903928d3852bc7afcc",
+    "resize.png": "392d1989ed5737a77268a68138af211b67e36742a5d1cff4403c5bfff330c7cf",
+    "scale-125.png": "fbf5bffdf91a30df11792db7cef8b33c7b190193fbb936af65c786d1316c5c64",
+    "colors-labels.png": "27cf770d789a66095ee398c16f5e07abbf53a842d9b166740791faa01a86e5bf",
+    "player-icon.png": "6c401a00da216f7e689f2c28ac7c04f4fa95b8218239bd6d6dc3e7bf3a515413"
+  },
+  "displays": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 2560,
+        "height": 1369
+      },
+      "workArea": {
+        "x": 0,
+        "y": 0,
+        "width": 2560,
+        "height": 1369
+      },
+      "scaleFactor": 1
+    }
+  ],
+  "recoveryGapBetweenMinimizeEventsSeconds": 296.684,
+  "candidateSourceSha256": {
+    "src/frontend/components/Radar/components/RadarDisplay.spec.tsx": "601c3678acd255edbe54b67d2714d9ee5f11bd0474223b0d79a9ae1aa4d8bd60",
+    "src/frontend/components/Radar/components/RadarDisplay.tsx": "131189c9f42bd85eb1b72dbc70c2cc5f6d7fa55470d98000dac62a4fbfccd5f1",
+    "src/frontend/context/index.ts": "cce3295bdf5051c64a047cace1e0505793f93ffd687661e636273d15881b6dc0",
+    "src/interface.d.ts": "5da6f32a6cf9c80631a8b46b9cc98ae9e8c3c2f3bb2b3c758946286cc9ab1528",
+    "src/main.ts": "2f60a5c9095c9f80405d8a1c415b4cc71795c46392fb3ac915d9867fb4d8b79f",
+    "src/preload.ts": "725f99cf040584505e00343b82d53aadc813f61f43fda09466ac643f5bf1ef88",
+    "src/app/bridge/windowVisibilityBridge.spec.ts": "d44a6daf077a9a453615928f665275e72560cf50f40e570b50642b9fba091483",
+    "src/app/bridge/windowVisibilityBridge.ts": "612fa63e4d61fbb12b06f3111cb0db4cdd1ec98dcd44a6dbdc4e4da08dacf4d1",
+    "src/app/bridge/windowVisibilityRendererBridge.spec.ts": "f4dbc1d052bbb4c38f12b3aa5fd0b917841553a9fa67f97ccd00dacb71c360e4",
+    "src/app/bridge/windowVisibilityRendererBridge.ts": "82ee29b8f035189a83a445aff477d91ae51815596376ddae6402f155a29a8311",
+    "src/frontend/context/shared/useNativeWindowVisibility.tsx": "72f60a2750fce0b98abb91bd8dbd7074f2d736e1d3e57d0dc7bf2d3b633f9284",
+    "src/types/windowVisibility.ts": "fa75e92b34271f836edaeb37a85c2e5513312160d7d10464ce7ed06073655da0"
+  }
+}

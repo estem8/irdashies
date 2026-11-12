@@ -12,6 +12,8 @@ const id = process.argv[2],
   mode = process.argv[3];
 assert.match(id ?? '', /^[a-z0-9-]+$/);
 assert.ok(['display', 'widget'].includes(mode));
+assert.ok(!process.argv[4] || process.argv[4] === 'short');
+const durationSeconds = process.argv[4] === 'short' ? 90 : 180;
 for (const port of [9222, 9229]) {
   let occupied = false;
   try {
@@ -79,7 +81,7 @@ const child = spawn(
       PERF_TELEMETRY_PAYLOAD: 'allowlisted',
       PERF_VISIBILITY_PHASES: '',
       PERF_HEAP_PROFILE_PATH: '',
-      PERF_DURATION_SECONDS: '180',
+      PERF_DURATION_SECONDS: String(durationSeconds),
       PERF_REPORT_INTERVAL_MS: '5000',
       PERF_RUN_ID: id,
       PERF_BUILD: source.slice(0, 8),
@@ -104,7 +106,8 @@ const accept = (chunk) => {
     if (i < 0) break;
     const line = buffer.slice(0, i);
     buffer = buffer.slice(i + 1);
-    if (line.includes('Completed fixed 180s capture')) complete = true;
+    if (line.includes(`Completed fixed ${durationSeconds}s capture`))
+      complete = true;
     for (const [marker, set] of [
       ['[PerfRunOrigin:JSON] ', (v) => (origin = v)],
       ['[PerfRunTopology:JSON] ', (v) => (topology = v)],
@@ -193,7 +196,7 @@ try {
   );
   main.ws.close();
   main = undefined;
-  const deadline = elapsed + 210000;
+  const deadline = elapsed + (durationSeconds + 30) * 1000;
   while (!exited && clock.read().monotonicMs < deadline) {
     assert.equal(cancelled, false, 'Capture cancelled');
     await sleep(1000);

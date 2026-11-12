@@ -17,6 +17,7 @@ import type { ChannelBridge } from '@irdashies/types';
 declare global {
   interface Window {
     widgetPreviewBridge?: import('./types/widgetPreview').WidgetPreviewBridge;
+    windowVisibilityBridge?: import('./types/windowVisibility').WindowVisibilityBridge;
     storageStatusBridge?: import('./types/storageStatus').StorageStatusBridge;
     channelBridge: ChannelBridge;
     irsdkBridge: IrSdkBridge;

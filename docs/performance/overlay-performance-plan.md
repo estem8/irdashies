@@ -99,12 +99,20 @@ G work and reusable delivery checks are not additional queue items.
       Blocker: actual source/temporal fixture unavailable. Next: run a native
       reconnect/session sequence with positive live input when available; do not
       repeat the completed seek/pause test or relabel tape as live. Proceed to E-1.
-- [ ] **E-1 — close remaining drawing/visibility checks.** Next: enumerate
-      untested static-cache/resize/DPR and native visibility transitions against
-      existing hidden-draw reports, then exercise those transitions only.
-      Completion: immediate repaint and correct stop/resume without a blank frame
-      in the added cases. Actual 144/240 Hz checks remain blocked by absent hardware;
-      do not replace them with simulated cadence or introduce an unmeasured scheduler.
+- [ ] **E-1 — close remaining drawing/visibility checks.** The
+      [native Radar and static-transition diagnostic](2026-11-12-radar-native-visibility.md)
+      found Radar drawing while minimized; a typed native-visibility bridge now
+      cancels its rAF and restores the latest frame. Two baseline intervals have
+      898/899 draws versus 0/0 candidate in matched 15-second native-minimized
+      intervals. The final baseline was recovered after a preflight cancellation;
+      the 296.684-second minimize-event gap is disclosed, not a normal CPU pass.
+      Resize/125% scale/colors/labels/player icon/emulated DPR 2 have bounded
+      nonempty-canvas evidence; this is not every compositor-presented frame.
+      Checks: 93 targeted tests, ten capture test files, TypeScript/ESLint,
+      formatting, artifact hashes and candidate restoration. Next/limitations:
+      actual 144/240 Hz, physical high-DPI quality and additional occlusion/hotkey
+      modes remain unavailable/unverified; no new Map scheduler or app CPU/FPS
+      gain is claimed. Continue with F-3 rather than repeating these checks.
 - [ ] **F-3 — compare window-mode cost with matched input cadence.** Next:
       diagnose the known 56.22/53.23 Hz mismatch before another long comparison.
       Completion: repeated matched A/B CPU/memory evidence with equal geometry,
@@ -122,15 +130,15 @@ G work and reusable delivery checks are not additional queue items.
 Checked items below mean the stated work is complete; they do not imply that
 the whole stage passed its exit criterion or that game FPS improved.
 
-| Stage                             | Verified evidence                                                                                                              | Open requirement                                                                                                                            |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| A — reproducible baseline         | Isolated source/seed/environment/topology; completed Linux R3 A–B–B–A                                                          | Full analyzer acceptance remains inconclusive; packaged Windows and real simulator presentation absent                                      |
-| B — instrumentation               | SDK/process/React/draw boundaries; bounded diagnostics and clock guards; completed collection on/off experiment                | Quantitative overhead is inconclusive, not zero; activity coverage remains incomplete; new metadata is scoped to the verified Linux capture |
-| C — Relative / TitleBar           | Implementation and behavioral checks; combined normal-operation matrix                                                         | Combined six-file gain does not isolate this change's CPU contribution                                                                      |
-| D — stable Map data               | Behavioral tests, render-phase result and repeated direct identity construction measurement                                    | App-wide allocation bytes and isolated CPU contribution are not established                                                                 |
-| E — canvas / hidden windows       | Map/Input/Radar hidden draw stop/resume; exercised Lap Trace stop/resume after reference-reset fix                             | Actual high-refresh displays and additional visibility/static-cache transitions remain unverified; no new scheduler change justified        |
-| F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                                 |
-| G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                            |
+| Stage                             | Verified evidence                                                                                                              | Open requirement                                                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| A — reproducible baseline         | Isolated source/seed/environment/topology; completed Linux R3 A–B–B–A                                                          | Full analyzer acceptance remains inconclusive; packaged Windows and real simulator presentation absent                                       |
+| B — instrumentation               | SDK/process/React/draw boundaries; bounded diagnostics and clock guards; completed collection on/off experiment                | Quantitative overhead is inconclusive, not zero; activity coverage remains incomplete; new metadata is scoped to the verified Linux capture  |
+| C — Relative / TitleBar           | Implementation and behavioral checks; combined normal-operation matrix                                                         | Combined six-file gain does not isolate this change's CPU contribution                                                                       |
+| D — stable Map data               | Behavioral tests, render-phase result and repeated direct identity construction measurement                                    | App-wide allocation bytes and isolated CPU contribution are not established                                                                  |
+| E — canvas / hidden windows       | Map/Input/Radar hide and Radar minimize draw checks; bounded static transitions; exercised Lap Trace stop/resume               | Actual high-refresh/physical DPI and additional native modes remain open; static-case evidence is bounded; no Map scheduler change justified |
+| F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                                  |
+| G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                             |
 
 Evidence and constraints for the execution queue (not additional tasks):
 
@@ -413,8 +421,10 @@ Dependencies: D, separate A/B for each change. Priority: P2.
       widget/window is hidden. Do not add background timers to bypass pausing.
 - [ ] Preserve immediate repaint after static-cache and size changes, DPR/widget
       scale, colors, icons, and data changes. Do not introduce one blank frame.
-- [ ] Radar already limits paints to 60; check actual draw rate and `active`
-      lifecycle before changing its scheduling.
+- [x] Check Radar draw rate and active/native visibility lifecycle. The
+      [native minimize diagnostic](2026-11-12-radar-native-visibility.md) observes
+      about 60 draws/s without the native gate and zero with it while minimized;
+      restore and cleanup pass. The 60 Hz scheduler is unchanged.
 - [ ] If a new user setting is needed, describe it in the type, manifest
       defaults/properties, and settings; use the existing merge.
 

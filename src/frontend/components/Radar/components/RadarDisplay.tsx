@@ -1,3 +1,4 @@
+import { useNativeWindowVisibility } from '@irdashies/context';
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { perfMetrics } from '@irdashies/utils/perfMetrics';
 import { useWidgetScale } from '@irdashies/domain/widgetPresentation/WidgetScale';
@@ -111,6 +112,7 @@ export const RadarDisplay = memo(
     dive = NO_DIVES,
   }: RadarDisplayProps) => {
     const widgetScale = useWidgetScale();
+    const nativeVisible = useNativeWindowVisibility();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [size, setSize] = useState(0);
@@ -150,6 +152,7 @@ export const RadarDisplay = memo(
     }, []);
 
     useEffect(() => {
+      if (!nativeVisible) return;
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       if (!canvas || !ctx || size <= 0) return;
@@ -304,7 +307,7 @@ export const RadarDisplay = memo(
       };
       paint();
       return () => cancelAnimationFrame(handle);
-    }, [size, active, widgetScale]);
+    }, [size, active, widgetScale, nativeVisible]);
 
     return (
       <div

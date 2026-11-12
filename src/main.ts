@@ -1,3 +1,4 @@
+import { setupWindowVisibilityBridge } from './app/bridge/windowVisibilityBridge';
 import './app/perfUserData';
 import { setupStorageStatusBridge } from './app/bridge/storageStatusBridge';
 import { setupWidgetPreviewBridge } from './app/bridge/widgetPreviewBridge';
@@ -484,6 +485,7 @@ void app.whenReady().then(async () => {
   // Setup IPC bridges
   setupLogBridge();
   setupStorageStatusBridge();
+  setupWindowVisibilityBridge();
   const disposeWidgetPreviews = setupWidgetPreviewBridge(runtimePerfMetrics);
   app.once('will-quit', disposeWidgetPreviews);
   fuelDatabase = setupFuelCalculatorBridge();
