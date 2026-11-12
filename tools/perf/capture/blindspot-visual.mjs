@@ -73,7 +73,11 @@ try {
     await sleep(1000);
   }
   if (!pages?.length) throw new Error('No browser target');
-  cdp = await CDP.connect(pages[0].webSocketDebuggerUrl);
+  const page = pages.find(
+    (target) => target.type === 'page' && target.url === 'about:blank'
+  );
+  assert.ok(page, 'Missing blank page target');
+  cdp = await CDP.connect(page.webSocketDebuggerUrl);
   await cdp.call('Page.enable');
   await cdp.call('Emulation.setDeviceMetricsOverride', {
     width: 1100,

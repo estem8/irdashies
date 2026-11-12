@@ -90,7 +90,11 @@ diagnostic controls are only in the capture tool, not production code.
    also records Linux private memory from smaps_rollup every ten seconds;
    seven-minute runs are not the planned long-session leak test.
 5. Recheck actual final-code manufacturer rendering in Storybook, including
-   widget scale/DPR. Blind-spot visual reproduction is:
+   widget scale/DPR. **Completed on this Chromium:** see
+   [manufacturer visual check](2026-11-12-manufacturer-visual.md): 54 elements,
+   12 scale/DPR combinations, exact geometry and small raster differences.
+   Windows, animation and exhaustive simulator-sheet coverage are not implied.
+   Blind-spot visual reproduction is:
 
    ```bash
    node tools/perf/capture/blindspot-visual.mjs
