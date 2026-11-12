@@ -17,6 +17,8 @@ const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
 const overhead = process.argv[3] === 'overhead';
 const identity = process.argv[3] === 'identity';
+const overheadSmoke = overhead && process.argv[4] === 'smoke';
+assert.ok(!process.argv[4] || overheadSmoke, 'Unexpected fourth argument');
 const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
 const diagnosticHeight = process.env.PERF_DIAGNOSTIC_VIEWPORT_HEIGHT;
@@ -35,13 +37,15 @@ if (process.argv[3] && !smoke && !probe && !memory && !overhead && !identity)
   throw new Error(
     'Expected optional smoke, probe, memory, overhead or identity mode'
   );
-const durationSeconds = memory
-  ? 1380
-  : probe || identity
-    ? 180
-    : smoke
-      ? 90
-      : 420;
+const durationSeconds = overheadSmoke
+  ? 90
+  : memory
+    ? 1380
+    : probe || identity
+      ? 180
+      : smoke
+        ? 90
+        : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
@@ -125,12 +129,17 @@ const ensurePortsFree = async () => {
 };
 try {
   const phases = overhead
-    ? [
-        ['on1', 'candidate'],
-        ['off1', 'candidate'],
-        ['off2', 'candidate'],
-        ['on2', 'candidate'],
-      ]
+    ? overheadSmoke
+      ? [
+          ['on1', 'candidate'],
+          ['off1', 'candidate'],
+        ]
+      : [
+          ['on1', 'candidate'],
+          ['off1', 'candidate'],
+          ['off2', 'candidate'],
+          ['on2', 'candidate'],
+        ]
     : smoke || probe || memory
       ? [[memory ? 'memory' : probe ? 'probe' : 'smoke', 'candidate']]
       : [
@@ -171,6 +180,7 @@ try {
           sources,
           seedSha256: hash(seed),
           collection,
+          overheadSmoke,
           mapIdentityDiagnostic: identity,
           mapIdentitySourceSha256: identity
             ? mapIdentitySourceSha256
@@ -389,12 +399,13 @@ try {
         JSON.stringify(inventory, null, 2)
       );
       if (overhead || identity) {
+        await wait(Math.max(0, origin + 55000 - Date.now()));
         assert.equal(
           await overlay.evaluate('Boolean(window.rendererPerfBridge)'),
           collection === 'on'
         );
         await overlay.evaluate(
-          `(async()=>{const {getChannelSnapshotStore}=await import('/src/frontend/context/ChannelStore/ChannelSnapshotStore.ts');const stores=Object.fromEntries(['track-state.snapshot','driver-controls.snapshot','radar.snapshot'].map(name=>[name,getChannelSnapshotStore(name,window.channelBridge)]));const p={frames:0,readWorkload:()=>Object.fromEntries(Object.entries(stores).map(([name,store])=>{const snapshot=store.snapshot;if(!snapshot||!Number.isSafeInteger(snapshot.version))throw new Error('Missing existing '+name+' snapshot');return [name,{version:snapshot.version,trackSlots:snapshot.carIdxLapDistPct?.length}]}))};p.readWorkload();const frame=()=>{p.frames++;p.handle=requestAnimationFrame(frame)};p.handle=requestAnimationFrame(frame);window.__perfOverhead=p;return true})()`
+          `(async()=>{const {getChannelSnapshotStore}=await import('/src/frontend/context/ChannelStore/ChannelSnapshotStore.ts');const stores=Object.fromEntries(['track-state.snapshot','driver-controls.snapshot','radar.snapshot'].map(name=>[name,getChannelSnapshotStore(name,window.channelBridge)]));const p={frames:0,readWorkload:()=>Object.fromEntries(Object.entries(stores).map(([name,store])=>{const snapshot=store.snapshot;if(!snapshot||!Number.isSafeInteger(snapshot.version))throw new Error('Missing existing '+name+' snapshot; selections='+store.selections?.size);return [name,{version:snapshot.version,trackSlots:snapshot.carIdxLapDistPct?.length}]}))};p.readWorkload();const frame=()=>{p.frames++;p.handle=requestAnimationFrame(frame)};p.handle=requestAnimationFrame(frame);window.__perfOverhead=p;return true})()`
         );
       }
       sampler = (async () => {

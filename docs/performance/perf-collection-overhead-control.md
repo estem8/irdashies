@@ -60,3 +60,15 @@ R2 was rejected at preflight because the virtual display changed back to
 2560x1369 and the overlay height was 1014 instead of the requested 1009.
 The next R3 run uses the default 1014 viewport; all geometry/environment gates
 remain strict. This failed startup is not a CPU sample or overhead result.
+
+R3's early snapshot check failed before measurement because Driver Controls
+had no initialized snapshot yet. Readiness now follows the 55-second warmup.
+Validate both collection states with a separate short protocol first:
+
+```sh
+node tools/perf/capture/long-matrix.mjs overhead-readiness-r1 overhead smoke
+```
+
+This runs on/off for 90 seconds each. It tests initialization and external
+sampling, not overhead acceptance; the full report intentionally requires all
+four 420-second phases and cannot accept this short run.

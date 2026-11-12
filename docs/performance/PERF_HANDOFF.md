@@ -11,6 +11,14 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `collection-overhead-r3 overhead` failed before measurement: an early
+  existing-store snapshot check found Driver Controls not ready. Child shutdown
+  and candidate restoration are verified; no overhead result. The snapshot
+  readiness check now follows 55 seconds of warmup. Next validation is a short
+  two-phase on/off readiness capture (`overhead-readiness-r1 overhead smoke`,
+  90 seconds per phase). The full four-phase report must reject this short run.
+  No active capture at this preparation checkpoint.
+
 - `collection-overhead-r2 overhead` failed preflight after the virtual display
   returned to 2560x1369: actual overlay height 1014, requested diagnostic height 1009. Zero completed phases/samples, child termination verified and candidate
   restored. Existing-store snapshot access initialized successfully before the
