@@ -6,6 +6,20 @@ import { createHash } from 'node:crypto';
 const root = resolve(process.argv[2]);
 const read = async (path) =>
   JSON.parse(await readFile(resolve(root, path), 'utf8'));
+for (const marker of ['failed.json', 'cancelled.json']) {
+  let present = false;
+  try {
+    await readFile(resolve(root, marker));
+    present = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  assert.equal(
+    present,
+    false,
+    'Capture has terminal failure marker: ' + marker
+  );
+}
 const runs = await read('runs.json');
 assert.deepEqual(
   runs.map((r) => [r.sequence, r.variant]),
@@ -54,7 +68,7 @@ for (const run of runs) {
   assert.ok(samples.length >= 10, 'Insufficient diagnostic observations');
   const first = samples[0],
     last = samples.at(-1),
-    spanSeconds = (last.at - first.at) / 1000;
+    spanSeconds = (last.monotonicMs - first.monotonicMs) / 1000;
   assert.ok(spanSeconds >= 90, 'Insufficient diagnostic span');
   for (let i = 0; i < samples.length; i++) {
     const s = samples[i];
@@ -67,7 +81,8 @@ for (const run of runs) {
     );
     for (const key of counters) {
       assert.ok(
-        Number.isSafeInteger(s.ui.identityDiagnostic?.[key]),
+        Number.isSafeInteger(s.ui.identityDiagnostic?.[key]) &&
+          s.ui.identityDiagnostic[key] >= 0,
         'Missing ' + key
       );
       if (i)
@@ -79,8 +94,17 @@ for (const run of runs) {
     }
     if (i) {
       assert.ok(
-        s.at > samples[i - 1].at && s.at - samples[i - 1].at < 15000,
+        s.monotonicMs > samples[i - 1].monotonicMs &&
+          s.monotonicMs - samples[i - 1].monotonicMs < 15000,
         'Sampling gap'
+      );
+      assert.ok(
+        Math.abs(
+          s.at -
+            samples[i - 1].at -
+            (s.monotonicMs - samples[i - 1].monotonicMs)
+        ) <= 2000,
+        'Wall/monotonic clock mismatch'
       );
       assert.ok(
         s.ui.status.position > samples[i - 1].ui.status.position,

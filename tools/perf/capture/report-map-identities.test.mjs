@@ -38,6 +38,7 @@ async function fixture(mutate = (value) => value) {
       const computations = run.variant === 'baseline' ? 1 + i * 20 : 1;
       return {
         at: 100000 + i * 10000,
+        monotonicMs: 100000 + i * 10000,
         elapsedSeconds: 60 + i * 10,
         ui: {
           ...viewport,

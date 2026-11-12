@@ -3,7 +3,7 @@
 Prepared protocol, not executed yet:
 
 ```sh
-PERF_DIAGNOSTIC_VIEWPORT_HEIGHT=1009 node tools/perf/capture/long-matrix.mjs map-identities-r1 identity
+systemd-inhibit --what=idle:sleep --mode=block --why="irDashies perf capture" node tools/perf/capture/long-matrix.mjs map-identities-r1 identity
 node tools/perf/capture/report-map-identities.mjs perf-results/map-identities-r1
 ```
 

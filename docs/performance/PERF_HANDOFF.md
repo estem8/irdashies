@@ -11,6 +11,27 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- CURRENT: on2 retry completed 420 seconds, exit 0 and candidate restoration.
+  All four successful measurements are assembled in ignored
+  `collection-overhead-r5-recovered`, with original failed startup preserved.
+  Strict source/seed/viewport/runtime/cadence and PID checks pass. CPU overhead
+  is inconclusive: on-minus-off +3.314% / -4.141%, on/on variation 40.663 ms/s;
+  UTC recovery gap 8388.267 seconds is an additional confounder. See
+  `2026-11-12-collection-overhead.{md,json}`. Do not claim zero overhead.
+  New smaps controls show mainly dirty/anonymous changes and larger on-mode
+  growth; no retained leak is established. See memory-composition report.
+  No capture is active. Next: direct Map identity diagnostic, then exercised
+  Lap Trace hidden and Gantry probes. CI remains deferred for the user's limits.
+
+- CURRENT: R5 is terminal. on1/off1/off2 each completed 420 seconds with exit 0;
+  on2 failed topology preflight (cause not yet diagnosed). Controller exit 1,
+  child termination verified and candidate restored. No full overhead result.
+  The first three phases' scalar CPU/private-memory evidence is preserved in
+  `2026-11-12-overhead-r5-partial.json` on the wip/perf-r5-checkpoint branch.
+  Current source remains 2e5354cc. No capture is active. Preserve the three
+  successful phases; inspect on2 startup diagnostics before deciding how to
+  collect the missing last leg. User requested immediate GitHub preservation.
+
 - `collection-overhead-r4 overhead` is terminal: on1 completed 420 seconds;
   off1 was interrupted after about 225 seconds of observed playback when wall
   time advanced about three hours. Controller failed its Date.now shutdown

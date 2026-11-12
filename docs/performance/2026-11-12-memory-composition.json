@@ -1,0 +1,2413 @@
+{
+  "scope": "Per-run six-minute Linux smaps composition in untraced collection on/off scenarios. Private clean/dirty, anonymous RSS and PSS are distinct accounting views, not additive allocation categories. This cannot backfill absent breakdowns in the earlier 20-minute diagnostic, identify allocation stacks, or establish a leak.",
+  "matched": {
+    "source": "2e5354cc68222db626ea4341d8f8e6a8d6ffe6c5",
+    "sources": [
+      {
+        "file": "src/frontend/components/Standings/Relative.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "1fd43dd4c5d816a13396b586ce4e2548856dd81a476c0b3d3513b99404e336de",
+        "afterSha256": "3ebf3837d02ae629481d87586f9df04912a4b4949d9b1bd3f7ebe66e3bfa9ee9"
+      },
+      {
+        "file": "src/frontend/components/Standings/components/TitleBar/TitleBar.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "aa71d69f6fc6aec55f4d33b72ecd94b2e5e8855275f069d5cc22142fa846b8d5",
+        "afterSha256": "e6904b320e86bf14f6a6c8103d0fce4c78f26fc52f8747943ae3b4f85aa70964"
+      },
+      {
+        "file": "src/frontend/components/TrackMap/hooks/useDriverProgress.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "730be7e3e4a9bedca19ff33f9d413736738e24bf2436127e3821565c64f92d19",
+        "afterSha256": "6a54fe6cb9d5af5202ce6fcf95347c43a0ac35542493cda8c6d4d8299981880c"
+      },
+      {
+        "file": "src/frontend/context/SessionStore/arrayShallowCompare.ts",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "80c8df13e94073f6e02a6dc87fb5d472c2d4c542ef4acac3e1e5b457a7023300",
+        "afterSha256": "21458861124e478ce7fcaa025ae2584d275dd4805e11399bd38056a4de37ef78"
+      },
+      {
+        "file": "src/frontend/components/BlindSpotMonitor/components/BlindSpotMonitorIndicator.tsx",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "80f8a16e0aca6e049dbc6c15d25d23da5ecc143cc1cffaef3f175ac1356834c8",
+        "afterSha256": "e85beb33b5e495cbc87b18609f5833c40fc69b7077e54b52de5e21979e5ea257"
+      },
+      {
+        "file": "src/frontend/components/shared/CarManufacturer/CarManufacturer.tsx",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "5913f88becb4003d0746d3b9814ce6bb67245ec1a23a62844583d202de399a4a",
+        "afterSha256": "9ca449bae41f36c99c9097fe88856d8949ca1e5049294e715a3d92b4a5b246c4"
+      }
+    ],
+    "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+    "expectedViewport": {
+      "width": 1549,
+      "height": 1014,
+      "dpr": 1
+    },
+    "environment": {
+      "versions": {
+        "node": "24.22.1",
+        "acorn": "8.18.0",
+        "ada": "4.0.0",
+        "amaro": "1.1.11",
+        "ares": "1.34.9",
+        "brotli": "1.2.0",
+        "cldr": "48.0",
+        "icu": "78.2",
+        "llhttp": "9.4.3",
+        "merve": "1.2.2",
+        "modules": "150",
+        "napi": "10",
+        "nbytes": "0.1.4",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.70.0",
+        "nghttp3": "",
+        "ngtcp2": "",
+        "openssl": "0.0.0",
+        "simdjson": "4.6.11",
+        "simdutf": "7.7.0",
+        "sqlite": "3.53.4",
+        "tz": "2026e",
+        "undici": "7.30.1",
+        "unicode": "17.0",
+        "uv": "1.52.1",
+        "uvwasi": "0.0.23",
+        "v8": "15.6.75.19-electron.0",
+        "zlib": "1.3.2.1-motley",
+        "zstd": "1.6.0",
+        "electron": "45.2.0",
+        "chrome": "156.0.8078.49"
+      },
+      "gpuFeatures": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "raw_draw": "disabled_off_ok",
+        "skia_graphite": "disabled_off",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "disabled_software",
+        "vulkan": "disabled_off",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webgpu_on_vk_via_gl_interop": "disabled_off",
+        "webnn": "disabled_off"
+      },
+      "gpu": {
+        "auxAttributes": {
+          "amdSwitchable": false,
+          "canSupportThreadedTextureMailbox": false,
+          "glImplementationParts": "(gl=none,angle=none)",
+          "glResetNotificationStrategy": 0,
+          "hardwareSupportsVulkan": false,
+          "inProcessGpu": true,
+          "initializationTime": 0,
+          "isAsan": false,
+          "isClangCoverage": false,
+          "jpegDecodeAcceleratorSupported": false,
+          "optimus": false,
+          "passthroughCmdDecoder": false,
+          "sandboxed": false,
+          "skiaBackendType": "None",
+          "subpixelFontRendering": true,
+          "targetCpuBits": 64,
+          "visibilityCallbackCallCount": 0
+        },
+        "gpuDevice": [
+          {
+            "active": true,
+            "deviceId": 4176,
+            "gpuPreference": 0,
+            "vendorId": 6900
+          }
+        ]
+      },
+      "displays": [
+        {
+          "id": 73,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1369
+          },
+          "workArea": {
+            "x": 0,
+            "y": 0,
+            "width": 2560,
+            "height": 1369
+          },
+          "scaleFactor": 1,
+          "displayFrequency": 0
+        }
+      ]
+    }
+  },
+  "cpuCadenceMatched": true,
+  "points": [
+    {
+      "sequence": "on1",
+      "collection": "on",
+      "roles": {
+        "main": {
+          "pid": 115809,
+          "creationTime": 1794473101390,
+          "sampleCount": 36,
+          "spanSeconds": 350.62699999999995,
+          "firstSeconds": 65.059,
+          "lastSeconds": 415.686,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 105.8046875,
+              "last": 127.66015625,
+              "delta": 21.85546875,
+              "min": 98.109375,
+              "max": 128.7890625,
+              "slopeMiBPerMinute": 2.9777074428004964
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 22.66796875,
+              "last": 22.42578125,
+              "delta": -0.2421875,
+              "min": 22.375,
+              "max": 22.68359375,
+              "slopeMiBPerMinute": -0.03387227516232648
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 83.13671875,
+              "last": 105.234375,
+              "delta": 22.09765625,
+              "min": 75.59765625,
+              "max": 106.36328125,
+              "slopeMiBPerMinute": 3.0115797179628228
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 82.42578125,
+              "last": 104.5234375,
+              "delta": 22.09765625,
+              "min": 74.88671875,
+              "max": 105.65234375,
+              "slopeMiBPerMinute": 3.0147210556750768
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 174.60546875,
+              "last": 196.794921875,
+              "delta": 22.189453125,
+              "min": 167.2138671875,
+              "max": 197.923828125,
+              "slopeMiBPerMinute": 3.012387018738538
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 82.42578125,
+              "last": 104.5234375,
+              "delta": 22.09765625,
+              "min": 74.88671875,
+              "max": 105.65234375,
+              "slopeMiBPerMinute": 3.0147210556750768
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 91.189453125,
+              "last": 91.283203125,
+              "delta": 0.09375,
+              "min": 91.189453125,
+              "max": 91.3525390625,
+              "slopeMiBPerMinute": -0.0023551213166638683
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.9892578125,
+              "last": 0.9873046875,
+              "delta": -0.001953125,
+              "min": 0.9873046875,
+              "max": 0.9931640625,
+              "slopeMiBPerMinute": -0.00010690042004916588
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 318.3203125,
+              "last": 340.81640625,
+              "delta": 22.49609375,
+              "min": 311.1796875,
+              "max": 341.9453125,
+              "slopeMiBPerMinute": 3.073839489127773
+            }
+          }
+        },
+        "gpu": {
+          "pid": 115855,
+          "creationTime": 1794473101650,
+          "sampleCount": 36,
+          "spanSeconds": 350.62699999999995,
+          "firstSeconds": 65.059,
+          "lastSeconds": 415.686,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 41.65625,
+              "last": 51.89453125,
+              "delta": 10.23828125,
+              "min": 41.65625,
+              "max": 51.94140625,
+              "slopeMiBPerMinute": 1.4907251139257263
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 16.83203125,
+              "last": 16.734375,
+              "delta": -0.09765625,
+              "min": 16.55859375,
+              "max": 16.83203125,
+              "slopeMiBPerMinute": -0.0031856831069634666
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 24.82421875,
+              "last": 35.16015625,
+              "delta": 10.3359375,
+              "min": 24.82421875,
+              "max": 35.20703125,
+              "slopeMiBPerMinute": 1.4939107970326897
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 34.59765625,
+              "last": 44.9296875,
+              "delta": 10.33203125,
+              "min": 34.59765625,
+              "max": 44.9765625,
+              "slopeMiBPerMinute": 1.4937059858913275
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 103.953125,
+              "last": 114.435546875,
+              "delta": 10.482421875,
+              "min": 103.953125,
+              "max": 114.482421875,
+              "slopeMiBPerMinute": 1.5230765462446956
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 29.677734375,
+              "last": 40.01171875,
+              "delta": 10.333984375,
+              "min": 29.677734375,
+              "max": 40.05859375,
+              "slopeMiBPerMinute": 1.4938083914620086
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 72.9189453125,
+              "last": 73.025390625,
+              "delta": 0.1064453125,
+              "min": 72.76171875,
+              "max": 73.025390625,
+              "slopeMiBPerMinute": 0.02034936265644422
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.35546875,
+              "last": 1.3984375,
+              "delta": 0.04296875,
+              "min": 1.35546875,
+              "max": 1.3984375,
+              "slopeMiBPerMinute": 0.009071615894094503
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 212.3125,
+              "last": 223.23046875,
+              "delta": 10.91796875,
+              "min": 212.3125,
+              "max": 223.27734375,
+              "slopeMiBPerMinute": 1.5845621571896378
+            }
+          }
+        },
+        "utility-1": {
+          "pid": 115858,
+          "creationTime": 1794473101650,
+          "sampleCount": 36,
+          "spanSeconds": 350.62699999999995,
+          "firstSeconds": 65.059,
+          "lastSeconds": 415.686,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 19.10546875,
+              "last": 17.94921875,
+              "delta": -1.15625,
+              "min": 17.94921875,
+              "max": 19.10546875,
+              "slopeMiBPerMinute": -0.15772587991703235
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 2.7890625,
+              "last": 2.734375,
+              "delta": -0.0546875,
+              "min": 2.734375,
+              "max": 2.7890625,
+              "slopeMiBPerMinute": -0.00912729592519428
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 16.31640625,
+              "last": 15.21484375,
+              "delta": -1.1015625,
+              "min": 15.21484375,
+              "max": 16.31640625,
+              "slopeMiBPerMinute": -0.1485985839918381
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 16.30859375,
+              "last": 15.20703125,
+              "delta": -1.1015625,
+              "min": 15.20703125,
+              "max": 16.30859375,
+              "slopeMiBPerMinute": -0.1485985839918381
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 35.4794921875,
+              "last": 34.3955078125,
+              "delta": -1.083984375,
+              "min": 34.3955078125,
+              "max": 35.4794921875,
+              "slopeMiBPerMinute": -0.1448495916311507
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 16.30859375,
+              "last": 15.20703125,
+              "delta": -1.1015625,
+              "min": 15.20703125,
+              "max": 16.30859375,
+              "slopeMiBPerMinute": -0.1485985839918381
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 19.0029296875,
+              "last": 19.01953125,
+              "delta": 0.0166015625,
+              "min": 19.0029296875,
+              "max": 19.0546875,
+              "slopeMiBPerMinute": 0.003685767997370023
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.16796875,
+              "last": 0.16796875,
+              "delta": 0,
+              "min": 0.16796875,
+              "max": 0.16796875,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 108.28125,
+              "last": 107.3671875,
+              "delta": -0.9140625,
+              "min": 107.3671875,
+              "max": 108.28125,
+              "slopeMiBPerMinute": -0.10870485830055941
+            }
+          }
+        },
+        "tape-controls": {
+          "pid": 115863,
+          "creationTime": 1794473101660,
+          "sampleCount": 36,
+          "spanSeconds": 350.62699999999995,
+          "firstSeconds": 65.059,
+          "lastSeconds": 415.686,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 26.63671875,
+              "last": 28.71484375,
+              "delta": 2.078125,
+              "min": 26.63671875,
+              "max": 28.71484375,
+              "slopeMiBPerMinute": 0.3278559580950513
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 0.2421875,
+              "last": 0.2421875,
+              "delta": 0,
+              "min": 0.1875,
+              "max": 0.2421875,
+              "slopeMiBPerMinute": -0.0011374664391267508
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 26.39453125,
+              "last": 28.47265625,
+              "delta": 2.078125,
+              "min": 26.39453125,
+              "max": 28.47265625,
+              "slopeMiBPerMinute": 0.32899342453417807
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 36.25390625,
+              "last": 38.33203125,
+              "delta": 2.078125,
+              "min": 36.25390625,
+              "max": 38.33203125,
+              "slopeMiBPerMinute": 0.32899342453417807
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 52.5244140625,
+              "last": 54.6259765625,
+              "delta": 2.1015625,
+              "min": 52.5244140625,
+              "max": 54.6259765625,
+              "slopeMiBPerMinute": 0.33634778156954465
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 28.810546875,
+              "last": 30.888671875,
+              "delta": 2.078125,
+              "min": 28.810546875,
+              "max": 30.888671875,
+              "slopeMiBPerMinute": 0.32899342453417807
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 23.3974609375,
+              "last": 23.4208984375,
+              "delta": 0.0234375,
+              "min": 23.3583984375,
+              "max": 23.423828125,
+              "slopeMiBPerMinute": 0.007224863702783485
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.314453125,
+              "last": 0.314453125,
+              "delta": 0,
+              "min": 0.314453125,
+              "max": 0.314453125,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 125.78125,
+              "last": 128.046875,
+              "delta": 2.265625,
+              "min": 125.78125,
+              "max": 128.046875,
+              "slopeMiBPerMinute": 0.37230758527294805
+            }
+          }
+        },
+        "overlay": {
+          "pid": 115897,
+          "creationTime": 1794473102030,
+          "sampleCount": 36,
+          "spanSeconds": 350.62699999999995,
+          "firstSeconds": 65.059,
+          "lastSeconds": 415.686,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 315,
+              "last": 424.3984375,
+              "delta": 109.3984375,
+              "min": 314.4921875,
+              "max": 478.6015625,
+              "slopeMiBPerMinute": 23.001733280876785
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 12.046875,
+              "last": 12.92578125,
+              "delta": 0.87890625,
+              "min": 12.046875,
+              "max": 12.92578125,
+              "slopeMiBPerMinute": 0.09343211109031933
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 302.953125,
+              "last": 411.47265625,
+              "delta": 108.51953125,
+              "min": 302.11328125,
+              "max": 465.73828125,
+              "slopeMiBPerMinute": 22.90830116978647
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 312.08203125,
+              "last": 421.2578125,
+              "delta": 109.17578125,
+              "min": 311.8984375,
+              "max": 475.5234375,
+              "slopeMiBPerMinute": 22.926010719100226
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 348.013671875,
+              "last": 457.7626953125,
+              "delta": 109.7490234375,
+              "min": 347.560546875,
+              "max": 511.9765625,
+              "slopeMiBPerMinute": 23.049934940155662
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 304.6455078125,
+              "last": 413.8212890625,
+              "delta": 109.17578125,
+              "min": 304.4619140625,
+              "max": 468.0869140625,
+              "slopeMiBPerMinute": 22.926010719100226
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 41.1962890625,
+              "last": 42.384765625,
+              "delta": 1.1884765625,
+              "min": 41.1962890625,
+              "max": 42.384765625,
+              "slopeMiBPerMinute": 0.13251175127606848
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 2.169921875,
+              "last": 1.5546875,
+              "delta": -0.615234375,
+              "min": 1.51171875,
+              "max": 2.169921875,
+              "slopeMiBPerMinute": -0.00863644698362734
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 431.8125,
+              "last": 542.3515625,
+              "delta": 110.5390625,
+              "min": 431.59765625,
+              "max": 596.5546875,
+              "slopeMiBPerMinute": 23.151383575009866
+            }
+          }
+        }
+      },
+      "totals": {
+        "privateMiB": {
+          "first": 508.203125,
+          "last": 650.6171875,
+          "delta": 142.4140625
+        },
+        "privateCleanMiB": {
+          "first": 54.578125,
+          "last": 55.0625,
+          "delta": 0.484375
+        },
+        "privateDirtyMiB": {
+          "first": 453.625,
+          "last": 595.5546875,
+          "delta": 141.9296875
+        },
+        "privateHugetlbMiB": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "anonymousMiB": {
+          "first": 481.66796875,
+          "last": 624.25,
+          "delta": 142.58203125
+        },
+        "pssMiB": {
+          "first": 714.576171875,
+          "last": 858.0146484375,
+          "delta": 143.4384765625
+        },
+        "pssAnonMiB": {
+          "first": 461.8681640625,
+          "last": 604.4521484375,
+          "delta": 142.583984375
+        },
+        "pssFileMiB": {
+          "first": 247.705078125,
+          "last": 249.1337890625,
+          "delta": 1.4287109375
+        },
+        "pssShmemMiB": {
+          "first": 4.9970703125,
+          "last": 4.4228515625,
+          "delta": -0.57421875
+        },
+        "rssMiB": {
+          "first": 1196.5078125,
+          "last": 1341.8125,
+          "delta": 145.3046875
+        }
+      }
+    },
+    {
+      "sequence": "off1",
+      "collection": "off",
+      "roles": {
+        "main": {
+          "pid": 121683,
+          "creationTime": 1794473540880,
+          "sampleCount": 36,
+          "spanSeconds": 350.578,
+          "firstSeconds": 65.04,
+          "lastSeconds": 415.618,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 105.77734375,
+              "last": 110.26171875,
+              "delta": 4.484375,
+              "min": 92.6015625,
+              "max": 126.58984375,
+              "slopeMiBPerMinute": 0.6108386817728649
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 24.0546875,
+              "last": 23.76953125,
+              "delta": -0.28515625,
+              "min": 23.7109375,
+              "max": 24.0546875,
+              "slopeMiBPerMinute": -0.038545447998087484
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 81.72265625,
+              "last": 86.4921875,
+              "delta": 4.76953125,
+              "min": 68.70703125,
+              "max": 102.67578125,
+              "slopeMiBPerMinute": 0.6493841297709528
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 81.109375,
+              "last": 85.87890625,
+              "delta": 4.76953125,
+              "min": 68.09375,
+              "max": 102.0625,
+              "slopeMiBPerMinute": 0.6521718159781164
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 174.1484375,
+              "last": 178.8076171875,
+              "delta": 4.6591796875,
+              "min": 161.09765625,
+              "max": 195.052734375,
+              "slopeMiBPerMinute": 0.6397546129611424
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 81.109375,
+              "last": 85.87890625,
+              "delta": 4.76953125,
+              "min": 68.09375,
+              "max": 102.0625,
+              "slopeMiBPerMinute": 0.6521718159781164
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 92.09765625,
+              "last": 91.9892578125,
+              "delta": -0.1083984375,
+              "min": 91.9892578125,
+              "max": 92.1123046875,
+              "slopeMiBPerMinute": -0.012458643572353949
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.9404296875,
+              "last": 0.9384765625,
+              "delta": -0.001953125,
+              "min": 0.9384765625,
+              "max": 0.9404296875,
+              "slopeMiBPerMinute": -5.2695668041153614e-5
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 316.43359375,
+              "last": 321.4296875,
+              "delta": 4.99609375,
+              "min": 303.64453125,
+              "max": 337.53515625,
+              "slopeMiBPerMinute": 0.6998290192644415
+            }
+          }
+        },
+        "gpu": {
+          "pid": 121731,
+          "creationTime": 1794473541080,
+          "sampleCount": 36,
+          "spanSeconds": 350.578,
+          "firstSeconds": 65.04,
+          "lastSeconds": 415.618,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 41.37890625,
+              "last": 51.875,
+              "delta": 10.49609375,
+              "min": 41.37890625,
+              "max": 51.94140625,
+              "slopeMiBPerMinute": 1.5144833985717079
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 16.515625,
+              "last": 16.515625,
+              "delta": 0,
+              "min": 16.41796875,
+              "max": 16.515625,
+              "slopeMiBPerMinute": 0.008495778873098082
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 24.86328125,
+              "last": 35.359375,
+              "delta": 10.49609375,
+              "min": 24.86328125,
+              "max": 35.42578125,
+              "slopeMiBPerMinute": 1.5059876196986102
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 34.6171875,
+              "last": 45.109375,
+              "delta": 10.4921875,
+              "min": 34.6171875,
+              "max": 45.17578125,
+              "slopeMiBPerMinute": 1.5057828557961237
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 103.9375,
+              "last": 114.6171875,
+              "delta": 10.6796875,
+              "min": 103.9375,
+              "max": 114.68359375,
+              "slopeMiBPerMinute": 1.5388167244760347
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 29.6953125,
+              "last": 40.189453125,
+              "delta": 10.494140625,
+              "min": 29.6953125,
+              "max": 40.255859375,
+              "slopeMiBPerMinute": 1.5058852377473666
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 72.79296875,
+              "last": 72.9736328125,
+              "delta": 0.1806640625,
+              "min": 72.7392578125,
+              "max": 72.9736328125,
+              "slopeMiBPerMinute": 0.03219978313180814
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.44921875,
+              "last": 1.453125,
+              "delta": 0.00390625,
+              "min": 1.44921875,
+              "max": 1.453125,
+              "slopeMiBPerMinute": 0.0007347213494521366
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 213.2890625,
+              "last": 224.30078125,
+              "delta": 11.01171875,
+              "min": 213.2890625,
+              "max": 224.3671875,
+              "slopeMiBPerMinute": 1.586164933035984
+            }
+          }
+        },
+        "utility-1": {
+          "pid": 121733,
+          "creationTime": 1794473541080,
+          "sampleCount": 36,
+          "spanSeconds": 350.578,
+          "firstSeconds": 65.04,
+          "lastSeconds": 415.618,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 18.45703125,
+              "last": 17.421875,
+              "delta": -1.03515625,
+              "min": 17.421875,
+              "max": 18.45703125,
+              "slopeMiBPerMinute": -0.08586875166876244
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 2.40625,
+              "last": 2.33203125,
+              "delta": -0.07421875,
+              "min": 2.33203125,
+              "max": 2.40625,
+              "slopeMiBPerMinute": -0.011901876327912982
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 16.05078125,
+              "last": 15.08984375,
+              "delta": -0.9609375,
+              "min": 15.08984375,
+              "max": 16.05078125,
+              "slopeMiBPerMinute": -0.07396687534084948
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 16.04296875,
+              "last": 15.08203125,
+              "delta": -0.9609375,
+              "min": 15.08203125,
+              "max": 16.04296875,
+              "slopeMiBPerMinute": -0.07396687534084948
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 34.8310546875,
+              "last": 33.837890625,
+              "delta": -0.9931640625,
+              "min": 33.837890625,
+              "max": 34.8310546875,
+              "slopeMiBPerMinute": -0.07938867978883635
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 16.04296875,
+              "last": 15.08203125,
+              "delta": -0.9609375,
+              "min": 15.08203125,
+              "max": 16.04296875,
+              "slopeMiBPerMinute": -0.07396687534084948
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 18.583984375,
+              "last": 18.5517578125,
+              "delta": -0.0322265625,
+              "min": 18.5517578125,
+              "max": 18.583984375,
+              "slopeMiBPerMinute": -0.005421804447986893
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.203125,
+              "last": 0.203125,
+              "delta": 0,
+              "min": 0.203125,
+              "max": 0.203125,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 107.7109375,
+              "last": 106.8125,
+              "delta": -0.8984375,
+              "min": 106.8125,
+              "max": 107.7109375,
+              "slopeMiBPerMinute": -0.06529467763670954
+            }
+          }
+        },
+        "tape-controls": {
+          "pid": 121738,
+          "creationTime": 1794473541090,
+          "sampleCount": 36,
+          "spanSeconds": 350.578,
+          "firstSeconds": 65.04,
+          "lastSeconds": 415.618,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 26.1953125,
+              "last": 26.1796875,
+              "delta": -0.015625,
+              "min": 26.1328125,
+              "max": 26.1953125,
+              "slopeMiBPerMinute": 0.0046086314688814104
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 0.125,
+              "last": 0.16796875,
+              "delta": 0.04296875,
+              "min": 0.125,
+              "max": 0.16796875,
+              "slopeMiBPerMinute": 0.009540896372246267
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 26.0703125,
+              "last": 26.01171875,
+              "delta": -0.05859375,
+              "min": 26.0078125,
+              "max": 26.0703125,
+              "slopeMiBPerMinute": -0.004932264903364854
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 35.9921875,
+              "last": 35.93359375,
+              "delta": -0.05859375,
+              "min": 35.9296875,
+              "max": 35.9921875,
+              "slopeMiBPerMinute": -0.004932264903364858
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 52.267578125,
+              "last": 52.2490234375,
+              "delta": -0.0185546875,
+              "min": 52.19140625,
+              "max": 52.267578125,
+              "slopeMiBPerMinute": 0.004838697303024063
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 28.5517578125,
+              "last": 28.4931640625,
+              "delta": -0.05859375,
+              "min": 28.4892578125,
+              "max": 28.5517578125,
+              "slopeMiBPerMinute": -0.004932264903364854
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 23.4521484375,
+              "last": 23.4921875,
+              "delta": 0.0400390625,
+              "min": 23.4384765625,
+              "max": 23.49609375,
+              "slopeMiBPerMinute": 0.009825170934603002
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.26171875,
+              "last": 0.26171875,
+              "delta": 0,
+              "min": 0.26171875,
+              "max": 0.26171875,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 125.87109375,
+              "last": 126.125,
+              "delta": 0.25390625,
+              "min": 125.87109375,
+              "max": 126.125,
+              "slopeMiBPerMinute": 0.027879327168357157
+            }
+          }
+        },
+        "overlay": {
+          "pid": 121773,
+          "creationTime": 1794473541440,
+          "sampleCount": 36,
+          "spanSeconds": 350.578,
+          "firstSeconds": 65.04,
+          "lastSeconds": 415.618,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 385.2578125,
+              "last": 406.65625,
+              "delta": 21.3984375,
+              "min": 384.5859375,
+              "max": 407.21875,
+              "slopeMiBPerMinute": 2.3417996312732785
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 11.76953125,
+              "last": 12.67578125,
+              "delta": 0.90625,
+              "min": 11.76953125,
+              "max": 12.67578125,
+              "slopeMiBPerMinute": 0.10151354325850029
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 373.48828125,
+              "last": 393.98046875,
+              "delta": 20.4921875,
+              "min": 372.69140625,
+              "max": 394.54296875,
+              "slopeMiBPerMinute": 2.240286088014778
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 382.66015625,
+              "last": 403.8046875,
+              "delta": 21.14453125,
+              "min": 382.51953125,
+              "max": 404.3671875,
+              "slopeMiBPerMinute": 2.2577870685741193
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 418.2119140625,
+              "last": 439.75,
+              "delta": 21.5380859375,
+              "min": 417.5654296875,
+              "max": 440.3125,
+              "slopeMiBPerMinute": 2.357311833104936
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 375.2265625,
+              "last": 396.373046875,
+              "delta": 21.146484375,
+              "min": 375.0859375,
+              "max": 396.935546875,
+              "slopeMiBPerMinute": 2.257889450525363
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 40.8173828125,
+              "last": 41.86328125,
+              "delta": 1.0458984375,
+              "min": 40.8173828125,
+              "max": 41.86328125,
+              "slopeMiBPerMinute": 0.11643477504626727
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 2.166015625,
+              "last": 1.51171875,
+              "delta": -0.654296875,
+              "min": 1.5078125,
+              "max": 2.166015625,
+              "slopeMiBPerMinute": -0.017023718780416634
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 502.0234375,
+              "last": 523.828125,
+              "delta": 21.8046875,
+              "min": 501.41015625,
+              "max": 524.390625,
+              "slopeMiBPerMinute": 2.39582346099885
+            }
+          }
+        }
+      },
+      "totals": {
+        "privateMiB": {
+          "first": 577.06640625,
+          "last": 612.39453125,
+          "delta": 35.328125
+        },
+        "privateCleanMiB": {
+          "first": 54.87109375,
+          "last": 55.4609375,
+          "delta": 0.58984375
+        },
+        "privateDirtyMiB": {
+          "first": 522.1953125,
+          "last": 556.93359375,
+          "delta": 34.73828125
+        },
+        "privateHugetlbMiB": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "anonymousMiB": {
+          "first": 550.421875,
+          "last": 585.80859375,
+          "delta": 35.38671875
+        },
+        "pssMiB": {
+          "first": 783.396484375,
+          "last": 819.26171875,
+          "delta": 35.865234375
+        },
+        "pssAnonMiB": {
+          "first": 530.6259765625,
+          "last": 566.0166015625,
+          "delta": 35.390625
+        },
+        "pssFileMiB": {
+          "first": 247.744140625,
+          "last": 248.8701171875,
+          "delta": 1.1259765625
+        },
+        "pssShmemMiB": {
+          "first": 5.0205078125,
+          "last": 4.3681640625,
+          "delta": -0.65234375
+        },
+        "rssMiB": {
+          "first": 1265.328125,
+          "last": 1302.49609375,
+          "delta": 37.16796875
+        }
+      }
+    },
+    {
+      "sequence": "off2",
+      "collection": "off",
+      "roles": {
+        "main": {
+          "pid": 126378,
+          "creationTime": 1794473980150,
+          "sampleCount": 36,
+          "spanSeconds": 350.603,
+          "firstSeconds": 65.072,
+          "lastSeconds": 415.675,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 102.75,
+              "last": 119.6484375,
+              "delta": 16.8984375,
+              "min": 91.03515625,
+              "max": 122.69921875,
+              "slopeMiBPerMinute": 2.2787949092900357
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 22.7734375,
+              "last": 22.71484375,
+              "delta": -0.05859375,
+              "min": 22.5390625,
+              "max": 22.7734375,
+              "slopeMiBPerMinute": -0.002921226676797447
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 79.9765625,
+              "last": 96.93359375,
+              "delta": 16.95703125,
+              "min": 68.453125,
+              "max": 100.1171875,
+              "slopeMiBPerMinute": 2.281716135966833
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 79.23046875,
+              "last": 96.1875,
+              "delta": 16.95703125,
+              "min": 67.70703125,
+              "max": 99.37109375,
+              "slopeMiBPerMinute": 2.2847133318992014
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 171.466796875,
+              "last": 188.7802734375,
+              "delta": 17.3134765625,
+              "min": 160.033203125,
+              "max": 191.6669921875,
+              "slopeMiBPerMinute": 2.346552636270688
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 79.23046875,
+              "last": 96.1875,
+              "delta": 16.95703125,
+              "min": 67.70703125,
+              "max": 99.37109375,
+              "slopeMiBPerMinute": 2.2847133318992014
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 91.228515625,
+              "last": 91.5869140625,
+              "delta": 0.3583984375,
+              "min": 91.1240234375,
+              "max": 91.5869140625,
+              "slopeMiBPerMinute": 0.06171362682659979
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.0068359375,
+              "last": 1.0048828125,
+              "delta": -0.001953125,
+              "min": 1.0048828125,
+              "max": 1.0107421875,
+              "slopeMiBPerMinute": 5.1168329249696756e-5
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 314.421875,
+              "last": 332.375,
+              "delta": 17.953125,
+              "min": 303.45703125,
+              "max": 334.99609375,
+              "slopeMiBPerMinute": 2.465149172979166
+            }
+          }
+        },
+        "gpu": {
+          "pid": 126429,
+          "creationTime": 1794473980420,
+          "sampleCount": 36,
+          "spanSeconds": 350.603,
+          "firstSeconds": 65.072,
+          "lastSeconds": 415.675,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 41.01953125,
+              "last": 51.59375,
+              "delta": 10.57421875,
+              "min": 41.01953125,
+              "max": 51.7421875,
+              "slopeMiBPerMinute": 1.52396639576044
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 16.19921875,
+              "last": 16.26171875,
+              "delta": 0.0625,
+              "min": 16.16015625,
+              "max": 16.26171875,
+              "slopeMiBPerMinute": 0.011079673491192906
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 24.8203125,
+              "last": 35.33203125,
+              "delta": 10.51171875,
+              "min": 24.8203125,
+              "max": 35.48046875,
+              "slopeMiBPerMinute": 1.512886722269247
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 34.61328125,
+              "last": 45.125,
+              "delta": 10.51171875,
+              "min": 34.61328125,
+              "max": 45.2734375,
+              "slopeMiBPerMinute": 1.5128867222692475
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 103.7744140625,
+              "last": 114.525390625,
+              "delta": 10.7509765625,
+              "min": 103.7744140625,
+              "max": 114.673828125,
+              "slopeMiBPerMinute": 1.5459677329156936
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 29.697265625,
+              "last": 40.208984375,
+              "delta": 10.51171875,
+              "min": 29.697265625,
+              "max": 40.357421875,
+              "slopeMiBPerMinute": 1.5128867222692475
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 72.673828125,
+              "last": 72.9091796875,
+              "delta": 0.2353515625,
+              "min": 72.673828125,
+              "max": 72.9091796875,
+              "slopeMiBPerMinute": 0.03245022368584574
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.40234375,
+              "last": 1.40625,
+              "delta": 0.00390625,
+              "min": 1.40234375,
+              "max": 1.408203125,
+              "slopeMiBPerMinute": 0.0005705690299599578
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 212.74609375,
+              "last": 223.796875,
+              "delta": 11.05078125,
+              "min": 212.74609375,
+              "max": 223.9453125,
+              "slopeMiBPerMinute": 1.590973253778457
+            }
+          }
+        },
+        "utility-1": {
+          "pid": 126432,
+          "creationTime": 1794473980420,
+          "sampleCount": 36,
+          "spanSeconds": 350.603,
+          "firstSeconds": 65.072,
+          "lastSeconds": 415.675,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 19.08984375,
+              "last": 17.73828125,
+              "delta": -1.3515625,
+              "min": 17.73828125,
+              "max": 19.08984375,
+              "slopeMiBPerMinute": -0.16020647833288315
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 2.7421875,
+              "last": 2.640625,
+              "delta": -0.1015625,
+              "min": 2.640625,
+              "max": 2.8046875,
+              "slopeMiBPerMinute": -0.01699717671930953
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 16.34765625,
+              "last": 15.09765625,
+              "delta": -1.25,
+              "min": 15.09765625,
+              "max": 16.34765625,
+              "slopeMiBPerMinute": -0.14320930161357365
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 16.33984375,
+              "last": 15.08984375,
+              "delta": -1.25,
+              "min": 15.08984375,
+              "max": 16.33984375,
+              "slopeMiBPerMinute": -0.14320930161357365
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 35.5517578125,
+              "last": 34.291015625,
+              "delta": -1.2607421875,
+              "min": 34.291015625,
+              "max": 35.5517578125,
+              "slopeMiBPerMinute": -0.1440483266199701
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 16.33984375,
+              "last": 15.08984375,
+              "delta": -1.25,
+              "min": 15.08984375,
+              "max": 16.33984375,
+              "slopeMiBPerMinute": -0.14320930161357365
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 19.04296875,
+              "last": 19.0322265625,
+              "delta": -0.0107421875,
+              "min": 19.0322265625,
+              "max": 19.1181640625,
+              "slopeMiBPerMinute": -0.0008751582464801035
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.16796875,
+              "last": 0.16796875,
+              "delta": 0,
+              "min": 0.16796875,
+              "max": 0.16796875,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 108.6640625,
+              "last": 107.6015625,
+              "delta": -1.0625,
+              "min": 107.6015625,
+              "max": 108.6640625,
+              "slopeMiBPerMinute": -0.1033154052846869
+            }
+          }
+        },
+        "tape-controls": {
+          "pid": 126438,
+          "creationTime": 1794473980430,
+          "sampleCount": 36,
+          "spanSeconds": 350.603,
+          "firstSeconds": 65.072,
+          "lastSeconds": 415.675,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 26.48828125,
+              "last": 26.61328125,
+              "delta": 0.125,
+              "min": 26.203125,
+              "max": 26.6640625,
+              "slopeMiBPerMinute": 0.06251140425087216
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 0.25,
+              "last": 0.1875,
+              "delta": -0.0625,
+              "min": 0.1875,
+              "max": 0.25,
+              "slopeMiBPerMinute": -0.010745174054046971
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 26.23828125,
+              "last": 26.42578125,
+              "delta": 0.1875,
+              "min": 26.015625,
+              "max": 26.42578125,
+              "slopeMiBPerMinute": 0.07325657830491915
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 36.09375,
+              "last": 36.28125,
+              "delta": 0.1875,
+              "min": 35.87109375,
+              "max": 36.28125,
+              "slopeMiBPerMinute": 0.07325657830491913
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 52.4482421875,
+              "last": 52.59375,
+              "delta": 0.1455078125,
+              "min": 52.177734375,
+              "max": 52.6220703125,
+              "slopeMiBPerMinute": 0.06571126946966481
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 28.6533203125,
+              "last": 28.8408203125,
+              "delta": 0.1875,
+              "min": 28.4306640625,
+              "max": 28.8408203125,
+              "slopeMiBPerMinute": 0.07325657830491915
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 23.478515625,
+              "last": 23.4365234375,
+              "delta": -0.0419921875,
+              "min": 23.4306640625,
+              "max": 23.509765625,
+              "slopeMiBPerMinute": -0.007681559779926562
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.314453125,
+              "last": 0.314453125,
+              "delta": 0,
+              "min": 0.314453125,
+              "max": 0.314453125,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 125.5625,
+              "last": 126.0625,
+              "delta": 0.5,
+              "min": 125.52734375,
+              "max": 126.0625,
+              "slopeMiBPerMinute": 0.11951230838861301
+            }
+          }
+        },
+        "overlay": {
+          "pid": 126474,
+          "creationTime": 1794473980780,
+          "sampleCount": 36,
+          "spanSeconds": 350.603,
+          "firstSeconds": 65.072,
+          "lastSeconds": 415.675,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 387.42578125,
+              "last": 389.90625,
+              "delta": 2.48046875,
+              "min": 378.59765625,
+              "max": 405.03515625,
+              "slopeMiBPerMinute": 2.0876782979082886
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 12.6484375,
+              "last": 14.0390625,
+              "delta": 1.390625,
+              "min": 12.6484375,
+              "max": 14.0390625,
+              "slopeMiBPerMinute": 0.19888146931678016
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 374.77734375,
+              "last": 375.8671875,
+              "delta": 1.08984375,
+              "min": 365.46875,
+              "max": 391.90625,
+              "slopeMiBPerMinute": 1.888796828591508
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 383.97265625,
+              "last": 385.71484375,
+              "delta": 1.7421875,
+              "min": 375.3203125,
+              "max": 401.7578125,
+              "slopeMiBPerMinute": 1.9056382752108363
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 420.3056640625,
+              "last": 423.048828125,
+              "delta": 2.7431640625,
+              "min": 411.6103515625,
+              "max": 438.0478515625,
+              "slopeMiBPerMinute": 2.1233119295856864
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 376.537109375,
+              "last": 378.28125,
+              "delta": 1.744140625,
+              "min": 367.884765625,
+              "max": 394.322265625,
+              "slopeMiBPerMinute": 1.906071922389782
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 41.650390625,
+              "last": 43.302734375,
+              "delta": 1.65234375,
+              "min": 41.650390625,
+              "max": 43.302734375,
+              "slopeMiBPerMinute": 0.23436837178430792
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 2.1171875,
+              "last": 1.462890625,
+              "delta": -0.654296875,
+              "min": 1.458984375,
+              "max": 2.1171875,
+              "slopeMiBPerMinute": -0.01729474944899194
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 504.10546875,
+              "last": 507.3203125,
+              "delta": 3.21484375,
+              "min": 495.56640625,
+              "max": 522.04296875,
+              "slopeMiBPerMinute": 2.2018747449520357
+            }
+          }
+        }
+      },
+      "totals": {
+        "privateMiB": {
+          "first": 576.7734375,
+          "last": 605.5,
+          "delta": 28.7265625
+        },
+        "privateCleanMiB": {
+          "first": 54.61328125,
+          "last": 55.84375,
+          "delta": 1.23046875
+        },
+        "privateDirtyMiB": {
+          "first": 522.16015625,
+          "last": 549.65625,
+          "delta": 27.49609375
+        },
+        "privateHugetlbMiB": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "anonymousMiB": {
+          "first": 550.25,
+          "last": 578.3984375,
+          "delta": 28.1484375
+        },
+        "pssMiB": {
+          "first": 783.546875,
+          "last": 813.2392578125,
+          "delta": 29.6923828125
+        },
+        "pssAnonMiB": {
+          "first": 530.4580078125,
+          "last": 558.6083984375,
+          "delta": 28.150390625
+        },
+        "pssFileMiB": {
+          "first": 248.07421875,
+          "last": 250.267578125,
+          "delta": 2.193359375
+        },
+        "pssShmemMiB": {
+          "first": 5.0087890625,
+          "last": 4.3564453125,
+          "delta": -0.65234375
+        },
+        "rssMiB": {
+          "first": 1265.5,
+          "last": 1297.15625,
+          "delta": 31.65625
+        }
+      }
+    },
+    {
+      "sequence": "on2",
+      "collection": "on",
+      "roles": {
+        "main": {
+          "pid": 270032,
+          "creationTime": 1794482781850,
+          "sampleCount": 36,
+          "spanSeconds": 350.565,
+          "firstSeconds": 65.032,
+          "lastSeconds": 415.597,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 104.38671875,
+              "last": 126.9296875,
+              "delta": 22.54296875,
+              "min": 97.20703125,
+              "max": 127.5546875,
+              "slopeMiBPerMinute": 2.9317866820656704
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 22.92578125,
+              "last": 22.71484375,
+              "delta": -0.2109375,
+              "min": 22.66015625,
+              "max": 22.92578125,
+              "slopeMiBPerMinute": -0.023037454434263013
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 81.4609375,
+              "last": 104.21484375,
+              "delta": 22.75390625,
+              "min": 74.4296875,
+              "max": 104.77734375,
+              "slopeMiBPerMinute": 2.954824136499932
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 81.03125,
+              "last": 103.78515625,
+              "delta": 22.75390625,
+              "min": 74,
+              "max": 104.34765625,
+              "slopeMiBPerMinute": 2.9575403749952542
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 160.388671875,
+              "last": 183.09765625,
+              "delta": 22.708984375,
+              "min": 153.326171875,
+              "max": 183.6533203125,
+              "slopeMiBPerMinute": 2.953346420591397
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 81.03125,
+              "last": 103.78515625,
+              "delta": 22.75390625,
+              "min": 74,
+              "max": 104.34765625,
+              "slopeMiBPerMinute": 2.9575403749952542
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 78.6328125,
+              "last": 78.5908203125,
+              "delta": -0.0419921875,
+              "min": 78.5458984375,
+              "max": 78.65234375,
+              "slopeMiBPerMinute": -0.004077234262309868
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.7236328125,
+              "last": 0.7216796875,
+              "delta": -0.001953125,
+              "min": 0.7216796875,
+              "max": 0.7236328125,
+              "slopeMiBPerMinute": -5.2713301662580334e-5
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 315.67578125,
+              "last": 338.765625,
+              "delta": 23.08984375,
+              "min": 308.91796875,
+              "max": 339.203125,
+              "slopeMiBPerMinute": 3.0179231781965488
+            }
+          }
+        },
+        "gpu": {
+          "pid": 270086,
+          "creationTime": 1794482782480,
+          "sampleCount": 36,
+          "spanSeconds": 350.565,
+          "firstSeconds": 65.032,
+          "lastSeconds": 415.597,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 31.22265625,
+              "last": 41.83984375,
+              "delta": 10.6171875,
+              "min": 31.22265625,
+              "max": 41.96875,
+              "slopeMiBPerMinute": 1.5397578079793524
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 6.56640625,
+              "last": 6.703125,
+              "delta": 0.13671875,
+              "min": 6.50390625,
+              "max": 6.703125,
+              "slopeMiBPerMinute": 0.02706903754603945
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 24.65625,
+              "last": 35.13671875,
+              "delta": 10.48046875,
+              "min": 24.65625,
+              "max": 35.265625,
+              "slopeMiBPerMinute": 1.5126887704333127
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 34.453125,
+              "last": 44.94921875,
+              "delta": 10.49609375,
+              "min": 34.453125,
+              "max": 45.078125,
+              "slopeMiBPerMinute": 1.5123876910018175
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 86.015625,
+              "last": 96.80078125,
+              "delta": 10.78515625,
+              "min": 86.015625,
+              "max": 96.9296875,
+              "slopeMiBPerMinute": 1.5609505846176113
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 29.533203125,
+              "last": 40.03125,
+              "delta": 10.498046875,
+              "min": 29.533203125,
+              "max": 40.16015625,
+              "slopeMiBPerMinute": 1.5128017972258778
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 55.46484375,
+              "last": 55.7421875,
+              "delta": 0.27734375,
+              "min": 55.4228515625,
+              "max": 55.7421875,
+              "slopeMiBPerMinute": 0.04460332020976435
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.017578125,
+              "last": 1.02734375,
+              "delta": 0.009765625,
+              "min": 1.0078125,
+              "max": 1.02734375,
+              "slopeMiBPerMinute": 0.0035145977465048804
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 212.109375,
+              "last": 223.22265625,
+              "delta": 11.11328125,
+              "min": 212.109375,
+              "max": 223.3515625,
+              "slopeMiBPerMinute": 1.60807865447651
+            }
+          }
+        },
+        "utility-1": {
+          "pid": 270091,
+          "creationTime": 1794482782490,
+          "sampleCount": 36,
+          "spanSeconds": 350.565,
+          "firstSeconds": 65.032,
+          "lastSeconds": 415.597,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 18.53125,
+              "last": 17.51953125,
+              "delta": -1.01171875,
+              "min": 17.51953125,
+              "max": 18.53125,
+              "slopeMiBPerMinute": -0.14516749180879113
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 2.5234375,
+              "last": 2.49609375,
+              "delta": -0.02734375,
+              "min": 2.49609375,
+              "max": 2.5234375,
+              "slopeMiBPerMinute": -0.004722320407781602
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 16.0078125,
+              "last": 15.0234375,
+              "delta": -0.984375,
+              "min": 15.0234375,
+              "max": 16.0078125,
+              "slopeMiBPerMinute": -0.14044517140100957
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 16,
+              "last": 15.015625,
+              "delta": -0.984375,
+              "min": 15.015625,
+              "max": 16,
+              "slopeMiBPerMinute": -0.14044517140100957
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 35.1279296875,
+              "last": 34.1357421875,
+              "delta": -0.9921875,
+              "min": 34.1357421875,
+              "max": 35.1279296875,
+              "slopeMiBPerMinute": -0.14103397778783588
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 16,
+              "last": 15.015625,
+              "delta": -0.984375,
+              "min": 15.015625,
+              "max": 16,
+              "slopeMiBPerMinute": -0.14044517140100957
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 18.935546875,
+              "last": 18.927734375,
+              "delta": -0.0078125,
+              "min": 18.927734375,
+              "max": 18.9462890625,
+              "slopeMiBPerMinute": -0.0005888063868263275
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.19140625,
+              "last": 0.19140625,
+              "delta": 0,
+              "min": 0.19140625,
+              "max": 0.19140625,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 109.21484375,
+              "last": 108.29296875,
+              "delta": -0.921875,
+              "min": 108.29296875,
+              "max": 109.21484375,
+              "slopeMiBPerMinute": -0.12483278402297189
+            }
+          }
+        },
+        "tape-controls": {
+          "pid": 270095,
+          "creationTime": 1794482782500,
+          "sampleCount": 36,
+          "spanSeconds": 350.565,
+          "firstSeconds": 65.032,
+          "lastSeconds": 415.597,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 24.93359375,
+              "last": 27.84375,
+              "delta": 2.91015625,
+              "min": 24.93359375,
+              "max": 27.84375,
+              "slopeMiBPerMinute": 0.5614832431417858
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 0.25,
+              "last": 0.25,
+              "delta": 0,
+              "min": 0.25,
+              "max": 0.25,
+              "slopeMiBPerMinute": 0
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 24.68359375,
+              "last": 27.59375,
+              "delta": 2.91015625,
+              "min": 24.68359375,
+              "max": 27.59375,
+              "slopeMiBPerMinute": 0.5614832431417858
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 34.5078125,
+              "last": 37.41796875,
+              "delta": 2.91015625,
+              "min": 34.5078125,
+              "max": 37.41796875,
+              "slopeMiBPerMinute": 0.5614832431417858
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 50.7939453125,
+              "last": 53.7470703125,
+              "delta": 2.953125,
+              "min": 50.7939453125,
+              "max": 53.7470703125,
+              "slopeMiBPerMinute": 0.5729629180433491
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 27.0712890625,
+              "last": 29.9814453125,
+              "delta": 2.91015625,
+              "min": 27.0712890625,
+              "max": 29.9814453125,
+              "slopeMiBPerMinute": 0.5614832431417858
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 23.3681640625,
+              "last": 23.4111328125,
+              "delta": 0.04296875,
+              "min": 23.357421875,
+              "max": 23.416015625,
+              "slopeMiBPerMinute": 0.011479674901563298
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 0.353515625,
+              "last": 0.353515625,
+              "delta": 0,
+              "min": 0.353515625,
+              "max": 0.353515625,
+              "slopeMiBPerMinute": 0
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 123.89453125,
+              "last": 127.0546875,
+              "delta": 3.16015625,
+              "min": 123.89453125,
+              "max": 127.0546875,
+              "slopeMiBPerMinute": 0.6200779957552582
+            }
+          }
+        },
+        "overlay": {
+          "pid": 270133,
+          "creationTime": 1794482784720,
+          "sampleCount": 36,
+          "spanSeconds": 350.565,
+          "firstSeconds": 65.032,
+          "lastSeconds": 415.597,
+          "decompositionMaxErrorMiB": 0,
+          "fields": {
+            "privateMiB": {
+              "availableSamples": 36,
+              "first": 344.5,
+              "last": 423.703125,
+              "delta": 79.203125,
+              "min": 340.328125,
+              "max": 480.3203125,
+              "slopeMiBPerMinute": 9.05019332636767
+            },
+            "privateCleanMiB": {
+              "availableSamples": 36,
+              "first": 12.3984375,
+              "last": 12.9453125,
+              "delta": 0.546875,
+              "min": 12.3984375,
+              "max": 13.0078125,
+              "slopeMiBPerMinute": 0.06269689689769124
+            },
+            "privateDirtyMiB": {
+              "availableSamples": 36,
+              "first": 332.1015625,
+              "last": 410.7578125,
+              "delta": 78.65625,
+              "min": 327.8671875,
+              "max": 467.484375,
+              "slopeMiBPerMinute": 8.987496429469982
+            },
+            "privateHugetlbMiB": {
+              "availableSamples": 36,
+              "first": 0,
+              "last": 0,
+              "delta": 0,
+              "min": 0,
+              "max": 0,
+              "slopeMiBPerMinute": 0
+            },
+            "anonymousMiB": {
+              "availableSamples": 36,
+              "first": 341.20703125,
+              "last": 420.51953125,
+              "delta": 79.3125,
+              "min": 337.62890625,
+              "max": 477.24609375,
+              "slopeMiBPerMinute": 9.005208098828609
+            },
+            "pssMiB": {
+              "availableSamples": 36,
+              "first": 377.0234375,
+              "last": 456.3974609375,
+              "delta": 79.3740234375,
+              "min": 372.888671875,
+              "max": 512.96875,
+              "slopeMiBPerMinute": 9.065375573274308
+            },
+            "pssAnonMiB": {
+              "availableSamples": 36,
+              "first": 333.779296875,
+              "last": 413.091796875,
+              "delta": 79.3125,
+              "min": 330.201171875,
+              "max": 469.818359375,
+              "slopeMiBPerMinute": 9.005208098828609
+            },
+            "pssFileMiB": {
+              "availableSamples": 36,
+              "first": 41.39453125,
+              "last": 42.0849609375,
+              "delta": 0.6904296875,
+              "min": 41.39453125,
+              "max": 42.1162109375,
+              "slopeMiBPerMinute": 0.07388109911978442
+            },
+            "pssShmemMiB": {
+              "availableSamples": 36,
+              "first": 1.84765625,
+              "last": 1.21875,
+              "delta": -0.62890625,
+              "min": 1.19921875,
+              "max": 1.84765625,
+              "slopeMiBPerMinute": -0.01372265189715888
+            },
+            "rssMiB": {
+              "availableSamples": 36,
+              "first": 460.47265625,
+              "last": 540.25,
+              "delta": 79.77734375,
+              "min": 456.37890625,
+              "max": 596.6953125,
+              "slopeMiBPerMinute": 9.128819655213206
+            }
+          }
+        }
+      },
+      "totals": {
+        "privateMiB": {
+          "first": 523.57421875,
+          "last": 637.8359375,
+          "delta": 114.26171875
+        },
+        "privateCleanMiB": {
+          "first": 44.6640625,
+          "last": 45.109375,
+          "delta": 0.4453125
+        },
+        "privateDirtyMiB": {
+          "first": 478.91015625,
+          "last": 592.7265625,
+          "delta": 113.81640625
+        },
+        "privateHugetlbMiB": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "anonymousMiB": {
+          "first": 507.19921875,
+          "last": 621.6875,
+          "delta": 114.48828125
+        },
+        "pssMiB": {
+          "first": 709.349609375,
+          "last": 824.1787109375,
+          "delta": 114.8291015625
+        },
+        "pssAnonMiB": {
+          "first": 487.4150390625,
+          "last": 601.9052734375,
+          "delta": 114.490234375
+        },
+        "pssFileMiB": {
+          "first": 217.7958984375,
+          "last": 218.7568359375,
+          "delta": 0.9609375
+        },
+        "pssShmemMiB": {
+          "first": 4.1337890625,
+          "last": 3.5126953125,
+          "delta": -0.62109375
+        },
+        "rssMiB": {
+          "first": 1221.3671875,
+          "last": 1337.5859375,
+          "delta": 116.21875
+        }
+      }
+    }
+  ],
+  "artifactHashes": {
+    "on1/linux-private-memory.json": "18a94b3c01100337b23a1af8617d4c0877439ca1154022e92e8e05926cc19d91",
+    "off1/linux-private-memory.json": "2390658424996be38e6584ad03b13bb03761b55903a2e339734f09e6a7443ec5",
+    "off2/linux-private-memory.json": "fa2e102bb49d969085118a43e2ebf49a597a07474b2d34cfe43f6d88a36dd2e9",
+    "on2/linux-private-memory.json": "2d9c515f924858c09b7556c9b56fe331e5c3e31c259c7d2dea0bc22f4d9a7771"
+  },
+  "verdict": "DESCRIPTIVE_ONLY_NOT_A_LEAK_VERDICT"
+}

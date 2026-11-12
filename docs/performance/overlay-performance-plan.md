@@ -80,7 +80,11 @@ Next work, in priority order:
    Map/Input/Radar work while hidden and repaint after show, so no Radar change
    is justified. Lap Trace was idle; Gantry runtime history and other native
    visibility modes remain separate. Change scheduling only with measured need.
-3. Finish instrumentation-overhead, input-coverage and allocation evidence gaps.
+3. Finish input-coverage and allocation evidence gaps. The
+   [on/off overhead experiment](2026-11-12-collection-overhead.md) is complete
+   with disclosed startup recovery, but its mixed-sign CPU deltas do not resolve
+   a quantitative cost. The [memory controls](2026-11-12-memory-composition.md)
+   show why instrumentation must be separated from production growth.
    Do not repeat the normal matrix without a new change or a specific concern:
    R3 already completed two pairs with lower CPU, but its analyzer verdict is
    inconclusive. Preserve that verdict and explain each missing gate.
@@ -88,9 +92,10 @@ Next work, in priority order:
    replay seek/pause/native hide/show smoke has passed. Preserve required Input
    and Lap Trace samples, event ordering, precision and lifecycle resets.
 5. Verify packaged Windows/iRacing presentation before claiming game FPS or
-   frame-time improvement. Windows access is unavailable. A new CI dispatch
-   also returned HTTP 422 because Actions is disabled; the earlier successful
-   Windows CI covers its checkpoint only.
+   frame-time improvement. Windows access is unavailable. An earlier CI dispatch
+   returned HTTP 422 while Actions was disabled. Actions is now enabled, but new
+   jobs are deferred at the user request because limits are running out. The
+   earlier successful Windows CI covers its checkpoint only.
 
 Settings/memory investigations remain open and should move forward when the
 reported trigger or a capture implicates them. A renderer rewrite or native/IPC
