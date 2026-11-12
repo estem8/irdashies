@@ -114,18 +114,19 @@ G work and reusable delivery checks are not additional queue items.
       modes remain unavailable/unverified; no new Map scheduler or app CPU/FPS
       gain is claimed. Continue with F-3 rather than repeating these checks.
 - [ ] **F-3 — compare window-mode cost with matched input cadence.**
-      The [bounded poll-delay diagnostic](2026-11-12-poll-delay.md) completed two
-      180-second runs: display/widget ticks 59.451/59.664 Hz, 0.357% difference,
-      active demand 60 Hz. The old 56.22/53.23 gap is not reproduced at that
-      magnitude; current display inventory differs, and the timer wrapper adds
-      diagnostic work, so no historical cause or normal CPU result is claimed.
-      Checks: source/seed/display matches, duration markers, bounded timer guards,
-      script syntax/TypeScript/ESLint and report hashes. Next: remove the wrapper
-      and run normal display→widget→widget→display at 420 seconds each. Predeclared
-      gate: identical source/seed/tape/DPI/per-instance screen geometry and paired
-      mean incoming cadence difference at most 0.5%, with required publications
-      present. Reject mismatch rather than relax the gate. Existing geometry
-      checks alone do not close this task; overhead remains unquantified.
+      The [timer readiness diagnostic](2026-11-12-poll-delay.md) was followed by
+      a [normal 420-second display/widget pair](2026-11-12-window-cost.md).
+      Both captures exit 0; source/seed/tape/environment and initial screen
+      geometry match. Cadence 59.508/59.727 Hz differs by 0.369%, within the
+      predeclared 0.5% gate. Comparison is rejected: native move notifications
+      occur for Lap Trace at 182.371 s and Blind Spot at 187.889 s; actual bounds
+      at those moments are missing, so continuous geometry equality is unproven.
+      The reverse pair was not launched and no CPU/memory mode gain is claimed.
+      Checks: 11 capture test files, TypeScript/ESLint, formatting, component
+      coverage and artifact hashes. Blocker: stable placement evidence missing.
+      Next: short native bounds/setter-origin trace for those windows; resolve
+      real moves or same-bounds notifications before another long cost pair.
+      Do not repeat the completed capture merely to obtain a favorable verdict.
 - [ ] **A-1 — packaged Windows and simulator presentation acceptance.**
       Blocked: Windows/iRacing access is unavailable. Completion: same-target
       packaged A/B and actual simulator presentation evidence under the declared
@@ -171,8 +172,10 @@ Evidence and constraints for the execution queue (not additional tasks):
    for [Map/Input/Radar](2026-11-12-hidden-draw-audit.md),
    [exercised Lap Trace](2026-11-12-laptrace-hidden.md), and
    [Gantry hidden history](2026-11-12-gantry-hidden.md).
-   [Window topology](2026-11-12-window-topology.md) has matching instance geometry,
-   but is not a repeated CPU comparison. High-refresh hardware remains absent.
+   [Window topology](2026-11-12-window-topology.md) has matching initial instance
+   geometry. The new [normal cost pair](2026-11-12-window-cost.md) matches
+   incoming cadence but is rejected for unproven steady geometry; it does not
+   establish a repeated CPU comparison. High-refresh hardware remains absent.
    Do not introduce scheduling changes without a measured need.
 4. Keep instrumentation qualification explicit. The
    [collection on/off experiment](2026-11-12-collection-overhead.md) has mixed-sign

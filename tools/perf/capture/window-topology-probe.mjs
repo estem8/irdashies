@@ -1,3 +1,4 @@
+import { createReadStream } from 'node:fs';
 import { spawn, execFileSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -12,8 +13,9 @@ const id = process.argv[2],
   mode = process.argv[3];
 assert.match(id ?? '', /^[a-z0-9-]+$/);
 assert.ok(['display', 'widget'].includes(mode));
-assert.ok(!process.argv[4] || process.argv[4] === 'short');
-const durationSeconds = process.argv[4] === 'short' ? 90 : 180;
+assert.ok(!process.argv[4] || ['short', 'cost'].includes(process.argv[4]));
+const cost = process.argv[4] === 'cost';
+const durationSeconds = cost ? 420 : process.argv[4] === 'short' ? 90 : 180;
 for (const port of [9222, 9229]) {
   let occupied = false;
   try {
@@ -40,6 +42,13 @@ await writeFile(resolve(out, 'profile/config.json'), seed);
 const source = execFileSync('git', ['rev-parse', 'HEAD'], {
   encoding: 'utf8',
 }).trim();
+let tapeSha256;
+if (cost) {
+  const digest = createHash('sha256');
+  for await (const chunk of createReadStream('perf-results/ai-race-10min.irdt'))
+    digest.update(chunk);
+  tapeSha256 = digest.digest('hex');
+}
 const clock = createCaptureClock();
 const log = createWriteStream(resolve(out, 'console.log'));
 let buffer = '',
@@ -85,7 +94,7 @@ const child = spawn(
       PERF_REPORT_INTERVAL_MS: '5000',
       PERF_RUN_ID: id,
       PERF_BUILD: source.slice(0, 8),
-      PERF_SCENARIO: 'window-topology-readiness',
+      PERF_SCENARIO: cost ? 'window-mode-cost' : 'window-topology-readiness',
       PERF_USER_DATA_DIR: resolve(out, 'profile'),
       PERF_LOG_PATH: resolve(out, 'metrics.log'),
     },
@@ -151,6 +160,16 @@ try {
     await sleep(500);
   }
   const electron = `process.getBuiltinModule('module').createRequire(process.cwd()+'/package.json')('electron')`;
+  const sourceStatus = () =>
+    main.evaluate(
+      `(async()=>{const e=${electron};const w=e.BrowserWindow.getAllWindows().find(w=>!w.webContents.getURL().endsWith('#/tape-replay'));return {at:Date.now(),sourceKind:process.env.PERF_SOURCE_KIND,status:await w.webContents.executeJavaScript('window.tapeReplayBridge.getStatus()')}})()`
+    );
+  const sourceStart = cost ? await sourceStatus() : undefined;
+  const environment = cost
+    ? await main.evaluate(
+        `(async()=>{const e=${electron};const os=process.getBuiltinModule('os');return {versions:process.versions,os:os.release(),cpu:os.cpus()[0]?.model,logicalCpuCount:os.cpus().length,gpuFeatures:e.app.getGPUFeatureStatus(),gpu:await e.app.getGPUInfo('basic'),displays:e.screen.getAllDisplays().map(d=>({bounds:d.bounds,workArea:d.workArea,scaleFactor:d.scaleFactor,displayFrequency:d.displayFrequency}))}})()`
+      )
+    : undefined;
   const dom = `(()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,widgets:[...document.querySelectorAll('[data-widget-id]')].map(e=>{const r=e.getBoundingClientRect();return {id:e.getAttribute('data-widget-id'),x:r.x,y:r.y,width:r.width,height:r.height}})}))()`;
   const snapshot = await main.evaluate(
     `(async()=>({displays:${electron}.screen.getAllDisplays().map(d=>({bounds:d.bounds,workArea:d.workArea,scaleFactor:d.scaleFactor})),windows:await Promise.all(${electron}.BrowserWindow.getAllWindows().map(async w=>({id:w.id,pid:w.webContents.getOSProcessId(),title:w.getTitle(),url:w.webContents.getURL(),bounds:w.getBounds(),visible:w.isVisible(),backgroundThrottling:w.webContents.getBackgroundThrottling(),dom:await w.webContents.executeJavaScript(${JSON.stringify(dom)})})))}))()`
@@ -173,9 +192,18 @@ try {
     assert.equal(w.dom.dpr, 1);
     assert.equal(w.backgroundThrottling, false);
   }
+  if (cost)
+    await main.evaluate(
+      `(()=>{const e=${electron};let count=0;const emit=(name,windowId)=>{if(count>=257)return;const overflow=count++>=256;process.stdout.write('[PerfWindowGeometry:JSON] '+JSON.stringify({at:Date.now(),name:overflow?'overflow':name,windowId})+String.fromCharCode(10))};for(const w of e.BrowserWindow.getAllWindows()){const id=w.id;for(const name of ['move','resize','show','hide','minimize','restore','closed'])w.on(name,()=>emit(name,id))}for(const name of ['display-added','display-removed','display-metrics-changed'])e.screen.on(name,()=>emit(name));return true})()`
+    );
   const result = {
-    scope:
-      'Linux window topology readiness and rendered geometry only; no CPU acceptance',
+    scope: cost
+      ? 'Linux development normal-operation window-mode cost; optional collection on; no timer wrapper/profiler/work suppression'
+      : 'Linux window topology readiness and rendered geometry only; no CPU acceptance',
+    durationSeconds,
+    tapeSha256,
+    sourceStart,
+    environment,
     source,
     mode,
     seedSha256: createHash('sha256').update(seed).digest('hex'),
@@ -194,6 +222,15 @@ try {
       overlays: overlays.length,
     }) + '\n'
   );
+  let sourceEnd;
+  if (cost) {
+    while (clock.read().monotonicMs < elapsed + 410000) {
+      assert.equal(cancelled, false, 'Capture cancelled');
+      assert.equal(exited, false, 'Exited before source checkpoint');
+      await sleep(1000);
+    }
+    sourceEnd = await sourceStatus();
+  }
   main.ws.close();
   main = undefined;
   const deadline = elapsed + (durationSeconds + 30) * 1000;
@@ -207,8 +244,11 @@ try {
   assert.ok(complete, 'No fixed-duration marker');
   await writeFile(
     resolve(out, 'result.json'),
-    JSON.stringify({ ...result, status, completedMarker: complete }, null, 2) +
-      '\n'
+    JSON.stringify(
+      { ...result, sourceEnd, status, completedMarker: complete },
+      null,
+      2
+    ) + '\n'
   );
 } catch (error) {
   await writeFile(

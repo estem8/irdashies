@@ -1,0 +1,170 @@
+{
+  "comparisonAccepted": false,
+  "reason": "Native move notifications during widget steady state; actual bounds were not recorded at those moments, so continuous geometry equality is unproven. No reverse pair or CPU cost comparison accepted.",
+  "cadenceGatePercent": 0.5,
+  "observedCadenceDifferencePercent": 0.36948649054493465,
+  "sameEnvironment": true,
+  "initialScreenGeometryEqual": true,
+  "runs": [
+    {
+      "name": "display1",
+      "source": "f3255f9a02b2afc8b54a6b4e5eed6b976b2c4fbf",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "tapeSha256": "6e23e8abab49c1a0ae7c8f6d1f298d31145a6189d3029b8ca540aad56a22b168",
+      "status": {
+        "code": 0,
+        "signal": null
+      },
+      "completedMarker": true,
+      "steadySeconds": 355.0979259,
+      "steadyIntervals": 71,
+      "tickHz": 59.5075286526758,
+      "processLifetimesStable": true,
+      "cpuSamplesComplete": true,
+      "processCount": 5,
+      "steadyGeometryEvents": [],
+      "sourceStart": {
+        "at": 1794510716104,
+        "sourceKind": "tape",
+        "status": {
+          "position": 55.5268207,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "sourceEnd": {
+        "at": 1794511071448,
+        "sourceKind": "tape",
+        "status": {
+          "position": 410.8716668,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "artifacts": {
+        "console.log": "760b1cf56f997023d673160796afc40aef963731b060a66357405e0279ebbe23",
+        "observed.json": "3841376730ec0fcf5ccc6f39c2dd4210457058dcdf1be4ce5b18ecf83ecf6247",
+        "result.json": "90176528d64ad56792d3241cb9e890edebd4c3b4899916157a30682ab7d39860"
+      }
+    },
+    {
+      "name": "widget1",
+      "source": "f3255f9a02b2afc8b54a6b4e5eed6b976b2c4fbf",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "tapeSha256": "6e23e8abab49c1a0ae7c8f6d1f298d31145a6189d3029b8ca540aad56a22b168",
+      "status": {
+        "code": 0,
+        "signal": null
+      },
+      "completedMarker": true,
+      "steadySeconds": 355.113393,
+      "steadyIntervals": 71,
+      "tickHz": 59.72740093190459,
+      "processLifetimesStable": true,
+      "cpuSamplesComplete": true,
+      "processCount": 14,
+      "steadyGeometryEvents": [
+        {
+          "at": 1794511272779,
+          "name": "move",
+          "windowId": 11,
+          "elapsedSeconds": 182.371,
+          "widgetIds": ["laptrace"]
+        },
+        {
+          "at": 1794511278297,
+          "name": "move",
+          "windowId": 7,
+          "elapsedSeconds": 187.889,
+          "widgetIds": ["blindspotmonitor"]
+        }
+      ],
+      "sourceStart": {
+        "at": 1794511145514,
+        "sourceKind": "tape",
+        "status": {
+          "position": 55.1900594,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "sourceEnd": {
+        "at": 1794511500778,
+        "sourceKind": "tape",
+        "status": {
+          "position": 410.454926,
+          "duration": 600.0009345,
+          "speed": 1,
+          "paused": false,
+          "ended": false
+        }
+      },
+      "artifacts": {
+        "console.log": "d1b470b18829cabff41b0919c6c95aef0d40bf4c16cf8058cb53c3f0e000c457",
+        "observed.json": "b000521d9a045560724e1443307a578834b00f537a7bbe432df5d03e58799af4",
+        "result.json": "c1c4eb0ba6963727051ffb6f2da5a8fd5c45c149caad77c1adfc3baf33719f0d"
+      }
+    }
+  ],
+  "validDisplayOnlyProcessSummary": [
+    {
+      "pid": 176764,
+      "creationTime": 1794510660400,
+      "role": "display",
+      "cpuMsPerSecond": 304.05676386808614,
+      "meanWorkingSetMiB": 507.89021544411247,
+      "firstWorkingSetMiB": 500.15625,
+      "lastWorkingSetMiB": 513.58984375,
+      "maxWorkingSetMiB": 537.35546875
+    },
+    {
+      "pid": 176713,
+      "creationTime": 1794510660000,
+      "role": "GPU",
+      "cpuMsPerSecond": 187.77905913424092,
+      "meanWorkingSetMiB": 214.5488245370092,
+      "firstWorkingSetMiB": 211.1171875,
+      "lastWorkingSetMiB": 221.80078125,
+      "maxWorkingSetMiB": 222.203125
+    },
+    {
+      "pid": 176667,
+      "creationTime": 1794510659760,
+      "role": "Browser",
+      "cpuMsPerSecond": 86.00438611217332,
+      "meanWorkingSetMiB": 315.11177542480266,
+      "firstWorkingSetMiB": 303.25,
+      "lastWorkingSetMiB": 326.6953125,
+      "maxWorkingSetMiB": 327.2109375
+    },
+    {
+      "pid": 176716,
+      "creationTime": 1794510660000,
+      "role": "Utility",
+      "cpuMsPerSecond": 0.028161226624811186,
+      "meanWorkingSetMiB": 103.77196534713075,
+      "firstWorkingSetMiB": 104.5859375,
+      "lastWorkingSetMiB": 103.67578125,
+      "maxWorkingSetMiB": 104.5859375
+    },
+    {
+      "pid": 176724,
+      "creationTime": 1794510660010,
+      "role": "controls",
+      "cpuMsPerSecond": 0.14080613312405585,
+      "meanWorkingSetMiB": 126.302666993945,
+      "firstWorkingSetMiB": 125.6875,
+      "lastWorkingSetMiB": 127.40234375,
+      "maxWorkingSetMiB": 127.40234375
+    }
+  ],
+  "validDisplayOnlyCpuMsPerSecond": 578.0091764742492,
+  "validDisplayOnlySummedWorkingSetMiB": 1267.6254477470002,
+  "memoryScope": "Summed process working sets include shared pages; not private memory or physical RAM ownership."
+}
