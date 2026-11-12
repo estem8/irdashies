@@ -1,55 +1,104 @@
 # Overlay Performance Improvement Plan
 
-Date: 2026-11-11. Branch: `perf`.
+Date: 2026-11-12. Branch: `perf`.
 Base: `tariknz/irdashies`, `main`,
 `94f0264170c61b34bac61a57c296484e8f4d8c03`.
 
-Latest continuation instructions: [PERF_HANDOFF.md](PERF_HANDOFF.md).
-The static-logo layer reduction and equivalent blind-spot translation are
-implemented candidates. The [R3 normal matrix](2026-11-12-normal-matrix.md)
-completed four runs; CPU is lower in both pairs, but full acceptance remains
-inconclusive because input coverage and other gates remain open. Windows access
-is unavailable; the overall plan is not complete.
+## Document ownership
 
-Status: profile isolation, source attribution, CPU-time sampling, SDK spans,
-and runtime topology are implemented. Stages C/D are implemented and reviewed;
-four 420-second Linux tape captures have completed in A–B–B–A order.
-The [capture-readiness report](2026-11-11-capture-readiness.md) documents the
-bundled startup correction. Results and remaining limitations are recorded in
-the [subscription report](2026-11-11-renderer-subscriptions.md). A separate
-full-grid React Profiler pair has completed; its render-phase results are documented there.
-Stage E draw counters and an initial stage F Chromium trace are documented in
-the [trace report](2026-11-11-renderer-trace.md). Scheduling changes and the
-remaining stages E–G stay conditional; Windows game presentation and packaged
-cost have not been measured. A short in-process group comparison is documented
-in the [widget group report](2026-11-11-widget-group-comparison.md).
-Current focus: system-wide attribution on the saved 10-widget profile. The
-[system pipeline report](2026-11-11-system-pipeline-attribution.md) compares
-normal operation with central-store application and main snapshot delivery
-blocked, while preserving subscriptions and processor demand. It identifies
-the expensive downstream update path; it is not an optimization or a game FPS
-result. The unproven Weather experiment was reverted. Earlier five-widget
-results are scoped diagnostics, not coverage of the full catalog.
+This file is the sole active source for performance status, decisions,
+acceptance gaps, and next priorities. Update it when evidence changes; link to
+the detailed report instead of copying result tables or backlog items.
 
-Follow-up: the [session-array fast-path report](2026-11-11-session-array-fast-path.md)
-records a small identical-reference comparator saving with unchanged IPC-clone
-semantics. This microbenchmark does not validate total application CPU or
-complete the downstream trace/acceptance work below.
-The subsequent [plain-record comparison report](2026-11-11-session-record-comparison.md)
-records reduced temporary allocation and a 14–15% local comparison-time saving
-for equal full-field fixture clones in two runs. The later R3 matrix measures
-the combined candidate's total CPU; it does not isolate comparator contribution.
+- [`../PERFORMANCE_BENCHMARKS.md`](../PERFORMANCE_BENCHMARKS.md): repeatable
+  capture and analysis protocol only.
+- Dated reports in this directory: experiment evidence; link them instead of
+  copying their result tables or chronology into the plan.
 
-The [reconstructed ten-widget attribution](2026-11-11-shared-renderer-attribution.md)
-restores tape playback and adds two complete group/DOM trace runs with loss-free
-CDP completion. Mask removal and an HTML wind-arrow experiment show no supported
-gain. The equivalent blind-spot transform and static-logo demotion are now
-implemented, with [normal-run evidence](2026-11-12-normal-matrix.md),
-[manufacturer scale/DPR checks](2026-11-12-manufacturer-visual.md) and
-[replay lifecycle smoke](2026-11-12-lifecycle.md). The original saved seed
-remains unavailable; the reconstructed workload is documented separately.
+The original saved user profile is unavailable; reconstructed workloads do not
+represent it. See [`ARCHITECTURE_RULES.md`](../ARCHITECTURE_RULES.md) for
+performance constraints.
 
-Architecture constraints: [ARCHITECTURE_RULES.md](../ARCHITECTURE_RULES.md).
+## Continuation protocol
+
+1. Read this plan first, then only the linked evidence and benchmark procedure
+   relevant to the selected task. Inspect `git status` and recent commits before
+   editing; preserve unrelated user changes.
+2. Continue on the existing `perf` branch. Do not create temporary branches,
+   another plan, handoff or status log. Isolated capture worktrees are allowed
+   only when required by the benchmark, without a new development branch.
+3. Select one open task by ID from the execution queue below. Check its existing
+   evidence first. Stages A–G describe scope and acceptance, not an instruction
+   to restart at A. Completed experiments stay complete even when acceptance
+   is inconclusive. Reopen work only for a documented regression, changed input
+   or a specific missing measurement.
+4. Before measuring, state the hypothesis, missing evidence and completion
+   criterion. Reuse existing helpers. Prefer a short targeted diagnostic;
+   reserve long A/B runs for a concrete candidate. Never rerun an unchanged
+   experiment solely to obtain a passing verdict.
+5. After each completed step, update that task in this file with its result,
+   checks, evidence link or artifact location, remaining limitation and next
+   action. Update affected stage checkboxes in the same change. Use `[x]` only
+   when the stated criterion is met; partial or blocked work remains `[ ]`.
+   A completed diagnostic may have an inconclusive outcome without closing
+   the broader acceptance requirement.
+6. Commit each completed step together with its plan update on `perf`, using an
+   English conventional commit message. Run TypeScript/ESLint before committing
+   and appropriate behavioral checks for code changes. For documentation-only
+   steps, verify links, formatting and consistency. Stage explicit task files.
+   The commit containing the note identifies its checkpoint; do not add a
+   follow-up commit solely to insert its own hash.
+7. Before ending a run, leave the selected task's next action or exact blocker
+   here and report the commit hash. If blocked, select another actionable task;
+   if none is actionable, report the blockers instead of repeating closed work.
+   Do not commit incomplete code merely to satisfy the checkpoint rule.
+
+## Execution queue
+
+This queue owns task selection and progress; the stage checklists below retain
+technical acceptance detail. Blocked items are not completed. Conditional Stage
+G work and reusable delivery checks are not additional queue items.
+
+- [x] **DOC-1 — consolidate continuation instructions.** Result: one entry point,
+      continuation/commit protocol, task IDs and separated historical observations.
+      Existing log/handoff deletions and reference updates are included in this
+      documentation checkpoint. Checks: local links, obsolete-name search,
+      formatting and diff whitespace. No runtime behavior changed.
+- [ ] **F-1 — attribute remaining memory growth with collection disabled.**
+      Next: inspect the existing Settings, MemoryInfra and composition reports;
+      select one allocation/heap ownership measurement with a collection-off control.
+      Completion: identify the growing process and retained object/allocation owner,
+      or record a bounded diagnostic that rules out a specific owner and name the
+      next discriminating measurement. Do not mark the broader Stage F ownership
+      requirement complete unless an owner is established. The completed short
+      composition and long forced-GC runs need no repetition with unchanged inputs.
+- [ ] **B-1 — identify and close metadata gaps.** Next: compare current capture
+      origin/runtime metadata against Stage B's required fields and existing R3
+      evidence. Completion: enumerate missing fields explicitly, add any necessary
+      capture support and verify with a short capture; preserve unavailable fields
+      as unavailable. This does not retroactively pass R3 or quantify overhead.
+- [ ] **F-2 — verify reconnect/session and event delivery.** Next: inspect the
+      lifecycle report and available fixtures; target only transitions not already
+      exercised. Completion: evidence of reset/resume and positive required event
+      delivery for each covered transition. Blocker: the current tape has no radio
+      transmission; radio coverage requires a suitable fixture or simulator input.
+- [ ] **E-1 — close remaining drawing/visibility checks.** Next: enumerate
+      untested static-cache/resize/DPR and native visibility transitions against
+      existing hidden-draw reports, then exercise those transitions only.
+      Completion: immediate repaint and correct stop/resume without a blank frame
+      in the added cases. Actual 144/240 Hz checks remain blocked by absent hardware;
+      do not replace them with simulated cadence or introduce an unmeasured scheduler.
+- [ ] **F-3 — compare window-mode cost with matched input cadence.** Next:
+      diagnose the known 56.22/53.23 Hz mismatch before another long comparison.
+      Completion: repeated matched A/B CPU/memory evidence with equal geometry,
+      source cadence and workload, or a documented blocker. Existing geometry
+      verification is complete and must not be redone as the task's sole result.
+- [ ] **A-1 — packaged Windows and simulator presentation acceptance.**
+      Blocked: Windows/iRacing access is unavailable. Completion: same-target
+      packaged A/B and actual simulator presentation evidence under the declared
+      workload. Remote CI is also blocked by HTTP 422 (Actions disabled); dispatch
+      only after that external condition changes. Linux CI and historical Windows
+      checks do not close this item.
 
 ## Current completion and next priorities
 
@@ -66,7 +115,7 @@ the whole stage passed its exit criterion or that game FPS improved.
 | F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                          |
 | G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                     |
 
-Next work, in priority order:
+Evidence and constraints for the execution queue (not additional tasks):
 
 1. Preserve the unresolved memory distinction. The
    [repeated long-session check](2026-11-12-settings-memory.md),
@@ -106,6 +155,35 @@ Settings/memory investigations remain open and should move forward when the
 reported trigger or a capture implicates them. A renderer rewrite or native/IPC
 redesign is not the next implementation step on the current evidence.
 
+## Earlier findings and closed decisions
+
+These summarize the lasting outcomes from the older Phase 0.5–2a records. Their
+measurements are historical, not current baselines; current acceptance is
+defined by the stages and reference workloads below.
+
+| Finding                                                                                      | Disposition                                                                                                                                                                            | Current interpretation                                                                                                         |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Early steady-state and driver-join memory growth                                             | Legacy tests observed roughly 13–20 MB/min steady growth and 5–6 MB per joining driver. Phase 2a fixes reduced growth in specific workloads.                                           | Not globally resolved: newer development runs still show private-memory growth with an unresolved owner. Stage F remains open. |
+| `L1`/`L2`/`S5`: synchronous storage writes, repeated session parsing, analytics-log pressure | The identified hot-path write, YAML parse, and warning-forwarding issues were addressed in earlier remediation runs.                                                                   | Closed for that remediation; no current regression is established here.                                                        |
+| `P1`/`P2`/`P4`: telemetry fanout and raw high-frequency subscriptions                        | Payload projection, typed-channel delivery, and targeted selector changes landed in earlier phases.                                                                                    | Implementation work is complete; the combined R3 result remains inconclusive and does not isolate every change's cost.         |
+| `H3`/`H4` and Standings allocation churn                                                     | Boot-reset and uneventful PitLap clone issues were fixed and validated in Phase 2a workloads.                                                                                          | Closed for the measured cases; retain the current acceptance limits above.                                                     |
+| `A2`/`A3`/`L5`/`A7`: disconnect cleanup and per-driver state                                 | Disconnect cleanup and leave emission were implemented and tested. Mid-session absence detection was declined because transient `SessionInfo` omissions can create false leave events. | Disconnect path closed; mid-session leave detection is an explicit design decision, not an open fix.                           |
+| Per-renderer reference-lap fetches                                                           | Reference-lap work moved to the main-process `ReferenceLapProcessor` and `reference-laps.snapshot` channel (`bf119e05`).                                                               | Closed; no per-renderer fetch-dedup task remains.                                                                              |
+| Tier 2b filesystem-level write-count proof                                                   | The old run log did not establish whether debounce behavior reduced actual disk writes.                                                                                                | Not an active performance gate; revisit only for a concrete storage regression or new evidence.                                |
+
+## Reference workloads
+
+Use references only for the same build target and workload. The latest located
+packaged result is not a measurement of current `main`; packaged current-main
+drift remains unmeasured.
+
+| Reference                                     | Scope and result                                                                                                                                                                                  | Qualification                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| August packaged pair, `28cbf61e` → `f189c2ee` | Full 40-car tape, 17 widget types; app CPU 3.709% → 3.679%, private-memory slope 16.574 → 9.273 MiB/min. [Evidence](2026-08-09-packaged-reference.json).                                          | Latest located packaged reference; memory target still missed and event-driven input coverage incomplete.                                 |
+| 1 November `a5200766` saved-profile replay    | Two 420-second development runs, 59-car actual replay and 20 saved widget instances; app CPU 4.483–4.604%, private-memory slope 20.320–43.683 MiB/min. [Report](2026-11-01-main-full-profile.md). | Descriptive, incomplete input coverage; not a packaged release baseline.                                                                  |
+| 1 November shared/widget window comparison    | Six-instance development replay; app CPU 2.010% shared vs 4.699% individual, private-memory slopes 9.853 vs 20.221 MiB/min. [Report](2026-11-01-window-mode.md).                                  | Scoped comparison with missing input coverage; not a full-workload or release result.                                                     |
+| 12 November R3 normal matrix                  | Four 420-second Linux tape runs; CPU was lower in both pairs (18.02% and 7.61%). [Report](2026-11-12-normal-matrix.md).                                                                           | Current campaign comparison; formal acceptance remains inconclusive because input coverage and private-memory integration are incomplete. |
+
 ## 1. Goal and scope
 
 Reduce CPU time, unnecessary React updates, canvas/compositor work, and memory
@@ -140,7 +218,9 @@ Observations to recheck:
 | One actualDuration of 22.6 ms in the first interval | The aggregate does not link the maximum to mount/update; a recurring hitch has not been established                   |
 | `processTelemetry` p99 about 0.16 ms in demo        | The mock mode does not measure the native SDK or its synchronous wait                                                 |
 
-Candidates confirmed in the new base:
+Historical observations at the starting base, before the changes below.
+Relative/TitleBar and Map identity findings were addressed in C/D; SDK wait
+instrumentation was addressed in B. This list is not a current backlog:
 
 - Relative subscribes to the full track state for `sessionFlags`.
 - TitleBar subscribes to the full track state for `lapDistPct`, including
@@ -158,8 +238,10 @@ Candidates confirmed in the new base:
 
 Dependencies: none. Priority: P0.
 
-- [ ] Record the source SHA and tracked-file state, build versions,
-      Electron/Chromium, OS, CPU/GPU/driver, displays, DPI, and refresh rate.
+- [x] Record source/build state and matched Linux environment inventories for
+      R3; see the [normal matrix](2026-11-12-normal-matrix.md). This closes
+      campaign capture bookkeeping, not packaged Windows acceptance. Record
+      fresh source/environment metadata for each future comparison.
 - [x] Keep one declared seed within each comparison: widget instances, config,
       layout, window mode, Gantry, Settings, windows, channels and visibility.
       Reconstructed and diagnostic seeds are recorded separately; the original
@@ -170,16 +252,17 @@ Dependencies: none. Priority: P0.
 - [x] Separate workloads: Linux mock, deterministic SDK tape, and actual
       replay/game session. Record the actual source in metadata; do not leave
       `simulatorMode: live` on a mock capture or assess FPS using fixture fields.
-- [ ] Capture baseline and candidate on the same target. Use Dev for the React
-      Profiler; verify final cost with a packaged build on Windows.
+- [x] Capture baseline and candidate on the same Linux development target;
+      R3 and the render-phase diagnostic are complete in their stated scopes.
+- [ ] Verify final cost with a packaged build on Windows (A-1; blocked).
 - [x] For steady state, capture 420 seconds: exclude 60 seconds of warmup and
       analyze the following 360 seconds. This leaves more than the 300 seconds
       required by the analyzer. Capture startup as a separate scenario.
-- [ ] Complete two valid repetitions in A–B / B–A order. The early pair with
-      mismatched 60/165–169 Hz cadence remains confounded. R3 later completed
-      matched A–B–B–A runs with lower CPU in both pairs, but missing channel input
-      coverage and private-memory integration keep the full analyzer gate open.
-      See its report; do not restart capture merely because this box is open.
+- [x] Complete two matched repetitions in A–B / B–A order: R3 completed a
+      matched A–B–B–A capture. The capture requirement is complete, but the full
+      analyzer gate remains inconclusive because of input-coverage and
+      private-memory gaps. See its report; do not restart capture merely because
+      acceptance remains open.
 
 Workload matrix:
 
@@ -226,13 +309,20 @@ Dependencies: A. Priority: P0.
       on timeout, exception, disconnect, and stop.
 - [x] Extend existing metric types/allowlists and the analyzer consistently;
       do not add a standalone IPC firehose.
-- [ ] Record window IDs, renderer role, active instances, subscriptions/rates,
-      and the actual mock/tape/live source in metadata.
+- [x] Record source kind, startup topology, runtime process roles and channel
+      rates in existing captures; see the
+      [instrumentation report](2026-11-11-perf-instrumentation.md) and R3 report.
+- [ ] Audit field completeness for runtime window IDs, active instances and
+      per-window subscription/rate attribution; enumerate and close specific
+      missing fields under B-1. Existing aggregate/source metadata is not an
+      instruction to rerun the normal matrix.
 - [x] For React, capture interval aggregates and a bounded list of slow render
       events: widget instance ID/type, phase, actualDuration, startTime, and
       commitTime. Align timelines with the capture origin.
-- [ ] Keep data in bounded buffers; emit aggregates infrequently. Compare
-      captures with instrumentation on/off and estimate its overhead.
+- [x] Keep diagnostic buffers bounded and emit aggregates infrequently; run the
+      collection on/off comparison. Its recovered result is inconclusive due to
+      mixed-sign deltas and an 8,388-second recovery gap; it establishes no
+      overhead bound. Do not call the overhead zero or subtract an assumed cost.
 - [x] Store traces separately from lightweight perf captures: sampling/profiling
       adds load and is not a direct estimate of a normal packaged run.
 
@@ -308,6 +398,9 @@ Dependencies: D, separate A/B for each change. Priority: P2.
 - [ ] If a new user setting is needed, describe it in the type, manifest
       defaults/properties, and settings; use the existing merge.
 
+Only items phrased “if needed” or “if a new setting is needed” are conditional;
+other unchecked Stage E checks remain open as described in the status table.
+
 Stage E exit criterion: CPU/draw work decreases beyond repeat noise; movement,
 fade/hide, scaling, and replay do not regress. For visual changes, prepare
 before/after screenshots and a short motion recording.
@@ -324,8 +417,9 @@ Dependencies: A/B; independent of C–E. Priority: P1 for diagnosis.
       compare heap after GC at identical checkpoints; do not infer a leak from RSS.
       Completed for visible Standings preview with looping tape; see the memory
       report. Allocation ownership and other workload modes remain open.
-- [ ] Compare display/shared and individual/widget modes with identical
-      instances, layout, and DPI; record actual geometry of all windows.
+- [x] Compare display/shared and individual/widget modes with the same instances,
+      layout, and DPI; record all window geometry. Geometry matched, but input
+      rates differed (56.22 vs 53.23 Hz), so this is not a CPU comparison.
 - [x] Capture an initial Chromium Performance trace with Settings closed and
       attribute layout/paint/raster/compositor spans; see the
       [trace report](2026-11-11-renderer-trace.md). This is diagnostic evidence,
@@ -336,13 +430,13 @@ Dependencies: A/B; independent of C–E. Priority: P1 for diagnosis.
 - [ ] Separate the downstream React/effects, DOM/canvas and compositor costs
       enough to select a shared implementation change; validate it without
       diagnostic work suppression.
-- [ ] Check hidden windows with `backgroundThrottling: false`: snapshot gating
-      is separate from rAF, event delivery, and Gantry history retention.
-      Native hide/show diagnostics now pass for Map/Input/Radar, exercised Lap
-      Trace and Gantry live lap history. Other native visibility modes and full
-      incident/event coverage are not established by those captures.
-- [ ] Preserve Gantry's required always-fed semantics and event delivery; do
-      not change Chromium flags or hardware acceleration without a separate A/B.
+- [x] Verify hidden draw stop/resume for Map/Input/Radar, exercised Lap Trace,
+      and Gantry history retention/disable cleanup in the tested scenarios.
+- [ ] Complete remaining visibility/lifecycle coverage: other native hide modes,
+      rAF versus snapshot/event delivery, and full Gantry incident/event coverage.
+- Preserve Gantry's always-fed contract. Do not change Chromium flags or
+  hardware acceleration without a separate A/B; this is a constraint, not an
+  outstanding implementation task.
 
 Stage F exit criterion: the owner of load/memory growth is identified by
 process and objects; window changes are confirmed by trace and game presentation
@@ -359,6 +453,9 @@ downstream traces and measured compositor candidate, this supports continuing
 renderer/drawing investigation first, not declaring transport free or redesigning
 the native API without new attribution.
 
+No Stage G item is active. The unchecked items below are conditional triggers,
+not current tasks; reopen them only after attribution shows a native/IPC bottleneck.
+
 Dependencies: live profile B/F. Priority: P3, only when there is measured benefit.
 
 - [ ] If SDK materialization dominates: measure copied bytes, number of
@@ -370,24 +467,25 @@ Dependencies: live profile B/F. Priority: P3, only when there is measured benefi
 - [ ] If IPC dominates: measure bytes/rate/delivery by channel and window, then
       reduce a specific payload. Preserve coalescing, rate ceilings, event ordering,
       latest snapshot, and seeded delivery after show.
-- [ ] Do not reduce Input accuracy, FuelLevel/SessionTime threshold calculations,
-      or frame-delta speed calculations; these are covered by the no-round rules.
+      Invariant: do not reduce Input accuracy, FuelLevel/SessionTime threshold
+      calculations, or frame-delta speed calculations; follow the no-round rules.
 
 Stage G exit criterion: the gain exceeds measured overhead of the new interface
 and copying; public consumers and lifecycle behavior are preserved.
 
-## 10. Delivery order and checks
+## 10. Future delivery checks
 
-Proposed independent commits/PRs:
+The initial C/D implementation and instrumentation are already on `perf`; those
+proposed commits are superseded. Remaining code changes are evidence-gated:
 
-1. `chore: make overlay performance captures comparable` — stages A/B.
-2. `perf: narrow relative and title bar subscriptions` — C.
-3. `perf: preserve track map identity data between position updates` — D.
-4. `perf: limit redundant track map paints` — E, if A/B confirms benefit.
-5. Separate Settings/memory or window-rendering fix — based on F results.
-6. Separate native/IPC work — only after decision G.
+1. Stage E drawing/scheduling change only after matched A/B identifies a gain
+   beyond run variation without visual or lifecycle regressions.
+2. Stage F Settings/memory/window change only after attribution identifies an
+   owner and a reproducible consumer-visible cost.
+3. Stage G native/IPC change only after a measured transport or SDK bottleneck.
 
-For each implementation step:
+The checklist below applies to each future change/PR; unchecked boxes are a
+reusable gate, not branch backlog.
 
 - [ ] Write branch documentation, commit messages, and PR titles/descriptions
       in English.

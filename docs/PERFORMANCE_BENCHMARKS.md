@@ -1,15 +1,12 @@
 # irDashies Performance Benchmarks
 
-Current references and their evidence qualifications are listed in the
-[baseline register](./PERFORMANCE_TEST_LOG.md#current-baseline-register).
-Choose a reference with the same target and workload; the most recent capture
-does not automatically replace the release baseline. Attached compact evidence
-under `docs/performance/` survives when local `perf-results/` logs are absent.
-
-This is the repeatable benchmark protocol for diagnosing iRacing FPS loss,
-overlay stutter, and long-session degradation. It complements
-[`PERFORMANCE_TEST_SUMMARY.md`](./PERFORMANCE_TEST_SUMMARY.md), whose earlier
-runs established the memory and telemetry-processing targets.
+This document owns the repeatable benchmark procedure and CLI examples, not the
+active roadmap. Current status, decisions, acceptance gaps, and priorities live
+in the [performance plan](./performance/overlay-performance-plan.md). Its
+[reference-workloads section](./performance/overlay-performance-plan.md#reference-workloads)
+lists the comparison baselines; choose one with the same build target and
+workload. A newer capture does not automatically replace a packaged reference.
+Dated reports linked from the plan preserve experiment-specific evidence.
 
 ## What the harness captures
 
@@ -409,5 +406,5 @@ measured layer:
 - A single widget's paint regression: optimize that renderer before moving
   application-wide architecture.
 
-Follow-up work, evidence gates, and measurable exit criteria are tracked in
-[archived implementation plan](./archive/architecture-2026/IMPLEMENTATION_PLAN.md#performance-measurement-and-optimization-plan-2026-07-26).
+Current follow-up work and evidence gates are tracked only in the
+[active performance plan](./performance/overlay-performance-plan.md).

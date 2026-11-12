@@ -132,6 +132,6 @@ The real-code candidate now removes manufacturer `translateZ(0)`. Normal-run
 acceptance is pending. Blind-spot transform geometry was independently checked
 in Storybook/Chromium: two heights, five positions, both sides, zero coordinate
 difference from the original. Its isolated total CPU contribution is unproven.
-See [PERF_HANDOFF.md](PERF_HANDOFF.md) for the exact continuation point, new
-tracked capture tools and remaining gates. The user confirms Windows access
-is currently unavailable.
+See the [active performance plan](overlay-performance-plan.md) for current
+priorities; capture tools and experiment-specific evidence are linked there.
+The user confirms Windows access is currently unavailable.

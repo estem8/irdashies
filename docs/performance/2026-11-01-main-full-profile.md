@@ -14,9 +14,9 @@ inputs are missing. This is not a release acceptance result.
 
 The [sanitized evidence](./2026-11-01-main-full-profile.json) includes per-run
 build/native fingerprints, profile hashes, missing-input lists, replay checks
-and all 72 private-memory observations per repeat. The [baseline
-register](../PERFORMANCE_TEST_LOG.md#current-baseline-register) keeps this
-separate from the six-instance experiment and archived packaged reference.
+and all 72 private-memory observations per repeat. The [reference workload
+index](overlay-performance-plan.md#reference-workloads) keeps this separate
+from the six-instance experiment and the packaged release reference.
 
 ## Measured results
 

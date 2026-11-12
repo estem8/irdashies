@@ -14,7 +14,7 @@ persists after #857.
 The attached [machine-readable evidence](./2026-11-01-window-mode.json) preserves
 the per-run figures, qualifications, source-manifest fingerprint and raw-log
 hashes even when the local `perf-results/` directory is unavailable. See the
-[baseline register](../PERFORMANCE_TEST_LOG.md#current-baseline-register) for
+[reference workload index](overlay-performance-plan.md#reference-workloads) for
 which captures may be compared.
 
 Four corrected development captures ran in shared → individual → individual → shared order. Each lasted 420 seconds with the first 60 seconds excluded. All 1,608 recorded source-file hashes remained unchanged. Native replay samples confirm normal-speed playback, session 2, the same cockpit camera and focus car, and monotonically increasing replay frames during all four measured windows (72 replay samples per run).
