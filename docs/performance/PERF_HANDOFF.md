@@ -408,3 +408,12 @@ R2 failed geometry preflight, neither accepted as history proof. No capture
 active. Remaining Linux plan scope includes display-vs-widget topology,
 active-radio/real session transitions, and unresolved memory ownership;
 Windows simulator acceptance and current-head CI remain externally blocked.
+
+## Full local CI validation
+
+Source 2fb87380 passes npm run lint, npm run build-storybook and npm test -- --run
+on Linux. Node perf tests 42/42; Vitest 543 files passed/9 skipped, 6518 tests
+passed/41 skipped. Fixed discovery mismatch by running node:test files in their
+own mandatory npm test phase and excluding only that pattern from Vitest.
+See [local CI report](2026-11-12-local-ci.md). No background capture/check active.
+Remote CI/Windows remain unverified; do not substitute local Linux validation.

@@ -1,0 +1,36 @@
+{
+  "sourceCommit": "2fb873809b62417e367c3171cc5472419cc2dc16",
+  "platform": "Linux",
+  "node": "v26.13.1",
+  "checks": {
+    "lint": {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    "storybook": {
+      "command": "npm run build-storybook",
+      "exitCode": 0
+    },
+    "tests": {
+      "command": "npm test -- --run",
+      "exitCode": 0,
+      "nodeTestPass": 42,
+      "nodeTestFail": 0,
+      "vitestFilesPassed": 543,
+      "vitestFilesSkipped": 9,
+      "vitestTestsPassed": 6518,
+      "vitestTestsSkipped": 41,
+      "vitestDurationSeconds": 164.68
+    }
+  },
+  "logSha256": {
+    "lint": "887540c256145ea87adbae0e9ace57fa6a123ea67b18c31f7cf0538e8201d80d",
+    "storybook": "41966a058c6399c4b62b5ef17a4bbfabaca5935f29757d11a50e3518bbe126d9",
+    "tests": "dc1d7cdfdaabd85ef3decb7ffd240be2ce1b78e9cc30433760afda44c7b9735e"
+  },
+  "limits": [
+    "Windows runner and PowerShell signing-package test not executed",
+    "GitHub Actions dispatch previously rejected HTTP 422; no current-head remote CI run claimed",
+    "No simulator presentation/FPS evidence"
+  ]
+}
