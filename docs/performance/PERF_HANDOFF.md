@@ -11,6 +11,22 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- The user explicitly authorized CI after the earlier quota warning. Attempted dispatch of
+  ci.yml on published perf (07c7330e), should_release=false and
+  signing_smoke_test=false, but dispatch FAILED with HTTP 422: Actions has been
+  disabled for this repository. No new run was created. Permissions report
+  enabled=true and CI workflow state=active; the effective GitHub restriction
+  remains unexplained. Do not claim current-head CI. The only listed run is
+  historical 43101017184 at 50657bdd. Local validation continues independently.
+
+- CURRENT: Map R2 completed all four 180-second phases, exit 0 and candidate
+  restored. Identity-object rates 887.618/0.363/0.363/878.913 per second;
+  candidate memo recomputes once per steady interval, progress stays about 22/s.
+  Source/environment/hash/PID and progress/input cadence checks pass. See
+  2026-11-12-map-identities.{md,json}. This is not app-wide CPU or memory bytes.
+  Five Map hook tests and eight observer/report tests pass. No capture is active.
+  Next: exercised Lap Trace native-hide probe, then Gantry.
+
 - `map-identities-r1` is terminal: baseline a1 completed; b1 hit the app's
   default five-second topology readiness timeout while windows were loading.
   Candidate restoration/child termination are verified. Log chronology shows
@@ -23,8 +39,7 @@ claim game FPS or Windows acceptance.
   records the main PID before readiness, so failure cleanup can signal main
   first rather than the entire GPU/renderer process group. 31 targeted tests,
   TypeScript and targeted ESLint pass, including a renderer loading after 6s.
-  Next is a fresh same-protocol `map-identities-r2 identity` four-phase run.
-  No capture is currently active; r1 a1 remains separate partial evidence.
+  R2 then completed under this protocol; r1 a1 remains separate partial evidence.
 
 - CURRENT: on2 retry completed 420 seconds, exit 0 and candidate restoration.
   All four successful measurements are assembled in ignored

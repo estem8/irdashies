@@ -129,7 +129,7 @@ try {
     const seeded = await record('synthetic-reference-active');
     for (const measure of ['lapTraceFrame', 'lapTraceBrakeCue'])
       assert.ok(
-        (seeded.draws[measure] ?? 0) > (resumed.draws[measure] ?? 0),
+        (seeded.draws[measure] ?? 0) - (resumed.draws[measure] ?? 0) > 1,
         'Unexercised ' + measure + ' before hide'
       );
     const screenshot = await overlay.call('Page.captureScreenshot', {

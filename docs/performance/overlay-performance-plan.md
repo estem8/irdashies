@@ -268,8 +268,11 @@ Main file: `TrackMap/hooks/useDriverProgress.tsx`.
       from position progress, which continues updating at its own frequency.
 - [x] Stabilize fallback qualifying data if the conversion creates a new array
       on every render. Preserve reset/disconnect semantics.
-- [ ] Count identity recomputations and allocation rate. Do not mutate snapshots
-      or selected arrays to artificially preserve references.
+- [x] Count identity recomputations and specific identity-object construction
+      rate without mutating snapshots or selected arrays. The
+      [direct four-run diagnostic](2026-11-12-map-identities.md) observes about
+      879–888 identity objects/s baseline versus 0.363/s candidate, with matched
+      progress/input cadence. This is not total allocation bytes or retained heap.
 - [x] Check equal values in new payload objects, position changes, join/leave,
       pace car, spectator, multiclass, qualifying fallback, and focus.
 
