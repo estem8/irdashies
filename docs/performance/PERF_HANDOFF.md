@@ -11,6 +11,15 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `collection-overhead-r1 overhead` is now running from checkpoint `2f04c48a`,
+  controller PID 75516, terminal session 57264, explicit diagnostic height 1009.
+  Four 420-second candidate-source runs use collection on/off/off/on, normal
+  delivery and identical external cumulative CPU/rAF/smaps sampling. No overhead
+  result is claimed yet. Do not build/test or run other captures while active.
+  Poll the existing handle; after successful completion run the prepared
+  `report-collection-overhead.mjs` against this root, then the separate Map
+  identity diagnostic. The native R4 capture is finished and fully reported.
+
 - `native-light-smoke-r2 native-smoke 1009` completed 180 seconds with exit 0,
   ten loss-free one-shot traces and the candidate restored. All checkpoints
   retain main malloc/V8 and renderer malloc/PartitionAlloc/V8 aggregate sizes;
@@ -24,8 +33,8 @@ claim game FPS or Windows acceptance.
   5.650 MiB and post-GC V8 3.748 MiB. These metrics are not equivalent; the run
   does not establish a leak or account for all private growth. Next captures
   persist separate clean/dirty/anonymous/file PSS fields to investigate the gap.
-  Parser/native report and overhead/source-transform tests pass; no capture is
-  active at this checkpoint. Observe authoritative handles/files before launch.
+  Parser/native report and overhead/source-transform tests pass. Native capture
+  is finished; the overhead handle above is current. Check it before launch.
 
 - `native-memory-r3 native 1009` failed at the 720-second dump because CDP
   reported trace data loss. Only the 120/420 checkpoints are valid; do not
