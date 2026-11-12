@@ -349,3 +349,14 @@ the standalone trace-attribution suite has 10 passing tests; TypeScript and
 ESLint passed for the application candidate. Six tape-control tests also pass.
 Capture scripts are experimental diagnostic tooling. R3 exercised a complete
 four-run execution; the overall acceptance gaps are recorded in its report.
+
+## Lap Trace native visibility follow-up (2026-11-12)
+
+Fixed unknown session snapshots clearing Lap Trace reference on native show
+(`1fe4f696`). Regression tests 25/25, old-code negative control confirmed,
+TypeScript/ESLint pass. `laptrace-hidden-r3` completed 180 seconds / exit 0 /
+candidate restored. Plot and brake cue stayed at 120/49 during 20 seconds
+hidden, resumed to 239/95 after show, reference preserved. See
+[scoped result](2026-11-12-laptrace-hidden.md). Next available Linux lifecycle
+work is Gantry; prepared diagnostic remains unverified. CI dispatch remains
+blocked by GitHub HTTP 422 Actions disabled, Windows/iRacing unavailable.

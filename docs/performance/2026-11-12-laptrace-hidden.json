@@ -1,0 +1,554 @@
+{
+  "scope": "Runtime smoke with diagnostic observers; not CPU acceptance or real simulator reconnect",
+  "hiddenProbe": true,
+  "lapTraceProbe": true,
+  "injectedReference": {
+    "trackId": 18,
+    "carPath": "bmwm4gt3",
+    "trackLengthM": 6413.5,
+    "samples": 6414,
+    "source": "synthetic diagnostic only"
+  },
+  "passed": true,
+  "records": [
+    {
+      "label": "before",
+      "at": "2026-11-12T12:42:28.425Z",
+      "status": {
+        "position": 57.0062969,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 21,
+      "track": {
+        "sessionTime": 147.88333384197176,
+        "version": 1268,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [],
+      "draws": {
+        "radarFrame": 54,
+        "trackMapAnimationFrame": 79,
+        "trackMapRafDraw": 58,
+        "inputTraceFrame": 51,
+        "trackMapCommitDraw": 21
+      },
+      "rootTextLength": 1252,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-forward",
+      "at": "2026-11-12T12:42:30.446Z",
+      "status": {
+        "position": 301.9146123,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 67,
+      "track": {
+        "sessionTime": 392.80000050860014,
+        "version": 1319,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 170,
+        "trackMapAnimationFrame": 245,
+        "trackMapRafDraw": 175,
+        "inputTraceFrame": 163,
+        "trackMapCommitDraw": 70
+      },
+      "rootTextLength": 1605,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-backward",
+      "at": "2026-11-12T12:42:32.467Z",
+      "status": {
+        "position": 31.906839,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 114,
+      "track": {
+        "sessionTime": 122.8000005086229,
+        "version": 1368,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 280,
+        "trackMapAnimationFrame": 408,
+        "trackMapRafDraw": 288,
+        "inputTraceFrame": 278,
+        "trackMapCommitDraw": 120
+      },
+      "rootTextLength": 1263,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-start",
+      "at": "2026-11-12T12:42:32.476Z",
+      "status": {
+        "position": 31.9281455,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 115,
+      "track": {
+        "sessionTime": 122.8500005086229,
+        "version": 1369,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 281,
+        "trackMapAnimationFrame": 410,
+        "trackMapRafDraw": 289,
+        "inputTraceFrame": 279,
+        "trackMapCommitDraw": 121
+      },
+      "rootTextLength": 1263,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-end",
+      "at": "2026-11-12T12:42:34.487Z",
+      "status": {
+        "position": 31.9281455,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 115,
+      "track": {
+        "sessionTime": 122.8500005086229,
+        "version": 1369,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 401,
+        "trackMapAnimationFrame": 413,
+        "trackMapRafDraw": 292,
+        "inputTraceFrame": 280,
+        "trackMapCommitDraw": 121
+      },
+      "rootTextLength": 1263,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "resumed",
+      "at": "2026-11-12T12:42:36.550Z",
+      "status": {
+        "position": 33.9560515,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 160,
+      "track": {
+        "sessionTime": 124.85000050862278,
+        "version": 1419,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 519,
+        "trackMapAnimationFrame": 576,
+        "trackMapRafDraw": 410,
+        "inputTraceFrame": 393,
+        "trackMapCommitDraw": 166
+      },
+      "rootTextLength": 1260,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": false,
+        "referenceLabel": null,
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "synthetic-reference-active",
+      "at": "2026-11-12T12:42:38.682Z",
+      "status": {
+        "position": 36.0897192,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 205,
+      "track": {
+        "sessionTime": 127.00000050862266,
+        "version": 1473,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 628,
+        "trackMapAnimationFrame": 742,
+        "trackMapRafDraw": 531,
+        "inputTraceFrame": 503,
+        "trackMapCommitDraw": 211,
+        "lapTraceFrame": 109,
+        "lapTraceBrakeCue": 44
+      },
+      "rootTextLength": 1214,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": true,
+        "referenceLabel": "Diagnostic synthetic reference",
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "hidden-start",
+      "at": "2026-11-12T12:42:39.903Z",
+      "status": {
+        "position": 37.341245,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 210,
+      "track": {
+        "sessionTime": 127.25000050862265,
+        "version": 1479,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 639,
+        "trackMapAnimationFrame": 760,
+        "trackMapRafDraw": 544,
+        "inputTraceFrame": 514,
+        "trackMapCommitDraw": 216,
+        "lapTraceFrame": 120,
+        "lapTraceBrakeCue": 49
+      },
+      "rootTextLength": 1213,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": true,
+        "referenceLabel": "Diagnostic synthetic reference",
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "hidden-end",
+      "at": "2026-11-12T12:42:59.912Z",
+      "status": {
+        "position": 57.3502454,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 210,
+      "track": {
+        "sessionTime": 127.25000050862265,
+        "version": 1479,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 639,
+        "trackMapAnimationFrame": 760,
+        "trackMapRafDraw": 544,
+        "inputTraceFrame": 514,
+        "trackMapCommitDraw": 216,
+        "lapTraceFrame": 120,
+        "lapTraceBrakeCue": 49
+      },
+      "rootTextLength": 1213,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": true,
+        "referenceLabel": "Diagnostic synthetic reference",
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "shown",
+      "at": "2026-11-12T12:43:01.982Z",
+      "status": {
+        "position": 59.3902065,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 256,
+      "track": {
+        "sessionTime": 150.23333384197363,
+        "version": 49,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 754,
+        "trackMapAnimationFrame": 926,
+        "trackMapRafDraw": 661,
+        "inputTraceFrame": 634,
+        "trackMapCommitDraw": 265,
+        "lapTraceFrame": 239,
+        "lapTraceBrakeCue": 95
+      },
+      "rootTextLength": 1204,
+      "lapTrace": {
+        "trackId": 18,
+        "carPath": "bmwm4gt3",
+        "trackLengthM": 6413.5,
+        "referencePresent": true,
+        "referenceLabel": "Diagnostic synthetic reference",
+        "referenceError": null,
+        "activeLapPresent": true
+      },
+      "window": {
+        "visible": true
+      }
+    }
+  ],
+  "sourceCommit": "1fe4f696",
+  "controllerExitCode": 0,
+  "candidateRestored": true
+}

@@ -1,9 +1,9 @@
 # Lap Trace hidden-window diagnostic preparation
 
-Prepared, runtime not yet verified:
+Verified on Linux after the recorder fix (`1fe4f696`):
 
 ```sh
-node tools/perf/capture/lifecycle-probe.mjs laptrace-hidden-r1 hidden-laptrace
+node tools/perf/capture/lifecycle-probe.mjs laptrace-hidden-r3 hidden-laptrace
 ```
 
 The ordinary ten-widget tape fixture has no saved reference lap, so the earlier
@@ -23,4 +23,5 @@ This probes rendering/lifecycle with synthetic reference data. It does not
 validate reference-lap accuracy, live simulator input, high-refresh display
 behavior, or total CPU. Require successful controller shutdown, fixed-duration
 marker, candidate restoration and absence of failure artifacts in addition to
-the lifecycle result. Syntax and targeted ESLint pass; runtime remains pending.
+the lifecycle result. Runtime passed with exit 0, a fixed 180-second capture and candidate restoration.
+See [the result](2026-11-12-laptrace-hidden.md).
