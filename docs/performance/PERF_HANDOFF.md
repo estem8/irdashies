@@ -11,6 +11,16 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `native-light-smoke-r2 native-smoke 1009` completed 180 seconds with exit 0,
+  ten loss-free one-shot traces and the candidate restored. All checkpoints
+  retain main malloc/V8 and renderer malloc/PartitionAlloc/V8 aggregate sizes;
+  main PartitionAlloc is empty (not zero). Traces are 1.56–2.07 MB. See
+  `2026-11-12-memory-infra-light-readiness.json` for bounded provider evidence.
+- `native-memory-r4 native 1009` is running with this light configuration
+  (controller PID 50922, terminal session 33883). Observe this handle or the
+  authoritative result files before launching anything else. No long result
+  is claimed yet. Do not run builds/tests or heavy analysis while it captures.
+
 - `native-memory-r3 native 1009` failed at the 720-second dump because CDP
   reported trace data loss. Only the 120/420 checkpoints are valid; do not
   interpret this as a completed native growth profile.

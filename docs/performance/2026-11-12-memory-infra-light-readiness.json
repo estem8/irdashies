@@ -1,0 +1,616 @@
+{
+  "scope": "Light aggregate provider readiness only; no long-memory attribution result. Main PartitionAlloc can be empty; absence is not zero.",
+  "root": "perf-results/native-light-smoke-r2/probe",
+  "report": [
+    {
+      "label": "preview-active",
+      "bytes": 2012256,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30568320,
+              "effective_size": 37550704,
+              "size": 37990457,
+              "virtual_size": 71303168
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 22469652,
+              "size": 22469652
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 18500852,
+              "effective_size": 33522256,
+              "size": 34503944,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 46067184,
+              "size": 85789910
+            },
+            "v8": {
+              "effective_size": 59829956,
+              "size": 59829956
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 26410186,
+              "effective_size": 40955152,
+              "size": 41884568,
+              "virtual_size": 104857600
+            },
+            "partition_alloc": {
+              "effective_size": 61236818,
+              "size": 115183299
+            },
+            "v8": {
+              "effective_size": 66996020,
+              "size": 66996020
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-paused-1",
+      "bytes": 1795496,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30534624,
+              "effective_size": 37703472,
+              "size": 38676632,
+              "virtual_size": 88080384
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20795404,
+              "size": 20795404
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 18629936,
+              "effective_size": 32987280,
+              "size": 33963856,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 45916432,
+              "size": 85639158
+            },
+            "v8": {
+              "effective_size": 57252556,
+              "size": 57252556
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 23366362,
+              "effective_size": 39697584,
+              "size": 40545208,
+              "virtual_size": 104857600
+            },
+            "partition_alloc": {
+              "effective_size": 58152258,
+              "size": 111013297
+            },
+            "v8": {
+              "effective_size": 51378100,
+              "size": 51378100
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-paused-2",
+      "bytes": 1560671,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30472196,
+              "effective_size": 37689248,
+              "size": 38128912,
+              "virtual_size": 90177536
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20360212,
+              "size": 20360212
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 17997616,
+              "effective_size": 30899888,
+              "size": 31901480,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 45877040,
+              "size": 85599766
+            },
+            "v8": {
+              "effective_size": 57715412,
+              "size": 57715412
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 22488868,
+              "effective_size": 37132896,
+              "size": 37980520,
+              "virtual_size": 111149056
+            },
+            "partition_alloc": {
+              "effective_size": 56750704,
+              "size": 109611743
+            },
+            "v8": {
+              "effective_size": 51423156,
+              "size": 51423156
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-paused-3",
+      "bytes": 1833297,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30617696,
+              "effective_size": 37920880,
+              "size": 38360544,
+              "virtual_size": 94371840
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20478996,
+              "size": 20478996
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 18705392,
+              "effective_size": 31855344,
+              "size": 32812192,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 45968032,
+              "size": 85690758
+            },
+            "v8": {
+              "effective_size": 57932524,
+              "size": 57932524
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 23993440,
+              "effective_size": 41542288,
+              "size": 42389912,
+              "virtual_size": 113246208
+            },
+            "partition_alloc": {
+              "effective_size": 56752128,
+              "size": 109732011
+            },
+            "v8": {
+              "effective_size": 51550132,
+              "size": 51550132
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-paused-final",
+      "bytes": 1587947,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30626864,
+              "effective_size": 37857552,
+              "size": 38297216,
+              "virtual_size": 96468992
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20814868,
+              "size": 20814868
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 16906928,
+              "effective_size": 28944784,
+              "size": 29901776,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 46052816,
+              "size": 85775542
+            },
+            "v8": {
+              "effective_size": 58706668,
+              "size": 58706668
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 25021392,
+              "effective_size": 43667600,
+              "size": 44520384,
+              "virtual_size": 115343360
+            },
+            "partition_alloc": {
+              "effective_size": 56704048,
+              "size": 109565087
+            },
+            "v8": {
+              "effective_size": 51887020,
+              "size": 51887020
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-resumed-1",
+      "bytes": 2033773,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 31098560,
+              "effective_size": 37757136,
+              "size": 38196800,
+              "virtual_size": 90177536
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20397076,
+              "size": 20397076
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 17480384,
+              "effective_size": 30568800,
+              "size": 31540312,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 46053792,
+              "size": 85776518
+            },
+            "v8": {
+              "effective_size": 58738388,
+              "size": 58738388
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 25406704,
+              "effective_size": 38295664,
+              "size": 39184184,
+              "virtual_size": 111149056
+            },
+            "partition_alloc": {
+              "effective_size": 60789440,
+              "size": 114735921
+            },
+            "v8": {
+              "effective_size": 72619892,
+              "size": 72619892
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-resumed-2",
+      "bytes": 2065856,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 31117216,
+              "effective_size": 38080800,
+              "size": 38520464,
+              "virtual_size": 94371840
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20507668,
+              "size": 20507668
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 17940112,
+              "effective_size": 30875824,
+              "size": 31837736,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 45928784,
+              "size": 85651510
+            },
+            "v8": {
+              "effective_size": 57933540,
+              "size": 57933540
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 27012880,
+              "effective_size": 42784112,
+              "size": 44005436,
+              "virtual_size": 113246208
+            },
+            "partition_alloc": {
+              "effective_size": 60559056,
+              "size": 114624381
+            },
+            "v8": {
+              "effective_size": 73214840,
+              "size": 73214840
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "preview-resumed-3",
+      "bytes": 2073034,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 31048228,
+              "effective_size": 38112768,
+              "size": 38552432,
+              "virtual_size": 94371840
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 20900884,
+              "size": 20900884
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 17862224,
+              "effective_size": 30302336,
+              "size": 31264440,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 46124864,
+              "size": 85847590
+            },
+            "v8": {
+              "effective_size": 58957540,
+              "size": 58957540
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 28462084,
+              "effective_size": 44286800,
+              "size": 45678100,
+              "virtual_size": 115343360
+            },
+            "partition_alloc": {
+              "effective_size": 60561136,
+              "size": 114507617
+            },
+            "v8": {
+              "effective_size": 73122672,
+              "size": 73122672
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "settings-closed-to-tray",
+      "bytes": 1618859,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 30937312,
+              "effective_size": 37754400,
+              "size": 38194064,
+              "virtual_size": 94371840
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 21081108,
+              "size": 21081108
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 15864464,
+              "effective_size": 27339584,
+              "size": 28296576,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 45930208,
+              "size": 85652934
+            },
+            "v8": {
+              "effective_size": 57916140,
+              "size": 57916140
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 27729632,
+              "effective_size": 44461024,
+              "size": 45344432,
+              "virtual_size": 115343360
+            },
+            "partition_alloc": {
+              "effective_size": 60525632,
+              "size": 114472113
+            },
+            "v8": {
+              "effective_size": 69092220,
+              "size": 69092220
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "settings-reopened",
+      "bytes": 1633230,
+      "dataLossOccurred": false,
+      "providers": {
+        "main": {
+          "pid": 48096,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 31123680,
+              "effective_size": 38332096,
+              "size": 38771760,
+              "virtual_size": 94371840
+            },
+            "partition_alloc": {},
+            "v8": {
+              "effective_size": 21150740,
+              "size": 21150740
+            }
+          }
+        },
+        "overlay": {
+          "pid": 48197,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 16390400,
+              "effective_size": 27873264,
+              "size": 28830256,
+              "virtual_size": 119537664
+            },
+            "partition_alloc": {
+              "effective_size": 46086144,
+              "size": 85808870
+            },
+            "v8": {
+              "effective_size": 58960620,
+              "size": 58960620
+            }
+          }
+        },
+        "settings": {
+          "pid": 48819,
+          "counters": {
+            "malloc": {
+              "allocated_objects_size": 27846672,
+              "effective_size": 44266432,
+              "size": 45149888,
+              "virtual_size": 115343360
+            },
+            "partition_alloc": {
+              "effective_size": 60541680,
+              "size": 114488161
+            },
+            "v8": {
+              "effective_size": 72196988,
+              "size": 72196988
+            }
+          }
+        }
+      }
+    }
+  ]
+}
