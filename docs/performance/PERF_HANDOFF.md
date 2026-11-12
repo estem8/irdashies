@@ -11,6 +11,28 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `native-memory-r2 native` was rejected at preflight: the virtual display
+  changed from 2560x1369 to 2560x1009 and the overlay was 1549x1009 rather than
+  1549x1014. No memory checkpoints were accepted. The normal A/B validator
+  remains fixed at 1549x1014. A separate native-only explicit height argument
+  now records and checks actual diagnostic geometry at every checkpoint:
+  `node tools/perf/capture/settings-probe.mjs native-memory-r3 native 1009`.
+  Such subsystem attribution is within one run at the current display size;
+  it is not a matched repeat of the earlier 1014-pixel captures.
+- `memoryDumpSummary.mjs` merges split provider events by PID without summing
+  overlapping allocator nodes. Its unit cases and both available partial R1
+  dumps pass. Hex byte scalars beyond JS Number precision are preserved exactly
+  as decimal objects (some providers contain sentinel/underflow-like values),
+  never rounded into misleading memory totals. The full native report remains
+  unexecuted until a complete capture exists.
+- `native-memory-r1 native` failed before its 420-second checkpoint after the
+  overlay closed at 05:05:52 local time. The handle is missing, the controller
+  wrote `failed.json` with verified child termination, and only preview-active
+  plus steady-120 dumps exist. No full-duration acceptance or allocation-growth
+  conclusion follows from this partial run. Cause of closure is unknown; the
+  user did not notice whether it was manual. Native-only controller diagnostics
+  now record JS close/destroy call stacks and native close/quit/crash events in
+  ignored console.log, without preventing closure. Retry with a fresh output ID.
 - `native-memory-smoke-r2 native-smoke` completed 180 seconds with exit 0 and
   source restoration. MemoryInfra exported ten named traces, each with exactly
   one manual dump and no reported loss, with malloc/PartitionAlloc/V8 and browser
@@ -19,7 +41,7 @@ claim game FPS or Windows acceptance.
   never equate those blindly. Each point now owns a separate trace/filename,
   which also avoids keeping a trace buffer active throughout the 20-minute gap.
   This is provider validation, not an allocation-owner conclusion.
-  Next: `node tools/perf/capture/settings-probe.mjs native-memory-r1 native`.
+  Use a fresh ID for the next native capture; preserve failed R1/R2 evidence.
   It reuses the 1380-second diagnostic and forced-GC checkpoints, adding
   detailed memory-infra dumps. Compare subsystem counters without summing
   overlapping parents/children or assuming private pages equal live objects.

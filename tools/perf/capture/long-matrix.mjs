@@ -16,6 +16,18 @@ const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
 const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
+const diagnosticHeight = process.env.PERF_DIAGNOSTIC_VIEWPORT_HEIGHT;
+assert.ok(
+  !diagnosticHeight || nativeMemoryDiagnostic,
+  'Custom viewport is native diagnostic only'
+);
+const viewportHeight = diagnosticHeight ? Number(diagnosticHeight) : 1014;
+assert.ok(
+  Number.isInteger(viewportHeight) &&
+    viewportHeight >= 1000 &&
+    viewportHeight <= 4000,
+  'Invalid diagnostic viewport height'
+);
 if (process.argv[3] && !smoke && !probe && !memory)
   throw new Error('Expected optional smoke, probe or memory mode');
 const durationSeconds = memory ? 1380 : probe ? 180 : smoke ? 90 : 420;
@@ -128,6 +140,7 @@ try {
           }).trim(),
           sources,
           seedSha256: hash(seed),
+          expectedViewport: { width: 1549, height: viewportHeight, dpr: 1 },
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
@@ -284,6 +297,13 @@ try {
       assert.equal(await main.evaluate('process.env.PERF_RUN_ID'), runId);
       browserPid = await main.evaluate('process.pid');
       assert.ok(Number.isInteger(browserPid) && browserPid > 1);
+      if (nativeMemoryDiagnostic) {
+        // Diagnostic only: observe closure origins without preventing closure.
+        // Stack traces remain in ignored console.log, never published as media.
+        await main.evaluate(
+          `(()=>{const e=${electron};const seen=new WeakSet();const emit=(data)=>process.stdout.write('[PerfWindowDiagnostic:JSON] '+JSON.stringify({at:new Date().toISOString(),...data})+'\\n');const attach=w=>{if(seen.has(w))return;seen.add(w);for(const name of ['close','destroy']){const original=w[name];w[name]=function(...args){emit({kind:'method',name,id:w.id,stack:new Error().stack});return Reflect.apply(original,this,args)}}for(const name of ['close','closed'])w.on(name,()=>emit({kind:'event',name,id:w.id,stack:new Error().stack}));w.webContents.on('render-process-gone',(_event,details)=>emit({kind:'renderer-gone',id:w.id,details}))};e.BrowserWindow.getAllWindows().forEach(attach);e.app.on('browser-window-created',(_event,w)=>attach(w));for(const name of ['before-quit','will-quit'])e.app.on(name,()=>emit({kind:'app-event',name,stack:new Error().stack}));return true})()`
+        );
+      }
       // The explicit capture flag fixes bounds/visibility at creation, so
       // first-paint timing cannot change auxiliary startup state between runs.
       await wait(1000);
@@ -367,7 +387,7 @@ try {
       assert.equal(ui.status.speed, 1);
       assert.equal(ui.status.paused, false);
       assert.equal(ui.width, 1549);
-      assert.equal(ui.height, 1014);
+      assert.equal(ui.height, viewportHeight);
       assert.equal(ui.dpr, 1);
       assert.ok(
         windows

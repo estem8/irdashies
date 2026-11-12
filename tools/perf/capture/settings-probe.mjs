@@ -14,6 +14,18 @@ assert.ok(
   'Expected memory, native or native-smoke mode'
 );
 const mode = memory ? 'memory' : 'probe';
+const requestedHeight = process.argv[4];
+assert.ok(
+  !requestedHeight || native,
+  'Custom viewport requires native diagnostic'
+);
+const viewportHeight = requestedHeight ? Number(requestedHeight) : 1014;
+assert.ok(
+  Number.isInteger(viewportHeight) &&
+    viewportHeight >= 1000 &&
+    viewportHeight <= 4000,
+  'Invalid diagnostic viewport height'
+);
 assert.match(id ?? '', /^[a-z0-9-]+$/);
 const root = resolve('perf-results', id);
 try {
@@ -28,7 +40,11 @@ const child = spawn(
   ['tools/perf/capture/long-matrix.mjs', id, mode],
   {
     stdio: 'inherit',
-    env: { ...process.env, PERF_NATIVE_MEMORY_DIAGNOSTIC: native ? '1' : '0' },
+    env: {
+      ...process.env,
+      PERF_NATIVE_MEMORY_DIAGNOSTIC: native ? '1' : '0',
+      PERF_DIAGNOSTIC_VIEWPORT_HEIGHT: requestedHeight ?? '',
+    },
   }
 );
 let exited = false;
@@ -98,6 +114,16 @@ try {
         await overlay.call('HeapProfiler.collectGarbage');
         value.overlayHeap = await overlay.call('Runtime.getHeapUsage');
         value.overlayDOM = await overlay.call('Memory.getDOMCounters');
+      }
+      if (native) {
+        value.overlayViewport = await overlay.evaluate(
+          '({width:innerWidth,height:innerHeight,dpr:devicePixelRatio})'
+        );
+        assert.deepEqual(
+          value.overlayViewport,
+          { width: 1549, height: viewportHeight, dpr: 1 },
+          'Diagnostic viewport changed'
+        );
       }
       if (nativeTrace) value.nativeDump = await nativeTrace.dump(label);
     }
