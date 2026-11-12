@@ -31,7 +31,11 @@ const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
 const diagnosticHeight = process.env.PERF_DIAGNOSTIC_VIEWPORT_HEIGHT;
 assert.ok(
-  !diagnosticHeight || nativeMemoryDiagnostic || overhead || identity,
+  !diagnosticHeight ||
+    nativeMemoryDiagnostic ||
+    overhead ||
+    identity ||
+    lapTimesDiagnostic,
   'Custom viewport is diagnostic only'
 );
 const viewportHeight = diagnosticHeight ? Number(diagnosticHeight) : 1014;
