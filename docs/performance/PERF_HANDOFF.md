@@ -11,6 +11,22 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `native-memory-r3 native 1009` failed at the 720-second dump because CDP
+  reported trace data loss. Only the 120/420 checkpoints are valid; do not
+  interpret this as a completed native growth profile.
+- A light MemoryInfra configuration is prepared with the loss guard retained.
+  `native-light-smoke-r1` failed topology preflight before dump validation:
+  Chromium logged zygote communication failures, repeated GPU launch failure
+  (1002), then a fatal GPU-unusable exit. Coredump metadata confirms SIGTRAP
+  for Electron PID 41341; the underlying launch failure remains unresolved.
+  This does not establish the cause of the earlier R1 window disappearance.
+  The user did not notice whether that earlier window was manually closed.
+- Overhead collection control is saved separately on origin branch
+  `chore/perf-collection-overhead`, commit `3ccb5f8c`. It preserves capture
+  bootstrap while disabling optional collectors/reporters. 32 tests,
+  TypeScript and targeted ESLint passed. Runtime overhead is not measured;
+  the commit has not yet been integrated into `perf`.
+
 - `native-memory-r2 native` was rejected at preflight: the virtual display
   changed from 2560x1369 to 2560x1009 and the overlay was 1549x1009 rather than
   1549x1014. No memory checkpoints were accepted. The normal A/B validator

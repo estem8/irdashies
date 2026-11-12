@@ -4,6 +4,40 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { summarizeMemoryDump } from './memoryDumpSummary.mjs';
 
+// Stable aggregates only: opaque resource IDs make unbounded, noisy reports.
+// These nodes overlap; preserve each counter without summing parents/children.
+const allocatorNames = new Set([
+  'malloc',
+  'malloc/allocated_objects',
+  'malloc/metadata_fragmentation_caches',
+  'partition_alloc',
+  'partition_alloc/address_space',
+  'partition_alloc/partitions',
+  'partition_alloc/partitions/fast_malloc',
+  'partition_alloc/partitions/buffer',
+  'partition_alloc/partitions/array_buffer',
+  'v8',
+  'v8/main',
+  'v8/main/heap',
+  'v8/utility',
+  'v8/utility/heap',
+  'blink_gc',
+  'cc',
+  'cc/tile_memory',
+  'canvas',
+  'skia',
+  'skia/glyph_cache',
+  'web_cache',
+  'web_cache/Font_resources',
+  'web_cache/Image_resources',
+  'web_cache/CSS stylesheet_resources',
+  'devtools',
+  'devtools/console',
+  'gpu',
+  'gpu/command_buffer',
+  'gpu/transfer_buffer',
+]);
+
 // Deliberately analyze only after a complete diagnostic, not while it runs.
 const root = resolve(process.argv[2]);
 const read = async (file) =>
@@ -58,9 +92,7 @@ for (const checkpoint of checkpoints) {
     const allocators = Object.fromEntries(
       Object.entries(process.allocators).filter(
         ([name, attrs]) =>
-          name.split('/').length <= 3 &&
-          !/0x[0-9a-f]+/i.test(name) &&
-          Object.keys(attrs).length > 0
+          allocatorNames.has(name) && Object.keys(attrs).length > 0
       )
     );
     selected[role] = {

@@ -3,6 +3,16 @@ import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
 
+const traceConfig = {
+  recordMode: 'recordAsMuchAsPossible',
+  traceBufferSizeInKb: 256 * 1024,
+  enableSampling: false,
+  includedCategories: ['disabled-by-default-memory-infra'],
+  excludedCategories: ['*'],
+  memoryDumpConfig: { triggers: [] },
+};
+const levelOfDetail = 'light';
+
 /** One manual dump per named trace avoids relying on returned/trace GUID equality. */
 export async function startMemoryDumpTrace(out) {
   const version = await (
@@ -54,14 +64,13 @@ export async function startMemoryDumpTrace(out) {
       assert.ok(!stopped && !active, 'Memory trace unavailable');
       let result, primaryError;
       await browser.call('Tracing.start', {
-        categories: '-*,disabled-by-default-memory-infra',
-        options: 'record-as-much-as-possible',
+        traceConfig,
         transferMode: 'ReturnAsStream',
       });
       active = true;
       try {
         result = await browser.call('Tracing.requestMemoryDump', {
-          levelOfDetail: 'detailed',
+          levelOfDetail,
         });
         assert.equal(result.success, true, 'Chromium memory dump failed');
       } catch (error) {
@@ -71,6 +80,8 @@ export async function startMemoryDumpTrace(out) {
         const exported = await finish(label);
         dumps.push({
           label,
+          levelOfDetail,
+          traceConfig,
           at: new Date().toISOString(),
           ...result,
           ...exported,
