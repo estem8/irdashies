@@ -445,6 +445,6 @@ collection/memory controls and local CI evidence. Kept unresolved exit gates
 and conditional work explicit. Window-mode readiness captures have identical
 geometry but different mean input tick rates (display 56.22 vs widget 53.23 Hz
 in 60–170 seconds), so do not treat them as a matched CPU acceptance pair.
-No background capture/check is active. The two side-branch histories are
-consolidated on local `perf`; `origin/perf` is not updated. Side refs remain
-intact as backups, and no branch was deleted.
+No background capture/check is active. The branch histories and checkpoint files
+are consolidated on `perf`; the side branch refs remain intact as backups and
+were not deleted.
