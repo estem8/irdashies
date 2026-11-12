@@ -38,8 +38,8 @@ missing counters and mismatched source/seed/environment/viewport. The explicit
 1009-pixel diagnostic height is recorded; the default normal A/B height stays 1014. Source/seed fixtures must be prepared in the executing worktree first.
 
 Only syntax checks have run for the new controller mode and reporter. Targeted ESLint passed. Runtime
-validation and report test execution remain pending while the separate
-native-memory capture occupies the machine. A matched rAF rate does not establish
+validation remains pending. The report test cases now pass after the separate
+native-memory capture completed. A matched rAF rate does not establish
 identical widget drawing or actual simulator presentation. Interpret the paired
 CPU differences alongside on/on and off/off run variation, including an
 inconclusive outcome when the difference is below that variation.

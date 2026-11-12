@@ -8,6 +8,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
 import { terminateCaptureChild } from './terminateCaptureChild.mjs';
+import { instrumentMapIdentities } from './instrument-map-identities.mjs';
 import { readWidgetInputRequirements } from '../widgetInputMetadata.ts';
 
 const matrix = process.argv[2] ?? 'normal-final-r1';
@@ -15,11 +16,12 @@ const smoke = process.argv[3] === 'smoke';
 const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
 const overhead = process.argv[3] === 'overhead';
+const identity = process.argv[3] === 'identity';
 const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
 const diagnosticHeight = process.env.PERF_DIAGNOSTIC_VIEWPORT_HEIGHT;
 assert.ok(
-  !diagnosticHeight || nativeMemoryDiagnostic || overhead,
+  !diagnosticHeight || nativeMemoryDiagnostic || overhead || identity,
   'Custom viewport is diagnostic only'
 );
 const viewportHeight = diagnosticHeight ? Number(diagnosticHeight) : 1014;
@@ -29,9 +31,17 @@ assert.ok(
     viewportHeight <= 4000,
   'Invalid diagnostic viewport height'
 );
-if (process.argv[3] && !smoke && !probe && !memory && !overhead)
-  throw new Error('Expected optional smoke, probe, memory or overhead mode');
-const durationSeconds = memory ? 1380 : probe ? 180 : smoke ? 90 : 420;
+if (process.argv[3] && !smoke && !probe && !memory && !overhead && !identity)
+  throw new Error(
+    'Expected optional smoke, probe, memory, overhead or identity mode'
+  );
+const durationSeconds = memory
+  ? 1380
+  : probe || identity
+    ? 180
+    : smoke
+      ? 90
+      : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
@@ -84,14 +94,19 @@ const requestStop = () => {
 process.once('SIGINT', requestStop);
 process.once('SIGTERM', requestStop);
 const wait = (ms) => sleep(ms, undefined, { signal: cancellation.signal });
-const copySources = async (variant) => {
+let mapIdentitySourceSha256;
+const copySources = async (variant, instrumentIdentity = false) => {
   for (const source of sources) {
     const data = await readFile(resolve(sourceRoot, variant, source.file));
     assert.equal(
       hash(data),
       variant === 'baseline' ? source.beforeSha256 : source.afterSha256
     );
-    await writeFile(source.file, data);
+    if (instrumentIdentity && source.file.endsWith('/useDriverProgress.tsx')) {
+      const diagnosticSource = instrumentMapIdentities(data.toString());
+      mapIdentitySourceSha256 = hash(diagnosticSource);
+      await writeFile(source.file, diagnosticSource);
+    } else await writeFile(source.file, data);
   }
 };
 const ensurePortsFree = async () => {
@@ -127,12 +142,19 @@ try {
   for (const [sequence, variant] of phases) {
     cancellation.signal.throwIfAborted();
     await ensurePortsFree();
-    await copySources(variant);
+    await copySources(variant, identity);
     const runId = `${matrix}-${sequence}`;
     const collection = overhead && sequence.startsWith('off') ? 'off' : 'on';
     const folder = resolve(out, sequence);
     await mkdir(resolve(folder, 'profile'), { recursive: true });
     await writeFile(resolve(folder, 'profile/config.json'), seed);
+    if (identity)
+      await writeFile(
+        resolve(folder, 'map-identity-source.tsx'),
+        await readFile(
+          'src/frontend/components/TrackMap/hooks/useDriverProgress.tsx'
+        )
+      );
     await writeFile(
       resolve(folder, 'source.diff'),
       execFileSync('git', ['diff'], { encoding: 'utf8' })
@@ -149,18 +171,24 @@ try {
           sources,
           seedSha256: hash(seed),
           collection,
+          mapIdentityDiagnostic: identity,
+          mapIdentitySourceSha256: identity
+            ? mapIdentitySourceSha256
+            : undefined,
           expectedViewport: { width: 1549, height: viewportHeight, dpr: 1 },
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: overhead
-            ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
-              collection
-            : nativeMemoryDiagnostic
-              ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
-              : memory
-                ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-                : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: identity
+            ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
+            : overhead
+              ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+                collection
+              : nativeMemoryDiagnostic
+                ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+                : memory
+                  ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+                  : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -199,13 +227,15 @@ try {
           PERF_METRICS_COLLECTION: collection,
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: overhead
-            ? 'metrics-collection-overhead'
-            : nativeMemoryDiagnostic
-              ? 'native-memory-diagnostic'
-              : memory
-                ? 'settings-memory-diagnostic'
-                : 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: identity
+            ? 'map-identity-diagnostic'
+            : overhead
+              ? 'metrics-collection-overhead'
+              : nativeMemoryDiagnostic
+                ? 'native-memory-diagnostic'
+                : memory
+                  ? 'settings-memory-diagnostic'
+                  : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
@@ -214,6 +244,7 @@ try {
           PERF_WIDGET_TYPES: ids.join(','),
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
+            mapIdentityDiagnostic: identity,
             metricsCollectionOverhead: overhead,
             collection,
             memoryDiagnostic: memory,
@@ -350,7 +381,7 @@ try {
         resolve(folder, 'environment.json'),
         JSON.stringify(inventory, null, 2)
       );
-      if (overhead) {
+      if (overhead || identity) {
         assert.equal(
           await overlay.evaluate('Boolean(window.rendererPerfBridge)'),
           collection === 'on'
@@ -362,13 +393,24 @@ try {
       sampler = (async () => {
         while (!stopMemory) {
           let processes = latest?.processes ?? [];
-          if (overhead) {
+          if (overhead || identity) {
             const sample = await main.evaluate(
               `({at:Date.now(),processes:${electron}.app.getAppMetrics().map(p=>({pid:p.pid,type:p.type,name:p.name,creationTime:p.creationTime,cumulativeCPUUsage:p.cpu.cumulativeCPUUsage}))})`
             );
             const ui = await overlay.evaluate(
-              `(async()=>({frames:window.__perfOverhead.frames,now:performance.now(),width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus()}))()`
+              `(async()=>({frames:window.__perfOverhead.frames,now:performance.now(),width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus(),identityDiagnostic:window.__perfMapIdentity}))()`
             );
+            if (identity) {
+              assert.ok(
+                ui.identityDiagnostic,
+                'Map identity diagnostic not mounted'
+              );
+              assert.ok(
+                Object.values(ui.identityDiagnostic).every(
+                  (n) => Number.isSafeInteger(n) && n >= 0
+                )
+              );
+            }
             assert.equal(ui.visibility, 'visible');
             assert.equal(ui.width, 1549);
             assert.equal(ui.height, viewportHeight);
@@ -454,7 +496,7 @@ try {
       await wait(Math.max(0, origin + 55000 - Date.now()));
       const windows = await main.evaluate(windowsExpression);
       const ui = await overlay.evaluate(
-        `(async()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus()}))()`
+        `(async()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus(),identityDiagnostic:window.__perfMapIdentity}))()`
       );
       assert.equal(ui.visibility, 'visible');
       assert.equal(ui.status.speed, 1);
@@ -558,7 +600,7 @@ try {
         }
       }
       if (sampler) await sampler;
-      if (overhead)
+      if (overhead || identity)
         await writeFile(
           resolve(folder, 'external-cpu.json'),
           JSON.stringify(externalCpuSamples, null, 2)
