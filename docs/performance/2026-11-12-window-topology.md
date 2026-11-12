@@ -35,3 +35,10 @@ node tools/perf/capture/window-topology-probe.mjs window-topology-widget-new wid
 
 Run sequentially, with no other capture occupying Inspector ports. This pair
 is a readiness diagnostic, not the repeated CPU acceptance matrix.
+
+The later plan audit also checked the existing reporter input cadence over
+60–170 seconds: 22 samples per mode, mean 56.215 Hz display versus 53.230 Hz
+widget (−5.31%). Scalars are retained in the adjacent JSON. The differing input
+rates are an additional reason this readiness pair is not a matched CPU
+acceptance comparison. No causal bottleneck or correction factor follows from
+this single pair.

@@ -819,5 +819,194 @@
       }
     }
   },
-  "maxGeometryDifferencePx": 0
+  "maxGeometryDifferencePx": 0,
+  "diagnosticInputCadence": {
+    "display": {
+      "samples": [
+        {
+          "elapsedSeconds": 60.094,
+          "tickRateHz": 55.20078164306808
+        },
+        {
+          "elapsedSeconds": 65.097,
+          "tickRateHz": 56.58409081702596
+        },
+        {
+          "elapsedSeconds": 70.096,
+          "tickRateHz": 57.401293825162796
+        },
+        {
+          "elapsedSeconds": 75.096,
+          "tickRateHz": 53.395574574779154
+        },
+        {
+          "elapsedSeconds": 80.102,
+          "tickRateHz": 57.157237241385495
+        },
+        {
+          "elapsedSeconds": 85.103,
+          "tickRateHz": 56.996428603783755
+        },
+        {
+          "elapsedSeconds": 90.102,
+          "tickRateHz": 55.786621252491244
+        },
+        {
+          "elapsedSeconds": 95.102,
+          "tickRateHz": 56.19179150309723
+        },
+        {
+          "elapsedSeconds": 100.107,
+          "tickRateHz": 56.800972432647946
+        },
+        {
+          "elapsedSeconds": 105.103,
+          "tickRateHz": 54.39442457148145
+        },
+        {
+          "elapsedSeconds": 110.104,
+          "tickRateHz": 54.79598455025217
+        },
+        {
+          "elapsedSeconds": 115.106,
+          "tickRateHz": 57.17014803550184
+        },
+        {
+          "elapsedSeconds": 120.109,
+          "tickRateHz": 57.177456072619584
+        },
+        {
+          "elapsedSeconds": 125.113,
+          "tickRateHz": 56.38604558143969
+        },
+        {
+          "elapsedSeconds": 130.113,
+          "tickRateHz": 56.97810445402017
+        },
+        {
+          "elapsedSeconds": 135.114,
+          "tickRateHz": 55.366480025663115
+        },
+        {
+          "elapsedSeconds": 140.117,
+          "tickRateHz": 54.97678440348184
+        },
+        {
+          "elapsedSeconds": 145.116,
+          "tickRateHz": 57.395301620609345
+        },
+        {
+          "elapsedSeconds": 150.126,
+          "tickRateHz": 56.50016759387194
+        },
+        {
+          "elapsedSeconds": 155.134,
+          "tickRateHz": 56.5137250171143
+        },
+        {
+          "elapsedSeconds": 160.133,
+          "tickRateHz": 55.39130135003585
+        },
+        {
+          "elapsedSeconds": 165.141,
+          "tickRateHz": 58.175223172451076
+        }
+      ],
+      "meanTickRateHz": 56.215269924635635
+    },
+    "widget": {
+      "samples": [
+        {
+          "elapsedSeconds": 63.297,
+          "tickRateHz": 54.73700755696339
+        },
+        {
+          "elapsedSeconds": 68.297,
+          "tickRateHz": 53.986767843201626
+        },
+        {
+          "elapsedSeconds": 73.296,
+          "tickRateHz": 54.39071224197744
+        },
+        {
+          "elapsedSeconds": 78.296,
+          "tickRateHz": 52.7975269638371
+        },
+        {
+          "elapsedSeconds": 83.301,
+          "tickRateHz": 51.95915386995968
+        },
+        {
+          "elapsedSeconds": 88.302,
+          "tickRateHz": 51.598850377613644
+        },
+        {
+          "elapsedSeconds": 93.302,
+          "tickRateHz": 53.59501459174266
+        },
+        {
+          "elapsedSeconds": 98.302,
+          "tickRateHz": 52.98482196789907
+        },
+        {
+          "elapsedSeconds": 103.306,
+          "tickRateHz": 53.37356193982873
+        },
+        {
+          "elapsedSeconds": 108.309,
+          "tickRateHz": 50.96388800823512
+        },
+        {
+          "elapsedSeconds": 113.314,
+          "tickRateHz": 53.74038042195981
+        },
+        {
+          "elapsedSeconds": 118.32,
+          "tickRateHz": 50.944654745977104
+        },
+        {
+          "elapsedSeconds": 123.325,
+          "tickRateHz": 52.9695859231547
+        },
+        {
+          "elapsedSeconds": 128.327,
+          "tickRateHz": 53.566924566757024
+        },
+        {
+          "elapsedSeconds": 133.327,
+          "tickRateHz": 53.3921182555031
+        },
+        {
+          "elapsedSeconds": 138.327,
+          "tickRateHz": 54.78600765364524
+        },
+        {
+          "elapsedSeconds": 143.329,
+          "tickRateHz": 56.183767385927
+        },
+        {
+          "elapsedSeconds": 148.339,
+          "tickRateHz": 55.151848024526636
+        },
+        {
+          "elapsedSeconds": 153.335,
+          "tickRateHz": 52.38275559685743
+        },
+        {
+          "elapsedSeconds": 158.343,
+          "tickRateHz": 51.394036236035205
+        },
+        {
+          "elapsedSeconds": 163.337,
+          "tickRateHz": 52.78941572214769
+        },
+        {
+          "elapsedSeconds": 168.347,
+          "tickRateHz": 53.380407255320996
+        }
+      ],
+      "meanTickRateHz": 53.230418506775926
+    },
+    "widgetVsDisplayPercent": -5.309680842698638
+  }
 }

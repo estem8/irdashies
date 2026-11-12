@@ -427,3 +427,14 @@ widget mode 10 overlays/11 renderers. See
 [topology report](2026-11-12-window-topology.md). This is not CPU acceptance or
 a recommendation to change defaults. No capture is active. User requested
 immediate GitHub preservation after the pair completed.
+
+## Plan evidence reconciliation
+
+Updated overlay-performance-plan.md to reflect completed Map object-count,
+Lap Trace hide/show, Gantry history, enabled lap-time delivery, window geometry,
+collection/memory controls and local CI evidence. Kept unresolved exit gates
+and conditional work explicit. Window-mode readiness captures have identical
+geometry but different mean input tick rates (display 56.22 vs widget 53.23 Hz
+in 60–170 seconds), so do not treat them as a matched CPU acceptance pair.
+No background capture/check is active. Source checkpoint before this doc update
+is 3a4fa56a; all work is on perf and preserved in origin.

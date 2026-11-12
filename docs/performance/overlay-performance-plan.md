@@ -56,46 +56,51 @@ Architecture constraints: [ARCHITECTURE_RULES.md](../ARCHITECTURE_RULES.md).
 Checked items below mean the stated work is complete; they do not imply that
 the whole stage passed its exit criterion or that game FPS improved.
 
-| Stage                             | Current status                                                                                    | Remaining acceptance work                                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| A — reproducible baseline         | Partial: isolated profiles, source attribution, topology checks and long replay captures complete | Complete environment inventory, two valid matched A/B repetitions and packaged Windows/game validation    |
-| B — instrumentation               | Partial: process CPU, SDK spans, React aggregates and canvas counters implemented                 | Complete metadata coverage and measure instrumentation overhead; persist trace completion/buffer evidence |
-| C — Relative / TitleBar           | Implementation and behavioral checks complete                                                     | Confirm contribution to total application CPU in matched A/B                                              |
-| D — stable Map data               | Core implementation and behavioral checks complete; render-phase improvement observed             | Direct identity-recomputation/allocation measurements and repeatable total-cost validation                |
-| E — canvas / hidden windows       | Draw attribution complete; scheduling optimization not implemented                                | Measure and reduce redundant drawing while preserving immediate repaint, animation and hide/show behavior |
-| F — windows / compositor / memory | Initial trace and ten-widget system pipeline attribution complete                                 | Separate downstream costs, cover lifecycle spikes, Settings, hidden windows and long-session memory       |
-| G — native / IPC                  | Deferred: steady-state transport is not the leading target in the measured workload               | Reopen only if another workload identifies a native/transport bottleneck                                  |
+| Stage                             | Verified evidence                                                                                                              | Open requirement                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| A — reproducible baseline         | Isolated source/seed/environment/topology; completed Linux R3 A–B–B–A                                                          | Full analyzer acceptance remains inconclusive; packaged Windows and real simulator presentation absent                               |
+| B — instrumentation               | SDK/process/React/draw boundaries; bounded diagnostics and clock guards; completed collection on/off experiment                | Quantitative overhead is inconclusive, not zero; some activity/metadata coverage remains incomplete                                  |
+| C — Relative / TitleBar           | Implementation and behavioral checks; combined normal-operation matrix                                                         | Combined six-file gain does not isolate this change's CPU contribution                                                               |
+| D — stable Map data               | Behavioral tests, render-phase result and repeated direct identity construction measurement                                    | App-wide allocation bytes and isolated CPU contribution are not established                                                          |
+| E — canvas / hidden windows       | Map/Input/Radar hidden draw stop/resume; exercised Lap Trace stop/resume after reference-reset fix                             | Actual high-refresh displays and additional visibility/static-cache transitions remain unverified; no new scheduler change justified |
+| F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                          |
+| G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                     |
 
 Next work, in priority order:
 
-1. Reconcile the private-memory metrics and finish ownership attribution.
-   The [repeated memory diagnostic](2026-11-12-settings-memory.md) localized
-   main/overlay growth. A [completed light MemoryInfra diagnostic](2026-11-12-native-memory.md)
-   now shows much smaller Chromium private-footprint/live-allocation changes
-   than Linux private growth. Preserve this distinction; separate clean/dirty/
-   anonymous/file PSS sampling is prepared. Settings listeners/DOM do not
-   accumulate, and no unbounded native leak has been established.
-2. Complete remaining hidden-drawing coverage. The
-   [Linux native-hide probe](2026-11-12-hidden-draw-audit.md) observed zero
-   Map/Input/Radar work while hidden and repaint after show, so no Radar change
-   is justified. Lap Trace was idle; Gantry runtime history and other native
-   visibility modes remain separate. Change scheduling only with measured need.
-3. Finish input-coverage and allocation evidence gaps. The
-   [on/off overhead experiment](2026-11-12-collection-overhead.md) is complete
-   with disclosed startup recovery, but its mixed-sign CPU deltas do not resolve
-   a quantitative cost. The [memory controls](2026-11-12-memory-composition.md)
-   show why instrumentation must be separated from production growth.
-   Do not repeat the normal matrix without a new change or a specific concern:
-   R3 already completed two pairs with lower CPU, but its analyzer verdict is
-   inconclusive. Preserve that verdict and explain each missing gate.
-4. Complete remaining join/leave, actual reconnect and session-transition checks;
-   replay seek/pause/native hide/show smoke has passed. Preserve required Input
-   and Lap Trace samples, event ordering, precision and lifecycle resets.
-5. Verify packaged Windows/iRacing presentation before claiming game FPS or
-   frame-time improvement. Windows access is unavailable. An earlier CI dispatch
-   returned HTTP 422 while Actions was disabled. Actions is now enabled, but new
-   jobs are deferred at the user request because limits are running out. The
-   earlier successful Windows CI covers its checkpoint only.
+1. Preserve the unresolved memory distinction. The
+   [repeated long-session check](2026-11-12-settings-memory.md),
+   [MemoryInfra diagnostic](2026-11-12-native-memory.md) and
+   [clean/dirty/anonymous controls](2026-11-12-memory-composition.md) are complete
+   in their stated scopes. Linux private growth exceeds the smaller reported
+   live allocation changes; a retained native leak and allocation owner remain
+   unproven. The short natural-GC composition controls cannot retroactively
+   explain every byte of the long forced-GC run.
+2. Cover actual reconnect/session transitions and active radio input where
+   available. [Conditional demand](2026-11-12-input-demand.md) explains absent
+   lap-time publication in the ordinary seed; the separate
+   [feature-enabled runtime](2026-11-12-lap-times-features.md) verifies positive
+   history delivery. The tape contains no radio transmission. Keep R3's original
+   inconclusive verdict; these later diagnostics do not turn it into a full pass.
+3. Continue only unresolved drawing/window work. Native hide/show is verified
+   for [Map/Input/Radar](2026-11-12-hidden-draw-audit.md),
+   [exercised Lap Trace](2026-11-12-laptrace-hidden.md), and
+   [Gantry hidden history](2026-11-12-gantry-hidden.md).
+   [Window topology](2026-11-12-window-topology.md) has matching instance geometry,
+   but is not a repeated CPU comparison. High-refresh hardware remains absent.
+   Do not introduce scheduling changes without a measured need.
+4. Keep instrumentation qualification explicit. The
+   [collection on/off experiment](2026-11-12-collection-overhead.md) has mixed-sign
+   deltas and a disclosed recovery gap. Do not repeat the full normal matrix
+   merely to obtain a favorable result or subtract an assumed zero overhead.
+   [Map identities](2026-11-12-map-identities.md) now have a completed direct
+   four-run diagnostic; total allocation bytes remain a different claim.
+5. Verify packaged Windows/iRacing presentation before game FPS/frame-time
+   claims. Windows access is unavailable. The user's later explicit CI request
+   authorized dispatch, but GitHub rejected it with HTTP 422 (Actions disabled),
+   despite the permissions API reporting enabled. No current-head remote run
+   exists. [Full local CI](2026-11-12-local-ci.md) passed on Linux; the earlier
+   Windows run covers its historical checkpoint only.
 
 Settings/memory investigations remain open and should move forward when the
 reported trigger or a capture implicates them. A renderer rewrite or native/IPC
@@ -155,8 +160,10 @@ Dependencies: none. Priority: P0.
 
 - [ ] Record the source SHA and tracked-file state, build versions,
       Electron/Chromium, OS, CPU/GPU/driver, displays, DPI, and refresh rate.
-- [ ] Keep one seed profile: widget instances, config, layout, window mode,
-      Gantry, Settings, number of windows, channels, and visibility rules.
+- [x] Keep one declared seed within each comparison: widget instances, config,
+      layout, window mode, Gantry, Settings, windows, channels and visibility.
+      Reconstructed and diagnostic seeds are recorded separately; the original
+      user seed remains unavailable.
 - [x] Create identical isolated copies of the seed for each run. Verify the
       actual storage path: the previous `--user-data-dir` did not provide the
       expected startup-storage isolation. Do not change user settings.
@@ -331,6 +338,9 @@ Dependencies: A/B; independent of C–E. Priority: P1 for diagnosis.
       diagnostic work suppression.
 - [ ] Check hidden windows with `backgroundThrottling: false`: snapshot gating
       is separate from rAF, event delivery, and Gantry history retention.
+      Native hide/show diagnostics now pass for Map/Input/Radar, exercised Lap
+      Trace and Gantry live lap history. Other native visibility modes and full
+      incident/event coverage are not established by those captures.
 - [ ] Preserve Gantry's required always-fed semantics and event delivery; do
       not change Chromium flags or hardware acceleration without a separate A/B.
 
