@@ -85,7 +85,7 @@ the legacy telemetry firehose into a channel-based widget.
 ### 3.1 Stores
 
 - **R3.1** New renderer stores that hold session-derived state MUST be added to the centralized disconnect reset in `useResetOnDisconnect`. If they also need session-number or driver lifecycle handling, consume the existing typed lifecycle/snapshot source instead of creating another global event source.
-- **R3.2** A store that grows unboundedly (history, recorded laps, per-driver maps) MUST cap itself or clear on `sessionNumChange`. Document the cap in the store file.
+- **R3.2** Growing collections (history, recorded laps, per-driver maps) MUST declare an in-session retention bound by count, bytes or age, plus their session-change/reset policy. Clearing only on `sessionNumChange` does not bound a long session. Document the bound in the owning store/processor. Whole-session retention requires an explicit documented exception with expected growth and supported workload limits, or persistence that bounds resident data while preserving access to history. Preserve Gantry's whole-session history contract; do not silently discard required history to satisfy a generic cap.
 - **R3.3** Stores live in `src/frontend/context/<StoreName>/`. Their updaters live in the same folder, not in `OverlayContainer/` or anywhere else.
 - **R3.4** A store exposes its data via a typed hook (`use<Thing>Snapshot()`); selectors that other widgets consume live in `frontend/domain/`, not in a sibling widget folder.
 
@@ -114,8 +114,12 @@ the legacy telemetry firehose into a channel-based widget.
   - A processor in `src/app/processors/` that owns it.
   - A renderer hook `use<Name>Snapshot()` in `src/frontend/context/`.
 - **R4.5** A channel snapshot MUST be the minimum payload the consumers need. Do not re-broadcast the full telemetry shape inside a "convenience" channel.
-- **R4.6** Channel subscriptions are per-window. Destroyed targets are removed; hidden windows normally do not receive broadcasts. Use the existing bridge's visibility/lifecycle handling, which reads the owning `BrowserWindow` via `BrowserWindow.fromWebContents(sender)?.isVisible()`, plus the per-window subscription map.
-  - **Exception: the enabled Gantry.** It has to hold the whole session (standings, lap history, fuel, incidents, session names) whether it is on screen, minimised or closed, so it receives every channel and `sessionData` regardless of visibility (`setupChannelBridge`'s `isAlwaysFed`, `OverlayManager.isGantryWebContents`). Closing it while the widget is enabled hides the window rather than destroying it. Do not extend this exception to other windows.
+- **R4.6** Channel subscriptions are per-window; destroyed targets are removed. Visibility affects four separate stages:
+  - **Processing:** `ProcessorHost` normally follows active demand. `processWhileHidden` retains processing for history/crossings from registered demand, including required dependencies; it does not itself enable hidden snapshot delivery.
+  - **Snapshot delivery:** `ChannelBus` normally suspends delivery to hidden/minimized subscriptions and seeds the latest snapshot on return. Use `setupChannelBridge`'s owning-window visibility check and `show`/`hide`/`minimize`/`restore` handling; a CSS-hidden widget is not the same as a hidden native window.
+  - **Event delivery:** subscribed event channels remain active while hidden. Incidents and lifecycle facts cannot be recovered from a later latest-state snapshot. Do not drop, coalesce or replay them as if they were snapshots.
+  - **Drawing:** receiving data or retaining history does not require rendering while hidden. Stop unnecessary drawing loops through the appropriate widget/native visibility lifecycle, independently of processing and delivery.
+  - **Exception for snapshot delivery: the enabled Gantry.** It retains the whole session (standings, lap history, fuel, incidents, session names) whether on screen, minimized or closed. It continues receiving its subscribed snapshot channels and `sessionData` regardless of visibility (`setupChannelBridge`'s `isAlwaysFed`, `OverlayManager.isGantryWebContents`). Closing it while enabled hides the window rather than destroying it. Do not extend this exception to other windows. Event delivery to hidden subscribers is the general rule, not a Gantry-only exception.
 
 ---
 
@@ -136,13 +140,18 @@ the legacy telemetry firehose into a channel-based widget.
 - **R5.2** Processors MUST be deterministic given a sequence of frames + lifecycle events. They are unit-tested with recorded fixtures in `src/app/processors/<Name>.spec.ts`.
 - **R5.3** A processor declares the cadence needed for correct processing. Typical choices are `60` for controls/co-sampled recordings, `25` for positional data and `5` for sortable data; these are defaults, not an exhaustive whitelist. In the current host, `'event'` processors still see every incoming frame while demanded; publication is change/version driven. Processing cadence is distinct from channel delivery limits. Do not lower it merely because the UI displays fewer updates.
 - **R5.4** Processors do not perform I/O (storage, logging beyond `logger.warn`/`error`, network). Pull dependencies through a constructor-injected interface so tests can stub them.
+- **R5.5** Document snapshot ownership and lifetime at the processor/channel boundary:
+  - State whether `snapshot()` returns an immutable value or a processor-owned latest-state view. The host uses a numeric `version` when present, otherwise object identity, to detect publication changes; it does not deep-compare payloads. Reused objects require a version that advances when published state changes, including initialization and lifecycle resets, without reusing a token for changed state during the processor instance's lifetime.
+  - `ChannelBus` retains snapshot references in its latest cache and pending delivery slot; publication does not clone or freeze them. A processor-owned view may reuse buffers only when all consumers accept latest-state semantics, delayed serialization/coalescing remains correct, and the serialized version describes the serialized values. Do not treat a queued reference as an immutable historical sample.
+  - Events and any samples required for recordings, crossings or calculations must preserve their values and ordering until consumed/serialized. Choose stable payload ownership at the appropriate boundary; do not silently replace required samples with a mutable latest-state view or add blanket per-frame cloning without measurement.
+  - Renderer-store snapshots, selected arrays and React props are read-only to consumers. Preserve references for equal selected values through selectors/memoization; never mutate received data to manufacture referential stability.
 
 ---
 
 ## 6. Storage and Persistence
 
 - **R6.1** All disk I/O in `src/app/storage/` MUST be async. `writeFileSync` / `readFileSync` are forbidden in new code.
-- **R6.2** Writes are debounced (default 250 ms). The debouncer flushes on `app.before-quit`.
+- **R6.2** Coalescible state writes are debounced (default 250 ms) and serialized per destination so an older write cannot overwrite newer state. Prefer the existing [createDebouncedAtomicWriter](../src/app/storage/debouncedAtomicWriter.ts) for replaceable JSON state. Expose a flush function and await it in the existing [src/main.ts shutdown flow](../src/main.ts) before exit; an async `before-quit` listener is not awaited automatically. Writes requiring immediate durability need an explicit awaited path rather than an incidental debounce.
 - **R6.3** Any persisted collection that grows over time MUST declare a cap (count, size, or age) and prune on save.
 - **R6.4** Read errors return a typed safe default and call `logger.warn` with the path and error. They never throw to the bridge.
 
@@ -221,6 +230,7 @@ are derived from these. Only the settings section still needs one line in
 - **R13.4** Do not add promotion hints (`translateZ(0)`, `transform-gpu`, permanent `will-change`) to repeated static sprites, icons or rows merely on the assumption that GPU promotion is faster. When changing this behavior, measure the representative full-grid workload: inspect layer count, total application CPU and available memory metrics, plus image quality at supported widget scales/DPR. Promotion can be beneficial; hints do not guarantee a layer, and fewer layers alone do not prove a win. This is not a blanket ban or a demand to rewrite untouched legacy uses.
 - **R13.5** For visual motion that does not need to reflow surrounding content, prefer `transform`/`opacity` to animating `top`, `left`, `width` or `height`. Preserve geometry, interpolation, transition suppression and hide/show behavior; verify resizing, widget scale and DPR. A transform or a compositing-warning fix is a candidate, not proof of lower total cost.
 - **R13.6** Separate performance diagnosis from acceptance. Microbenchmarks, React render duration, trace spans and modes that suppress delivery/rendering cannot establish an application-wide improvement. Validate claims with matched, repeated, normal-operation A/B runs following [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md), retaining required samples, precision, event ordering and lifecycle behavior. If evidence is missing or confounded, label the change experimental/unverified. Claim game FPS/frame-time improvements only from actual simulator presentation evidence.
+- **R13.7** Prioritize measured contribution before optimizing a hot path. State the hypothesis, its share of pipeline cost (or that it is unknown), the behavior-preserving candidate and the decision criterion. Start with a bounded diagnostic using existing instrumentation; reserve longer repeated normal-operation A/B for a concrete candidate and application-wide claims. A reproducible reduction in redundant calls/allocations is a scoped result, not proof of lower total CPU, memory or game frame time. If the path is cheap or the result is inconclusive, record that limit and move to a higher-cost candidate; do not repeat unchanged experiments merely to obtain a passing verdict. Keep campaign findings and next priorities in [the active performance plan](performance/overlay-performance-plan.md), not in another status log.
 
 ---
 
@@ -243,8 +253,11 @@ Run through this list before opening any PR. LLM agents: include a filled copy i
 [ ] N4 — every new ipcMain handler validates renderer input
 [ ] R2.1/R2.2 — telemetry hooks use the rounded variants (or the key is on the no-round list)
 [ ] R3.1 — new session-derived renderer stores participate in centralized reset/lifecycle handling
+[ ] R3.2 — growing collections declare in-session retention bounds or an explicit whole-session exception
 [ ] R4.1 — new bridges use defineBridge
-[ ] R6.1 — new storage code is async
+[ ] R4.6 — visibility preserves required processing/events/history independently of snapshot delivery and drawing
+[ ] R5.5 — snapshot ownership, versioning and delayed-delivery lifetime are explicit
+[ ] R6.1/R6.2 — storage is async, writes are serialized and shutdown awaits pending state
 [ ] R7.1 — new widget is added through the manifest, `widget.ts` and `WIDGET_SETTINGS` flow
 [ ] R8.1/R8.2 — settings defaults are updated; breaking changes ship a tested load-time migration
 [ ] R10.1 — native code null-checks pointers and bounds-checks indices
@@ -252,6 +265,7 @@ Run through this list before opening any PR. LLM agents: include a filled copy i
 [ ] R13.1 — high-frequency code is wrapped in perfMetrics
 [ ] R13.4/R13.5 — repeated static layers and motion costs are justified; visual geometry, scaling and lifecycle behavior are preserved
 [ ] R13.6 — performance claims have matched normal-operation evidence; diagnostic suppression and missing gates are explicitly identified
+[ ] R13.7 — optimization priority and validation depth match measured contribution; scoped and global claims are separate
 [ ] R14.1 — new processors and selectors have *.spec.ts coverage
 [ ] Storybook story exists for any new visual component
 [ ] PR description includes: architecture impact (affected rules/layers, or "None") and before/after perf numbers if hot-path
@@ -293,12 +307,30 @@ contextBridge.exposeInMainWorld('myBridge', { foo, bar });
 ## Required patterns — quick reference
 
 ```ts
-// REQUIRED — async + debounced storage write
-import { promises as fsp } from 'node:fs';
-import { debounce } from '@irdashies/utils/debounce';
-export const saveData = debounce(async (data) => {
-  await fsp.writeFile(path, JSON.stringify(data), 'utf8');
-}, 250);
+// REQUIRED — main-process state writer, serialized + atomic + debounced
+// Example factory in src/app/storage/; caller supplies a validated file path.
+import logger from '../logger';
+import { createDebouncedAtomicWriter } from './debouncedAtomicWriter';
+
+export const createExampleStore = (filePath: string) => {
+  let latest = { enabled: false };
+  const writer = createDebouncedAtomicWriter({
+    filePath,
+    serialize: () => JSON.stringify(latest),
+    onSuccess: () => undefined,
+    onError: () => logger.warn('[ExampleStore] Failed to save state'),
+  });
+  return {
+    save(enabled: boolean) {
+      latest = { enabled };
+      writer.schedule();
+    },
+    flush: () => writer.flush(),
+  };
+};
+// Composition owns one writer per destination. Await store.flush() in the
+// existing src/main.ts shutdown flow, alongside the other storage flushes.
+// See storage/settingsWindowBounds.ts for a concrete caller.
 
 // REQUIRED — rounded telemetry subscription
 const positions = useTelemetryValuesRounded('CarIdxLapDistPct', 3);
