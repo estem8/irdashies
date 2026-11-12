@@ -24,8 +24,8 @@ source in the active `perf` worktree was not changed.
 Prepared runtime protocol (not yet executed):
 
 ```sh
-PERF_DIAGNOSTIC_VIEWPORT_HEIGHT=1009 node tools/perf/capture/long-matrix.mjs collection-overhead-r2 overhead
-node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r2
+node tools/perf/capture/long-matrix.mjs collection-overhead-r3 overhead
+node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r3
 ```
 
 The controller uses candidate sources throughout, orders collection on/off/off/on,
@@ -34,8 +34,8 @@ receive identical CDP process CPU sampling, private-memory reads and an external
 rAF counter. CPU comes from cumulative per-process CPU seconds, not optional
 collector logs. The report excludes the first 60 seconds, requires at least
 300 seconds of steady-state observations, rejects process churn, stopped replay,
-missing counters and mismatched source/seed/environment/viewport. The explicit
-1009-pixel diagnostic height is recorded; the default normal A/B height stays 1014. Source/seed fixtures must be prepared in the executing worktree first.
+missing counters and mismatched source/seed/environment/viewport. An optional explicit
+diagnostic height is recorded when supplied; the default normal A/B height stays 1014. Source/seed fixtures must be prepared in the executing worktree first.
 
 Only syntax checks have run for the new controller mode and reporter. Targeted ESLint passed. Runtime
 validation remains pending. The report test cases now pass after the separate
@@ -55,3 +55,8 @@ incomparable if rAF or snapshot rates differ by more than 5% or 1 Hz. Inputs
 that remain unchanged are explicitly marked inactive; this is not complete
 input coverage for other fixtures. Separate clean/dirty and PSS breakdowns are
 retained when available.
+
+R2 was rejected at preflight because the virtual display changed back to
+2560x1369 and the overlay height was 1014 instead of the requested 1009.
+The next R3 run uses the default 1014 viewport; all geometry/environment gates
+remain strict. This failed startup is not a CPU sample or overhead result.

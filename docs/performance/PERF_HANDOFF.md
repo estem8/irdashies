@@ -11,14 +11,19 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `collection-overhead-r2 overhead` failed preflight after the virtual display
+  returned to 2560x1369: actual overlay height 1014, requested diagnostic height 1009. Zero completed phases/samples, child termination verified and candidate
+  restored. Existing-store snapshot access initialized successfully before the
+  geometry assertion. This is not an overhead result. Next run uses normal
+  default 1014 geometry (no height override), ID `collection-overhead-r3`.
+
 - `collection-overhead-r1 overhead` was deliberately cancelled during on1
   (no completed phases), exit 130, candidate restored and child termination
   verified. It omitted input-cadence evidence with collectors off and is not an
   overhead result. The updated diagnostic reads existing channel-store snapshot
   versions without subscriptions and reports cadence mismatches as incomparable.
-  Its unit cases and targeted ESLint pass. The next run ID is
-  `collection-overhead-r2`, explicit diagnostic height 1009. No capture is active
-  at this preparation checkpoint; inspect handles/files before starting one.
+  Its unit cases and targeted ESLint pass. R2 geometry rejection is recorded
+  above. Inspect handles/files before starting another capture.
 
 - `native-light-smoke-r2 native-smoke 1009` completed 180 seconds with exit 0,
   ten loss-free one-shot traces and the candidate restored. All checkpoints
