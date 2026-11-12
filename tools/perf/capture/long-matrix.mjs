@@ -14,12 +14,13 @@ const matrix = process.argv[2] ?? 'normal-final-r1';
 const smoke = process.argv[3] === 'smoke';
 const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
+const overhead = process.argv[3] === 'overhead';
 const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
 const diagnosticHeight = process.env.PERF_DIAGNOSTIC_VIEWPORT_HEIGHT;
 assert.ok(
-  !diagnosticHeight || nativeMemoryDiagnostic,
-  'Custom viewport is native diagnostic only'
+  !diagnosticHeight || nativeMemoryDiagnostic || overhead,
+  'Custom viewport is diagnostic only'
 );
 const viewportHeight = diagnosticHeight ? Number(diagnosticHeight) : 1014;
 assert.ok(
@@ -28,8 +29,8 @@ assert.ok(
     viewportHeight <= 4000,
   'Invalid diagnostic viewport height'
 );
-if (process.argv[3] && !smoke && !probe && !memory)
-  throw new Error('Expected optional smoke, probe or memory mode');
+if (process.argv[3] && !smoke && !probe && !memory && !overhead)
+  throw new Error('Expected optional smoke, probe, memory or overhead mode');
 const durationSeconds = memory ? 1380 : probe ? 180 : smoke ? 90 : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
@@ -108,8 +109,14 @@ const ensurePortsFree = async () => {
   }
 };
 try {
-  const phases =
-    smoke || probe || memory
+  const phases = overhead
+    ? [
+        ['on1', 'candidate'],
+        ['off1', 'candidate'],
+        ['off2', 'candidate'],
+        ['on2', 'candidate'],
+      ]
+    : smoke || probe || memory
       ? [[memory ? 'memory' : probe ? 'probe' : 'smoke', 'candidate']]
       : [
           ['a1', 'baseline'],
@@ -122,6 +129,7 @@ try {
     await ensurePortsFree();
     await copySources(variant);
     const runId = `${matrix}-${sequence}`;
+    const collection = overhead && sequence.startsWith('off') ? 'off' : 'on';
     const folder = resolve(out, sequence);
     await mkdir(resolve(folder, 'profile'), { recursive: true });
     await writeFile(resolve(folder, 'profile/config.json'), seed);
@@ -140,15 +148,19 @@ try {
           }).trim(),
           sources,
           seedSha256: hash(seed),
+          collection,
           expectedViewport: { width: 1549, height: viewportHeight, dpr: 1 },
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: nativeMemoryDiagnostic
-            ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
-            : memory
-              ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-              : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: overhead
+            ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+              collection
+            : nativeMemoryDiagnostic
+              ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+              : memory
+                ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+                : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -184,13 +196,16 @@ try {
           IRDASHIES_TELEMETRY_REPLAY_LOOP: memory ? '1' : '0',
           IRDASHIES_TELEMETRY_REPLAY_SPEED: '1',
           PERF_METRICS: '1',
+          PERF_METRICS_COLLECTION: collection,
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: nativeMemoryDiagnostic
-            ? 'native-memory-diagnostic'
-            : memory
-              ? 'settings-memory-diagnostic'
-              : 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: overhead
+            ? 'metrics-collection-overhead'
+            : nativeMemoryDiagnostic
+              ? 'native-memory-diagnostic'
+              : memory
+                ? 'settings-memory-diagnostic'
+                : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
@@ -199,6 +214,8 @@ try {
           PERF_WIDGET_TYPES: ids.join(','),
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
+            metricsCollectionOverhead: overhead,
+            collection,
             memoryDiagnostic: memory,
             nativeMemoryDiagnostic,
             tapeLoop: memory,
@@ -275,6 +292,8 @@ try {
     let phaseError;
     let cleanupError;
     const privateSamples = [];
+    const externalCpuSamples = [];
+    let samplerError;
     let stopMemory = false;
     let sampler;
     try {
@@ -331,9 +350,48 @@ try {
         resolve(folder, 'environment.json'),
         JSON.stringify(inventory, null, 2)
       );
+      if (overhead) {
+        assert.equal(
+          await overlay.evaluate('Boolean(window.rendererPerfBridge)'),
+          collection === 'on'
+        );
+        await overlay.evaluate(
+          `(()=>{const p={frames:0};const frame=()=>{p.frames++;p.handle=requestAnimationFrame(frame)};p.handle=requestAnimationFrame(frame);window.__perfOverhead=p;return true})()`
+        );
+      }
       sampler = (async () => {
         while (!stopMemory) {
-          const processes = latest?.processes ?? [];
+          let processes = latest?.processes ?? [];
+          if (overhead) {
+            const sample = await main.evaluate(
+              `({at:Date.now(),processes:${electron}.app.getAppMetrics().map(p=>({pid:p.pid,type:p.type,name:p.name,creationTime:p.creationTime,cumulativeCPUUsage:p.cpu.cumulativeCPUUsage}))})`
+            );
+            const ui = await overlay.evaluate(
+              `(async()=>({frames:window.__perfOverhead.frames,now:performance.now(),width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus()}))()`
+            );
+            assert.equal(ui.visibility, 'visible');
+            assert.equal(ui.width, 1549);
+            assert.equal(ui.height, viewportHeight);
+            assert.equal(ui.dpr, 1);
+            assert.equal(ui.status.paused, false);
+            assert.equal(ui.status.speed, 1);
+            assert.equal(
+              sample.processes.filter((p) => p.type === 'Browser').length,
+              1
+            );
+            assert.ok(sample.processes.length >= 4);
+            assert.ok(
+              sample.processes.every((p) =>
+                Number.isFinite(p.cumulativeCPUUsage)
+              )
+            );
+            externalCpuSamples.push({
+              ...sample,
+              elapsedSeconds: (sample.at - origin) / 1000,
+              ui,
+            });
+            processes = sample.processes;
+          }
           const samples = await Promise.all(
             processes.map(async (p) => {
               try {
@@ -381,7 +439,9 @@ try {
           });
           await sleep(10000);
         }
-      })();
+      })().catch((error) => {
+        samplerError = error;
+      });
       await wait(Math.max(0, origin + 40000 - Date.now()));
       const screenshot = await overlay.call('Page.captureScreenshot', {
         format: 'png',
@@ -439,6 +499,7 @@ try {
       });
       let nextProgress = origin + 90000;
       while (!exited) {
+        if (samplerError) throw samplerError;
         assert.ok(
           !overlayDisconnected || completedMarker,
           `Overlay disconnected before completion: ${JSON.stringify(overlayDisconnected)}`
@@ -457,6 +518,7 @@ try {
         }
         await wait(1000);
       }
+      if (samplerError) throw samplerError;
       const status = await exit;
       assert.equal(status.code, 0, 'Capture failed');
       assert.ok(completedMarker, 'Missing fixed-duration completion marker');
@@ -464,6 +526,7 @@ try {
         runId,
         sequence,
         variant,
+        collection,
         status,
         origin,
         preflight: { windows, ui },
@@ -495,6 +558,11 @@ try {
         }
       }
       if (sampler) await sampler;
+      if (overhead)
+        await writeFile(
+          resolve(folder, 'external-cpu.json'),
+          JSON.stringify(externalCpuSamples, null, 2)
+        );
       await writeFile(
         resolve(folder, 'linux-private-memory.json'),
         JSON.stringify(privateSamples, null, 2)
