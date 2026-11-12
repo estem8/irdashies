@@ -1,0 +1,1623 @@
+{
+  "scope": "Short Settings preview cleanup diagnostic with forced GC; not a long-session leak test or CPU acceptance",
+  "passed": true,
+  "records": [
+    {
+      "label": "settings-absent",
+      "at": "2026-11-12T00:37:17.572Z",
+      "windows": [
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 5.36,
+            "percentCPUUsage": 1.4969312908537498,
+            "idleWakeupsPerSecond": 419
+          },
+          "memory": {
+            "workingSetSize": 321676,
+            "peakWorkingSetSize": 328772
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 8.68,
+            "percentCPUUsage": 2.745150691303812,
+            "idleWakeupsPerSecond": 150
+          },
+          "memory": {
+            "workingSetSize": 217104,
+            "peakWorkingSetSize": 222668
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 0.64,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 112096,
+            "peakWorkingSetSize": 115180
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 3
+          },
+          "memory": {
+            "workingSetSize": 126292,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 15.27,
+            "percentCPUUsage": 3.9934627015575503,
+            "idleWakeupsPerSecond": 175
+          },
+          "memory": {
+            "workingSetSize": 501396,
+            "peakWorkingSetSize": 552608
+          }
+        }
+      ]
+    },
+    {
+      "label": "preview-active",
+      "at": "2026-11-12T00:37:23.948Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 7.28,
+            "percentCPUUsage": 3.7406796565557316,
+            "idleWakeupsPerSecond": 420
+          },
+          "memory": {
+            "workingSetSize": 334444,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 10.58,
+            "percentCPUUsage": 6.30781599279266,
+            "idleWakeupsPerSecond": 160
+          },
+          "memory": {
+            "workingSetSize": 226976,
+            "peakWorkingSetSize": 226976
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 1.42,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 1
+          },
+          "memory": {
+            "workingSetSize": 114140,
+            "peakWorkingSetSize": 118284
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 2
+          },
+          "memory": {
+            "workingSetSize": 126056,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 17.63,
+            "percentCPUUsage": 3.9618058439277406,
+            "idleWakeupsPerSecond": 178
+          },
+          "memory": {
+            "workingSetSize": 499804,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 3.93,
+            "percentCPUUsage": 5.356382507639632,
+            "idleWakeupsPerSecond": 90
+          },
+          "memory": {
+            "workingSetSize": 350368,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 60059032,
+        "totalSize": 61272064,
+        "embedderHeapUsedSize": 12041984,
+        "backingStorageSize": 38637283
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "preview-paused-1",
+      "at": "2026-11-12T00:37:24.068Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 7.3,
+            "percentCPUUsage": 2.1163237340415963,
+            "idleWakeupsPerSecond": 170
+          },
+          "memory": {
+            "workingSetSize": 334252,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 10.61,
+            "percentCPUUsage": 3.173733336577594,
+            "idleWakeupsPerSecond": 126
+          },
+          "memory": {
+            "workingSetSize": 226756,
+            "peakWorkingSetSize": 226920
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 1.42,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114180,
+            "peakWorkingSetSize": 118284
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 7
+          },
+          "memory": {
+            "workingSetSize": 126056,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 17.68,
+            "percentCPUUsage": 5.284038188800798,
+            "idleWakeupsPerSecond": 348
+          },
+          "memory": {
+            "workingSetSize": 500108,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 4.09,
+            "percentCPUUsage": 16.918308888139315,
+            "idleWakeupsPerSecond": 318
+          },
+          "memory": {
+            "workingSetSize": 307868,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 47788596,
+        "totalSize": 48689152,
+        "embedderHeapUsedSize": 5403840,
+        "backingStorageSize": 37706707
+      },
+      "dom": {
+        "documents": 11,
+        "nodes": 1447,
+        "jsEventListeners": 335
+      },
+      "preview": {
+        "frames": 0,
+        "pause": false,
+        "play": true
+      }
+    },
+    {
+      "label": "preview-resumed-1",
+      "at": "2026-11-12T00:37:26.674Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 7.8,
+            "percentCPUUsage": 2.757214776333083,
+            "idleWakeupsPerSecond": 371
+          },
+          "memory": {
+            "workingSetSize": 338720,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 11.25,
+            "percentCPUUsage": 3.529131380407608,
+            "idleWakeupsPerSecond": 202
+          },
+          "memory": {
+            "workingSetSize": 227076,
+            "peakWorkingSetSize": 227600
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 1.71,
+            "percentCPUUsage": 1.599170372468286,
+            "idleWakeupsPerSecond": 1
+          },
+          "memory": {
+            "workingSetSize": 113936,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 126056,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 18.62,
+            "percentCPUUsage": 5.183651820945196,
+            "idleWakeupsPerSecond": 157
+          },
+          "memory": {
+            "workingSetSize": 497500,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 5.62,
+            "percentCPUUsage": 8.437347538370767,
+            "idleWakeupsPerSecond": 402
+          },
+          "memory": {
+            "workingSetSize": 330384,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 65560920,
+        "totalSize": 66564096,
+        "embedderHeapUsedSize": 11960824,
+        "backingStorageSize": 39291819
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "preview-paused-2",
+      "at": "2026-11-12T00:37:26.748Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 7.81,
+            "percentCPUUsage": 1.921931156425977,
+            "idleWakeupsPerSecond": 565
+          },
+          "memory": {
+            "workingSetSize": 338500,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 11.28,
+            "percentCPUUsage": 5.774572248560688,
+            "idleWakeupsPerSecond": 229
+          },
+          "memory": {
+            "workingSetSize": 227080,
+            "peakWorkingSetSize": 227600
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 1.71,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 113928,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 126056,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 18.64,
+            "percentCPUUsage": 3.8481075007311403,
+            "idleWakeupsPerSecond": 94
+          },
+          "memory": {
+            "workingSetSize": 497488,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 5.79,
+            "percentCPUUsage": 32.70010540975156,
+            "idleWakeupsPerSecond": 242
+          },
+          "memory": {
+            "workingSetSize": 310968,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 47802332,
+        "totalSize": 48427008,
+        "embedderHeapUsedSize": 5383792,
+        "backingStorageSize": 37706707
+      },
+      "dom": {
+        "documents": 11,
+        "nodes": 1447,
+        "jsEventListeners": 335
+      },
+      "preview": {
+        "frames": 0,
+        "pause": false,
+        "play": true
+      }
+    },
+    {
+      "label": "preview-resumed-2",
+      "at": "2026-11-12T00:37:29.348Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 8.23,
+            "percentCPUUsage": 2.190758068014275,
+            "idleWakeupsPerSecond": 626
+          },
+          "memory": {
+            "workingSetSize": 339332,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 11.91,
+            "percentCPUUsage": 3.529497532211838,
+            "idleWakeupsPerSecond": 190
+          },
+          "memory": {
+            "workingSetSize": 227484,
+            "peakWorkingSetSize": 227916
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.02,
+            "percentCPUUsage": 1.4604755162233272,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 115000,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 2
+          },
+          "memory": {
+            "workingSetSize": 126092,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 19.57,
+            "percentCPUUsage": 5.1116490648451025,
+            "idleWakeupsPerSecond": 199
+          },
+          "memory": {
+            "workingSetSize": 498552,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 7.15,
+            "percentCPUUsage": 6.876376264112241,
+            "idleWakeupsPerSecond": 375
+          },
+          "memory": {
+            "workingSetSize": 330644,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 66244492,
+        "totalSize": 66826240,
+        "embedderHeapUsedSize": 11840424,
+        "backingStorageSize": 39291819
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "preview-paused-3",
+      "at": "2026-11-12T00:37:29.434Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 8.25,
+            "percentCPUUsage": 3.3012234334044197,
+            "idleWakeupsPerSecond": 462
+          },
+          "memory": {
+            "workingSetSize": 339280,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 11.93,
+            "percentCPUUsage": 3.3019483146030315,
+            "idleWakeupsPerSecond": 220
+          },
+          "memory": {
+            "workingSetSize": 227484,
+            "peakWorkingSetSize": 227916
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.02,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114664,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 126092,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 19.62,
+            "percentCPUUsage": 8.252677168473452,
+            "idleWakeupsPerSecond": 127
+          },
+          "memory": {
+            "workingSetSize": 498052,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 7.32,
+            "percentCPUUsage": 27.508001592227856,
+            "idleWakeupsPerSecond": 272
+          },
+          "memory": {
+            "workingSetSize": 311056,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 47843692,
+        "totalSize": 48427008,
+        "embedderHeapUsedSize": 5376232,
+        "backingStorageSize": 37706707
+      },
+      "dom": {
+        "documents": 11,
+        "nodes": 1447,
+        "jsEventListeners": 335
+      },
+      "preview": {
+        "frames": 0,
+        "pause": false,
+        "play": true
+      }
+    },
+    {
+      "label": "preview-resumed-3",
+      "at": "2026-11-12T00:37:32.031Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 8.72,
+            "percentCPUUsage": 9.1786907515512,
+            "idleWakeupsPerSecond": 321
+          },
+          "memory": {
+            "workingSetSize": 339800,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 12.65,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 161
+          },
+          "memory": {
+            "workingSetSize": 227864,
+            "peakWorkingSetSize": 228260
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.28,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114804,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 64
+          },
+          "memory": {
+            "workingSetSize": 126060,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 20.55,
+            "percentCPUUsage": 4.589050525446285,
+            "idleWakeupsPerSecond": 353
+          },
+          "memory": {
+            "workingSetSize": 499312,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 8.52,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 193
+          },
+          "memory": {
+            "workingSetSize": 328112,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 65051032,
+        "totalSize": 66039808,
+        "embedderHeapUsedSize": 11484208,
+        "backingStorageSize": 39291374
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "settings-closed-to-tray",
+      "at": "2026-11-12T00:37:35.098Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 9.01,
+            "percentCPUUsage": 1.351143894728186,
+            "idleWakeupsPerSecond": 298
+          },
+          "memory": {
+            "workingSetSize": 339952,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 13.14,
+            "percentCPUUsage": 2.2829747160550196,
+            "idleWakeupsPerSecond": 206
+          },
+          "memory": {
+            "workingSetSize": 225692,
+            "peakWorkingSetSize": 228260
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.29,
+            "percentCPUUsage": 0.046591457493541724,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114292,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 126068,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 21.39,
+            "percentCPUUsage": 3.9136377556461563,
+            "idleWakeupsPerSecond": 132
+          },
+          "memory": {
+            "workingSetSize": 500192,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 8.66,
+            "percentCPUUsage": 0.6522735974650039,
+            "idleWakeupsPerSecond": 9
+          },
+          "memory": {
+            "workingSetSize": 309012,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 65051188,
+        "totalSize": 66039808,
+        "embedderHeapUsedSize": 11484360,
+        "backingStorageSize": 39291374
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "settings-reopened",
+      "at": "2026-11-12T00:37:37.166Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 1,
+          "showListeners": 1
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 9.22,
+            "percentCPUUsage": 2.598284439394149,
+            "idleWakeupsPerSecond": 236
+          },
+          "memory": {
+            "workingSetSize": 340444,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 13.62,
+            "percentCPUUsage": 2.5986310411675126,
+            "idleWakeupsPerSecond": 267
+          },
+          "memory": {
+            "workingSetSize": 226140,
+            "peakWorkingSetSize": 228260
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.29,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114292,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 12
+          },
+          "memory": {
+            "workingSetSize": 126100,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 21.93,
+            "percentCPUUsage": 3.4651355387765994,
+            "idleWakeupsPerSecond": 212
+          },
+          "memory": {
+            "workingSetSize": 501328,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 9,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 85
+          },
+          "memory": {
+            "workingSetSize": 322716,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 65885884,
+        "totalSize": 68136960,
+        "embedderHeapUsedSize": 11691336,
+        "backingStorageSize": 39291819
+      },
+      "dom": {
+        "documents": 14,
+        "nodes": 4682,
+        "jsEventListeners": 488
+      },
+      "preview": {
+        "frames": 1,
+        "pause": true,
+        "play": false
+      }
+    },
+    {
+      "label": "preview-paused-final",
+      "at": "2026-11-12T00:37:37.234Z",
+      "windows": [
+        {
+          "id": 3,
+          "pid": 53545,
+          "url": "http://localhost:5173/#/settings/standings",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1230,
+            "height": 1319
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        },
+        {
+          "id": 2,
+          "pid": 52939,
+          "url": "http://localhost:5173/",
+          "visible": true,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1549,
+            "height": 1014
+          },
+          "hideListeners": 1,
+          "showListeners": 2
+        },
+        {
+          "id": 1,
+          "pid": 52905,
+          "url": "http://localhost:5173/#/tape-replay",
+          "visible": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 620,
+            "height": 104
+          },
+          "hideListeners": 0,
+          "showListeners": 0
+        }
+      ],
+      "processes": [
+        {
+          "pid": 52850,
+          "type": "Browser",
+          "creationTime": 1794443780780,
+          "cpu": {
+            "cumulativeCPUUsage": 9.23,
+            "percentCPUUsage": 1.779308774127427,
+            "idleWakeupsPerSecond": 286
+          },
+          "memory": {
+            "workingSetSize": 340204,
+            "peakWorkingSetSize": 365864
+          }
+        },
+        {
+          "pid": 52896,
+          "type": "GPU",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 13.65,
+            "percentCPUUsage": 5.337859838476361,
+            "idleWakeupsPerSecond": 224
+          },
+          "memory": {
+            "workingSetSize": 226136,
+            "peakWorkingSetSize": 228260
+          }
+        },
+        {
+          "pid": 52899,
+          "type": "Utility",
+          "name": "Network Service",
+          "creationTime": 1794443781000,
+          "cpu": {
+            "cumulativeCPUUsage": 2.29,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 114252,
+            "peakWorkingSetSize": 119044
+          }
+        },
+        {
+          "pid": 52905,
+          "type": "Tab",
+          "creationTime": 1794443781010,
+          "cpu": {
+            "cumulativeCPUUsage": 0.2,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 126100,
+            "peakWorkingSetSize": 129404
+          }
+        },
+        {
+          "pid": 52939,
+          "type": "Tab",
+          "creationTime": 1794443781370,
+          "cpu": {
+            "cumulativeCPUUsage": 21.96,
+            "percentCPUUsage": 5.337394497502099,
+            "idleWakeupsPerSecond": 212
+          },
+          "memory": {
+            "workingSetSize": 501520,
+            "peakWorkingSetSize": 552608
+          }
+        },
+        {
+          "pid": 53545,
+          "type": "Tab",
+          "creationTime": 1794443836630,
+          "cpu": {
+            "cumulativeCPUUsage": 9.18,
+            "percentCPUUsage": 32.025563516478044,
+            "idleWakeupsPerSecond": 498
+          },
+          "memory": {
+            "workingSetSize": 311532,
+            "peakWorkingSetSize": 440968
+          }
+        }
+      ],
+      "heap": {
+        "usedSize": 47970112,
+        "totalSize": 48951296,
+        "embedderHeapUsedSize": 5162928,
+        "backingStorageSize": 37706714
+      },
+      "dom": {
+        "documents": 11,
+        "nodes": 1447,
+        "jsEventListeners": 335
+      },
+      "preview": {
+        "frames": 0,
+        "pause": false,
+        "play": true
+      }
+    }
+  ]
+}

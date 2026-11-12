@@ -12,8 +12,10 @@ import { readWidgetInputRequirements } from '../widgetInputMetadata.ts';
 
 const matrix = process.argv[2] ?? 'normal-final-r1';
 const smoke = process.argv[3] === 'smoke';
-if (process.argv[3] && !smoke) throw new Error('Expected optional smoke mode');
-const durationSeconds = smoke ? 90 : 420;
+const probe = process.argv[3] === 'probe';
+if (process.argv[3] && !smoke && !probe)
+  throw new Error('Expected optional smoke or probe mode');
+const durationSeconds = probe ? 180 : smoke ? 90 : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
@@ -47,6 +49,7 @@ print({
   pid: process.pid,
   matrix,
   smoke,
+  probe,
   durationSeconds,
 });
 const hash = (data) => createHash('sha256').update(data).digest('hex');
@@ -89,14 +92,15 @@ const ensurePortsFree = async () => {
   }
 };
 try {
-  const phases = smoke
-    ? [['smoke', 'candidate']]
-    : [
-        ['a1', 'baseline'],
-        ['b1', 'candidate'],
-        ['b2', 'candidate'],
-        ['a2', 'baseline'],
-      ];
+  const phases =
+    smoke || probe
+      ? [[probe ? 'probe' : 'smoke', 'candidate']]
+      : [
+          ['a1', 'baseline'],
+          ['b1', 'candidate'],
+          ['b2', 'candidate'],
+          ['a2', 'baseline'],
+        ];
   for (const [sequence, variant] of phases) {
     cancellation.signal.throwIfAborted();
     await ensurePortsFree();

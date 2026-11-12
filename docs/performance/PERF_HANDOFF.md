@@ -105,6 +105,10 @@ diagnostic controls are only in the capture tool, not production code.
    passed: [lifecycle report](2026-11-12-lifecycle.md), with 104 targeted tests.
    Actual simulator reconnect/join/leave, hidden rAF and Gantry semantics are
    not established by that smoke. Preserve the Windows presentation gate as open.
+   The [short Settings cleanup diagnostic](2026-11-12-settings-cleanup.md)
+   also passed: three pause/resume cycles returned to stable DOM/listener counts.
+   Closing to tray retains the preview frame; that is not evidence of a leak.
+   Repeated 20-minute, post-GC memory observations still remain to be collected.
    Publish a PR only when requested; visual PRs require actual screenshot
    attachments per AGENTS.md, not local paths.
 
