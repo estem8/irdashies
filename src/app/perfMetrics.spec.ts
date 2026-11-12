@@ -21,6 +21,17 @@ afterEach(() => {
 });
 
 describe('performance process memory coverage', () => {
+  it('disables default collectors independently of the capture flag', () => {
+    vi.stubEnv('PERF_METRICS', '1');
+    vi.stubEnv('PERF_METRICS_COLLECTION', 'off');
+    const metrics = new TelemetryPerfMetrics();
+    expect(metrics.enabled).toBe(false);
+    metrics.startReporting();
+    metrics.tick({ FrameRate: { value: [60] } } as Telemetry);
+    expect(vi.mocked(app.getAppMetrics)).not.toHaveBeenCalled();
+    expect(new TelemetryPerfMetrics(true).enabled).toBe(true);
+  });
+
   it('sums private bytes only when every included process reports them', () => {
     expect(sumCompletePrivateMemoryMB([1024, 2048])).toBe(3);
     expect(sumCompletePrivateMemoryMB([1024, undefined])).toBeUndefined();
@@ -99,9 +110,9 @@ describe('performance telemetry source metadata', () => {
     vi.stubEnv('PERF_SOURCE_KIND', 'live');
     vi.stubEnv('PERF_SCENARIO_METADATA', '{"simulatorMode":"replay"}');
 
-    expect(new TelemetryPerfMetrics(true).report().scenarioMetadata).toMatchObject(
-      { sourceKind: 'live', simulatorMode: 'replay' }
-    );
+    expect(
+      new TelemetryPerfMetrics(true).report().scenarioMetadata
+    ).toMatchObject({ sourceKind: 'live', simulatorMode: 'replay' });
   });
 
   it('includes per-process CPU deltas in reports after a valid baseline', () => {
@@ -126,9 +137,7 @@ describe('performance telemetry source metadata', () => {
       creationTime: 456,
       cpuTimeMs: 250,
     });
-    expect(processReport?.cpuTimeMsPerSecond).toEqual(
-      expect.any(Number)
-    );
+    expect(processReport?.cpuTimeMsPerSecond).toEqual(expect.any(Number));
     expect(processReport?.cpuSampleIntervalMs).toBeGreaterThan(0);
   });
 });
