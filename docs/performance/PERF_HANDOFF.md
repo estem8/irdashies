@@ -101,7 +101,10 @@ diagnostic controls are only in the capture tool, not production code.
    ```
 
 6. Finish lifecycle/seek/hide/show checks, Settings/memory investigation and
-   final validation. Preserve the remaining Windows presentation gate as open.
+   final validation. Replay seek/pause and native-window hide/show smoke now
+   passed: [lifecycle report](2026-11-12-lifecycle.md), with 104 targeted tests.
+   Actual simulator reconnect/join/leave, hidden rAF and Gantry semantics are
+   not established by that smoke. Preserve the Windows presentation gate as open.
    Publish a PR only when requested; visual PRs require actual screenshot
    attachments per AGENTS.md, not local paths.
 

@@ -1,0 +1,326 @@
+{
+  "scope": "Runtime smoke with diagnostic observers; not CPU acceptance or real simulator reconnect",
+  "passed": true,
+  "records": [
+    {
+      "label": "before",
+      "status": {
+        "position": 56.9224792,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 22,
+      "track": {
+        "sessionTime": 147.78333384197168,
+        "version": 1354,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [],
+      "rootTextLength": 1252,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-forward",
+      "status": {
+        "position": 301.9239278,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 67,
+      "track": {
+        "sessionTime": 392.80000050860014,
+        "version": 1405,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1605,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-backward",
+      "status": {
+        "position": 31.9221226,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 113,
+      "track": {
+        "sessionTime": 122.8000005086229,
+        "version": 1455,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-start",
+      "status": {
+        "position": 31.9392648,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 114,
+      "track": {
+        "sessionTime": 122.8500005086229,
+        "version": 1456,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-end",
+      "status": {
+        "position": 31.9392648,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 114,
+      "track": {
+        "sessionTime": 122.8500005086229,
+        "version": 1456,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "resumed",
+      "status": {
+        "position": 33.9556603,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 157,
+      "track": {
+        "sessionTime": 124.88333384195612,
+        "version": 1507,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1260,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "hidden-start",
+      "status": {
+        "position": 34.99092,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 157,
+      "track": {
+        "sessionTime": 124.88333384195612,
+        "version": 1507,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1260,
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "hidden-end",
+      "status": {
+        "position": 37.9962945,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 157,
+      "track": {
+        "sessionTime": 124.88333384195612,
+        "version": 1507,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1260,
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "shown",
+      "status": {
+        "position": 40.0222,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 202,
+      "track": {
+        "sessionTime": 130.88333384195823,
+        "version": 49,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "rootTextLength": 1261,
+      "window": {
+        "visible": true
+      }
+    }
+  ]
+}
