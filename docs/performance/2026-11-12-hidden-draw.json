@@ -1,0 +1,399 @@
+{
+  "scope": "Runtime smoke with diagnostic observers; not CPU acceptance or real simulator reconnect",
+  "hiddenProbe": true,
+  "passed": true,
+  "records": [
+    {
+      "label": "before",
+      "at": "2026-11-12T01:42:02.457Z",
+      "status": {
+        "position": 57.0901186,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 22,
+      "track": {
+        "sessionTime": 147.96666717530516,
+        "version": 1344,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [],
+      "draws": {
+        "radarFrame": 60,
+        "trackMapAnimationFrame": 82,
+        "trackMapRafDraw": 61,
+        "inputTraceFrame": 57,
+        "trackMapCommitDraw": 21
+      },
+      "rootTextLength": 1252,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-forward",
+      "at": "2026-11-12T01:42:04.466Z",
+      "status": {
+        "position": 301.906566,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 68,
+      "track": {
+        "sessionTime": 392.80000050860014,
+        "version": 1394,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 172,
+        "trackMapAnimationFrame": 241,
+        "trackMapRafDraw": 172,
+        "inputTraceFrame": 170,
+        "trackMapCommitDraw": 69
+      },
+      "rootTextLength": 1605,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "seek-backward",
+      "at": "2026-11-12T01:42:06.482Z",
+      "status": {
+        "position": 31.9217544,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 111,
+      "track": {
+        "sessionTime": 122.8000005086229,
+        "version": 1443,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 284,
+        "trackMapAnimationFrame": 398,
+        "trackMapRafDraw": 284,
+        "inputTraceFrame": 283,
+        "trackMapCommitDraw": 114
+      },
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-start",
+      "at": "2026-11-12T01:42:06.485Z",
+      "status": {
+        "position": 31.924485,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 111,
+      "track": {
+        "sessionTime": 122.8000005086229,
+        "version": 1443,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 284,
+        "trackMapAnimationFrame": 398,
+        "trackMapRafDraw": 284,
+        "inputTraceFrame": 283,
+        "trackMapCommitDraw": 114
+      },
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "pause-end",
+      "at": "2026-11-12T01:42:08.490Z",
+      "status": {
+        "position": 31.924485,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": true,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 112,
+      "track": {
+        "sessionTime": 122.8500005086229,
+        "version": 1444,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 405,
+        "trackMapAnimationFrame": 403,
+        "trackMapRafDraw": 288,
+        "inputTraceFrame": 284,
+        "trackMapCommitDraw": 115
+      },
+      "rootTextLength": 1263,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "resumed",
+      "at": "2026-11-12T01:42:10.522Z",
+      "status": {
+        "position": 33.9399617,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 157,
+      "track": {
+        "sessionTime": 124.80000050862279,
+        "version": 1493,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 526,
+        "trackMapAnimationFrame": 567,
+        "trackMapRafDraw": 407,
+        "inputTraceFrame": 400,
+        "trackMapCommitDraw": 160
+      },
+      "rootTextLength": 1260,
+      "window": {
+        "visible": true
+      }
+    },
+    {
+      "label": "hidden-start",
+      "at": "2026-11-12T01:42:11.528Z",
+      "status": {
+        "position": 34.9594388,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 158,
+      "track": {
+        "sessionTime": 124.88333384195612,
+        "version": 1495,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 530,
+        "trackMapAnimationFrame": 572,
+        "trackMapRafDraw": 411,
+        "inputTraceFrame": 401,
+        "trackMapCommitDraw": 161
+      },
+      "rootTextLength": 1260,
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "hidden-end",
+      "at": "2026-11-12T01:42:31.532Z",
+      "status": {
+        "position": 54.964364,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 158,
+      "track": {
+        "sessionTime": 124.88333384195612,
+        "version": 1495,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 530,
+        "trackMapAnimationFrame": 572,
+        "trackMapRafDraw": 411,
+        "inputTraceFrame": 401,
+        "trackMapCommitDraw": 161
+      },
+      "rootTextLength": 1260,
+      "window": {
+        "visible": false
+      }
+    },
+    {
+      "label": "shown",
+      "at": "2026-11-12T01:42:33.557Z",
+      "status": {
+        "position": 56.988150000000005,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "visibility": "visible",
+      "updates": 203,
+      "track": {
+        "sessionTime": 147.83333384197172,
+        "version": 49,
+        "cars": 72,
+        "focus": 0
+      },
+      "events": [
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        },
+        {
+          "type": "disconnect"
+        },
+        {
+          "type": "enter",
+          "replay": true
+        }
+      ],
+      "draws": {
+        "radarFrame": 645,
+        "trackMapAnimationFrame": 737,
+        "trackMapRafDraw": 528,
+        "inputTraceFrame": 517,
+        "trackMapCommitDraw": 209
+      },
+      "rootTextLength": 1248,
+      "window": {
+        "visible": true
+      }
+    }
+  ]
+}

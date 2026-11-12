@@ -72,9 +72,11 @@ Next work, in priority order:
    [repeated memory diagnostic](2026-11-12-settings-memory.md). Two 20-minute
    post-GC intervals are complete; Settings listeners/DOM do not accumulate,
    but stable V8 heap does not resolve native/browser memory growth.
-2. Execute the prepared [hidden-drawing probe](2026-11-12-hidden-draw-audit.md).
-   Snapshot gating is already observed; widget drawing, Gantry and event/history
-   delivery are separate. Change scheduling only when measured cost warrants it.
+2. Complete remaining hidden-drawing coverage. The
+   [Linux native-hide probe](2026-11-12-hidden-draw-audit.md) observed zero
+   Map/Input/Radar work while hidden and repaint after show, so no Radar change
+   is justified. Lap Trace was idle; Gantry runtime history and other native
+   visibility modes remain separate. Change scheduling only with measured need.
 3. Finish instrumentation-overhead, input-coverage and allocation evidence gaps.
    Do not repeat the normal matrix without a new change or a specific concern:
    R3 already completed two pairs with lower CPU, but its analyzer verdict is

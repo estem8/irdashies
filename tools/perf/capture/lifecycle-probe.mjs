@@ -55,9 +55,13 @@ try {
   await overlay.evaluate(
     `(()=>{const p={updates:0,track:null,events:[]};p.stopTrack=window.channelBridge.subscribe('track-state.snapshot',s=>{p.updates++;p.track={sessionTime:s.sessionTime,version:s.version,cars:s.carIdxLapDistPct.length,focus:s.focusCarIdx}});p.stopEvents=window.channelBridge.subscribe('session.lifecycle',e=>p.events.push(e));window.__perfLifecycle=p;return true})()`
   );
+  if (hiddenProbe)
+    await overlay.evaluate(
+      `(async()=>{const {perfMetrics}=await import('/src/frontend/utils/perfMetrics.ts');const p=window.__perfLifecycle;const original=perfMetrics.measure;p.draws={};perfMetrics.measure=function(name,measured,breakdown){p.draws[name]=(p.draws[name]??0)+1;if(breakdown)p.draws[breakdown]=(p.draws[breakdown]??0)+1;return original.call(this,name,measured,breakdown)};p.stopDraws=()=>{perfMetrics.measure=original};return true})()`
+    );
   const record = async (label) => {
     const value = await overlay.evaluate(
-      `(async()=>({status:await window.tapeReplayBridge.getStatus(),visibility:document.visibilityState,updates:window.__perfLifecycle.updates,track:window.__perfLifecycle.track,events:window.__perfLifecycle.events,rootTextLength:document.getElementById('app')?.textContent?.length??0}))()`
+      `(async()=>({status:await window.tapeReplayBridge.getStatus(),visibility:document.visibilityState,updates:window.__perfLifecycle.updates,track:window.__perfLifecycle.track,events:window.__perfLifecycle.events,draws:{...window.__perfLifecycle.draws},rootTextLength:document.getElementById('app')?.textContent?.length??0}))()`
     );
     value.window = await main.evaluate(
       `(()=>{const w=${windowExpression};return {visible:w.isVisible(),backgroundThrottling:w.webContents.getLastWebPreferences().backgroundThrottling}})()`
@@ -127,6 +131,13 @@ try {
     'Snapshots did not resume after show'
   );
   assert.ok(shown.rootTextLength > 100, 'Overlay content disappeared');
+  if (hiddenProbe) {
+    assert.ok(before.draws.radarFrame > 0, 'Draw observer not connected');
+    assert.ok(
+      shown.draws.radarFrame > hiddenEnd.draws.radarFrame,
+      'Radar did not repaint after show'
+    );
+  }
   await writeFile(
     resolve(out, 'lifecycle.json'),
     JSON.stringify(
@@ -149,7 +160,7 @@ try {
     }) + '\n'
   );
   await overlay.evaluate(
-    `(()=>{window.__perfLifecycle.stopTrack();window.__perfLifecycle.stopEvents();delete window.__perfLifecycle;return true})()`
+    `(()=>{window.__perfLifecycle.stopDraws?.();window.__perfLifecycle.stopTrack();window.__perfLifecycle.stopEvents();delete window.__perfLifecycle;return true})()`
   );
   overlay.ws.close();
   overlay = undefined;

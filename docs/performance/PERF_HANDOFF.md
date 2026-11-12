@@ -21,14 +21,14 @@ claim game FPS or Windows acceptance.
   [memory results](2026-11-12-settings-memory.md): Settings heap/listeners show
   no large accumulation, but private-memory growth in overlay/main remains
   unresolved. Do not treat V8 heap stability as proof of native-memory stability.
-- Prepared but not executed: `lifecycle-probe.mjs <fresh-id> hidden` and
-  `report-memory.mjs <completed-r1-folder> <completed-r2-folder>`. The former
-  extends native hide to 20 seconds; the latter verifies source/seed/environment
-  and completed checkpoint coverage before comparing post-GC heaps. Source
-  audit is [here](2026-11-12-hidden-draw-audit.md). Validate these queued tools
-  after memory captures; do not describe their preparation as a passed check.
-  Syntax/ESLint for both queued tools passed between the two memory runs;
-  runtime hidden-mode execution remains pending; the two-run report has now run.
+- `hidden-draw-r2` completed the native-hide runtime check with direct named
+  work counters: Map/Input/Radar have zero calls in the settled 20-second
+  hidden interval and resume after showing. No scheduling change is justified
+  by this Linux result. See the [hidden drawing report](2026-11-12-hidden-draw-audit.md).
+  The first attempt lacked complete hidden reporter intervals and cannot be
+  treated as measured zero. Lap Trace was idle, so its hidden behavior remains
+  unexercised. Channel/Gantry suites passed 62 tests; runtime Gantry history is
+  not covered. No capture remains running.
 - `perf-results/normal-final-r2/runs.json` records A1 and B1 completing with
   exit 0. Both preflights show a visible 1549 × 1014 overlay at DPR 1 and
   hidden 620 × 104 tape controls at (0, 0). B2 has partial logs only.
