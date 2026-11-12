@@ -1,0 +1,2278 @@
+{
+  "scope": "Collection-off, Settings closed, Linux development; V8 sampled live allocations exclude pre-existing and native allocations. Two short diagnostics, not leak or CPU acceptance.",
+  "source": [
+    {
+      "file": "src/frontend/components/Standings/Relative.tsx",
+      "baselineCommit": "94f02641",
+      "beforeSha256": "1fd43dd4c5d816a13396b586ce4e2548856dd81a476c0b3d3513b99404e336de",
+      "afterSha256": "3ebf3837d02ae629481d87586f9df04912a4b4949d9b1bd3f7ebe66e3bfa9ee9"
+    },
+    {
+      "file": "src/frontend/components/Standings/components/TitleBar/TitleBar.tsx",
+      "baselineCommit": "94f02641",
+      "beforeSha256": "aa71d69f6fc6aec55f4d33b72ecd94b2e5e8855275f069d5cc22142fa846b8d5",
+      "afterSha256": "e6904b320e86bf14f6a6c8103d0fce4c78f26fc52f8747943ae3b4f85aa70964"
+    },
+    {
+      "file": "src/frontend/components/TrackMap/hooks/useDriverProgress.tsx",
+      "baselineCommit": "94f02641",
+      "beforeSha256": "730be7e3e4a9bedca19ff33f9d413736738e24bf2436127e3821565c64f92d19",
+      "afterSha256": "6a54fe6cb9d5af5202ce6fcf95347c43a0ac35542493cda8c6d4d8299981880c"
+    },
+    {
+      "file": "src/frontend/context/SessionStore/arrayShallowCompare.ts",
+      "baselineCommit": "02e8e07e",
+      "beforeSha256": "80c8df13e94073f6e02a6dc87fb5d472c2d4c542ef4acac3e1e5b457a7023300",
+      "afterSha256": "21458861124e478ce7fcaa025ae2584d275dd4805e11399bd38056a4de37ef78"
+    },
+    {
+      "file": "src/frontend/components/BlindSpotMonitor/components/BlindSpotMonitorIndicator.tsx",
+      "baselineCommit": "02e8e07e",
+      "beforeSha256": "80f8a16e0aca6e049dbc6c15d25d23da5ecc143cc1cffaef3f175ac1356834c8",
+      "afterSha256": "e85beb33b5e495cbc87b18609f5833c40fc69b7077e54b52de5e21979e5ea257"
+    },
+    {
+      "file": "src/frontend/components/shared/CarManufacturer/CarManufacturer.tsx",
+      "baselineCommit": "02e8e07e",
+      "beforeSha256": "5913f88becb4003d0746d3b9814ce6bb67245ec1a23a62844583d202de399a4a",
+      "afterSha256": "9ca449bae41f36c99c9097fe88856d8949ca1e5049294e715a3d92b4a5b246c4"
+    }
+  ],
+  "manifest": {
+    "source": "e0f881053b9e1fc25f4c724581e0a91d1b5e571e",
+    "sources": [
+      {
+        "file": "src/frontend/components/Standings/Relative.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "1fd43dd4c5d816a13396b586ce4e2548856dd81a476c0b3d3513b99404e336de",
+        "afterSha256": "3ebf3837d02ae629481d87586f9df04912a4b4949d9b1bd3f7ebe66e3bfa9ee9"
+      },
+      {
+        "file": "src/frontend/components/Standings/components/TitleBar/TitleBar.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "aa71d69f6fc6aec55f4d33b72ecd94b2e5e8855275f069d5cc22142fa846b8d5",
+        "afterSha256": "e6904b320e86bf14f6a6c8103d0fce4c78f26fc52f8747943ae3b4f85aa70964"
+      },
+      {
+        "file": "src/frontend/components/TrackMap/hooks/useDriverProgress.tsx",
+        "baselineCommit": "94f02641",
+        "beforeSha256": "730be7e3e4a9bedca19ff33f9d413736738e24bf2436127e3821565c64f92d19",
+        "afterSha256": "6a54fe6cb9d5af5202ce6fcf95347c43a0ac35542493cda8c6d4d8299981880c"
+      },
+      {
+        "file": "src/frontend/context/SessionStore/arrayShallowCompare.ts",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "80c8df13e94073f6e02a6dc87fb5d472c2d4c542ef4acac3e1e5b457a7023300",
+        "afterSha256": "21458861124e478ce7fcaa025ae2584d275dd4805e11399bd38056a4de37ef78"
+      },
+      {
+        "file": "src/frontend/components/BlindSpotMonitor/components/BlindSpotMonitorIndicator.tsx",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "80f8a16e0aca6e049dbc6c15d25d23da5ecc143cc1cffaef3f175ac1356834c8",
+        "afterSha256": "e85beb33b5e495cbc87b18609f5833c40fc69b7077e54b52de5e21979e5ea257"
+      },
+      {
+        "file": "src/frontend/components/shared/CarManufacturer/CarManufacturer.tsx",
+        "baselineCommit": "02e8e07e",
+        "beforeSha256": "5913f88becb4003d0746d3b9814ce6bb67245ec1a23a62844583d202de399a4a",
+        "afterSha256": "9ca449bae41f36c99c9097fe88856d8949ca1e5049294e715a3d92b4a5b246c4"
+      }
+    ],
+    "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+    "expectedViewport": {
+      "width": 1549,
+      "height": 1009,
+      "dpr": 1
+    },
+    "node": "v26.13.1",
+    "os": "7.2.15-arch1-1",
+    "cpu": "AMD Ryzen 5 9600X 6-Core Processor"
+  },
+  "phases": [
+    {
+      "sequence": "off-control",
+      "startSeconds": 55.3097419,
+      "endSeconds": 390.9189647,
+      "observations": [
+        {
+          "role": "main",
+          "pid": 83457,
+          "heapStartBytes": 14490748,
+          "heapEndBytes": 14264476,
+          "heapDeltaBytes": -226272,
+          "heapCounters": {
+            "usedSize": {
+              "start": 14490748,
+              "end": 14264476,
+              "delta": -226272
+            },
+            "totalSize": {
+              "start": 15773696,
+              "end": 15773696,
+              "delta": 0
+            },
+            "embedderHeapUsedSize": {
+              "start": 29976,
+              "end": 29976,
+              "delta": 0
+            },
+            "backingStorageSize": {
+              "start": 5252743,
+              "end": 5792630,
+              "delta": 539887
+            }
+          },
+          "privateDeltaMiB": 0.7109375,
+          "privateSampleSeconds": [65.074, 396.226]
+        },
+        {
+          "role": "overlay",
+          "pid": 83548,
+          "heapStartBytes": 48483008,
+          "heapEndBytes": 51302292,
+          "heapDeltaBytes": 2819284,
+          "heapCounters": {
+            "usedSize": {
+              "start": 48483008,
+              "end": 51302292,
+              "delta": 2819284
+            },
+            "totalSize": {
+              "start": 49971200,
+              "end": 52854784,
+              "delta": 2883584
+            },
+            "embedderHeapUsedSize": {
+              "start": 7166776,
+              "end": 8284032,
+              "delta": 1117256
+            },
+            "backingStorageSize": {
+              "start": 32780677,
+              "end": 33421332,
+              "delta": 640655
+            }
+          },
+          "privateDeltaMiB": 8.21484375,
+          "privateSampleSeconds": [65.074, 396.226]
+        }
+      ],
+      "artifacts": {
+        "ownership-start.json": "6c4343bd10fd334b31f177c2a9b28d9e21acd0d3eec3413e4a8a48cea97b1863",
+        "ownership.json": "964c4ae128adfd03b87531f53dece9be61406e50e6c467955c97d70f9c620bb3",
+        "linux-private-memory.json": "5e13ec50ee2cd410b18935ae1ab213039cc0d528a347388e564112c0efebdd8a",
+        "external-cpu.json": "2ac8ad9e2f6f8c534620ddf50fb0eab1ebe801aa2f9fa733ca027df276519af6",
+        "preflight.json": "521bc512b7d49f939e0e118ebfdce677d1c7f1e287d7d614deee9c7e39239cc8",
+        "environment.json": "487c286b4454c55ac764dc0297f8047eef01af7cf664df6ae67e17e78c666d86"
+      }
+    },
+    {
+      "sequence": "off-sampled",
+      "startSeconds": 55.5477475,
+      "endSeconds": 390.93916,
+      "observations": [
+        {
+          "role": "main",
+          "pid": 90117,
+          "heapStartBytes": 14697412,
+          "heapEndBytes": 14267984,
+          "heapDeltaBytes": -429428,
+          "heapCounters": {
+            "usedSize": {
+              "start": 14697412,
+              "end": 14267984,
+              "delta": -429428
+            },
+            "totalSize": {
+              "start": 15773696,
+              "end": 15511552,
+              "delta": -262144
+            },
+            "embedderHeapUsedSize": {
+              "start": 29976,
+              "end": 29976,
+              "delta": 0
+            },
+            "backingStorageSize": {
+              "start": 5261354,
+              "end": 5787982,
+              "delta": 526628
+            }
+          },
+          "privateDeltaMiB": 0.66796875,
+          "privateSampleSeconds": [65.08, 396.297],
+          "liveAllocations": {
+            "totalSampledLiveBytes": 1160444,
+            "allocationSites": 13,
+            "top": [
+              {
+                "estimatedLiveBytes": 460776,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "processTimers",
+                    "url": "node:internal/timers",
+                    "lineNumber": 602,
+                    "columnNumber": 24
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 165948,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "getSessionData",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 343,
+                    "columnNumber": 15
+                  },
+                  {
+                    "functionName": "load",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2566,
+                    "columnNumber": 13
+                  },
+                  {
+                    "functionName": "loadDocuments",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2523,
+                    "columnNumber": 22
+                  },
+                  {
+                    "functionName": "constructFromEvents",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1563,
+                    "columnNumber": 28
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 113700,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "(IDLE_EXTERNAL)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 78696,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "getSessionData",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 343,
+                    "columnNumber": 15
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 78696,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "getSessionData",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 343,
+                    "columnNumber": 15
+                  },
+                  {
+                    "functionName": "normalizeSessionYaml",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 226,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "join",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32980,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1419,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "runSafely",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1557,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1425,
+                    "columnNumber": 43
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2389,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "update",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2174,
+                    "columnNumber": 7
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32832,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "processTimers",
+                    "url": "node:internal/timers",
+                    "lineNumber": 602,
+                    "columnNumber": 24
+                  },
+                  {
+                    "functionName": "runNextTicks",
+                    "url": "node:internal/process/task_queues",
+                    "lineNumber": 62,
+                    "columnNumber": 21
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1419,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "runSafely",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1557,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1425,
+                    "columnNumber": 43
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2389,
+                    "columnNumber": 8
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32832,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "onSession",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1411,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "runSafely",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1557,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1416,
+                    "columnNumber": 37
+                  },
+                  {
+                    "functionName": "init",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 353,
+                    "columnNumber": 5
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32820,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1419,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "runSafely",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1557,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1425,
+                    "columnNumber": 43
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2761,
+                    "columnNumber": 8
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32812,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "saveLapTrace",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/main-CmjiHL0c.js",
+                    "lineNumber": 7944,
+                    "columnNumber": 19
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32800,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "getSessionData",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 343,
+                    "columnNumber": 15
+                  },
+                  {
+                    "functionName": "load",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2566,
+                    "columnNumber": 13
+                  },
+                  {
+                    "functionName": "loadDocuments",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2523,
+                    "columnNumber": 22
+                  },
+                  {
+                    "functionName": "constructFromEvents",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1563,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "addValue",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1524,
+                    "columnNumber": 17
+                  },
+                  {
+                    "functionName": "addMappingValue",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1513,
+                    "columnNumber": 24
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32780,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "getSessionData",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/irsdk-Ba-NHY_p.js",
+                    "lineNumber": 343,
+                    "columnNumber": 15
+                  },
+                  {
+                    "functionName": "load",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2566,
+                    "columnNumber": 13
+                  },
+                  {
+                    "functionName": "loadDocuments",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 2523,
+                    "columnNumber": 22
+                  },
+                  {
+                    "functionName": "constructFromEvents",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1563,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "constructScalar",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/js-yaml-D8zIiXP_.js",
+                    "lineNumber": 1443,
+                    "columnNumber": 24
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 32772,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/iracingSdkBridge-xa098sf4.js",
+                    "lineNumber": 242,
+                    "columnNumber": 3
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1419,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "runSafely",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1557,
+                    "columnNumber": 10
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 1425,
+                    "columnNumber": 43
+                  },
+                  {
+                    "functionName": "onFrame",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2389,
+                    "columnNumber": 8
+                  },
+                  {
+                    "functionName": "update",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2174,
+                    "columnNumber": 7
+                  },
+                  {
+                    "functionName": "judge",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/perfMetrics-DPNKyK3G.js",
+                    "lineNumber": 2212,
+                    "columnNumber": 6
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "role": "overlay",
+          "pid": 90210,
+          "heapStartBytes": 49698824,
+          "heapEndBytes": 50369012,
+          "heapDeltaBytes": 670188,
+          "heapCounters": {
+            "usedSize": {
+              "start": 49698824,
+              "end": 50369012,
+              "delta": 670188
+            },
+            "totalSize": {
+              "start": 53116928,
+              "end": 52068352,
+              "delta": -1048576
+            },
+            "embedderHeapUsedSize": {
+              "start": 7992560,
+              "end": 8172344,
+              "delta": 179784
+            },
+            "backingStorageSize": {
+              "start": 32781256,
+              "end": 33416333,
+              "delta": 635077
+            }
+          },
+          "privateDeltaMiB": -11.8828125,
+          "privateSampleSeconds": [65.08, 396.297],
+          "liveAllocations": {
+            "totalSampledLiveBytes": 3963632,
+            "allocationSites": 72,
+            "top": [
+              {
+                "estimatedLiveBytes": 433328,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/preload.cjs",
+                    "lineNumber": 5529,
+                    "columnNumber": 44
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 262576,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 229888,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 134848,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "Standings",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 82,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 173,
+                    "columnNumber": 74
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 203,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 134848,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "Standings",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 82,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 173,
+                    "columnNumber": 74
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 203,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 131164,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "Relative",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Relative.tsx",
+                    "lineNumber": 16,
+                    "columnNumber": 24
+                  },
+                  {
+                    "functionName": "useDriverRelatives",
+                    "url": "http://localhost:5173/src/frontend/domain/standings/useDriverRelatives.tsx",
+                    "lineNumber": 4,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useDriverStandings",
+                    "url": "http://localhost:5173/src/frontend/domain/standings/useDriverPositions.tsx",
+                    "lineNumber": 170,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useDrivers",
+                    "url": "http://localhost:5173/src/frontend/domain/standings/useDriverPositions.tsx",
+                    "lineNumber": 62,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/domain/standings/useDriverPositions.tsx",
+                    "lineNumber": 64,
+                    "columnNumber": 37
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 106828,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "paint",
+                    "url": "http://localhost:5173/src/frontend/components/Radar/components/RadarDisplay.tsx",
+                    "lineNumber": 190,
+                    "columnNumber": 16
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 98656,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 98512,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65760,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  },
+                  {
+                    "functionName": "defineKeyPropWarningGetter",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 87,
+                    "columnNumber": 37
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65728,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "Standings",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 82,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 173,
+                    "columnNumber": 74
+                  },
+                  {
+                    "functionName": "map",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 203,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65700,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "handler",
+                    "url": "/home/omarchy/Projects/irdashies/.vite/build/preload.cjs",
+                    "lineNumber": 290,
+                    "columnNumber": 19
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65664,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "performWorkUntilDeadline",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "performWorkOnRootViaSchedulerTask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9820,
+                    "columnNumber": 44
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "attemptEarlyBailoutIfNoScheduledUpdate",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6265,
+                    "columnNumber": 49
+                  },
+                  {
+                    "functionName": "createWorkInProgress",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 2875,
+                    "columnNumber": 31
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65644,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "Standings",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/Standings.tsx",
+                    "lineNumber": 82,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65612,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "exports.jsxDEV",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 190,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "jsxDEVImpl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 147,
+                    "columnNumber": 21
+                  },
+                  {
+                    "functionName": "ReactElement",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=22a02632",
+                    "lineNumber": 103,
+                    "columnNumber": 23
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 65568,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 44816,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "(IDLE_EXTERNAL)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 38784,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Input/InputTrace/InputTrace.tsx",
+                    "lineNumber": 52,
+                    "columnNumber": 39
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 36352,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "completeRootWhenReady",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8776,
+                    "columnNumber": 32
+                  },
+                  {
+                    "functionName": "completeRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9250,
+                    "columnNumber": 23
+                  },
+                  {
+                    "functionName": "commitRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9298,
+                    "columnNumber": 21
+                  },
+                  {
+                    "functionName": "flushSpawnedWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9452,
+                    "columnNumber": 27
+                  },
+                  {
+                    "functionName": "flushPassiveEffects",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9542,
+                    "columnNumber": 30
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "recursivelyTraversePassiveUnmountEffects",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8483,
+                    "columnNumber": 51
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "recursivelyTraversePassiveUnmountEffects",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8483,
+                    "columnNumber": 51
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  },
+                  {
+                    "functionName": "commitPassiveUnmountOnFiber",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8497,
+                    "columnNumber": 38
+                  }
+                ]
+              },
+              {
+                "estimatedLiveBytes": 36288,
+                "stack": [
+                  {
+                    "functionName": "(root)",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9848,
+                    "columnNumber": 29
+                  },
+                  {
+                    "functionName": "processRootScheduleInMicrotask",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9766,
+                    "columnNumber": 41
+                  },
+                  {
+                    "functionName": "flushSyncWorkAcrossRoots_impl",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9739,
+                    "columnNumber": 40
+                  },
+                  {
+                    "functionName": "performWorkOnRoot",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8657,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "renderRootSync",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 8983,
+                    "columnNumber": 25
+                  },
+                  {
+                    "functionName": "performUnitOfWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 9142,
+                    "columnNumber": 28
+                  },
+                  {
+                    "functionName": "beginWork",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 6324,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "updateFunctionComponent",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 5763,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "renderWithHooks",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 4384,
+                    "columnNumber": 26
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 108,
+                    "columnNumber": 34
+                  },
+                  {
+                    "functionName": "useMemo",
+                    "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=22a02632",
+                    "lineNumber": 14539,
+                    "columnNumber": 20
+                  },
+                  {
+                    "functionName": "",
+                    "url": "http://localhost:5173/src/frontend/components/Standings/components/DriverInfoRow/DriverInfoRow.tsx",
+                    "lineNumber": 157,
+                    "columnNumber": 35
+                  },
+                  {
+                    "functionName": "includes",
+                    "url": "",
+                    "lineNumber": -1,
+                    "columnNumber": -1
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "artifacts": {
+        "ownership-start.json": "a5e2329ca0ec2ba8275113753aeb8d591472127fea1ec124065009d6a1ed9f87",
+        "ownership.json": "4199b49ab820cbef2cdb83fb370503ddb6998c2f61f78a76fc5de2e8bd325a09",
+        "linux-private-memory.json": "1fba1a7322f769ad4aa677b0da5d790c3295fe92fa12d72978328994a2f21dd4",
+        "external-cpu.json": "1b78963b034181e4b570ee0340b3c541bddfc00375e77750a84cab0b50fa2884",
+        "preflight.json": "32783f6a1bac8ca877d7bb7a6a7e8d9332afbedce073c623b1f0e53b6ba00f58",
+        "environment.json": "487c286b4454c55ac764dc0297f8047eef01af7cf664df6ae67e17e78c666d86"
+      }
+    }
+  ]
+}

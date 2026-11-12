@@ -64,14 +64,18 @@ G work and reusable delivery checks are not additional queue items.
       Existing log/handoff deletions and reference updates are included in this
       documentation checkpoint. Checks: local links, obsolete-name search,
       formatting and diff whitespace. No runtime behavior changed.
-- [ ] **F-1 — attribute remaining memory growth with collection disabled.**
-      Next: inspect the existing Settings, MemoryInfra and composition reports;
-      select one allocation/heap ownership measurement with a collection-off control.
-      Completion: identify the growing process and retained object/allocation owner,
-      or record a bounded diagnostic that rules out a specific owner and name the
-      next discriminating measurement. Do not mark the broader Stage F ownership
-      requirement complete unless an owner is established. The completed short
-      composition and long forced-GC runs need no repetition with unchanged inputs.
+- [x] **F-1 — attribute remaining memory growth with collection disabled.**
+      Bounded result: the [collection-off V8 ownership diagnostic](2026-11-12-memory-ownership.md)
+      rules out net retained main V8 used-heap growth in its short measured window;
+      sampled overlay private growth does not reproduce the control. Two 420-second
+      phases completed with stable process lifetimes and source restoration.
+      Allocation stacks are recorded, but no long-session/native retention owner
+      is established. Checks: report guards, capture tests, TypeScript/ESLint,
+      formatting and source hashes. Broader Stage F ownership remains open.
+      Next discriminating measurement: collection-off Settings-preview-active
+      20-minute heap/private checkpoints; if private growth reproduces with flat
+      V8, verify native sampler availability and target that process with an
+      unsampled control. Do not repeat unchanged completed instrumented runs.
 - [ ] **B-1 — identify and close metadata gaps.** Next: compare current capture
       origin/runtime metadata against Stage B's required fields and existing R3
       evidence. Completion: enumerate missing fields explicitly, add any necessary
@@ -124,7 +128,10 @@ Evidence and constraints for the execution queue (not additional tasks):
    in their stated scopes. Linux private growth exceeds the smaller reported
    live allocation changes; a retained native leak and allocation owner remain
    unproven. The short natural-GC composition controls cannot retroactively
-   explain every byte of the long forced-GC run.
+   explain every byte of the long forced-GC run. The new
+   [collection-off allocation diagnostic](2026-11-12-memory-ownership.md) bounds
+   main V8 retention in a short Settings-closed window only; it does not close
+   long-session/native ownership.
 2. Cover actual reconnect/session transitions and active radio input where
    available. [Conditional demand](2026-11-12-input-demand.md) explains absent
    lap-time publication in the ordinary seed; the separate

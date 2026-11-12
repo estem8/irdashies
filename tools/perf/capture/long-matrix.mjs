@@ -16,11 +16,16 @@ const matrix = process.argv[2] ?? 'normal-final-r1';
 const smoke = process.argv[3] === 'smoke';
 const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
-const overhead = process.argv[3] === 'overhead';
+const ownership = process.argv[3] === 'ownership';
+const overhead = process.argv[3] === 'overhead' || ownership;
 const identity = process.argv[3] === 'identity';
-const overheadSmoke = overhead && process.argv[4] === 'smoke';
+const overheadSmoke = !ownership && overhead && process.argv[4] === 'smoke';
 const gantryDiagnostic = process.env.PERF_GANTRY_DIAGNOSTIC === '1';
 const lapTimesDiagnostic = process.env.PERF_LAP_TIMES_DIAGNOSTIC === '1';
+assert.ok(
+  !ownership || (!gantryDiagnostic && !lapTimesDiagnostic),
+  'Ownership requires an independent workload'
+);
 assert.ok(
   !lapTimesDiagnostic || (probe && !gantryDiagnostic),
   'Lap-times diagnostic requires independent probe mode'
@@ -47,7 +52,7 @@ assert.ok(
 );
 if (process.argv[3] && !smoke && !probe && !memory && !overhead && !identity)
   throw new Error(
-    'Expected optional smoke, probe, memory, overhead or identity mode'
+    'Expected optional smoke, probe, memory, overhead, ownership or identity mode'
   );
 const durationSeconds =
   gantryDiagnostic || lapTimesDiagnostic
@@ -172,26 +177,31 @@ const ensurePortsFree = async () => {
   }
 };
 try {
-  const phases = overhead
-    ? overheadSmoke
-      ? [
-          ['on1', 'candidate'],
-          ['off1', 'candidate'],
-        ]
-      : [
-          ['on1', 'candidate'],
-          ['off1', 'candidate'],
-          ['off2', 'candidate'],
-          ['on2', 'candidate'],
-        ]
-    : smoke || probe || memory
-      ? [[memory ? 'memory' : probe ? 'probe' : 'smoke', 'candidate']]
-      : [
-          ['a1', 'baseline'],
-          ['b1', 'candidate'],
-          ['b2', 'candidate'],
-          ['a2', 'baseline'],
-        ];
+  const phases = ownership
+    ? [
+        ['off-control', 'candidate'],
+        ['off-sampled', 'candidate'],
+      ]
+    : overhead
+      ? overheadSmoke
+        ? [
+            ['on1', 'candidate'],
+            ['off1', 'candidate'],
+          ]
+        : [
+            ['on1', 'candidate'],
+            ['off1', 'candidate'],
+            ['off2', 'candidate'],
+            ['on2', 'candidate'],
+          ]
+      : smoke || probe || memory
+        ? [[memory ? 'memory' : probe ? 'probe' : 'smoke', 'candidate']]
+        : [
+            ['a1', 'baseline'],
+            ['b1', 'candidate'],
+            ['b2', 'candidate'],
+            ['a2', 'baseline'],
+          ];
   for (const [sequence, variant] of phases) {
     cancellation.signal.throwIfAborted();
     await ensurePortsFree();
@@ -237,20 +247,22 @@ try {
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: lapTimesDiagnostic
-            ? 'Feature-enabled lap-times subscription/store diagnostic; not CPU acceptance'
-            : gantryDiagnostic
-              ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
-              : identity
-                ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
-                : overhead
-                  ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
-                    collection
-                  : nativeMemoryDiagnostic
-                    ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
-                    : memory
-                      ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-                      : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: ownership
+            ? 'Collection disabled; external process/rAF sampling; both phases use boundary GC; off-sampled adds retained V8 allocation sampling; not CPU acceptance'
+            : lapTimesDiagnostic
+              ? 'Feature-enabled lap-times subscription/store diagnostic; not CPU acceptance'
+              : gantryDiagnostic
+                ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
+                : identity
+                  ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
+                  : overhead
+                    ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+                      collection
+                    : nativeMemoryDiagnostic
+                      ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+                      : memory
+                        ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+                        : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -636,9 +648,81 @@ try {
         ui,
         privateSampling: 'Linux smaps_rollup every 10s',
       });
+      let ownershipFinished = false;
+      const ownershipStart = [];
+      if (ownership) {
+        for (const [role, connection] of [
+          ['main', main],
+          ['overlay', overlay],
+        ]) {
+          await connection.call('HeapProfiler.collectGarbage');
+          ownershipStart.push({
+            role,
+            heap: await connection.call('Runtime.getHeapUsage'),
+          });
+        }
+        await writeFile(
+          resolve(folder, 'ownership-start.json'),
+          JSON.stringify(
+            {
+              elapsedSeconds:
+                (clock.read().monotonicMs - originMonotonic) / 1000,
+              observations: ownershipStart,
+            },
+            null,
+            2
+          )
+        );
+      }
+      if (ownership && sequence === 'off-sampled') {
+        for (const connection of [main, overlay])
+          await connection.call('HeapProfiler.startSampling', {
+            samplingInterval: 32768,
+            includeObjectsCollectedByMajorGC: false,
+            includeObjectsCollectedByMinorGC: false,
+          });
+      }
+      const ownershipCheckpoint = async () => {
+        const observations = [];
+        for (const [role, connection] of [
+          ['main', main],
+          ['overlay', overlay],
+        ]) {
+          await connection.call('HeapProfiler.collectGarbage');
+          const heap = await connection.call('Runtime.getHeapUsage');
+          const profile =
+            sequence === 'off-sampled'
+              ? await connection.call('HeapProfiler.stopSampling')
+              : undefined;
+          observations.push({ role, heap, profile });
+        }
+        await writeFile(
+          resolve(folder, 'ownership.json'),
+          JSON.stringify(
+            {
+              collection,
+              sequence,
+              elapsedSeconds:
+                (clock.read().monotonicMs - originMonotonic) / 1000,
+              scope:
+                'Endpoint post-GC V8 heap and sampled currently live allocations since preflight; excludes native allocations; diagnostic only',
+              observations,
+            },
+            null,
+            2
+          )
+        );
+        ownershipFinished = true;
+      };
       let nextProgress = originMonotonic + 90000;
       while (!exited) {
         if (samplerError) throw samplerError;
+        if (
+          ownership &&
+          !ownershipFinished &&
+          clock.read().monotonicMs >= originMonotonic + 390000
+        )
+          await ownershipCheckpoint();
         assert.ok(
           !overlayDisconnected || completedMarker,
           `Overlay disconnected before completion: ${JSON.stringify(overlayDisconnected)}`
@@ -666,6 +750,8 @@ try {
       const status = await exit;
       assert.equal(status.code, 0, 'Capture failed');
       assert.ok(completedMarker, 'Missing fixed-duration completion marker');
+      if (ownership)
+        assert.ok(ownershipFinished, 'Missing ownership checkpoint');
       results.push({
         runId,
         sequence,
