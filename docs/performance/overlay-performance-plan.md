@@ -87,11 +87,18 @@ G work and reusable delivery checks are not additional queue items.
       targeted tests, TypeScript/ESLint, formatting and links. Per-widget ownership,
       closed-window partial intervals, GPU/private metrics and presentation remain
       unavailable; overhead is unquantified. R3 remains inconclusive. Next: F-2.
-- [ ] **F-2 — verify reconnect/session and event delivery.** Next: inspect the
-      lifecycle report and available fixtures; target only transitions not already
-      exercised. Completion: evidence of reset/resume and positive required event
-      delivery for each covered transition. Blocker: the current tape has no radio
-      transmission; radio coverage requires a suitable fixture or simulator input.
+- [ ] **F-2 — verify reconnect/session and event delivery.** New
+      [positive radio/lifecycle composition evidence](2026-11-12-radio-lifecycle.md)
+      uses the recorded carIdx 2 snapshot through production lifecycle/host/bus;
+      reset/resume, hidden lifecycle events, replay suppression and live return
+      pass. Checks: 50 tests, TypeScript/ESLint and formatting. Transition order is
+      synthetic; this is not native runtime acceptance. The existing tape has no
+      active radio and replay enter intentionally disables radio processing.
+      Positive one-frame JSON inputs exist, but there is no temporal native
+      reconnect/session/radio recording or live iRacing source on this host.
+      Blocker: actual source/temporal fixture unavailable. Next: run a native
+      reconnect/session sequence with positive live input when available; do not
+      repeat the completed seek/pause test or relabel tape as live. Proceed to E-1.
 - [ ] **E-1 — close remaining drawing/visibility checks.** Next: enumerate
       untested static-cache/resize/DPR and native visibility transitions against
       existing hidden-draw reports, then exercise those transitions only.
