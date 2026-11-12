@@ -225,6 +225,13 @@ try {
           IRDASHIES_TELEMETRY_REPLAY_SPEED: '1',
           PERF_METRICS: '1',
           PERF_METRICS_COLLECTION: collection,
+          PERF_OVERLAY_MODE: 'full',
+          PERF_WINDOW_MODE: 'display',
+          PERF_TELEMETRY_DELIVERY: 'on',
+          PERF_CHANNEL_DELIVERY: 'on',
+          PERF_TELEMETRY_PAYLOAD: 'allowlisted',
+          PERF_VISIBILITY_PHASES: '',
+          PERF_HEAP_PROFILE_PATH: '',
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
           PERF_SCENARIO: identity

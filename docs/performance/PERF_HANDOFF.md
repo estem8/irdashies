@@ -37,11 +37,14 @@ claim game FPS or Windows acceptance.
   for Electron PID 41341; the underlying launch failure remains unresolved.
   This does not establish the cause of the earlier R1 window disappearance.
   The user did not notice whether that earlier window was manually closed.
-- Overhead collection control is saved separately on origin branch
-  `chore/perf-collection-overhead`, commit `3ccb5f8c`. It preserves capture
-  bootstrap while disabling optional collectors/reporters. 32 tests,
-  TypeScript and targeted ESLint passed. Runtime overhead is not measured;
-  the commit has not yet been integrated into `perf`.
+- Overhead collection control and the direct Map identity diagnostic are now
+  integrated into `perf` (collector commit `6093158b`, tools through
+  `48926ec5`). The integrated 32 tests / 5 files, TypeScript, targeted ESLint,
+  four Node test files and both real hook-source transformations passed.
+  Runtime overhead and direct identity counts remain unmeasured. Run overhead
+  first using external cumulative CPU in on/off/off/on order; then the separate
+  instrumented identity probe. Both protocols explicitly support current 1009
+  diagnostic height without weakening the normal A/B 1014-pixel validator.
 
 - `native-memory-r2 native` was rejected at preflight: the virtual display
   changed from 2560x1369 to 2560x1009 and the overlay was 1549x1009 rather than
