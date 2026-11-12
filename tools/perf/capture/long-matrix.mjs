@@ -14,6 +14,8 @@ const matrix = process.argv[2] ?? 'normal-final-r1';
 const smoke = process.argv[3] === 'smoke';
 const probe = process.argv[3] === 'probe';
 const memory = process.argv[3] === 'memory';
+const nativeMemoryDiagnostic =
+  process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
 if (process.argv[3] && !smoke && !probe && !memory)
   throw new Error('Expected optional smoke, probe or memory mode');
 const durationSeconds = memory ? 1380 : probe ? 180 : smoke ? 90 : 420;
@@ -129,9 +131,11 @@ try {
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: memory
-            ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-            : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: nativeMemoryDiagnostic
+            ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+            : memory
+              ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+              : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -169,9 +173,11 @@ try {
           PERF_METRICS: '1',
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: memory
-            ? 'settings-memory-diagnostic'
-            : 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: nativeMemoryDiagnostic
+            ? 'native-memory-diagnostic'
+            : memory
+              ? 'settings-memory-diagnostic'
+              : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
@@ -181,6 +187,7 @@ try {
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
             memoryDiagnostic: memory,
+            nativeMemoryDiagnostic,
             tapeLoop: memory,
             target: 'dev',
             simulatorMode: 'replay',

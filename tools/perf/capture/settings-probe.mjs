@@ -4,10 +4,15 @@ import { resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
+import { startMemoryDumpTrace } from './memory-dump-trace.mjs';
 
 const id = process.argv[2];
-const memory = process.argv[3] === 'memory';
-assert.ok(!process.argv[3] || memory, 'Expected optional memory mode');
+const native = ['native', 'native-smoke'].includes(process.argv[3]);
+const memory = ['memory', 'native'].includes(process.argv[3]);
+assert.ok(
+  !process.argv[3] || memory || native,
+  'Expected memory, native or native-smoke mode'
+);
 const mode = memory ? 'memory' : 'probe';
 assert.match(id ?? '', /^[a-z0-9-]+$/);
 const root = resolve('perf-results', id);
@@ -21,7 +26,10 @@ const out = resolve(root, mode);
 const child = spawn(
   process.execPath,
   ['tools/perf/capture/long-matrix.mjs', id, mode],
-  { stdio: 'inherit' }
+  {
+    stdio: 'inherit',
+    env: { ...process.env, PERF_NATIVE_MEMORY_DIAGNOSTIC: native ? '1' : '0' },
+  }
 );
 let exited = false;
 const exit = new Promise((resolve, reject) => {
@@ -32,6 +40,7 @@ const exit = new Promise((resolve, reject) => {
   });
 });
 let main, overlay, settings;
+let nativeTrace;
 const records = [];
 const electron = `process.getBuiltinModule('module').createRequire(process.cwd()+'/package.json')('electron')`;
 const settingsWindow = `${electron}.BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('#/settings'))`;
@@ -61,6 +70,7 @@ try {
     pages.find((p) => p.type === 'page' && /:\d+\/$/.test(p.url))
       .webSocketDebuggerUrl
   );
+  if (native) nativeTrace = await startMemoryDumpTrace(out);
   const inventory = () =>
     main.evaluate(
       `${electron}.app.getAppMetrics().map(p=>({pid:p.pid,type:p.type,name:p.name,creationTime:p.creationTime,cpu:p.cpu,memory:p.memory}))`
@@ -82,18 +92,19 @@ try {
       value.preview = await settings.evaluate(
         `({frames:document.querySelectorAll('iframe[src*="index-widget-preview"]').length,pause:!!document.querySelector('button[aria-label="Pause preview"]'),play:!!document.querySelector('button[aria-label="Play preview"]')})`
       );
-      if (memory) {
+      if (memory || native) {
         await main.call('HeapProfiler.collectGarbage');
         value.mainHeap = await main.call('Runtime.getHeapUsage');
         await overlay.call('HeapProfiler.collectGarbage');
         value.overlayHeap = await overlay.call('Runtime.getHeapUsage');
         value.overlayDOM = await overlay.call('Memory.getDOMCounters');
       }
+      if (nativeTrace) value.nativeDump = await nativeTrace.dump(label);
     }
     records.push(value);
     await writeFile(
       resolve(out, 'settings-progress.json'),
-      JSON.stringify({ memory, records }, null, 2) + '\n'
+      JSON.stringify({ memory, native, records }, null, 2) + '\n'
     );
     process.stdout.write(
       JSON.stringify({
@@ -148,7 +159,7 @@ try {
       );
       await writeFile(
         resolve(out, 'settings-progress.json'),
-        JSON.stringify({ memory, records }, null, 2) + '\n'
+        JSON.stringify({ memory, native, records }, null, 2) + '\n'
       );
     }
   } else {
@@ -202,6 +213,8 @@ try {
     );
     await record('preview-paused-final');
   }
+  await nativeTrace?.stop();
+  nativeTrace = undefined;
   await writeFile(
     resolve(out, 'settings.json'),
     JSON.stringify(
@@ -210,6 +223,7 @@ try {
           ? 'Settings Standings preview active; post-GC checkpoints span 20 minutes; tape loops at 10 minutes; memory diagnostic, not CPU acceptance'
           : 'Short Settings preview cleanup diagnostic with forced GC; not a long-session leak test or CPU acceptance',
         passed: true,
+        nativeAllocatorDiagnostics: native,
         records,
       },
       null,
@@ -226,9 +240,13 @@ try {
   );
   throw error;
 } finally {
-  for (const c of [settings, overlay, main]) c?.ws.close();
-  if (!exited) {
-    child.kill('SIGTERM');
-    await exit;
+  try {
+    await nativeTrace?.stop();
+  } finally {
+    for (const c of [settings, overlay, main]) c?.ws.close();
+    if (!exited) {
+      child.kill('SIGTERM');
+      await exit;
+    }
   }
 }

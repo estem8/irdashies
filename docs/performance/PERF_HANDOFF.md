@@ -11,6 +11,21 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `native-memory-smoke-r2 native-smoke` completed 180 seconds with exit 0 and
+  source restoration. MemoryInfra exported ten named traces, each with exactly
+  one manual dump and no reported loss, with malloc/PartitionAlloc/V8 and browser
+  subsystem accounting. [Readiness evidence](2026-11-12-memory-infra-readiness.json).
+  The first continuous smoke exposed a returned-GUID versus trace-ID offset;
+  never equate those blindly. Each point now owns a separate trace/filename,
+  which also avoids keeping a trace buffer active throughout the 20-minute gap.
+  This is provider validation, not an allocation-owner conclusion.
+  Next: `node tools/perf/capture/settings-probe.mjs native-memory-r1 native`.
+  It reuses the 1380-second diagnostic and forced-GC checkpoints, adding
+  detailed memory-infra dumps. Compare subsystem counters without summing
+  overlapping parents/children or assuming private pages equal live objects.
+  Raw dumps may contain paths/addresses; keep them ignored and publish only
+  bounded scalar evidence. See Chromium's
+  [MemoryInfra accounting](https://chromium.googlesource.com/chromium/src/+/main/docs/memory-infra/README.md).
 - `settings-memory-r1 memory` completed from checkpoint `23a67264`: five post-GC
   points spanning 20 minutes, fixed 1380-second duration marker, exit 0 and
   source restoration. Settings heap was 60.07/60.72/60.99/60.39/60.56 decimal MB;
