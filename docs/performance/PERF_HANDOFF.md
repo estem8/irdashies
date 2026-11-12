@@ -384,3 +384,14 @@ See [diagnostic](2026-11-12-tape-input-coverage.md). Next inspect actual host
 state and direct subscriber demand; absent publication may be dependency-only
 processing, not missing data. Do not loosen normal-matrix acceptance gates.
 Ad hoc reproduction remains ignored at perf-results/coverage-diagnostic/replay.mjs.
+
+## Conditional channel demand confirmed in Electron
+
+`input-demand-r1 smoke` on ea360a76 completed 90 seconds, exit 0, candidate
+restored. Existing renderer stores: lap-times 0 active selections/no bridge
+subscription; radio 2 selections/subscribed/version 0; track 46 and relative
+1 selection actively fed. The seed disables all lap-time-dependent options.
+See [runtime evidence](2026-11-12-input-demand.md). This explains absent
+publications without demonstrating an application defect. Keep original
+matrix inconclusive; next feature-enabled lifecycle coverage must use a
+separate declared seed. No capture active.

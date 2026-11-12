@@ -1,0 +1,44 @@
+{
+  "channels": {
+    "lap-times.snapshot": {
+      "activeSelections": 0,
+      "bridgeSubscribed": false,
+      "snapshotPresent": false
+    },
+    "radio.snapshot": {
+      "activeSelections": 2,
+      "bridgeSubscribed": true,
+      "snapshotPresent": true,
+      "version": 0
+    },
+    "track-state.snapshot": {
+      "activeSelections": 46,
+      "bridgeSubscribed": true,
+      "snapshotPresent": true,
+      "version": 1234
+    },
+    "relative-gaps.snapshot": {
+      "activeSelections": 1,
+      "bridgeSubscribed": true,
+      "snapshotPresent": true,
+      "version": 240
+    }
+  },
+  "lapTimesPresentation": {
+    "sessionNum": null,
+    "historyPresent": false,
+    "lapTimesCount": 0
+  },
+  "replay": {
+    "position": 56.655533,
+    "duration": 600.0009345,
+    "speed": 1,
+    "paused": false,
+    "ended": false
+  },
+  "sourceCommit": "ea360a76",
+  "capture": "input-demand-r1",
+  "controllerExitCode": 0,
+  "candidateRestored": true,
+  "scope": "Read-only observation of existing renderer stores; no extra subscriptions or changed settings; not CPU acceptance"
+}
