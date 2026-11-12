@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "source": "b269e503",
+  "run": "relative-roster-ab-r1",
+  "phases": [
+    {
+      "mode": "baseline",
+      "seconds": 20.011,
+      "delta": {
+        "calls": 335,
+        "builds": 335,
+        "objects": 13735,
+        "projectionMs": 0.6000000052154064,
+        "relativeBuilds": 335,
+        "relativeMs": 14.799999952316284
+      },
+      "totalCpuMsPerSecondDescriptiveOnly": 560.1918944580481,
+      "sourceHzCompleteIntervals": 59.19644821310724,
+      "completeIntervals": 3,
+      "deliveryHz": {
+        "track-state.snapshot": 22.598644081355125,
+        "driver-controls.snapshot": 58.929797545480625,
+        "lap-trace.sample": 58.929797545480625,
+        "standings.snapshot": 4.999700017998922,
+        "relative-gaps.snapshot": 4.93303735109227
+      },
+      "tapeStart": 59.9287498,
+      "tapeEnd": 79.9397622
+    },
+    {
+      "mode": "candidate",
+      "seconds": 20.016,
+      "delta": {
+        "calls": 333,
+        "builds": 0,
+        "objects": 0,
+        "projectionMs": 0.0,
+        "relativeBuilds": 132,
+        "relativeMs": 4.399999998509884
+      },
+      "totalCpuMsPerSecondDescriptiveOnly": 541.0671462829737,
+      "sourceHzCompleteIntervals": 59.66334660030615,
+      "completeIntervals": 3,
+      "deliveryHz": {
+        "track-state.snapshot": 21.532135141786465,
+        "driver-controls.snapshot": 59.33003181482958,
+        "lap-trace.sample": 59.46335772902021,
+        "standings.snapshot": 4.99972178214856,
+        "relative-gaps.snapshot": 4.99972178214856
+      },
+      "tapeStart": 59.9226955,
+      "tapeEnd": 79.9389987
+    },
+    {
+      "mode": "candidate",
+      "seconds": 20.016,
+      "delta": {
+        "calls": 336,
+        "builds": 0,
+        "objects": 0,
+        "projectionMs": 0.0,
+        "relativeBuilds": 132,
+        "relativeMs": 5.8999999687075615
+      },
+      "totalCpuMsPerSecondDescriptiveOnly": 543.0655475619504,
+      "sourceHzCompleteIntervals": 59.60277073413553,
+      "completeIntervals": 3,
+      "deliveryHz": {
+        "track-state.snapshot": 21.667673924601843,
+        "driver-controls.snapshot": 58.93607307491701,
+        "lap-trace.sample": 59.069412606760714,
+        "standings.snapshot": 5.000232444138887,
+        "relative-gaps.snapshot": 5.000232444138887
+      },
+      "tapeStart": 59.9233431,
+      "tapeEnd": 79.9391943
+    },
+    {
+      "mode": "baseline",
+      "seconds": 20.011,
+      "delta": {
+        "calls": 333,
+        "builds": 333,
+        "objects": 13653,
+        "projectionMs": 0.7999999970197678,
+        "relativeBuilds": 333,
+        "relativeMs": 15.399999976158142
+      },
+      "totalCpuMsPerSecondDescriptiveOnly": 551.6965668882116,
+      "sourceHzCompleteIntervals": 59.593783573789516,
+      "completeIntervals": 3,
+      "deliveryHz": {
+        "track-state.snapshot": 21.997705346029687,
+        "driver-controls.snapshot": 59.32714472111037,
+        "lap-trace.sample": 59.26048500794058,
+        "standings.snapshot": 4.99947848773402,
+        "relative-gaps.snapshot": 4.99947848773402
+      },
+      "tapeStart": 59.9279573,
+      "tapeEnd": 79.938902
+    }
+  ],
+  "artifactsSha256": {
+    "perf-results/relative-roster-ab-r1/phases.json": "73879b6121fa99ed4f806850dcf1457b9232acfba906a4186187305cc0a0d2db",
+    "perf-results/relative-roster-ab-r1/console.log": "051fc5c949c4e2eafca2958625ff6f47411f8b3fca989aa37d9350a0d9f0f0c0",
+    "perf-results/relative-roster-ab-r1/controller.mjs": "3a8166f22f42b9c8901bc3b49f3d221d3e9ac9fcc434e51a175dd10a25be3802",
+    "perf-results/relative-roster-ab-r1/useDriverPositions.tsx": "095fa60ae01a43c63fe018b2348ff2712ae8341e5309f3c19c01f828f378ac5f",
+    "perf-results/relative-roster-ab-r1/standingsCost.ts": "8cf6841a94bbafe34e8fc82631c81056cfba8b8a5874fcbb5e04e7331a706d66"
+  },
+  "cpuVerdict": "Inconclusive: short intervals, source/delivery cadence variation, diagnostic overhead not bounded.",
+  "scopedVerdict": "Repeated reduction in projection construction and relative row rebuilds with normal widget work enabled."
+}

@@ -107,16 +107,27 @@ G work and reusable delivery checks are not additional queue items.
       secondary candidates, not ruled-out costs. No runtime experiment or
       application change in this review. Checks: source/evidence consistency,
       local links, formatting and whitespace.
-- [ ] **F-6 — preserve stable renderer identity work across dynamic updates.**
-      Start with Relative's unconditionally rebuilt roster projection and
-      infrequent lookup/derivation inputs; inspect existing rebuild counters.
-      Select one change, preserve immutable snapshots and genuine roster,
-      position, qualifying and lifecycle updates, then compare normal workload
-      rebuild/allocation work and total CPU. Extend semantic array stabilization
-      only where equality costs less than avoided work. Completion: correct
-      behavior plus reproducible scoped gain; a passing memoization test alone
-      does not establish performance improvement. Cross-channel batching is a
-      separate evidence-gated candidate, not part of this first change.
+- [x] **F-6 — preserve stable renderer identity work across dynamic updates.**
+      [Relative roster diagnostic](2026-11-12-relative-identities.md) confirms
+      the selected narrow hypothesis. Memoizing the unchanged participant
+      projection preserves real roster edits and cuts full Relative row rebuilds
+      from 333–335 to 132 per twenty seconds in both candidate phases; hook
+      render counts stay comparable. Baseline projected 13,653–13,735 roster
+      entries per phase versus zero after candidate warmup. The work is cheap;
+      total CPU improvement is inconclusive because of short windows and
+      source/delivery variation. No broad array normalization or batching claim.
+      Checks: 61 targeted tests, TypeScript/ESLint, formatting and whitespace.
+      Temporary runtime counters were removed. Next: F-7; do not rerun this
+      unchanged experiment merely to force global CPU acceptance.
+- [ ] **F-7 — identify costly downstream commit/paint amplification.**
+      The roster fix removes measured redundant work but explains little direct
+      synchronous time. Reuse current renderer/compositor evidence to select
+      one expensive commit/paint path, distinguish source updates, React commits
+      and actual draws, then implement a specific behavior-preserving candidate.
+      Completion: reproducible scoped work reduction with normal functionality;
+      application CPU acceptance still requires matched cadence and repeatability.
+      Do not combine blanket channel batching, telemetry coalescing or new
+      scheduling with this task without evidence for that exact change.
 - [ ] **F-2 — verify reconnect/session and event delivery.** New
       [positive radio/lifecycle composition evidence](2026-11-12-radio-lifecycle.md)
       uses the recorded carIdx 2 snapshot through production lifecycle/host/bus;
