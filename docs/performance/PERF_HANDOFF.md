@@ -395,3 +395,16 @@ See [runtime evidence](2026-11-12-input-demand.md). This explains absent
 publications without demonstrating an application defect. Keep original
 matrix inconclusive; next feature-enabled lifecycle coverage must use a
 separate declared seed. No capture active.
+
+## Enabled lap-time delivery verified
+
+`lap-times-features-r3` on 19739a00 completed 300 seconds / exit 0 / candidate
+restored with declared viewport 1549×1009. Separate seed enables avg lap and
+lap deltas in Relative/Standings plus Standings estimated laps. At tape
+195.94 seconds, channel and presentation versions 5 matched, five positive
+times/five history samples, two active selections. See
+[result](2026-11-12-lap-times-features.md). R1 was too short to exercise times;
+R2 failed geometry preflight, neither accepted as history proof. No capture
+active. Remaining Linux plan scope includes display-vs-widget topology,
+active-radio/real session transitions, and unresolved memory ownership;
+Windows simulator acceptance and current-head CI remain externally blocked.

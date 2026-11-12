@@ -1,0 +1,480 @@
+{
+  "passed": true,
+  "scope": "Linux feature-enabled tape channel/presentation diagnostic; not CPU acceptance",
+  "records": [
+    {
+      "replay": {
+        "position": 55.1941653,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 60.2260069,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 65.2573485,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 70.2981704,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 75.3107767,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 80.3210289,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 85.3361497,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 90.3576632,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 95.3713717,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 100.382649,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 105.4045058,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 110.4169565,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 115.4263092,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 120.4407547,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 125.4502468,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 130.4629444,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 135.4837736,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 140.5027414,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 145.5129344,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 150.7543535,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 155.780189,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 160.8052456,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 165.8124719,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 170.8233677,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 175.8347926,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 180.840277,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 185.8548188,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 190.8675174,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 2,
+      "presentationVersion": 2,
+      "positiveTimes": 0,
+      "totalSamples": 0,
+      "matchesChannel": true
+    },
+    {
+      "replay": {
+        "position": 195.942751,
+        "duration": 600.0009345,
+        "speed": 1,
+        "paused": false,
+        "ended": false
+      },
+      "activeSelections": 2,
+      "subscribed": true,
+      "channelVersion": 5,
+      "presentationVersion": 5,
+      "positiveTimes": 5,
+      "totalSamples": 5,
+      "matchesChannel": true
+    }
+  ],
+  "sourceCommit": "19739a004efcbcc8d66a67dbcdbd74ff41743816",
+  "seedSha256": "64a9e1bad109f09ad495de5817cf35cca5208db6c6dd0530153c772da39ca0c7",
+  "expectedViewport": {
+    "width": 1549,
+    "height": 1009,
+    "dpr": 1
+  },
+  "controllerExitCode": 0,
+  "durationSeconds": 300,
+  "candidateRestored": true
+}
