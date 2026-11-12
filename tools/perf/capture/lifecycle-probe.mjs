@@ -6,8 +6,12 @@ import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
 
 const runId = process.argv[2];
-const hiddenProbe = process.argv[3] === 'hidden';
-assert.ok(!process.argv[3] || hiddenProbe, 'Expected optional hidden mode');
+const lapTraceProbe = process.argv[3] === 'hidden-laptrace';
+const hiddenProbe = process.argv[3] === 'hidden' || lapTraceProbe;
+assert.ok(
+  !process.argv[3] || hiddenProbe,
+  'Expected optional hidden or hidden-laptrace mode'
+);
 const mode = hiddenProbe ? 'probe' : 'smoke';
 assert.match(runId ?? '', /^[a-z0-9-]+$/);
 const out = resolve('perf-results', runId, mode);
@@ -106,6 +110,36 @@ try {
   await sleep(2000);
   const resumed = await record('resumed');
   assert.ok(resumed.status.position > still.status.position + 1);
+  let injectedReference;
+  if (lapTraceProbe) {
+    injectedReference = await overlay.evaluate(`(async()=>{
+      const {useLapTraceStore}=await import('/src/frontend/context/LapTraceStore/LapTraceStore.tsx');
+      const {makeSyntheticLapTrace}=await import('/src/frontend/domain/lapTrace/syntheticLap.ts');
+      const {hydrateLapTrace}=await import('/src/frontend/domain/lapTrace/hydrateLapTrace.ts');
+      const state=useLapTraceStore.getState();
+      if(!(state.trackLengthM>0)||!(state.trackId>0)||!state.carPath)throw new Error('Lap Trace store is not initialized');
+      const original={referenceLap:state.referenceLap,referenceError:state.referenceError};
+      const record=makeSyntheticLapTrace({trackLengthM:state.trackLengthM,trackId:state.trackId,carPath:state.carPath});
+      record.source.label='Diagnostic synthetic reference';
+      useLapTraceStore.setState({referenceLap:hydrateLapTrace(record),referenceError:null});
+      window.__perfLifecycle.restoreReference=()=>useLapTraceStore.setState(original);
+      return {trackId:record.trackId,carPath:record.carPath,trackLengthM:record.trackLengthM,samples:record.samples.length,source:'synthetic diagnostic only'};
+    })()`);
+    await sleep(2000);
+    const seeded = await record('synthetic-reference-active');
+    for (const measure of ['lapTraceFrame', 'lapTraceBrakeCue'])
+      assert.ok(
+        (seeded.draws[measure] ?? 0) > (resumed.draws[measure] ?? 0),
+        'Unexercised ' + measure + ' before hide'
+      );
+    const screenshot = await overlay.call('Page.captureScreenshot', {
+      format: 'png',
+    });
+    await writeFile(
+      resolve(out, 'laptrace-active.png'),
+      Buffer.from(screenshot.data, 'base64')
+    );
+  }
   await main.evaluate(`${windowExpression}.hide()`);
   await sleep(1000);
   const hiddenStart = await record('hidden-start');
@@ -131,6 +165,19 @@ try {
     'Snapshots did not resume after show'
   );
   assert.ok(shown.rootTextLength > 100, 'Overlay content disappeared');
+  if (lapTraceProbe)
+    for (const measure of ['lapTraceFrame', 'lapTraceBrakeCue']) {
+      assert.equal(
+        hiddenEnd.draws[measure],
+        hiddenStart.draws[measure],
+        measure + ' kept drawing while hidden'
+      );
+      assert.ok(
+        shown.draws[measure] > hiddenEnd.draws[measure],
+        measure + ' did not repaint after show'
+      );
+    }
+
   if (hiddenProbe) {
     assert.ok(before.draws.radarFrame > 0, 'Draw observer not connected');
     assert.ok(
@@ -145,6 +192,8 @@ try {
         scope:
           'Runtime smoke with diagnostic observers; not CPU acceptance or real simulator reconnect',
         hiddenProbe,
+        lapTraceProbe,
+        injectedReference,
         passed: true,
         records,
       },
@@ -160,7 +209,7 @@ try {
     }) + '\n'
   );
   await overlay.evaluate(
-    `(()=>{window.__perfLifecycle.stopDraws?.();window.__perfLifecycle.stopTrack();window.__perfLifecycle.stopEvents();delete window.__perfLifecycle;return true})()`
+    `(()=>{window.__perfLifecycle.stopDraws?.();window.__perfLifecycle.restoreReference?.();window.__perfLifecycle.stopTrack();window.__perfLifecycle.stopEvents();delete window.__perfLifecycle;return true})()`
   );
   overlay.ws.close();
   overlay = undefined;
