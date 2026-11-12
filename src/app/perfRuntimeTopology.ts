@@ -42,6 +42,17 @@ interface PerfRuntimeTopologyDependencies {
   timeoutMs?: number;
 }
 
+/** Bounded opt-in startup grace; ordinary callers retain the existing default. */
+export function getPerfRuntimeTopologyTimeoutMs(
+  env: NodeJS.ProcessEnv = process.env
+): number {
+  if (env.PERF_METRICS !== '1') return 5000;
+  const timeout = Number(env.PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS);
+  return Number.isInteger(timeout) && timeout >= 1000 && timeout <= 60000
+    ? timeout
+    : 5000;
+}
+
 const noop = () => 0;
 
 const routeForRole = (route: string): PerfWindowRole => {

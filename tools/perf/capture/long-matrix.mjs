@@ -187,6 +187,7 @@ try {
           seedSha256: hash(seed),
           collection,
           overheadSmoke,
+          startupTopologyTimeoutMs: 30000,
           clock: { timebase: 'performance.now', maxWallDriftMs: 2000 },
           mapIdentityDiagnostic: identity,
           mapIdentitySourceSha256: identity
@@ -242,6 +243,7 @@ try {
           IRDASHIES_TELEMETRY_REPLAY_LOOP: memory ? '1' : '0',
           IRDASHIES_TELEMETRY_REPLAY_SPEED: '1',
           PERF_METRICS: '1',
+          PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS: '30000',
           PERF_METRICS_COLLECTION: collection,
           PERF_OVERLAY_MODE: 'full',
           PERF_WINDOW_MODE: 'display',
@@ -313,6 +315,9 @@ try {
           [
             '[PerfRunOrigin:JSON] ',
             (value) => {
+              assert.equal(value.runId, runId, 'Unexpected origin run ID');
+              if (Number.isInteger(value.browserPid) && value.browserPid > 1)
+                browserPid = value.browserPid;
               origin = Date.parse(value.timestamp);
               originMonotonic = clock.fromWallTimestamp(origin);
             },
@@ -375,7 +380,10 @@ try {
       activeConnections.add(main);
       cancellation.signal.throwIfAborted();
       assert.equal(await main.evaluate('process.env.PERF_RUN_ID'), runId);
-      browserPid = await main.evaluate('process.pid');
+      const inspectedPid = await main.evaluate('process.pid');
+      if (browserPid !== undefined)
+        assert.equal(inspectedPid, browserPid, 'Origin/inspector PID mismatch');
+      browserPid = inspectedPid;
       assert.ok(Number.isInteger(browserPid) && browserPid > 1);
       if (nativeMemoryDiagnostic) {
         // Diagnostic only: observe closure origins without preventing closure.

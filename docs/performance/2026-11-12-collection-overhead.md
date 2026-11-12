@@ -24,8 +24,8 @@ Source/seed/viewport/runtime inventories match; all PID lifetimes remain stable.
 The rAF and Track State/Driver Controls/Radar version-rate checks pass. Version
 changes are not exact delivery-callback counts. No new subscriptions were added.
 
-Recovery qualification: original R5 on1/off1/off2 completed, but on2 failed GPU
-startup before preflight and produced zero measured external CPU samples. Only
+Recovery qualification: original R5 on1/off1/off2 completed, but on2 hit topology
+readiness timeout before preflight and produced zero measured external CPU samples. Only
 that missing phase was retried. The app/source remains 2e5354cc; the retry runner
 differs only in its phase schedule (verified text/hashes). Original failure and
 successful raw files remain intact. The composite dataset links those original
@@ -44,3 +44,12 @@ Windows/iRacing presentation and production overhead remain unverified.
 Raw roots: perf-results/collection-overhead-r5, collection-overhead-r5-on2-retry,
 and collection-overhead-r5-recovered. The original failure is never relabeled
 successful. No new GitHub Actions run was dispatched.
+
+Startup diagnosis correction: the original on2 topology marker timed out at
+09:07:05.440 UTC. GPU launch errors follow at 09:07:05.959, after the controller
+began termination. The same ordering was reproduced in the Map and light-memory
+startup attempts. The earlier GPU-startup wording was premature; the evidenced
+failure is the five-second readiness limit followed by group teardown. A new
+bounded capture-only grace and early main PID address this without changing
+GPU flags. These corrections do not change the measured CPU values, recovery
+gap or inconclusive verdict.

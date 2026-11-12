@@ -80,6 +80,13 @@ controller records monotonic CPU-sample times and rejects wall/monotonic drift
 over two seconds. Keep the machine awake for unattended captures with a temporary
 inhibitor where available, without changing saved power settings.
 
+Cold development renderers may take more than five seconds to load. The
+long-matrix controller requests a validated 30-second topology grace within its
+60-second warmup, while retaining full readiness checks. Origin records the main
+PID early so failed-start cleanup can request graceful shutdown before any
+process-group fallback. Diagnose the first failure in timestamp order: GPU or
+zygote messages emitted during group teardown do not establish a GPU startup bug.
+
 Before the measured interval, verify and record:
 
 - Exact source/build state, seed and fixture hashes, playback position/speed,

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   capturePerfRuntimeTopology,
+  getPerfRuntimeTopologyTimeoutMs,
   type PerfRuntimeTopologyMarker,
   type PerfRuntimeTopologyWindow,
 } from './perfRuntimeTopology';
@@ -411,5 +412,59 @@ describe('capturePerfRuntimeTopology', () => {
     expect(mainSource).toContain(
       "webContents.on('did-stop-loading', listener)"
     );
+  });
+});
+
+describe('performance topology startup grace', () => {
+  it('requires opt-in and validates a bounded integer timeout', () => {
+    expect(getPerfRuntimeTopologyTimeoutMs({})).toBe(5000);
+    expect(
+      getPerfRuntimeTopologyTimeoutMs({
+        PERF_METRICS: '0',
+        PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS: '30000',
+      })
+    ).toBe(5000);
+    for (const value of ['1000', '30000', '60000']) {
+      expect(
+        getPerfRuntimeTopologyTimeoutMs({
+          PERF_METRICS: '1',
+          PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS: value,
+        })
+      ).toBe(Number(value));
+    }
+    for (const value of ['0', '999', '60001', 'Infinity', 'bad', '30000.5']) {
+      expect(
+        getPerfRuntimeTopologyTimeoutMs({
+          PERF_METRICS: '1',
+          PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS: value,
+        })
+      ).toBe(5000);
+    }
+  });
+  it('waits beyond five seconds for a cold renderer while retaining readiness checks', async () => {
+    vi.useFakeTimers();
+    const window = new FakeWindow(1, 'file:///app/index.html', {
+      loading: true,
+    });
+    const markers: PerfRuntimeTopologyMarker[] = [];
+    capturePerfRuntimeTopology({
+      runId: 'cold-start',
+      getWindows: () => [window],
+      getProcessTypes: () => ['Browser', 'Tab'],
+      writeMarker: (marker) => markers.push(marker),
+      onBeforeQuit: () => noOp,
+      timeoutMs: getPerfRuntimeTopologyTimeoutMs({
+        PERF_METRICS: '1',
+        PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS: '30000',
+      }),
+    });
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(markers).toHaveLength(0);
+    window.finishLoad();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(markers).toHaveLength(1);
+    expect(markers[0]).toMatchObject({ complete: true, timedOut: false });
+    expect(window.listenerCount()).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

@@ -11,6 +11,21 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `map-identities-r1` is terminal: baseline a1 completed; b1 hit the app's
+  default five-second topology readiness timeout while windows were loading.
+  Candidate restoration/child termination are verified. Log chronology shows
+  timeout first, then controller process-group termination, then GPU errors.
+  Earlier GPU-startup attribution for this and R5 on2/light-memory smoke was
+  premature: those GPU messages are teardown evidence, not an established cause.
+- Capture-only startup grace now validates PERF_RUNTIME_TOPOLOGY_TIMEOUT_MS
+  (1000–60000 ms, default unchanged at 5000). The controller requests 30000 ms,
+  within 60 seconds of warmup, and still requires complete readiness. Origin
+  records the main PID before readiness, so failure cleanup can signal main
+  first rather than the entire GPU/renderer process group. 31 targeted tests,
+  TypeScript and targeted ESLint pass, including a renderer loading after 6s.
+  Next is a fresh same-protocol `map-identities-r2 identity` four-phase run.
+  No capture is currently active; r1 a1 remains separate partial evidence.
+
 - CURRENT: on2 retry completed 420 seconds, exit 0 and candidate restoration.
   All four successful measurements are assembled in ignored
   `collection-overhead-r5-recovered`, with original failed startup preserved.
@@ -104,9 +119,9 @@ claim game FPS or Windows acceptance.
   interpret this as a completed native growth profile.
 - A light MemoryInfra configuration is prepared with the loss guard retained.
   `native-light-smoke-r1` failed topology preflight before dump validation:
-  Chromium logged zygote communication failures, repeated GPU launch failure
-  (1002), then a fatal GPU-unusable exit. Coredump metadata confirms SIGTRAP
-  for Electron PID 41341; the underlying launch failure remains unresolved.
+  A five-second topology timeout preceded teardown and the later zygote/GPU
+  errors (1002). Coredump metadata confirms SIGTRAP for PID 41341, but those
+  teardown messages do not establish an independent GPU startup defect.
   This does not establish the cause of the earlier R1 window disappearance.
   The user did not notice whether that earlier window was manually closed.
 - Overhead collection control and the direct Map identity diagnostic are now

@@ -117,7 +117,10 @@ import { PerfHeapProfiler } from './app/perfHeapProfiler';
 import { createBeforeQuitHandler } from './app/shutdownCoordinator';
 import { monitorDevParent } from './app/devParentMonitor';
 import { flushSettingsWindowMovementOnShutdown } from './app/trackWindowMovement';
-import { capturePerfRuntimeTopology } from './app/perfRuntimeTopology';
+import {
+  capturePerfRuntimeTopology,
+  getPerfRuntimeTopologyTimeoutMs,
+} from './app/perfRuntimeTopology';
 
 const safeErrorDetails = (error: unknown) => {
   const code =
@@ -562,6 +565,7 @@ void app.whenReady().then(async () => {
       `${PERF_CAPTURE_ORIGIN_LOG_PREFIX}${JSON.stringify({
         timestamp: captureOrigin,
         runId: process.env.PERF_RUN_ID ?? 'manual',
+        browserPid: process.pid,
         sourceKind: process.env.PERF_SOURCE_KIND,
         userDataPath: app.getPath('userData'),
         windows: BrowserWindow.getAllWindows()
@@ -577,6 +581,7 @@ void app.whenReady().then(async () => {
       })}`
     );
     capturePerfRuntimeTopology({
+      timeoutMs: getPerfRuntimeTopologyTimeoutMs(),
       runId: process.env.PERF_RUN_ID ?? 'manual',
       getWindows: () =>
         BrowserWindow.getAllWindows().map((window) => {
