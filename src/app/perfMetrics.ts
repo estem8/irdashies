@@ -5,7 +5,8 @@
  * using ring buffers to avoid per-tick allocations. Reports summary stats
  * (avg, max, p99) and per-process resource usage at a configurable interval.
  *
- * Enabled via PERF_METRICS=1 environment variable.
+ * Enabled via PERF_METRICS=1. PERF_METRICS_COLLECTION=off disables optional
+ * collection/reporting while keeping the capture bootstrap and workload intact.
  */
 
 import { monitorEventLoopDelay, performance } from 'node:perf_hooks';
@@ -16,6 +17,7 @@ import { FixedSampleBuffer } from '../shared/performanceSamples';
 import logger from './logger';
 import { ProcessCpuTimeTracker } from './processCpuTime';
 import type { PerfSourceKind } from './perfRunConfig';
+import { isPerfCollectionEnabled } from './perfCollectionConfig';
 
 export interface SectionStats {
   count: number;
@@ -114,9 +116,7 @@ export const parsePerfSourceKind = (
 export const isSyntheticPerfSource = (
   sourceKind: PerfSourceKind | undefined
 ): boolean =>
-  sourceKind === 'mock' ||
-  sourceKind === 'tape' ||
-  sourceKind === 'sdk-replay';
+  sourceKind === 'mock' || sourceKind === 'tape' || sourceKind === 'sdk-replay';
 
 export const resolvePerfSimulatorMode = (
   sourceKind: PerfSourceKind | undefined,
@@ -207,7 +207,7 @@ export class TelemetryPerfMetrics {
     enabled?: boolean,
     private readonly channelMetricsSource?: ChannelMetricsSource
   ) {
-    this._enabled = enabled ?? process.env.PERF_METRICS === '1';
+    this._enabled = enabled ?? isPerfCollectionEnabled();
   }
 
   get enabled(): boolean {
