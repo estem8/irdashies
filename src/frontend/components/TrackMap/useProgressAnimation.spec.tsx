@@ -252,6 +252,38 @@ describe('useProgressAnimation', () => {
     expect(drawCount).toBe(drawsBeforeFrames + 2);
   });
 
+  it.each([39, 40])(
+    'keeps the commit paint and skips an older/same-time RAF at %s',
+    (frameTime) => {
+      const values: number[] = [];
+      let clock = 0;
+      vi.mocked(performance.now).mockImplementation(() => clock);
+      const Harness = ({ progress }: { progress: number }) => {
+        const drivers = useRef([{ progress }]);
+        if (drivers.current[0].progress !== progress) {
+          drivers.current = [{ progress }];
+        }
+        useProgressAnimation(drivers.current, (positions) => {
+          values.push(positions[0]);
+        });
+        return null;
+      };
+      const view = render(<Harness progress={0.1} />);
+      clock = 40;
+      view.rerender(<Harness progress={0.3} />);
+      expect(values).toEqual([0.1, 0.1]);
+      act(() => callbacks.shift()?.(frameTime));
+      expect(values).toHaveLength(2);
+      expect(callbacks).toHaveLength(1);
+      act(() => callbacks.shift()?.(60));
+      expect(values.at(-1)).toBeCloseTo(0.2);
+      act(() => callbacks.shift()?.(80));
+      expect(values.at(-1)).toBeCloseTo(0.3);
+      expect(callbacks).toHaveLength(0);
+      view.unmount();
+    }
+  );
+
   it('cancels an active frame on unmount', () => {
     const Harness = ({ progress }: { progress: number }) => {
       const stableDrivers = useRef([{ progress }]);

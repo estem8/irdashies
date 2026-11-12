@@ -201,7 +201,12 @@ export const useProgressAnimation = (
       return active;
     };
     const frame = (now: number) => {
-      if (minFrameMs > 0 && now - lastDrawRef.current < minFrameMs) {
+      // A commit can paint after this browser frame's RAF timestamp. Its
+      // interpolation already includes that time; repainting cannot advance it.
+      if (
+        now <= lastDrawRef.current ||
+        (minFrameMs > 0 && now - lastDrawRef.current < minFrameMs)
+      ) {
         frameRef.current = requestAnimationFrame(frame);
         return;
       }

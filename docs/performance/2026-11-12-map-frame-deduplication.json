@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "source": "a7579a32",
+  "run": "map-frame-ab-r1",
+  "phases": [
+    {
+      "mode": "baseline",
+      "seconds": 20.02,
+      "delta": {
+        "calls": 1184,
+        "skipped": 0,
+        "eligible": 80,
+        "target": 438,
+        "appearance": 2,
+        "rafDraws": 1184
+      },
+      "cpuMsPerSecondDescriptiveOnly": 549.95004995005,
+      "completeRendererIntervals": 3,
+      "mapDrawMsPerSecond": 10.00546601009924,
+      "sourceHz": 59.268387820649
+    },
+    {
+      "mode": "candidate",
+      "seconds": 20.026,
+      "delta": {
+        "calls": 1097,
+        "skipped": 66,
+        "eligible": 66,
+        "target": 452,
+        "appearance": 2,
+        "rafDraws": 1031
+      },
+      "cpuMsPerSecondDescriptiveOnly": 536.3028063517427,
+      "completeRendererIntervals": 3,
+      "mapDrawMsPerSecond": 10.268172660855285,
+      "sourceHz": 58.58970735081066
+    },
+    {
+      "mode": "candidate",
+      "seconds": 20.033,
+      "delta": {
+        "calls": 1188,
+        "skipped": 81,
+        "eligible": 81,
+        "target": 431,
+        "appearance": 2,
+        "rafDraws": 1107
+      },
+      "cpuMsPerSecondDescriptiveOnly": 533.1203514201568,
+      "completeRendererIntervals": 3,
+      "mapDrawMsPerSecond": 8.753333332886298,
+      "sourceHz": 59.45928907704092
+    },
+    {
+      "mode": "baseline",
+      "seconds": 20.034,
+      "delta": {
+        "calls": 1191,
+        "skipped": 0,
+        "eligible": 33,
+        "target": 437,
+        "appearance": 2,
+        "rafDraws": 1191
+      },
+      "cpuMsPerSecondDescriptiveOnly": 536.0886492961965,
+      "completeRendererIntervals": 3,
+      "mapDrawMsPerSecond": 9.313333335270483,
+      "sourceHz": 59.27330251800905
+    }
+  ],
+  "staticMapPixelComparison": {
+    "region": [1000, 0, 549, 330],
+    "changedChannels": 0
+  },
+  "verdict": "Repeated direct elimination of redundant draws; overall CPU and draw-time improvement inconclusive.",
+  "artifactsSha256": {
+    "perf-results/map-frame-ab-r1/phases.json": "1b004df3b1cd56f1c81002a344bbc941d43ad07ae47a9752c46e1b8c5b56e3e1",
+    "perf-results/map-frame-ab-r1/console.log": "a6a24e8a22006f18548ba737602ea3d440ab21cc3407b34c7f8d69d78be8bdf9",
+    "perf-results/map-frame-ab-r1/controller.mjs": "bb3b119e931e98d9e46efb42652b2d3f9fc124ed3e290a13bf01734d90ffd1a3",
+    "perf-results/map-frame-ab-r1/useProgressAnimation.ts": "2b938dfd1044357951c7153ee9a7d4f580b6ba0d33854ac6943645223e82b013"
+  }
+}

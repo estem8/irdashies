@@ -119,15 +119,27 @@ G work and reusable delivery checks are not additional queue items.
       Checks: 61 targeted tests, TypeScript/ESLint, formatting and whitespace.
       Temporary runtime counters were removed. Next: F-7; do not rerun this
       unchanged experiment merely to force global CPU acceptance.
-- [ ] **F-7 — identify costly downstream commit/paint amplification.**
-      The roster fix removes measured redundant work but explains little direct
-      synchronous time. Reuse current renderer/compositor evidence to select
-      one expensive commit/paint path, distinguish source updates, React commits
-      and actual draws, then implement a specific behavior-preserving candidate.
-      Completion: reproducible scoped work reduction with normal functionality;
-      application CPU acceptance still requires matched cadence and repeatability.
-      Do not combine blanket channel batching, telemetry coalescing or new
-      scheduling with this task without evidence for that exact change.
+- [x] **F-7 — investigate downstream commit/paint amplification.**
+      [Map same-frame diagnostic](2026-11-12-map-frame-deduplication.md)
+      identifies a bounded repeated draw: a target commit has already painted
+      after the upcoming rAF timestamp. The shared map hook now skips that
+      callback's draw, retaining immediate commit paints and next/final animation
+      frames. Candidate phases avoid 66/81 redundant draws per twenty seconds.
+      Normal CPU and draw-time effects are inconclusive; Map is a small measured
+      cost, and the main systemic bottleneck is not resolved. Checks: 35 targeted
+      tests, TypeScript/ESLint, static pixel comparison, formatting/whitespace.
+      Physical high-refresh/DPI and motion acceptance remain open. Next: F-8;
+      do not repeat this unchanged small candidate for a global CPU verdict.
+- [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
+      The last two scoped fixes remove inexpensive work. Existing attribution
+      points to larger downstream DOM/compositor costs, but predates these
+      changes and cannot identify their current owner. Use one short current
+      trace/commit diagnostic to find the responsible nodes/update source and
+      choose a concrete behavior-preserving change. Do not repeat rejected
+      wind-wrapper, masks or Input-promotion probes without new evidence, and
+      do not infer packaged React cost directly from development JSX timings.
+      Completion: current causal attribution plus a candidate with reproducible
+      normal-function scoped gain; overall CPU requires matched cadence.
 - [ ] **F-2 — verify reconnect/session and event delivery.** New
       [positive radio/lifecycle composition evidence](2026-11-12-radio-lifecycle.md)
       uses the recorded carIdx 2 snapshot through production lifecycle/host/bus;
