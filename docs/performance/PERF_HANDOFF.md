@@ -109,6 +109,20 @@ diagnostic controls are only in the capture tool, not production code.
    also passed: three pause/resume cycles returned to stable DOM/listener counts.
    Closing to tray retains the preview frame; that is not evidence of a leak.
    Repeated 20-minute, post-GC memory observations still remain to be collected.
+   Prepared command (run twice with distinct IDs, sequentially):
+
+   ```bash
+   node tools/perf/capture/settings-probe.mjs settings-memory-r1 memory
+   node tools/perf/capture/settings-probe.mjs settings-memory-r2 memory
+   ```
+
+   Each is a 1,380-second diagnostic: Standings preview remains visible/playing,
+   forced-GC checkpoints at 120/420/720/1020/1320 seconds span 20 minutes.
+   Settings, overlay and main heaps are sampled separately, with Settings/overlay
+   DOM counters and external private-memory samples. The ten-minute live-overlay
+   tape loops; this is not an uninterrupted simulator session or CPU acceptance.
+   `settings-progress.json` is saved at each checkpoint; keep partial evidence
+   separate if a run fails. No tests/builds/other captures during measurement.
    Publish a PR only when requested; visual PRs require actual screenshot
    attachments per AGENTS.md, not local paths.
 

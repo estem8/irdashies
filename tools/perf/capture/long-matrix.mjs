@@ -13,9 +13,10 @@ import { readWidgetInputRequirements } from '../widgetInputMetadata.ts';
 const matrix = process.argv[2] ?? 'normal-final-r1';
 const smoke = process.argv[3] === 'smoke';
 const probe = process.argv[3] === 'probe';
-if (process.argv[3] && !smoke && !probe)
-  throw new Error('Expected optional smoke or probe mode');
-const durationSeconds = probe ? 180 : smoke ? 90 : 420;
+const memory = process.argv[3] === 'memory';
+if (process.argv[3] && !smoke && !probe && !memory)
+  throw new Error('Expected optional smoke, probe or memory mode');
+const durationSeconds = memory ? 1380 : probe ? 180 : smoke ? 90 : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
@@ -50,6 +51,7 @@ print({
   matrix,
   smoke,
   probe,
+  memory,
   durationSeconds,
 });
 const hash = (data) => createHash('sha256').update(data).digest('hex');
@@ -93,8 +95,8 @@ const ensurePortsFree = async () => {
 };
 try {
   const phases =
-    smoke || probe
-      ? [[probe ? 'probe' : 'smoke', 'candidate']]
+    smoke || probe || memory
+      ? [[memory ? 'memory' : probe ? 'probe' : 'smoke', 'candidate']]
       : [
           ['a1', 'baseline'],
           ['b1', 'candidate'],
@@ -127,8 +129,9 @@ try {
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation:
-            'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: memory
+            ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+            : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -161,12 +164,14 @@ try {
           IRDASHIES_TELEMETRY_REPLAY: resolve(
             'perf-results/ai-race-10min.irdt'
           ),
-          IRDASHIES_TELEMETRY_REPLAY_LOOP: '0',
+          IRDASHIES_TELEMETRY_REPLAY_LOOP: memory ? '1' : '0',
           IRDASHIES_TELEMETRY_REPLAY_SPEED: '1',
           PERF_METRICS: '1',
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: memory
+            ? 'settings-memory-diagnostic'
+            : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
@@ -175,6 +180,8 @@ try {
           PERF_WIDGET_TYPES: ids.join(','),
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
+            memoryDiagnostic: memory,
+            tapeLoop: memory,
             target: 'dev',
             simulatorMode: 'replay',
             fieldCount: 40,

@@ -6,6 +6,9 @@ import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
 
 const id = process.argv[2];
+const memory = process.argv[3] === 'memory';
+assert.ok(!process.argv[3] || memory, 'Expected optional memory mode');
+const mode = memory ? 'memory' : 'probe';
 assert.match(id ?? '', /^[a-z0-9-]+$/);
 const root = resolve('perf-results', id);
 try {
@@ -14,10 +17,10 @@ try {
 } catch (error) {
   if (error.code !== 'ENOENT') throw error;
 }
-const out = resolve(root, 'probe');
+const out = resolve(root, mode);
 const child = spawn(
   process.execPath,
-  ['tools/perf/capture/long-matrix.mjs', id, 'probe'],
+  ['tools/perf/capture/long-matrix.mjs', id, mode],
   { stdio: 'inherit' }
 );
 let exited = false;
@@ -52,7 +55,7 @@ try {
   }, 360);
   const targets = await (await fetch('http://127.0.0.1:9229/json/list')).json();
   main = await CDP.connect(targets[0].webSocketDebuggerUrl);
-  assert.equal(await main.evaluate('process.env.PERF_RUN_ID'), id + '-probe');
+  assert.equal(await main.evaluate('process.env.PERF_RUN_ID'), id + '-' + mode);
   const pages = await (await fetch('http://127.0.0.1:9222/json/list')).json();
   overlay = await CDP.connect(
     pages.find((p) => p.type === 'page' && /:\d+\/$/.test(p.url))
@@ -79,8 +82,19 @@ try {
       value.preview = await settings.evaluate(
         `({frames:document.querySelectorAll('iframe[src*="index-widget-preview"]').length,pause:!!document.querySelector('button[aria-label="Pause preview"]'),play:!!document.querySelector('button[aria-label="Play preview"]')})`
       );
+      if (memory) {
+        await main.call('HeapProfiler.collectGarbage');
+        value.mainHeap = await main.call('Runtime.getHeapUsage');
+        await overlay.call('HeapProfiler.collectGarbage');
+        value.overlayHeap = await overlay.call('Runtime.getHeapUsage');
+        value.overlayDOM = await overlay.call('Memory.getDOMCounters');
+      }
     }
     records.push(value);
+    await writeFile(
+      resolve(out, 'settings-progress.json'),
+      JSON.stringify({ memory, records }, null, 2) + '\n'
+    );
     process.stdout.write(
       JSON.stringify({
         stage: 'settings-observation',
@@ -111,7 +125,73 @@ try {
   await sleep(2000);
   const active = await record('preview-active');
   assert.equal(active.preview.frames, 1);
-  for (let cycle = 1; cycle <= 3; cycle++) {
+  if (memory) {
+    const { origin } = JSON.parse(
+      await readFile(resolve(out, 'preflight.json'), 'utf8')
+    );
+    for (const seconds of [120, 420, 720, 1020, 1320]) {
+      const deadline = origin + seconds * 1000;
+      while (Date.now() < deadline) {
+        assert.equal(exited, false, 'Memory capture ended before checkpoint');
+        await sleep(Math.min(30000, deadline - Date.now()));
+      }
+      assert.ok(
+        Date.now() - deadline < 5000,
+        'Memory checkpoint missed its timing window'
+      );
+      const checkpoint = await record('steady-' + seconds);
+      checkpoint.elapsedSeconds = (Date.parse(checkpoint.at) - origin) / 1000;
+      assert.equal(checkpoint.preview.frames, 1);
+      assert.equal(
+        checkpoint.windows.find((w) => w.url.includes('#/settings')).visible,
+        true
+      );
+      await writeFile(
+        resolve(out, 'settings-progress.json'),
+        JSON.stringify({ memory, records }, null, 2) + '\n'
+      );
+    }
+  } else {
+    for (let cycle = 1; cycle <= 3; cycle++) {
+      await settings.evaluate(
+        `document.querySelector('button[aria-label="Pause preview"]').click()`
+      );
+      await poll(() =>
+        settings.evaluate(
+          `!document.querySelector('iframe[src*="index-widget-preview"]')`
+        )
+      );
+      const paused = await record('preview-paused-' + cycle);
+      assert.equal(paused.preview.frames, 0);
+      await settings.evaluate(
+        `document.querySelector('button[aria-label="Play preview"]').click()`
+      );
+      await poll(() =>
+        settings.evaluate(
+          `!!document.querySelector('iframe[src*="index-widget-preview"]:not(.invisible)')`
+        )
+      );
+      await sleep(1000);
+      const playing = await record('preview-resumed-' + cycle);
+      assert.equal(playing.preview.frames, 1);
+    }
+    await main.evaluate(`${settingsWindow}.close()`);
+    await sleep(3000);
+    const closed = await record('settings-closed-to-tray');
+    assert.equal(
+      closed.windows.find((w) => w.url.includes('#/settings')).visible,
+      false
+    );
+    await overlay.evaluate(
+      `window.dashboardBridge.openWidgetSettings('standings')`
+    );
+    await sleep(2000);
+    const reopened = await record('settings-reopened');
+    assert.equal(
+      reopened.windows.find((w) => w.url.includes('#/settings')).visible,
+      true
+    );
+    assert.equal(reopened.preview.frames, 1);
     await settings.evaluate(
       `document.querySelector('button[aria-label="Pause preview"]').click()`
     );
@@ -120,52 +200,15 @@ try {
         `!document.querySelector('iframe[src*="index-widget-preview"]')`
       )
     );
-    const paused = await record('preview-paused-' + cycle);
-    assert.equal(paused.preview.frames, 0);
-    await settings.evaluate(
-      `document.querySelector('button[aria-label="Play preview"]').click()`
-    );
-    await poll(() =>
-      settings.evaluate(
-        `!!document.querySelector('iframe[src*="index-widget-preview"]:not(.invisible)')`
-      )
-    );
-    await sleep(1000);
-    const playing = await record('preview-resumed-' + cycle);
-    assert.equal(playing.preview.frames, 1);
+    await record('preview-paused-final');
   }
-  await main.evaluate(`${settingsWindow}.close()`);
-  await sleep(3000);
-  const closed = await record('settings-closed-to-tray');
-  assert.equal(
-    closed.windows.find((w) => w.url.includes('#/settings')).visible,
-    false
-  );
-  await overlay.evaluate(
-    `window.dashboardBridge.openWidgetSettings('standings')`
-  );
-  await sleep(2000);
-  const reopened = await record('settings-reopened');
-  assert.equal(
-    reopened.windows.find((w) => w.url.includes('#/settings')).visible,
-    true
-  );
-  assert.equal(reopened.preview.frames, 1);
-  await settings.evaluate(
-    `document.querySelector('button[aria-label="Pause preview"]').click()`
-  );
-  await poll(() =>
-    settings.evaluate(
-      `!document.querySelector('iframe[src*="index-widget-preview"]')`
-    )
-  );
-  await record('preview-paused-final');
   await writeFile(
     resolve(out, 'settings.json'),
     JSON.stringify(
       {
-        scope:
-          'Short Settings preview cleanup diagnostic with forced GC; not a long-session leak test or CPU acceptance',
+        scope: memory
+          ? 'Settings Standings preview active; post-GC checkpoints span 20 minutes; tape loops at 10 minutes; memory diagnostic, not CPU acceptance'
+          : 'Short Settings preview cleanup diagnostic with forced GC; not a long-session leak test or CPU acceptance',
         passed: true,
         records,
       },
