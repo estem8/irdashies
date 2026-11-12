@@ -1,0 +1,2303 @@
+{
+  "scope": "Linux dev, reconstructed ten-widget tape workload; overall acceptance remains inconclusive",
+  "rows": [
+    {
+      "sequence": "a1",
+      "variant": "baseline",
+      "source": "64819740339ecd1f0afda7a8d56027ee855f746e",
+      "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+      "environment": {
+        "versions": {
+          "node": "24.22.1",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.9",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.30.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.2.0",
+          "chrome": "156.0.8078.49"
+        },
+        "gpuFeatures": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "raw_draw": "disabled_off_ok",
+          "skia_graphite": "disabled_off",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "disabled_software",
+          "vulkan": "disabled_off",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webgpu_on_vk_via_gl_interop": "disabled_off",
+          "webnn": "disabled_off"
+        },
+        "gpu": {
+          "auxAttributes": {
+            "amdSwitchable": false,
+            "canSupportThreadedTextureMailbox": false,
+            "glImplementationParts": "(gl=none,angle=none)",
+            "glResetNotificationStrategy": 0,
+            "hardwareSupportsVulkan": false,
+            "inProcessGpu": true,
+            "initializationTime": 0,
+            "isAsan": false,
+            "isClangCoverage": false,
+            "jpegDecodeAcceleratorSupported": false,
+            "optimus": false,
+            "passthroughCmdDecoder": false,
+            "sandboxed": false,
+            "skiaBackendType": "None",
+            "subpixelFontRendering": true,
+            "targetCpuBits": 64,
+            "visibilityCallbackCallCount": 0
+          },
+          "gpuDevice": [
+            {
+              "active": true,
+              "deviceId": 4176,
+              "gpuPreference": 0,
+              "vendorId": 6900
+            }
+          ]
+        },
+        "displays": [
+          {
+            "id": 73,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ]
+      },
+      "preflight": {
+        "windows": [
+          {
+            "id": 2,
+            "pid": 13742,
+            "url": "http://localhost:5173/",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1014
+            },
+            "visible": true
+          },
+          {
+            "id": 1,
+            "pid": 13707,
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false
+          }
+        ],
+        "ui": {
+          "width": 1549,
+          "height": 1014,
+          "dpr": 1,
+          "visibility": "visible",
+          "status": {
+            "position": 55.0560119,
+            "duration": 600.0009345,
+            "speed": 1,
+            "paused": false,
+            "ended": false
+          }
+        }
+      },
+      "analysisWindow": {
+        "startSeconds": 60,
+        "endSeconds": 420
+      },
+      "cpuMsPerSecond": 706.9261666629651,
+      "processCpu": [
+        {
+          "type": "Tab",
+          "name": "irDashies - 73 (Primary))",
+          "cpuMsPerSecond": 399.6905929157354
+        },
+        {
+          "type": "GPU",
+          "name": "GPU",
+          "cpuMsPerSecond": 214.8368609241373
+        },
+        {
+          "type": "Browser",
+          "name": "Browser",
+          "cpuMsPerSecond": 92.2579469595594
+        },
+        {
+          "type": "Tab",
+          "name": "tape-replay",
+          "cpuMsPerSecond": 0.11261269082643809
+        },
+        {
+          "type": "Utility",
+          "name": "Network Service",
+          "cpuMsPerSecond": 0.028153172706609556
+        }
+      ],
+      "averageTickRateHz": 59.61396122104375,
+      "frameTimeP99IntervalMeanMs": 22.925179420269085,
+      "worstFrameMs": 50,
+      "channels": {
+        "blind-spot.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 2673,
+          "deliveries": 2290,
+          "processorRateHz": 25.027257024699797,
+          "publicationRateHz": 7.428968131818164,
+          "deliveryRateHz": 6.364510670356751
+        },
+        "car-speeds.snapshot": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "driver-controls.snapshot": {
+          "processorExecutions": 21473,
+          "publications": 21473,
+          "deliveries": 21190,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 59.679099399375765,
+          "deliveryRateHz": 58.89256816806093
+        },
+        "fuel.projection": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-log.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 9005,
+          "deliveries": 7713,
+          "processorRateHz": 25.027257024699797,
+          "publicationRateHz": 25.027257024699797,
+          "deliveryRateHz": 21.436450131205945
+        },
+        "lap-times.snapshot": {
+          "processorExecutions": 21473,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-trace.sample": {
+          "processorExecutions": 21473,
+          "publications": 21473,
+          "deliveries": 21309,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 59.679099399375765,
+          "deliveryRateHz": 59.22330038193537
+        },
+        "raceControl.sessionId": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "radar.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 9005,
+          "deliveries": 7709,
+          "processorRateHz": 25.027257024699797,
+          "publicationRateHz": 25.027257024699797,
+          "deliveryRateHz": 21.425333082000083
+        },
+        "radio.snapshot": {
+          "processorExecutions": 21473,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "reference-laps.snapshot": {
+          "processorExecutions": 21473,
+          "publications": 78,
+          "deliveries": 77,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 0.21678245951433472,
+          "deliveryRateHz": 0.2140031972128689
+        },
+        "relative-gaps.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1795,
+          "processorRateHz": 5.00545140493996,
+          "publicationRateHz": 5.00545140493996,
+          "deliveryRateHz": 4.988775831131164
+        },
+        "replay.context": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "sector-timing.snapshot": {
+          "processorExecutions": 21473,
+          "publications": 16,
+          "deliveries": 16,
+          "processorRateHz": 59.679099399375765,
+          "publicationRateHz": 0.04446819682345328,
+          "deliveryRateHz": 0.04446819682345328
+        },
+        "session-bar.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 1797,
+          "deliveries": 1797,
+          "processorRateHz": 25.027257024699797,
+          "publicationRateHz": 4.994334355734097,
+          "deliveryRateHz": 4.994334355734097
+        },
+        "session-timing.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1780,
+          "deliveries": 1779,
+          "processorRateHz": 5.00545140493996,
+          "publicationRateHz": 4.947086896609177,
+          "deliveryRateHz": 4.9443076343077115
+        },
+        "session.lifecycle": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "standings.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1794,
+          "processorRateHz": 5.00545140493996,
+          "publicationRateHz": 5.00545140493996,
+          "deliveryRateHz": 4.985996568829699
+        },
+        "track-state.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 9005,
+          "deliveries": 7728,
+          "processorRateHz": 25.027257024699797,
+          "publicationRateHz": 25.027257024699797,
+          "deliveryRateHz": 21.478139065727934
+        }
+      },
+      "widgetInputs": {
+        "blindspotmonitor": {
+          "covered": true,
+          "inputs": {
+            "blind-spot.snapshot": {
+              "observed": true,
+              "changeRateHz": 7.425,
+              "deliveryRateHz": 6.361111111111111
+            }
+          }
+        },
+        "input": {
+          "covered": true,
+          "inputs": {
+            "driver-controls.snapshot": {
+              "observed": true,
+              "changeRateHz": 58.81666666666667,
+              "deliveryRateHz": 58.05
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "laptimelog": {
+          "covered": true,
+          "inputs": {
+            "lap-log.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.136111111111113
+            }
+          }
+        },
+        "laptrace": {
+          "covered": true,
+          "inputs": {
+            "lap-trace.sample": {
+              "observed": true,
+              "changeRateHz": 58.81666666666667,
+              "deliveryRateHz": 58.36666666666667
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "map": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21666666666666667,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "radar": {
+          "covered": true,
+          "inputs": {
+            "radar.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.125
+            }
+          }
+        },
+        "relative": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.875,
+              "deliveryRateHz": 4.872222222222222
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.9222222222222225,
+              "deliveryRateHz": 4.9222222222222225
+            },
+            "relative-gaps.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.916666666666667
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "sectordelta": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21666666666666667,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "standings": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21666666666666667,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.875,
+              "deliveryRateHz": 4.872222222222222
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.9222222222222225,
+              "deliveryRateHz": 4.9222222222222225
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        },
+        "weather": {
+          "covered": true,
+          "inputs": {
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.9222222222222225,
+              "deliveryRateHz": 4.9222222222222225
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.666666666666668,
+              "deliveryRateHz": 21.175
+            }
+          }
+        }
+      },
+      "analyzerEvidence": {
+        "runOriginAvailable": true,
+        "runtimeTopologyAvailable": true,
+        "privateMemoryAvailable": false,
+        "privateMemorySampleCount": 0,
+        "privateMemorySpanSeconds": 0,
+        "privateMemoryMaxGapSeconds": 0,
+        "privateMemorySamplingAdequate": false,
+        "scenarioMetadataConsistent": true,
+        "inputCoverageAvailable": true,
+        "inputCoverageComplete": false,
+        "durationSufficient": true,
+        "conclusive": false,
+        "inconclusiveReasons": [
+          "private-memory samples are unavailable or incomplete",
+          "one or more visibility phases violated workload expectations"
+        ]
+      },
+      "externalPrivateMemory": {
+        "completeObservations": 36,
+        "totalObservations": 36,
+        "spanSeconds": 350.187,
+        "meanTotalMB": 619.8898654513889,
+        "peakTotalMB": 655.36328125,
+        "note": "External Linux smaps_rollup; not consumed by analyze.ts. Seven minutes does not prove long-session leak behavior."
+      },
+      "artifactHashes": {
+        "metrics.log": "b61a1aa15dfd195fac22124aded83875135cdf5c4484335db0b6043b0d918872",
+        "linux-private-memory.json": "b52a79a4497077ff8fbab394ccc826afe76a34e5535cf2d1568d213fe1a6a9f8",
+        "manifest.json": "92e221cbdf9f5c9d628bd8b1cb1a72b3269cf6986b6ffda26008a1151973fb22",
+        "preflight.json": "0088452a9d5bd7d44930d94f27ca2aff89631573959daa531c17060a2a9bb48a"
+      }
+    },
+    {
+      "sequence": "b1",
+      "variant": "candidate",
+      "source": "64819740339ecd1f0afda7a8d56027ee855f746e",
+      "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+      "environment": {
+        "versions": {
+          "node": "24.22.1",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.9",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.30.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.2.0",
+          "chrome": "156.0.8078.49"
+        },
+        "gpuFeatures": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "raw_draw": "disabled_off_ok",
+          "skia_graphite": "disabled_off",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "disabled_software",
+          "vulkan": "disabled_off",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webgpu_on_vk_via_gl_interop": "disabled_off",
+          "webnn": "disabled_off"
+        },
+        "gpu": {
+          "auxAttributes": {
+            "amdSwitchable": false,
+            "canSupportThreadedTextureMailbox": false,
+            "glImplementationParts": "(gl=none,angle=none)",
+            "glResetNotificationStrategy": 0,
+            "hardwareSupportsVulkan": false,
+            "inProcessGpu": true,
+            "initializationTime": 0,
+            "isAsan": false,
+            "isClangCoverage": false,
+            "jpegDecodeAcceleratorSupported": false,
+            "optimus": false,
+            "passthroughCmdDecoder": false,
+            "sandboxed": false,
+            "skiaBackendType": "None",
+            "subpixelFontRendering": true,
+            "targetCpuBits": 64,
+            "visibilityCallbackCallCount": 0
+          },
+          "gpuDevice": [
+            {
+              "active": true,
+              "deviceId": 4176,
+              "gpuPreference": 0,
+              "vendorId": 6900
+            }
+          ]
+        },
+        "displays": [
+          {
+            "id": 73,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ]
+      },
+      "preflight": {
+        "windows": [
+          {
+            "id": 2,
+            "pid": 19432,
+            "url": "http://localhost:5173/",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1014
+            },
+            "visible": true
+          },
+          {
+            "id": 1,
+            "pid": 19381,
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false
+          }
+        ],
+        "ui": {
+          "width": 1549,
+          "height": 1014,
+          "dpr": 1,
+          "visibility": "visible",
+          "status": {
+            "position": 55.0441669,
+            "duration": 600.0009345,
+            "speed": 1,
+            "paused": false,
+            "ended": false
+          }
+        }
+      },
+      "analysisWindow": {
+        "startSeconds": 60,
+        "endSeconds": 420
+      },
+      "cpuMsPerSecond": 579.5630270154079,
+      "processCpu": [
+        {
+          "type": "Tab",
+          "name": "irDashies - 73 (Primary))",
+          "cpuMsPerSecond": 310.5566016142404
+        },
+        {
+          "type": "GPU",
+          "name": "GPU",
+          "cpuMsPerSecond": 184.41409510287238
+        },
+        {
+          "type": "Browser",
+          "name": "Browser",
+          "cpuMsPerSecond": 84.47972819473667
+        },
+        {
+          "type": "Tab",
+          "name": "tape-replay",
+          "cpuMsPerSecond": 0.08445157766884709
+        },
+        {
+          "type": "Utility",
+          "name": "Network Service",
+          "cpuMsPerSecond": 0.028150525889615724
+        }
+      ],
+      "averageTickRateHz": 59.566717231703755,
+      "frameTimeP99IntervalMeanMs": 21.790561735008023,
+      "worstFrameMs": 49.89999999999418,
+      "channels": {
+        "blind-spot.snapshot": {
+          "processorExecutions": 9006,
+          "publications": 2676,
+          "deliveries": 2278,
+          "processorRateHz": 25.02663434661098,
+          "publicationRateHz": 7.43629508233744,
+          "deliveryRateHz": 6.3302990274905415
+        },
+        "car-speeds.snapshot": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "driver-controls.snapshot": {
+          "processorExecutions": 21458,
+          "publications": 21458,
+          "deliveries": 21148,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 59.62930488669536,
+          "deliveryRateHz": 58.767850673121146
+        },
+        "fuel.projection": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-log.snapshot": {
+          "processorExecutions": 9006,
+          "publications": 9006,
+          "deliveries": 7607,
+          "processorRateHz": 25.02663434661098,
+          "publicationRateHz": 25.02663434661098,
+          "deliveryRateHz": 21.138974847287333
+        },
+        "lap-times.snapshot": {
+          "processorExecutions": 21458,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-trace.sample": {
+          "processorExecutions": 21458,
+          "publications": 21458,
+          "deliveries": 21281,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 59.62930488669536,
+          "deliveryRateHz": 59.13744231959008
+        },
+        "raceControl.sessionId": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "radar.snapshot": {
+          "processorExecutions": 9006,
+          "publications": 9006,
+          "deliveries": 7605,
+          "processorRateHz": 25.02663434661098,
+          "publicationRateHz": 25.02663434661098,
+          "deliveryRateHz": 21.1334170781675
+        },
+        "radio.snapshot": {
+          "processorExecutions": 21458,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "reference-laps.snapshot": {
+          "processorExecutions": 21458,
+          "publications": 79,
+          "deliveries": 77,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 0.21953188023342965,
+          "deliveryRateHz": 0.213974111113596
+        },
+        "relative-gaps.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1793,
+          "processorRateHz": 5.004771092410213,
+          "publicationRateHz": 5.004771092410213,
+          "deliveryRateHz": 4.982540015930878
+        },
+        "replay.context": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "sector-timing.snapshot": {
+          "processorExecutions": 21458,
+          "publications": 16,
+          "deliveries": 16,
+          "processorRateHz": 59.62930488669536,
+          "publicationRateHz": 0.044462152958669295,
+          "deliveryRateHz": 0.044462152958669295
+        },
+        "session-bar.snapshot": {
+          "processorExecutions": 9006,
+          "publications": 1798,
+          "deliveries": 1798,
+          "processorRateHz": 25.02663434661098,
+          "publicationRateHz": 4.9964344387304624,
+          "deliveryRateHz": 4.9964344387304624
+        },
+        "session-timing.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1787,
+          "deliveries": 1786,
+          "processorRateHz": 5.004771092410213,
+          "publicationRateHz": 4.965866708571377,
+          "deliveryRateHz": 4.963087824011461
+        },
+        "session.lifecycle": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "standings.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1795,
+          "processorRateHz": 5.004771092410213,
+          "publicationRateHz": 5.004771092410213,
+          "deliveryRateHz": 4.988097785050711
+        },
+        "track-state.snapshot": {
+          "processorExecutions": 9006,
+          "publications": 9006,
+          "deliveries": 7619,
+          "processorRateHz": 25.02663434661098,
+          "publicationRateHz": 25.02663434661098,
+          "deliveryRateHz": 21.172321462006337
+        }
+      },
+      "widgetInputs": {
+        "blindspotmonitor": {
+          "covered": true,
+          "inputs": {
+            "blind-spot.snapshot": {
+              "observed": true,
+              "changeRateHz": 7.433333333333334,
+              "deliveryRateHz": 6.3277777777777775
+            }
+          }
+        },
+        "input": {
+          "covered": true,
+          "inputs": {
+            "driver-controls.snapshot": {
+              "observed": true,
+              "changeRateHz": 58.775,
+              "deliveryRateHz": 57.922222222222224
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "laptimelog": {
+          "covered": true,
+          "inputs": {
+            "lap-log.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.83888888888889
+            }
+          }
+        },
+        "laptrace": {
+          "covered": true,
+          "inputs": {
+            "lap-trace.sample": {
+              "observed": true,
+              "changeRateHz": 58.775,
+              "deliveryRateHz": 58.291666666666664
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "map": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.916666666666667
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "radar": {
+          "covered": true,
+          "inputs": {
+            "radar.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.833333333333332
+            }
+          }
+        },
+        "relative": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.894444444444445,
+              "deliveryRateHz": 4.891666666666667
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.925,
+              "deliveryRateHz": 4.925
+            },
+            "relative-gaps.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.911111111111111
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.916666666666667
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "sectordelta": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "standings": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.894444444444445,
+              "deliveryRateHz": 4.891666666666667
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.925,
+              "deliveryRateHz": 4.925
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.916666666666667
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        },
+        "weather": {
+          "covered": true,
+          "inputs": {
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.925,
+              "deliveryRateHz": 4.925
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.872222222222224
+            }
+          }
+        }
+      },
+      "analyzerEvidence": {
+        "runOriginAvailable": true,
+        "runtimeTopologyAvailable": true,
+        "privateMemoryAvailable": false,
+        "privateMemorySampleCount": 0,
+        "privateMemorySpanSeconds": 0,
+        "privateMemoryMaxGapSeconds": 0,
+        "privateMemorySamplingAdequate": false,
+        "scenarioMetadataConsistent": true,
+        "inputCoverageAvailable": true,
+        "inputCoverageComplete": false,
+        "durationSufficient": true,
+        "conclusive": false,
+        "inconclusiveReasons": [
+          "private-memory samples are unavailable or incomplete",
+          "one or more visibility phases violated workload expectations"
+        ]
+      },
+      "externalPrivateMemory": {
+        "completeObservations": 36,
+        "totalObservations": 36,
+        "spanSeconds": 350.159,
+        "meanTotalMB": 544.4972873263889,
+        "peakTotalMB": 579.703125,
+        "note": "External Linux smaps_rollup; not consumed by analyze.ts. Seven minutes does not prove long-session leak behavior."
+      },
+      "artifactHashes": {
+        "metrics.log": "2b83f3ca76aabb52d2e4c5e022cd49aac2dc04a31772da5e39c25e4394a0bc69",
+        "linux-private-memory.json": "0c8db9ad56999c6a0759c4930177f130a5875d283e22085c974aba5996f93064",
+        "manifest.json": "fd19d4b40093272dc7d41445cf9feacefec3d58d702a30bd1929f3c3de38fce5",
+        "preflight.json": "4a0f3846eaf38509a27b8bad7c796fd7e8cb9f07c5e2b6e9c929e9d3fe8d8a3d"
+      }
+    },
+    {
+      "sequence": "b2",
+      "variant": "candidate",
+      "source": "64819740339ecd1f0afda7a8d56027ee855f746e",
+      "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+      "environment": {
+        "versions": {
+          "node": "24.22.1",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.9",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.30.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.2.0",
+          "chrome": "156.0.8078.49"
+        },
+        "gpuFeatures": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "raw_draw": "disabled_off_ok",
+          "skia_graphite": "disabled_off",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "disabled_software",
+          "vulkan": "disabled_off",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webgpu_on_vk_via_gl_interop": "disabled_off",
+          "webnn": "disabled_off"
+        },
+        "gpu": {
+          "auxAttributes": {
+            "amdSwitchable": false,
+            "canSupportThreadedTextureMailbox": false,
+            "glImplementationParts": "(gl=none,angle=none)",
+            "glResetNotificationStrategy": 0,
+            "hardwareSupportsVulkan": false,
+            "inProcessGpu": true,
+            "initializationTime": 0,
+            "isAsan": false,
+            "isClangCoverage": false,
+            "jpegDecodeAcceleratorSupported": false,
+            "optimus": false,
+            "passthroughCmdDecoder": false,
+            "sandboxed": false,
+            "skiaBackendType": "None",
+            "subpixelFontRendering": true,
+            "targetCpuBits": 64,
+            "visibilityCallbackCallCount": 0
+          },
+          "gpuDevice": [
+            {
+              "active": true,
+              "deviceId": 4176,
+              "gpuPreference": 0,
+              "vendorId": 6900
+            }
+          ]
+        },
+        "displays": [
+          {
+            "id": 73,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ]
+      },
+      "preflight": {
+        "windows": [
+          {
+            "id": 2,
+            "pid": 24084,
+            "url": "http://localhost:5173/",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1014
+            },
+            "visible": true
+          },
+          {
+            "id": 1,
+            "pid": 24050,
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false
+          }
+        ],
+        "ui": {
+          "width": 1549,
+          "height": 1014,
+          "dpr": 1,
+          "visibility": "visible",
+          "status": {
+            "position": 55.0755174,
+            "duration": 600.0009345,
+            "speed": 1,
+            "paused": false,
+            "ended": false
+          }
+        }
+      },
+      "analysisWindow": {
+        "startSeconds": 60,
+        "endSeconds": 420
+      },
+      "cpuMsPerSecond": 596.0881668031722,
+      "processCpu": [
+        {
+          "type": "Tab",
+          "name": "irDashies - 73 (Primary))",
+          "cpuMsPerSecond": 323.47571482750413
+        },
+        {
+          "type": "GPU",
+          "name": "GPU",
+          "cpuMsPerSecond": 186.11394243294956
+        },
+        {
+          "type": "Browser",
+          "name": "Browser",
+          "cpuMsPerSecond": 86.38591792600153
+        },
+        {
+          "type": "Tab",
+          "name": "tape-replay",
+          "cpuMsPerSecond": 0.08444371253763591
+        },
+        {
+          "type": "Utility",
+          "name": "Network Service",
+          "cpuMsPerSecond": 0.028147904179211997
+        }
+      ],
+      "averageTickRateHz": 59.56726505148757,
+      "frameTimeP99IntervalMeanMs": 21.109309686736374,
+      "worstFrameMs": 50,
+      "channels": {
+        "blind-spot.snapshot": {
+          "processorExecutions": 9007,
+          "publications": 2673,
+          "deliveries": 2251,
+          "processorRateHz": 25.024283446694408,
+          "publicationRateHz": 7.426436066727451,
+          "deliveryRateHz": 6.2539871254034765
+        },
+        "car-speeds.snapshot": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "driver-controls.snapshot": {
+          "processorExecutions": 21461,
+          "publications": 21461,
+          "deliveries": 21046,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 59.62541879088583,
+          "deliveryRateHz": 58.472418054749696
+        },
+        "fuel.projection": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-log.snapshot": {
+          "processorExecutions": 9007,
+          "publications": 9007,
+          "deliveries": 7624,
+          "processorRateHz": 25.024283446694408,
+          "publicationRateHz": 25.024283446694408,
+          "deliveryRateHz": 21.1818737645829
+        },
+        "lap-times.snapshot": {
+          "processorExecutions": 21461,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-trace.sample": {
+          "processorExecutions": 21461,
+          "publications": 21461,
+          "deliveries": 21200,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 59.62541879088583,
+          "deliveryRateHz": 58.90027856888214
+        },
+        "raceControl.sessionId": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "radar.snapshot": {
+          "processorExecutions": 9007,
+          "publications": 9007,
+          "deliveries": 7628,
+          "processorRateHz": 25.024283446694408,
+          "publicationRateHz": 25.024283446694408,
+          "deliveryRateHz": 21.192987024690236
+        },
+        "radio.snapshot": {
+          "processorExecutions": 21461,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "reference-laps.snapshot": {
+          "processorExecutions": 21461,
+          "publications": 79,
+          "deliveries": 77,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 0.219486887119891,
+          "deliveryRateHz": 0.21393025706622287
+        },
+        "relative-gaps.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1794,
+          "processorRateHz": 5.003745363328148,
+          "publicationRateHz": 5.003745363328148,
+          "deliveryRateHz": 4.9842971581403095
+        },
+        "replay.context": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "sector-timing.snapshot": {
+          "processorExecutions": 21461,
+          "publications": 16,
+          "deliveries": 16,
+          "processorRateHz": 59.62541879088583,
+          "publicationRateHz": 0.04445304042934501,
+          "deliveryRateHz": 0.04445304042934501
+        },
+        "session-bar.snapshot": {
+          "processorExecutions": 9007,
+          "publications": 1799,
+          "deliveries": 1799,
+          "processorRateHz": 25.024283446694408,
+          "publicationRateHz": 4.99818873327448,
+          "deliveryRateHz": 4.99818873327448
+        },
+        "session-timing.snapshot": {
+          "processorExecutions": 1802,
+          "publications": 1787,
+          "deliveries": 1784,
+          "processorRateHz": 5.0065236783549825,
+          "publicationRateHz": 4.964848952952471,
+          "deliveryRateHz": 4.956514007871969
+        },
+        "session.lifecycle": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "standings.snapshot": {
+          "processorExecutions": 1802,
+          "publications": 1802,
+          "deliveries": 1794,
+          "processorRateHz": 5.0065236783549825,
+          "publicationRateHz": 5.0065236783549825,
+          "deliveryRateHz": 4.9842971581403095
+        },
+        "track-state.snapshot": {
+          "processorExecutions": 9007,
+          "publications": 9007,
+          "deliveries": 7615,
+          "processorRateHz": 25.024283446694408,
+          "publicationRateHz": 25.024283446694408,
+          "deliveryRateHz": 21.156868929341393
+        }
+      },
+      "widgetInputs": {
+        "blindspotmonitor": {
+          "covered": true,
+          "inputs": {
+            "blind-spot.snapshot": {
+              "observed": true,
+              "changeRateHz": 7.425,
+              "deliveryRateHz": 6.252777777777778
+            }
+          }
+        },
+        "input": {
+          "covered": true,
+          "inputs": {
+            "driver-controls.snapshot": {
+              "observed": true,
+              "changeRateHz": 58.78055555555556,
+              "deliveryRateHz": 57.65555555555556
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "laptimelog": {
+          "covered": true,
+          "inputs": {
+            "lap-log.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.88888888888889
+            }
+          }
+        },
+        "laptrace": {
+          "covered": true,
+          "inputs": {
+            "lap-trace.sample": {
+              "observed": true,
+              "changeRateHz": 58.78055555555556,
+              "deliveryRateHz": 58.07222222222222
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "map": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "radar": {
+          "covered": true,
+          "inputs": {
+            "radar.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.67222222222222,
+              "deliveryRateHz": 20.897222222222222
+            }
+          }
+        },
+        "relative": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.891666666666667,
+              "deliveryRateHz": 4.886111111111111
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "relative-gaps.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "sectordelta": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "standings": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.891666666666667,
+              "deliveryRateHz": 4.886111111111111
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.913888888888889
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        },
+        "weather": {
+          "covered": true,
+          "inputs": {
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.669444444444444,
+              "deliveryRateHz": 20.863888888888887
+            }
+          }
+        }
+      },
+      "analyzerEvidence": {
+        "runOriginAvailable": true,
+        "runtimeTopologyAvailable": true,
+        "privateMemoryAvailable": false,
+        "privateMemorySampleCount": 0,
+        "privateMemorySpanSeconds": 0,
+        "privateMemoryMaxGapSeconds": 0,
+        "privateMemorySamplingAdequate": false,
+        "scenarioMetadataConsistent": true,
+        "inputCoverageAvailable": true,
+        "inputCoverageComplete": false,
+        "durationSufficient": true,
+        "conclusive": false,
+        "inconclusiveReasons": [
+          "private-memory samples are unavailable or incomplete",
+          "one or more visibility phases violated workload expectations"
+        ]
+      },
+      "externalPrivateMemory": {
+        "completeObservations": 36,
+        "totalObservations": 36,
+        "spanSeconds": 350.174,
+        "meanTotalMB": 587.6563585069445,
+        "peakTotalMB": 603.60546875,
+        "note": "External Linux smaps_rollup; not consumed by analyze.ts. Seven minutes does not prove long-session leak behavior."
+      },
+      "artifactHashes": {
+        "metrics.log": "fcbef79abe15e8953c29c5bf8d03510b3e6757c9bee1503492bf93cc71443eb3",
+        "linux-private-memory.json": "012793f3b8e1958d9c52dc26ed2c627ab9811bd16df6fc3bd61ec9e2ec301277",
+        "manifest.json": "d8bba8ee15dd88d69ca50b230eef72f3dc92ba7ac2f837d9e00f9bca1db300a2",
+        "preflight.json": "3fdea1ef660393f8530985b2cf0abd91b155560d909b177f1b6373b8853b524e"
+      }
+    },
+    {
+      "sequence": "a2",
+      "variant": "baseline",
+      "source": "64819740339ecd1f0afda7a8d56027ee855f746e",
+      "seedSha256": "4e77250f17d9811a1bf5ad5a4ea0f48f4787e034857b033d0730f2e3ef09e37e",
+      "environment": {
+        "versions": {
+          "node": "24.22.1",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.9",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.30.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.2.0",
+          "chrome": "156.0.8078.49"
+        },
+        "gpuFeatures": {
+          "2d_canvas": "enabled",
+          "direct_rendering_display_compositor": "disabled_off_ok",
+          "gpu_compositing": "enabled",
+          "multiple_raster_threads": "enabled_on",
+          "opengl": "enabled_on",
+          "rasterization": "enabled",
+          "raw_draw": "disabled_off_ok",
+          "skia_graphite": "disabled_off",
+          "trees_in_viz": "disabled_off",
+          "video_decode": "enabled",
+          "video_encode": "disabled_software",
+          "vulkan": "disabled_off",
+          "webgl": "enabled",
+          "webgpu": "enabled",
+          "webgpu_on_vk_via_gl_interop": "disabled_off",
+          "webnn": "disabled_off"
+        },
+        "gpu": {
+          "auxAttributes": {
+            "amdSwitchable": false,
+            "canSupportThreadedTextureMailbox": false,
+            "glImplementationParts": "(gl=none,angle=none)",
+            "glResetNotificationStrategy": 0,
+            "hardwareSupportsVulkan": false,
+            "inProcessGpu": true,
+            "initializationTime": 0,
+            "isAsan": false,
+            "isClangCoverage": false,
+            "jpegDecodeAcceleratorSupported": false,
+            "optimus": false,
+            "passthroughCmdDecoder": false,
+            "sandboxed": false,
+            "skiaBackendType": "None",
+            "subpixelFontRendering": true,
+            "targetCpuBits": 64,
+            "visibilityCallbackCallCount": 0
+          },
+          "gpuDevice": [
+            {
+              "active": true,
+              "deviceId": 4176,
+              "gpuPreference": 0,
+              "vendorId": 6900
+            }
+          ]
+        },
+        "displays": [
+          {
+            "id": 73,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1369
+            },
+            "scaleFactor": 1,
+            "displayFrequency": 0
+          }
+        ]
+      },
+      "preflight": {
+        "windows": [
+          {
+            "id": 2,
+            "pid": 29670,
+            "url": "http://localhost:5173/",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1014
+            },
+            "visible": true
+          },
+          {
+            "id": 1,
+            "pid": 29637,
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false
+          }
+        ],
+        "ui": {
+          "width": 1549,
+          "height": 1014,
+          "dpr": 1,
+          "visibility": "visible",
+          "status": {
+            "position": 55.0563231,
+            "duration": 600.0009345,
+            "speed": 1,
+            "paused": false,
+            "ended": false
+          }
+        }
+      },
+      "analysisWindow": {
+        "startSeconds": 60,
+        "endSeconds": 420
+      },
+      "cpuMsPerSecond": 645.1889834718721,
+      "processCpu": [
+        {
+          "type": "Tab",
+          "name": "irDashies - 73 (Primary))",
+          "cpuMsPerSecond": 364.9951990630717
+        },
+        {
+          "type": "GPU",
+          "name": "GPU",
+          "cpuMsPerSecond": 194.46327058999046
+        },
+        {
+          "type": "Browser",
+          "name": "Browser",
+          "cpuMsPerSecond": 85.56158669798475
+        },
+        {
+          "type": "Tab",
+          "name": "tape-replay",
+          "cpuMsPerSecond": 0.11261808055016097
+        },
+        {
+          "type": "Utility",
+          "name": "Network Service",
+          "cpuMsPerSecond": 0.056309040275080526
+        }
+      ],
+      "averageTickRateHz": 59.63352408367861,
+      "frameTimeP99IntervalMeanMs": 23.837166697742393,
+      "worstFrameMs": 216.5,
+      "channels": {
+        "blind-spot.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 2672,
+          "deliveries": 2287,
+          "processorRateHz": 25.025678448396807,
+          "publicationRateHz": 7.425720467975155,
+          "deliveryRateHz": 6.355771972402388
+        },
+        "car-speeds.snapshot": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "driver-controls.snapshot": {
+          "processorExecutions": 21479,
+          "publications": 21479,
+          "deliveries": 21157,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 59.69200970495447,
+          "deliveryRateHz": 58.79714369047543
+        },
+        "fuel.projection": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-log.snapshot": {
+          "processorExecutions": 9004,
+          "publications": 9004,
+          "deliveries": 7633,
+          "processorRateHz": 25.02289936139532,
+          "publicationRateHz": 25.02289936139532,
+          "deliveryRateHz": 21.212771082355673
+        },
+        "lap-times.snapshot": {
+          "processorExecutions": 21479,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "lap-trace.sample": {
+          "processorExecutions": 21479,
+          "publications": 21479,
+          "deliveries": 21265,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 59.69200970495447,
+          "deliveryRateHz": 59.097285086636106
+        },
+        "raceControl.sessionId": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "radar.snapshot": {
+          "processorExecutions": 9004,
+          "publications": 9004,
+          "deliveries": 7635,
+          "processorRateHz": 25.02289936139532,
+          "publicationRateHz": 25.02289936139532,
+          "deliveryRateHz": 21.218329256358647
+        },
+        "radio.snapshot": {
+          "processorExecutions": 21479,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "reference-laps.snapshot": {
+          "processorExecutions": 21479,
+          "publications": 79,
+          "deliveries": 77,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 0.2195478731175289,
+          "deliveryRateHz": 0.21398969911455348
+        },
+        "relative-gaps.snapshot": {
+          "processorExecutions": 1801,
+          "publications": 1801,
+          "deliveries": 1795,
+          "processorRateHz": 5.005135689679362,
+          "publicationRateHz": 5.005135689679362,
+          "deliveryRateHz": 4.988461167670436
+        },
+        "replay.context": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "sector-timing.snapshot": {
+          "processorExecutions": 21479,
+          "publications": 16,
+          "deliveries": 16,
+          "processorRateHz": 59.69200970495447,
+          "publicationRateHz": 0.04446539202380333,
+          "deliveryRateHz": 0.04446539202380333
+        },
+        "session-bar.snapshot": {
+          "processorExecutions": 9005,
+          "publications": 1799,
+          "deliveries": 1799,
+          "processorRateHz": 25.025678448396807,
+          "publicationRateHz": 4.999577515676386,
+          "deliveryRateHz": 4.999577515676386
+        },
+        "session-timing.snapshot": {
+          "processorExecutions": 1800,
+          "publications": 1789,
+          "deliveries": 1785,
+          "processorRateHz": 5.002356602677874,
+          "publicationRateHz": 4.971786645661509,
+          "deliveryRateHz": 4.960670297655558
+        },
+        "session.lifecycle": {
+          "processorExecutions": 0,
+          "publications": 0,
+          "deliveries": 0,
+          "processorRateHz": 0,
+          "publicationRateHz": 0,
+          "deliveryRateHz": 0
+        },
+        "standings.snapshot": {
+          "processorExecutions": 1800,
+          "publications": 1800,
+          "deliveries": 1792,
+          "processorRateHz": 5.002356602677874,
+          "publicationRateHz": 5.002356602677874,
+          "deliveryRateHz": 4.980123906665972
+        },
+        "track-state.snapshot": {
+          "processorExecutions": 9004,
+          "publications": 9004,
+          "deliveries": 7626,
+          "processorRateHz": 25.02289936139532,
+          "publicationRateHz": 25.02289936139532,
+          "deliveryRateHz": 21.19331747334526
+        }
+      },
+      "widgetInputs": {
+        "blindspotmonitor": {
+          "covered": true,
+          "inputs": {
+            "blind-spot.snapshot": {
+              "observed": true,
+              "changeRateHz": 7.4222222222222225,
+              "deliveryRateHz": 6.352777777777778
+            }
+          }
+        },
+        "input": {
+          "covered": true,
+          "inputs": {
+            "driver-controls.snapshot": {
+              "observed": true,
+              "changeRateHz": 58.83611111111111,
+              "deliveryRateHz": 57.95
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "laptimelog": {
+          "covered": true,
+          "inputs": {
+            "lap-log.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.905555555555555
+            }
+          }
+        },
+        "laptrace": {
+          "covered": true,
+          "inputs": {
+            "lap-trace.sample": {
+              "observed": true,
+              "changeRateHz": 58.83611111111111,
+              "deliveryRateHz": 58.24166666666667
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "map": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.930555555555555,
+              "deliveryRateHz": 4.911111111111111
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "radar": {
+          "covered": true,
+          "inputs": {
+            "radar.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.91111111111111
+            }
+          }
+        },
+        "relative": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.9,
+              "deliveryRateHz": 4.888888888888889
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "relative-gaps.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.933333333333334,
+              "deliveryRateHz": 4.916666666666667
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.930555555555555,
+              "deliveryRateHz": 4.911111111111111
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "sectordelta": {
+          "covered": true,
+          "inputs": {
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "sector-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.044444444444444446,
+              "deliveryRateHz": 0.044444444444444446
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "standings": {
+          "covered": false,
+          "inputs": {
+            "lap-times.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "reference-laps.snapshot": {
+              "observed": true,
+              "changeRateHz": 0.21944444444444444,
+              "deliveryRateHz": 0.21388888888888888
+            },
+            "radio.snapshot": {
+              "observed": false,
+              "changeRateHz": 0,
+              "deliveryRateHz": 0
+            },
+            "session-timing.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.9,
+              "deliveryRateHz": 4.888888888888889
+            },
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "standings.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.930555555555555,
+              "deliveryRateHz": 4.911111111111111
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        },
+        "weather": {
+          "covered": true,
+          "inputs": {
+            "session-bar.snapshot": {
+              "observed": true,
+              "changeRateHz": 4.927777777777778,
+              "deliveryRateHz": 4.927777777777778
+            },
+            "track-state.snapshot": {
+              "observed": true,
+              "changeRateHz": 24.663888888888888,
+              "deliveryRateHz": 20.886111111111113
+            }
+          }
+        }
+      },
+      "analyzerEvidence": {
+        "runOriginAvailable": true,
+        "runtimeTopologyAvailable": true,
+        "privateMemoryAvailable": false,
+        "privateMemorySampleCount": 0,
+        "privateMemorySpanSeconds": 0,
+        "privateMemoryMaxGapSeconds": 0,
+        "privateMemorySamplingAdequate": false,
+        "scenarioMetadataConsistent": true,
+        "inputCoverageAvailable": true,
+        "inputCoverageComplete": false,
+        "durationSufficient": true,
+        "conclusive": false,
+        "inconclusiveReasons": [
+          "private-memory samples are unavailable or incomplete",
+          "one or more visibility phases violated workload expectations"
+        ]
+      },
+      "externalPrivateMemory": {
+        "completeObservations": 36,
+        "totalObservations": 36,
+        "spanSeconds": 350.171,
+        "meanTotalMB": 586.9217664930555,
+        "peakTotalMB": 619.453125,
+        "note": "External Linux smaps_rollup; not consumed by analyze.ts. Seven minutes does not prove long-session leak behavior."
+      },
+      "artifactHashes": {
+        "metrics.log": "044a0455063f7a4ff995698b0d49f079c2a6d950cb9148ccd0f5b34096998567",
+        "linux-private-memory.json": "53567e775491b6d1a108cf0cbb35e33cad576a656eea6c11b056b206430bd207",
+        "manifest.json": "17014afb5a9795ab9a95d7d5a3dd109a8cf19016f57341285e54e2f74b6f099a",
+        "preflight.json": "22609f231856cd1a8e7dabae0da7ce4a31a9ade036c1be0610d8be3e2e1ec1a5"
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "baseline": "a1",
+      "candidate": "b1",
+      "deltaCpuMsPerSecond": -127.3631396475572,
+      "deltaCpuPercent": -18.016469845609627
+    },
+    {
+      "baseline": "a2",
+      "candidate": "b2",
+      "deltaCpuMsPerSecond": -49.10081666869996,
+      "deltaCpuPercent": -7.610299916232311
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 # Perf checkpoint — 2026-11-12
 
 Goal: finish `perf`. **Not complete.** User requested a GitHub checkpoint before
-usage limits. Long capture R2 completed A1 and B1, but its process handle is
-now missing, B2 is incomplete and A2 is absent. The matrix is not accepted.
+usage limits. R3 completed all four 420-second runs with exit 0. See the
+[normal matrix report](2026-11-12-normal-matrix.md): CPU is lower in both pairs
+(18.02% and 7.61%), but full acceptance remains inconclusive. No capture remains
+running. Earlier R2 completed A1/B1 only; B2 is incomplete and A2 is absent.
 Candidate source is restored (the six measured files match HEAD).
 Windows/iRacing access is unavailable, confirmed by the user; do not
 claim game FPS or Windows acceptance.
@@ -60,17 +62,21 @@ diagnostic controls are only in the capture tool, not production code.
 
 1. Read `overlay-performance-plan.md` and the
    [shared renderer report](2026-11-11-shared-renderer-attribution.md).
-2. Run `node tools/perf/capture/prepare-matrix.mjs`. It snapshots the current
+2. Continue the open coverage/lifecycle, visual scale/DPR, Settings/long-memory
+   and instrumentation-overhead checks from the R3 report. Do not repeat the
+   normal matrix without a new change or a specific unresolved concern.
+   To prepare a justified future matrix, `node tools/perf/capture/prepare-matrix.mjs`
+   snapshots the current
    candidates and fixed baselines: C/D source files from `94f02641`, newer
    comparison/indicator/logo files from `02e8e07e`. Instrumentation remains
    identical. Do not substitute HEAD as the baseline after this checkpoint.
 3. Inspect `tools/perf/capture/long-matrix.mjs`, then run:
 
    ```bash
-   node tools/perf/capture/long-matrix.mjs normal-final-r3
+   node tools/perf/capture/long-matrix.mjs normal-final-r4
    ```
 
-   Use a fresh output directory; do not overwrite the partial R2 evidence.
+   Use a fresh output directory; do not overwrite R2/R3 evidence.
    It temporarily swaps six source files, launches four isolated 420-second
    captures in A–B–B–A order, keeps auxiliary tape controls hidden, checks
    viewport/source, and restores candidate source in `finally`. Reserve about
@@ -119,5 +125,5 @@ diagnostic controls are only in the capture tool, not production code.
 Validation before checkpoint: 358 affected renderer tests in 47 files passed;
 the standalone trace-attribution suite has 10 passing tests; TypeScript and
 ESLint passed for the application candidate. Six tape-control tests also pass.
-Capture scripts are experimental diagnostic tooling; the revised controller
-still needs a complete four-run acceptance execution.
+Capture scripts are experimental diagnostic tooling. R3 exercised a complete
+four-run execution; the overall acceptance gaps are recorded in its report.
