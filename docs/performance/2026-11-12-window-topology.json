@@ -1,0 +1,823 @@
+{
+  "scope": "Topology and geometry readiness only; not CPU acceptance",
+  "modes": {
+    "display": {
+      "scope": "Linux window topology readiness and rendered geometry only; no CPU acceptance",
+      "source": "5785e41978c73271ce21e74b6bdaf033cde2689c",
+      "mode": "display",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "topology": {
+        "timestamp": "2026-11-12T13:28:53.300Z",
+        "runId": "window-topology-display-r1",
+        "complete": true,
+        "timedOut": false,
+        "topologyChanged": false,
+        "processMetricsAvailable": true,
+        "snapshotErrors": [],
+        "windows": [
+          {
+            "id": 2,
+            "rendererPid": 388092,
+            "route": "http://localhost:5173/",
+            "role": "display",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1009
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 1,
+            "rendererPid": 388032,
+            "route": "http://localhost:5173/#/tape-replay",
+            "role": "other",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false,
+            "ready": true
+          }
+        ],
+        "processCounts": {
+          "Browser": 1,
+          "GPU": 1,
+          "Utility": 1,
+          "Tab": 2
+        }
+      },
+      "snapshot": {
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1009
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1009
+            },
+            "scaleFactor": 1
+          }
+        ],
+        "windows": [
+          {
+            "id": 2,
+            "pid": 388092,
+            "title": "irDashies - 73 (Primary))",
+            "url": "http://localhost:5173/",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 1549,
+              "height": 1009
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 1549,
+              "height": 1009,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "standings",
+                  "x": 6,
+                  "y": 10,
+                  "width": 560,
+                  "height": 890
+                },
+                {
+                  "id": "input",
+                  "x": 580,
+                  "y": 650,
+                  "width": 400,
+                  "height": 92
+                },
+                {
+                  "id": "relative",
+                  "x": 580,
+                  "y": 10,
+                  "width": 420,
+                  "height": 300
+                },
+                {
+                  "id": "map",
+                  "x": 1010,
+                  "y": 10,
+                  "width": 500,
+                  "height": 300
+                },
+                {
+                  "id": "weather",
+                  "x": 1320,
+                  "y": 330,
+                  "width": 190,
+                  "height": 425
+                },
+                {
+                  "id": "blindspotmonitor",
+                  "x": 0,
+                  "y": 0,
+                  "width": 1529,
+                  "height": 994
+                },
+                {
+                  "id": "radar",
+                  "x": 1010,
+                  "y": 330,
+                  "width": 300,
+                  "height": 300
+                },
+                {
+                  "id": "laptimelog",
+                  "x": 580,
+                  "y": 330,
+                  "width": 400,
+                  "height": 250
+                },
+                {
+                  "id": "sectordelta",
+                  "x": 6,
+                  "y": 920,
+                  "width": 560,
+                  "height": 60
+                },
+                {
+                  "id": "laptrace",
+                  "x": 580,
+                  "y": 750,
+                  "width": 400,
+                  "height": 160
+                }
+              ]
+            }
+          },
+          {
+            "id": 1,
+            "pid": 388032,
+            "title": "irDashies",
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false,
+            "backgroundThrottling": true,
+            "dom": {
+              "width": 620,
+              "height": 104,
+              "dpr": 1,
+              "widgets": []
+            }
+          }
+        ]
+      },
+      "status": {
+        "code": 0,
+        "signal": null
+      },
+      "completedMarker": true
+    },
+    "widget": {
+      "scope": "Linux window topology readiness and rendered geometry only; no CPU acceptance",
+      "source": "5785e41978c73271ce21e74b6bdaf033cde2689c",
+      "mode": "widget",
+      "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+      "topology": {
+        "timestamp": "2026-11-12T13:32:36.688Z",
+        "runId": "window-topology-widget-r1",
+        "complete": true,
+        "timedOut": false,
+        "topologyChanged": false,
+        "processMetricsAvailable": true,
+        "snapshotErrors": [],
+        "windows": [
+          {
+            "id": 11,
+            "rendererPid": 391055,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 560,
+              "y": 730,
+              "width": 440,
+              "height": 200
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 10,
+            "rendererPid": 391054,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": -14,
+              "y": 900,
+              "width": 600,
+              "height": 100
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 9,
+            "rendererPid": 391053,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 560,
+              "y": 310,
+              "width": 440,
+              "height": 290
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 8,
+            "rendererPid": 391035,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 990,
+              "y": 310,
+              "width": 340,
+              "height": 340
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 7,
+            "rendererPid": 391034,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": -20,
+              "y": -20,
+              "width": 1569,
+              "height": 1034
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 6,
+            "rendererPid": 391025,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 1300,
+              "y": 310,
+              "width": 230,
+              "height": 465
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 5,
+            "rendererPid": 391013,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 990,
+              "y": -10,
+              "width": 540,
+              "height": 340
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 4,
+            "rendererPid": 390997,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 560,
+              "y": -10,
+              "width": 460,
+              "height": 340
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 3,
+            "rendererPid": 390996,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": 560,
+              "y": 630,
+              "width": 440,
+              "height": 132
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 2,
+            "rendererPid": 390988,
+            "route": "http://localhost:5173/#/overlay-widget",
+            "role": "widget",
+            "bounds": {
+              "x": -14,
+              "y": -10,
+              "width": 600,
+              "height": 930
+            },
+            "visible": true,
+            "ready": true
+          },
+          {
+            "id": 1,
+            "rendererPid": 390940,
+            "route": "http://localhost:5173/#/tape-replay",
+            "role": "other",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false,
+            "ready": true
+          }
+        ],
+        "processCounts": {
+          "Browser": 1,
+          "GPU": 1,
+          "Utility": 1,
+          "Tab": 11
+        }
+      },
+      "snapshot": {
+        "displays": [
+          {
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1009
+            },
+            "workArea": {
+              "x": 0,
+              "y": 0,
+              "width": 2560,
+              "height": 1009
+            },
+            "scaleFactor": 1
+          }
+        ],
+        "windows": [
+          {
+            "id": 11,
+            "pid": 391055,
+            "title": "irDashies - laptrace",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 560,
+              "y": 730,
+              "width": 440,
+              "height": 200
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 440,
+              "height": 200,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "laptrace",
+                  "x": 20,
+                  "y": 20,
+                  "width": 400,
+                  "height": 160
+                }
+              ]
+            }
+          },
+          {
+            "id": 10,
+            "pid": 391054,
+            "title": "irDashies - sectordelta",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": -14,
+              "y": 900,
+              "width": 600,
+              "height": 100
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 600,
+              "height": 100,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "sectordelta",
+                  "x": 20,
+                  "y": 20,
+                  "width": 560,
+                  "height": 60
+                }
+              ]
+            }
+          },
+          {
+            "id": 9,
+            "pid": 391053,
+            "title": "irDashies - laptimelog",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 560,
+              "y": 310,
+              "width": 440,
+              "height": 290
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 440,
+              "height": 290,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "laptimelog",
+                  "x": 20,
+                  "y": 20,
+                  "width": 400,
+                  "height": 250
+                }
+              ]
+            }
+          },
+          {
+            "id": 8,
+            "pid": 391035,
+            "title": "irDashies - radar",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 990,
+              "y": 310,
+              "width": 340,
+              "height": 340
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 340,
+              "height": 340,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "radar",
+                  "x": 20,
+                  "y": 20,
+                  "width": 300,
+                  "height": 300
+                }
+              ]
+            }
+          },
+          {
+            "id": 7,
+            "pid": 391034,
+            "title": "irDashies - blindspotmonitor",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": -20,
+              "y": -20,
+              "width": 1569,
+              "height": 1034
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 1569,
+              "height": 1034,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "blindspotmonitor",
+                  "x": 20,
+                  "y": 20,
+                  "width": 1529,
+                  "height": 994
+                }
+              ]
+            }
+          },
+          {
+            "id": 6,
+            "pid": 391025,
+            "title": "irDashies - weather",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 1300,
+              "y": 310,
+              "width": 230,
+              "height": 465
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 230,
+              "height": 465,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "weather",
+                  "x": 20,
+                  "y": 20,
+                  "width": 190,
+                  "height": 425
+                }
+              ]
+            }
+          },
+          {
+            "id": 5,
+            "pid": 391013,
+            "title": "irDashies - map",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 990,
+              "y": -10,
+              "width": 540,
+              "height": 340
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 540,
+              "height": 340,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "map",
+                  "x": 20,
+                  "y": 20,
+                  "width": 500,
+                  "height": 300
+                }
+              ]
+            }
+          },
+          {
+            "id": 4,
+            "pid": 390997,
+            "title": "irDashies - relative",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 560,
+              "y": -10,
+              "width": 460,
+              "height": 340
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 460,
+              "height": 340,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "relative",
+                  "x": 20,
+                  "y": 20,
+                  "width": 420,
+                  "height": 300
+                }
+              ]
+            }
+          },
+          {
+            "id": 3,
+            "pid": 390996,
+            "title": "irDashies - input",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": 560,
+              "y": 630,
+              "width": 440,
+              "height": 132
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 440,
+              "height": 132,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "input",
+                  "x": 20,
+                  "y": 20,
+                  "width": 400,
+                  "height": 92
+                }
+              ]
+            }
+          },
+          {
+            "id": 2,
+            "pid": 390988,
+            "title": "irDashies - standings",
+            "url": "http://localhost:5173/#/overlay-widget",
+            "bounds": {
+              "x": -14,
+              "y": -10,
+              "width": 600,
+              "height": 930
+            },
+            "visible": true,
+            "backgroundThrottling": false,
+            "dom": {
+              "width": 600,
+              "height": 930,
+              "dpr": 1,
+              "widgets": [
+                {
+                  "id": "standings",
+                  "x": 20,
+                  "y": 20,
+                  "width": 560,
+                  "height": 890
+                }
+              ]
+            }
+          },
+          {
+            "id": 1,
+            "pid": 390940,
+            "title": "irDashies",
+            "url": "http://localhost:5173/#/tape-replay",
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "width": 620,
+              "height": 104
+            },
+            "visible": false,
+            "backgroundThrottling": true,
+            "dom": {
+              "width": 620,
+              "height": 104,
+              "dpr": 1,
+              "widgets": []
+            }
+          }
+        ]
+      },
+      "status": {
+        "code": 0,
+        "signal": null
+      },
+      "completedMarker": true
+    }
+  },
+  "globalWidgetBounds": {
+    "display": {
+      "standings": {
+        "x": 6,
+        "y": 10,
+        "width": 560,
+        "height": 890
+      },
+      "input": {
+        "x": 580,
+        "y": 650,
+        "width": 400,
+        "height": 92
+      },
+      "relative": {
+        "x": 580,
+        "y": 10,
+        "width": 420,
+        "height": 300
+      },
+      "map": {
+        "x": 1010,
+        "y": 10,
+        "width": 500,
+        "height": 300
+      },
+      "weather": {
+        "x": 1320,
+        "y": 330,
+        "width": 190,
+        "height": 425
+      },
+      "blindspotmonitor": {
+        "x": 0,
+        "y": 0,
+        "width": 1529,
+        "height": 994
+      },
+      "radar": {
+        "x": 1010,
+        "y": 330,
+        "width": 300,
+        "height": 300
+      },
+      "laptimelog": {
+        "x": 580,
+        "y": 330,
+        "width": 400,
+        "height": 250
+      },
+      "sectordelta": {
+        "x": 6,
+        "y": 920,
+        "width": 560,
+        "height": 60
+      },
+      "laptrace": {
+        "x": 580,
+        "y": 750,
+        "width": 400,
+        "height": 160
+      }
+    },
+    "widget": {
+      "laptrace": {
+        "x": 580,
+        "y": 750,
+        "width": 400,
+        "height": 160
+      },
+      "sectordelta": {
+        "x": 6,
+        "y": 920,
+        "width": 560,
+        "height": 60
+      },
+      "laptimelog": {
+        "x": 580,
+        "y": 330,
+        "width": 400,
+        "height": 250
+      },
+      "radar": {
+        "x": 1010,
+        "y": 330,
+        "width": 300,
+        "height": 300
+      },
+      "blindspotmonitor": {
+        "x": 0,
+        "y": 0,
+        "width": 1529,
+        "height": 994
+      },
+      "weather": {
+        "x": 1320,
+        "y": 330,
+        "width": 190,
+        "height": 425
+      },
+      "map": {
+        "x": 1010,
+        "y": 10,
+        "width": 500,
+        "height": 300
+      },
+      "relative": {
+        "x": 580,
+        "y": 10,
+        "width": 420,
+        "height": 300
+      },
+      "input": {
+        "x": 580,
+        "y": 650,
+        "width": 400,
+        "height": 92
+      },
+      "standings": {
+        "x": 6,
+        "y": 10,
+        "width": 560,
+        "height": 890
+      }
+    }
+  },
+  "maxGeometryDifferencePx": 0
+}

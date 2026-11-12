@@ -417,3 +417,13 @@ passed/41 skipped. Fixed discovery mismatch by running node:test files in their
 own mandatory npm test phase and excluding only that pattern from Vitest.
 See [local CI report](2026-11-12-local-ci.md). No background capture/check active.
 Remote CI/Windows remain unverified; do not substitute local Linux validation.
+
+## Window-mode geometry readiness complete
+
+Source 5785e419: display and widget R1 each completed 180 seconds / exit 0.
+Identical source/seed/displays; all ten widget instance global DOM bounds
+match exactly (0 px). Display mode 1 overlay/2 renderers including controls;
+widget mode 10 overlays/11 renderers. See
+[topology report](2026-11-12-window-topology.md). This is not CPU acceptance or
+a recommendation to change defaults. No capture is active. User requested
+immediate GitHub preservation after the pair completed.
