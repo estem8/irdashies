@@ -73,6 +73,11 @@ if (gantryDiagnostic) {
   );
   assert.ok(gantry, 'Missing Gantry fixture configuration');
   gantry.enabled = true;
+  // Gantry has its own fixed-size native window, but its saved layout also
+  // participates in the display window's shrink-wrap bounds. Keep the
+  // diagnostic layout inside the ten-widget extent so overlay geometry stays
+  // identical to the other lifecycle probes.
+  gantry.layout = { x: 0, y: 0, width: 1400, height: 800 };
 }
 const seed = JSON.stringify(seedDashboard);
 const sourceScript = await readFile(new URL(import.meta.url), 'utf8');
