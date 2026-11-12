@@ -37,7 +37,7 @@ const poll = async (fn, attempts = 30) => {
 const disableGantry = async () => {
   if (overlay)
     await overlay.evaluate(
-      `(()=>{const dashboard=window.dashboardBridge.getCurrentDashboard();if(!dashboard)throw new Error('No dashboard');window.dashboardBridge.saveDashboard({...dashboard,widgets:dashboard.widgets.map(w=>w.id==='gantry'?{...w,enabled:false}:w)});return true})()`
+      `(async()=>{const profile=await window.dashboardBridge.getCurrentProfile();const dashboard=await window.dashboardBridge.getDashboardForProfile(profile.id);if(!dashboard)throw new Error('No dashboard');window.dashboardBridge.saveDashboard({...dashboard,widgets:dashboard.widgets.map(w=>w.id==='gantry'?{...w,enabled:false}:w)});return true})()`
     );
 };
 try {
@@ -60,7 +60,7 @@ try {
   assert.ok(page, 'Missing isolated overlay');
   overlay = await CDP.connect(page.webSocketDebuggerUrl);
   await overlay.evaluate(
-    `(()=>{const dashboard=window.dashboardBridge.getCurrentDashboard();if(!dashboard?.widgets.find(w=>w.id==='gantry')?.enabled)throw new Error('Gantry diagnostic seed not active');return true})()`
+    `(async()=>{const profile=await window.dashboardBridge.getCurrentProfile();const dashboard=await window.dashboardBridge.getDashboardForProfile(profile.id);if(!dashboard?.widgets.find(w=>w.id==='gantry')?.enabled)throw new Error('Gantry diagnostic seed not active');return true})()`
   );
   const windowState = () =>
     main.evaluate(
