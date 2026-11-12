@@ -11,6 +11,21 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- GitHub Actions permissions API now reports enabled=true/allowed_actions=all.
+  No new workflow was dispatched. The user warned that GitHub limits are about
+  to run out, so defer new Actions jobs and unnecessary remote API calls.
+  Local R5 does not consume Actions minutes. Historical CI still covers only
+  its recorded checkpoint; no current-head CI result is claimed.
+
+- CURRENT: R5 is terminal. on1/off1/off2 each completed 420 seconds with exit 0;
+  on2 failed topology preflight (cause not yet diagnosed). Controller exit 1,
+  child termination verified and candidate restored. No full overhead result.
+  The first three phases' scalar CPU/private-memory evidence is preserved in
+  `2026-11-12-overhead-r5-partial.json` on the wip/perf-r5-checkpoint branch.
+  Current source remains 2e5354cc. No capture is active. Preserve the three
+  successful phases; inspect on2 startup diagnostics before deciding how to
+  collect the missing last leg. User requested immediate GitHub preservation.
+
 - `collection-overhead-r4 overhead` is terminal: on1 completed 420 seconds;
   off1 was interrupted after about 225 seconds of observed playback when wall
   time advanced about three hours. Controller failed its Date.now shutdown
