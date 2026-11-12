@@ -1,0 +1,28 @@
+{
+  "scope": "Offline diagnostic feeding selected raw tape variables directly into current processors with aggregation enabled; not runtime or CPU acceptance",
+  "frames": 36000,
+  "changes": {
+    "SessionTime": 35992,
+    "CarIdxTrackSurface": 16,
+    "CarIdxOnPitRoad": 1,
+    "CarIdxLapCompleted": 187,
+    "CarIdxLastLapTime": 88
+  },
+  "tapeSha256": "6e23e8abab49c1a0ae7c8f6d1f298d31145a6189d3029b8ca540aad56a22b168",
+  "sourceCommit": "6ccaf741",
+  "results": [
+    {
+      "channel": "lap-times.snapshot",
+      "version": 90,
+      "historySamples": 146,
+      "transmittingCarIdxs": null
+    },
+    {
+      "channel": "radio.snapshot",
+      "version": 0,
+      "historySamples": 0,
+      "transmittingCarIdxs": []
+    }
+  ],
+  "limits": "Ad hoc decoder uses repository tape layout; independent native playback confirmation remains pending. No analyzer gate is changed."
+}

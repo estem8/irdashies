@@ -374,3 +374,13 @@ hidden, resumed to 239/95 after show, reference preserved. See
 [scoped result](2026-11-12-laptrace-hidden.md). Next available Linux lifecycle
 work is Gantry; prepared diagnostic remains unverified. CI dispatch remains
 blocked by GitHub HTTP 422 Actions disabled, Windows/iRacing unavailable.
+
+## Input coverage investigation (after Gantry)
+
+No capture active. Offline decoded tape has 36,000 frames: radio always -1,
+last-lap times change 88 times. Current LapTimesProcessor fed selected raw
+values with aggregation enabled reaches version 90 / 146 history samples.
+See [diagnostic](2026-11-12-tape-input-coverage.md). Next inspect actual host
+state and direct subscriber demand; absent publication may be dependency-only
+processing, not missing data. Do not loosen normal-matrix acceptance gates.
+Ad hoc reproduction remains ignored at perf-results/coverage-diagnostic/replay.mjs.
