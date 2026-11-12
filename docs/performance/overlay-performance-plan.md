@@ -98,6 +98,25 @@ G work and reusable delivery checks are not additional queue items.
       image comparisons cover the changed path; see report for checks and costs.
       Next optimization must target a remaining measured hot path; do not reopen
       window-cost matrices without a concrete application hypothesis.
+- [x] **F-5 — review the complete pipeline for systemic bottlenecks.**
+      [Source review and existing evidence](2026-11-12-pipeline-review.md)
+      prioritize renderer update amplification: cloned-array identities, broad
+      selections, repeated Relative/Standings derivation and commit/rAF paints.
+      Independent channel deliveries may amplify commits; actual multiplicity
+      needs measurement. Native materialization and synchronous wait remain
+      secondary candidates, not ruled-out costs. No runtime experiment or
+      application change in this review. Checks: source/evidence consistency,
+      local links, formatting and whitespace.
+- [ ] **F-6 — preserve stable renderer identity work across dynamic updates.**
+      Start with Relative's unconditionally rebuilt roster projection and
+      infrequent lookup/derivation inputs; inspect existing rebuild counters.
+      Select one change, preserve immutable snapshots and genuine roster,
+      position, qualifying and lifecycle updates, then compare normal workload
+      rebuild/allocation work and total CPU. Extend semantic array stabilization
+      only where equality costs less than avoided work. Completion: correct
+      behavior plus reproducible scoped gain; a passing memoization test alone
+      does not establish performance improvement. Cross-channel batching is a
+      separate evidence-gated candidate, not part of this first change.
 - [ ] **F-2 — verify reconnect/session and event delivery.** New
       [positive radio/lifecycle composition evidence](2026-11-12-radio-lifecycle.md)
       uses the recorded carIdx 2 snapshot through production lifecycle/host/bus;
