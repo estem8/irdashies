@@ -6,11 +6,14 @@ import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
 
 const runId = process.argv[2];
+const hiddenProbe = process.argv[3] === 'hidden';
+assert.ok(!process.argv[3] || hiddenProbe, 'Expected optional hidden mode');
+const mode = hiddenProbe ? 'probe' : 'smoke';
 assert.match(runId ?? '', /^[a-z0-9-]+$/);
-const out = resolve('perf-results', runId, 'smoke');
+const out = resolve('perf-results', runId, mode);
 const controller = spawn(
   process.execPath,
-  ['tools/perf/capture/long-matrix.mjs', runId, 'smoke'],
+  ['tools/perf/capture/long-matrix.mjs', runId, mode],
   { stdio: 'inherit' }
 );
 let exited = false;
@@ -43,7 +46,7 @@ try {
   main = await CDP.connect(targets[0].webSocketDebuggerUrl);
   assert.equal(
     await main.evaluate('process.env.PERF_RUN_ID'),
-    runId + '-smoke'
+    runId + '-' + mode
   );
   const pages = await (await fetch('http://127.0.0.1:9222/json/list')).json();
   const page = pages.find((p) => p.type === 'page' && /:\d+\/$/.test(p.url));
@@ -59,7 +62,7 @@ try {
     value.window = await main.evaluate(
       `(()=>{const w=${windowExpression};return {visible:w.isVisible(),backgroundThrottling:w.webContents.getLastWebPreferences().backgroundThrottling}})()`
     );
-    records.push({ label, ...value });
+    records.push({ label, at: new Date().toISOString(), ...value });
     return value;
   };
   const command = (command) =>
@@ -102,7 +105,10 @@ try {
   await main.evaluate(`${windowExpression}.hide()`);
   await sleep(1000);
   const hiddenStart = await record('hidden-start');
-  await sleep(3000);
+  // Long enough to contain complete 5-second renderer metric intervals.
+  // Native window visibility is authoritative; Page Visibility remains visible
+  // with backgroundThrottling disabled. Inspect existing draw counters afterward.
+  await sleep(hiddenProbe ? 20000 : 3000);
   const hiddenEnd = await record('hidden-end');
   assert.equal(hiddenStart.window.visible, false);
   assert.equal(hiddenEnd.window.visible, false);
@@ -127,6 +133,7 @@ try {
       {
         scope:
           'Runtime smoke with diagnostic observers; not CPU acceptance or real simulator reconnect',
+        hiddenProbe,
         passed: true,
         records,
       },

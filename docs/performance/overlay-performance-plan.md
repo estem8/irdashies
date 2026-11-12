@@ -37,14 +37,17 @@ semantics. This microbenchmark does not validate total application CPU or
 complete the downstream trace/acceptance work below.
 The subsequent [plain-record comparison report](2026-11-11-session-record-comparison.md)
 records reduced temporary allocation and a 14–15% local comparison-time saving
-for equal full-field fixture clones in two runs. Total application impact
-remains unmeasured; the compositor investigation is still the next priority.
+for equal full-field fixture clones in two runs. The later R3 matrix measures
+the combined candidate's total CPU; it does not isolate comparator contribution.
 
 The [reconstructed ten-widget attribution](2026-11-11-shared-renderer-attribution.md)
 restores tape playback and adds two complete group/DOM trace runs with loss-free
 CDP completion. Mask removal and an HTML wind-arrow experiment show no supported
-gain. Blind-spot `top` animation is the next drawing candidate. The original
-saved seed remains unavailable; the new workload is documented separately.
+gain. The equivalent blind-spot transform and static-logo demotion are now
+implemented, with [normal-run evidence](2026-11-12-normal-matrix.md),
+[manufacturer scale/DPR checks](2026-11-12-manufacturer-visual.md) and
+[replay lifecycle smoke](2026-11-12-lifecycle.md). The original saved seed
+remains unavailable; the reconstructed workload is documented separately.
 
 Architecture constraints: [ARCHITECTURE_RULES.md](../ARCHITECTURE_RULES.md).
 
@@ -65,18 +68,24 @@ the whole stage passed its exit criterion or that game FPS improved.
 
 Next work, in priority order:
 
-1. Attribute the expensive downstream path on the same saved ten-widget
-   profile using a short shared trace: React commits/effects, DOM/canvas and
-   compositor work. Avoid a full long-run matrix for every widget.
-2. Implement one evidence-backed shared update or drawing improvement.
-   Preserve required Input/Lap Trace samples, event ordering, precision and
-   lifecycle resets; work-suppression modes are diagnostic only.
-3. Validate the candidate with all functionality enabled in matched long A/B
-   repetitions: total CPU ms/s, frame-interval tails, topology and channel rates.
-4. Exercise join/leave, reconnect, session transitions, hide/show and replay
-   seek as separate spike workloads; steady-state evidence does not cover them.
-5. Verify a packaged Windows build with iRacing and PresentMon/ETW before
-   claiming improved game frame time or FPS.
+1. Attribute the overlay/main private-memory growth localized by the
+   [repeated memory diagnostic](2026-11-12-settings-memory.md). Two 20-minute
+   post-GC intervals are complete; Settings listeners/DOM do not accumulate,
+   but stable V8 heap does not resolve native/browser memory growth.
+2. Execute the prepared [hidden-drawing probe](2026-11-12-hidden-draw-audit.md).
+   Snapshot gating is already observed; widget drawing, Gantry and event/history
+   delivery are separate. Change scheduling only when measured cost warrants it.
+3. Finish instrumentation-overhead, input-coverage and allocation evidence gaps.
+   Do not repeat the normal matrix without a new change or a specific concern:
+   R3 already completed two pairs with lower CPU, but its analyzer verdict is
+   inconclusive. Preserve that verdict and explain each missing gate.
+4. Complete remaining join/leave, actual reconnect and session-transition checks;
+   replay seek/pause/native hide/show smoke has passed. Preserve required Input
+   and Lap Trace samples, event ordering, precision and lifecycle resets.
+5. Verify packaged Windows/iRacing presentation before claiming game FPS or
+   frame-time improvement. Windows access is unavailable. A new CI dispatch
+   also returned HTTP 422 because Actions is disabled; the earlier successful
+   Windows CI covers its checkpoint only.
 
 Settings/memory investigations remain open and should move forward when the
 reported trigger or a capture implicates them. A renderer rewrite or native/IPC
@@ -149,10 +158,11 @@ Dependencies: none. Priority: P0.
 - [x] For steady state, capture 420 seconds: exclude 60 seconds of warmup and
       analyze the following 360 seconds. This leaves more than the 300 seconds
       required by the analyzer. Capture startup as a separate scenario.
-- [ ] Complete two valid repetitions in A–B / B–A order. Four runs were
-      captured, but candidate-1 ran at a different rAF cadence (about 60 Hz versus
-      165–169 Hz). Treat that pair as confounded. Additional controlled repeats
-      are needed before claiming a production CPU improvement.
+- [ ] Complete two valid repetitions in A–B / B–A order. The early pair with
+      mismatched 60/165–169 Hz cadence remains confounded. R3 later completed
+      matched A–B–B–A runs with lower CPU in both pairs, but missing channel input
+      coverage and private-memory integration keep the full analyzer gate open.
+      See its report; do not restart capture merely because this box is open.
 
 Workload matrix:
 
@@ -206,7 +216,7 @@ Dependencies: A. Priority: P0.
       commitTime. Align timelines with the capture origin.
 - [ ] Keep data in bounded buffers; emit aggregates infrequently. Compare
       captures with instrumentation on/off and estimate its overhead.
-- [ ] Store traces separately from lightweight perf captures: sampling/profiling
+- [x] Store traces separately from lightweight perf captures: sampling/profiling
       adds load and is not a direct estimate of a normal packaged run.
 
 Stage B exit criterion: the report shows complete work boundaries, timestamps
@@ -290,8 +300,10 @@ Dependencies: A/B; independent of C–E. Priority: P1 for diagnosis.
       enabled/disabled; attribute CPU/heap/working set by PID.
 - [ ] Capture allocation/heap profiles during sustained growth; check cleanup
       of preview, listeners, timers, canvas, and objects across repeated open/close.
-- [ ] For memory trends, use at least 20 minutes of steady state and repeat;
+- [x] For memory trends, use at least 20 minutes of steady state and repeat;
       compare heap after GC at identical checkpoints; do not infer a leak from RSS.
+      Completed for visible Standings preview with looping tape; see the memory
+      report. Allocation ownership and other workload modes remain open.
 - [ ] Compare display/shared and individual/widget modes with identical
       instances, layout, and DPI; record actual geometry of all windows.
 - [x] Capture an initial Chromium Performance trace with Settings closed and
@@ -314,6 +326,15 @@ process and objects; window changes are confirmed by trace and game presentation
 capture.
 
 ## 9. Stage G — conditional native/IPC optimization
+
+Current decision: defer interface/transport changes. In the completed R3 normal
+matrix, the Browser/main process accounts for 13.05–14.58% of summed process CPU
+(84.48–92.26 CPU ms/s). This includes SDK, processors and other main work; it
+does not isolate native materialization. It also does **not** bound end-to-end
+IPC cost, since deserialization/store work is in renderers. Together with the
+downstream traces and measured compositor candidate, this supports continuing
+renderer/drawing investigation first, not declaring transport free or redesigning
+the native API without new attribution.
 
 Dependencies: live profile B/F. Priority: P3, only when there is measured benefit.
 

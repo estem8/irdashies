@@ -13,6 +13,9 @@ count alternated **0 / 1**, without duplicates. Paused V8 used heap was
 47,788,596 → 47,802,332 → 47,843,692 bytes, approximately 47.8 MB. Resumed heap
 was 65.56 → 66.24 → 65.05 MB; final pause was 47.97 MB. No monotonic retained
 preview/listener/DOM accumulation is established by these three cycles.
+The Settings native window's preview `hide`/`show` listener counts also return
+to **0/0** on every pause and **1/1** on every resume; reopen does not duplicate
+those listeners. These counts are preserved in the same observations.
 
 Closing to tray retains the Settings renderer and its preview iframe: this
 matches the current native window close-to-tray policy and the observed

@@ -3,14 +3,32 @@
 Goal: finish `perf`. **Not complete.** User requested a GitHub checkpoint before
 usage limits. R3 completed all four 420-second runs with exit 0. See the
 [normal matrix report](2026-11-12-normal-matrix.md): CPU is lower in both pairs
-(18.02% and 7.61%), but full acceptance remains inconclusive. No capture remains
-running. Earlier R2 completed A1/B1 only; B2 is incomplete and A2 is absent.
+(18.02% and 7.61%), but full acceptance remains inconclusive.
+Earlier R2 completed A1/B1 only; B2 is incomplete and A2 is absent.
 Candidate source is restored (the six measured files match HEAD).
 Windows/iRacing access is unavailable, confirmed by the user; do not
 claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `settings-memory-r1 memory` completed from checkpoint `23a67264`: five post-GC
+  points spanning 20 minutes, fixed 1380-second duration marker, exit 0 and
+  source restoration. Settings heap was 60.07/60.72/60.99/60.39/60.56 decimal MB;
+  listeners stayed 488. This is one run, not the repeated memory conclusion.
+- `settings-memory-r2 memory` also completed: duration marker, exit 0 and
+  source restoration. No memory capture remains running. The actual two-run
+  report passed its source/seed/environment/checkpoint assertions. See
+  [memory results](2026-11-12-settings-memory.md): Settings heap/listeners show
+  no large accumulation, but private-memory growth in overlay/main remains
+  unresolved. Do not treat V8 heap stability as proof of native-memory stability.
+- Prepared but not executed: `lifecycle-probe.mjs <fresh-id> hidden` and
+  `report-memory.mjs <completed-r1-folder> <completed-r2-folder>`. The former
+  extends native hide to 20 seconds; the latter verifies source/seed/environment
+  and completed checkpoint coverage before comparing post-GC heaps. Source
+  audit is [here](2026-11-12-hidden-draw-audit.md). Validate these queued tools
+  after memory captures; do not describe their preparation as a passed check.
+  Syntax/ESLint for both queued tools passed between the two memory runs;
+  runtime hidden-mode execution remains pending; the two-run report has now run.
 - `perf-results/normal-final-r2/runs.json` records A1 and B1 completing with
   exit 0. Both preflights show a visible 1549 × 1014 overlay at DPR 1 and
   hidden 620 × 104 tape controls at (0, 0). B2 has partial logs only.
@@ -25,6 +43,10 @@ claim game FPS or Windows acceptance.
   https://github.com/estem8/irdashies/actions/runs/43101017184
   Tests, lint and Storybook succeeded; release/signing were skipped. This does
   not verify iRacing presentation or the subsequent capture-tool changes.
+- A later dispatch attempt for current checkpoint `23a67264` failed with GitHub
+  HTTP 422: `Actions has been disabled for this repository`. No new CI run was
+  created. Repository Actions settings were not changed. The earlier successful
+  run remains historical evidence for its own SHA, not validation of later code.
 - Next: inspect partial logs for renderer/channel loss before another matrix;
   B2's final log contains no overlay renderer and zero channel activity, so
   it must not contribute performance acceptance evidence.
@@ -108,7 +130,8 @@ diagnostic controls are only in the capture tool, not production code.
    The [short Settings cleanup diagnostic](2026-11-12-settings-cleanup.md)
    also passed: three pause/resume cycles returned to stable DOM/listener counts.
    Closing to tray retains the preview frame; that is not evidence of a leak.
-   Repeated 20-minute, post-GC memory observations still remain to be collected.
+   Repeated 20-minute, post-GC observations are now collected. Follow the
+   memory report's remaining overlay/main allocation-attribution gap.
    Prepared command (run twice with distinct IDs, sequentially):
 
    ```bash
