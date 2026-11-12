@@ -9,6 +9,20 @@ Candidate source is restored (the six measured files match HEAD).
 Windows/iRacing access is unavailable, confirmed by the user; do not
 claim game FPS or Windows acceptance.
 
+## Current state after Gantry verification
+
+No capture is active. Published source `de1adbfd` completed Gantry R4 with
+exit 0 and restored candidate. During 180 seconds native-hidden, lap crossings
+increased 0→80 across 40 cars; history survived show, and disabling the widget
+destroyed its window. See [result](2026-11-12-gantry-hidden.md).
+Lap Trace native hide/show also passed after the recorder sentinel fix; see
+[its result](2026-11-12-laptrace-hidden.md). Remaining acceptance limitations:
+Windows/iRacing unavailable, GitHub CI dispatch rejected HTTP 422, collection
+overhead quantitatively inconclusive, and full normal matrix coverage missing
+radio/lap-times publication. Remaining Linux plan scope includes workload
+coverage/lifecycle transitions and display-versus-widget topology. Historical
+checkpoints below describe their own time, not the present running state.
+
 ## Latest execution status
 
 - The user explicitly authorized CI after the earlier quota warning. Attempted dispatch of
@@ -19,7 +33,7 @@ claim game FPS or Windows acceptance.
   remains unexplained. Do not claim current-head CI. The only listed run is
   historical 43101017184 at 50657bdd. Local validation continues independently.
 
-- CURRENT: Map R2 completed all four 180-second phases, exit 0 and candidate
+- Historical checkpoint: Map R2 completed all four 180-second phases, exit 0 and candidate
   restored. Identity-object rates 887.618/0.363/0.363/878.913 per second;
   candidate memo recomputes once per steady interval, progress stays about 22/s.
   Source/environment/hash/PID and progress/input cadence checks pass. See
@@ -41,7 +55,7 @@ claim game FPS or Windows acceptance.
   TypeScript and targeted ESLint pass, including a renderer loading after 6s.
   R2 then completed under this protocol; r1 a1 remains separate partial evidence.
 
-- CURRENT: on2 retry completed 420 seconds, exit 0 and candidate restoration.
+- Historical checkpoint: on2 retry completed 420 seconds, exit 0 and candidate restoration.
   All four successful measurements are assembled in ignored
   `collection-overhead-r5-recovered`, with original failed startup preserved.
   Strict source/seed/viewport/runtime/cadence and PID checks pass. CPU overhead
@@ -53,7 +67,7 @@ claim game FPS or Windows acceptance.
   No capture is active. Next: direct Map identity diagnostic, then exercised
   Lap Trace hidden and Gantry probes. CI remains deferred for the user's limits.
 
-- CURRENT: R5 is terminal. on1/off1/off2 each completed 420 seconds with exit 0;
+- Historical checkpoint: R5 is terminal. on1/off1/off2 each completed 420 seconds with exit 0;
   on2 failed topology preflight (cause not yet diagnosed). Controller exit 1,
   child termination verified and candidate restored. No full overhead result.
   The first three phases' scalar CPU/private-memory evidence is preserved in
