@@ -145,6 +145,11 @@ export function updatePerfDashboardMetadata(
   env.PERF_ACTIVE_WIDGET_TYPES = JSON.stringify(
     activePerfWidgetTypes(dashboard)
   );
+  env.PERF_ACTIVE_WIDGET_INSTANCES = JSON.stringify(
+    dashboard.widgets
+      .filter((widget) => widget.enabled)
+      .map((widget) => ({ id: widget.id, type: widget.type ?? widget.id }))
+  );
   env.PERF_ACTIVE_WINDOW_MODE =
     dashboard.generalSettings?.overlayWindowMode === 'widget'
       ? 'widget'

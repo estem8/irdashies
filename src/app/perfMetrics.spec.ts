@@ -2,10 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('electron', () => ({
   app: { getAppMetrics: vi.fn(() => []) },
-  BrowserWindow: { getAllWindows: () => [] },
+  BrowserWindow: { getAllWindows: vi.fn(() => []) },
 }));
 
-import { app } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import type { Telemetry } from '@irdashies/types';
 import {
   isSyntheticPerfSource,
@@ -18,6 +18,7 @@ import {
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.mocked(app.getAppMetrics).mockReturnValue([]);
+  vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([]);
 });
 
 describe('performance process memory coverage', () => {
@@ -139,5 +140,67 @@ describe('performance telemetry source metadata', () => {
     });
     expect(processReport?.cpuTimeMsPerSecond).toEqual(expect.any(Number));
     expect(processReport?.cpuSampleIntervalMs).toBeGreaterThan(0);
+  });
+});
+
+describe('per-window channel attribution', () => {
+  it('refreshes window, WebContents and OS process identity and preserves unavailable inventory', () => {
+    const window = {
+      id: 12,
+      isDestroyed: () => false,
+      isVisible: () => false,
+      webContents: {
+        id: 27,
+        getOSProcessId: () => 1234,
+        getURL: () => '#/overlay-widget',
+      },
+    };
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([
+      window as unknown as Electron.BrowserWindow,
+    ]);
+    const metrics = new TelemetryPerfMetrics(true);
+    expect(metrics.report().runtimeWindows).toEqual([
+      {
+        windowId: 12,
+        webContentsId: 27,
+        pid: 1234,
+        route: '#/overlay-widget',
+        visible: false,
+      },
+    ]);
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([]);
+    expect(metrics.report().runtimeWindows).toEqual([]);
+    vi.mocked(BrowserWindow.getAllWindows).mockImplementation(() => {
+      throw new Error('unavailable');
+    });
+    expect(metrics.report().runtimeWindows).toBeUndefined();
+  });
+  it('reports renderer/channel interval deltas separately from subscription rates', () => {
+    let count = 3;
+    const source = {
+      metricsSnapshot: () => ({
+        publications: { '7:track': count },
+        deliveries: { '7:track': count - 1 },
+        channelPublications: { track: count },
+        channelDeliveries: { track: count - 1 },
+      }),
+      subscriptionSnapshot: () => [
+        { rendererId: 7, channel: 'track', rateHz: 25, active: true },
+      ],
+    };
+    const metrics = new TelemetryPerfMetrics(true, source);
+    expect(metrics.report().channelMetrics).toMatchObject({
+      rendererPublications: { '7:track': 3 },
+      rendererDeliveries: { '7:track': 2 },
+      subscriptions: [{ rendererId: 7, rateHz: 25 }],
+    });
+    count = 5;
+    expect(metrics.report().channelMetrics).toMatchObject({
+      rendererPublications: { '7:track': 2 },
+      rendererDeliveries: { '7:track': 2 },
+    });
+    expect(metrics.report().channelMetrics?.rendererDeliveries).toEqual({
+      '7:track': 0,
+    });
   });
 });

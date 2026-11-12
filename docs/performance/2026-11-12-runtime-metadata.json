@@ -1,0 +1,351 @@
+{
+  "scope": "Short Linux metadata verification, not overhead or CPU acceptance",
+  "sourceCheckpoint": "ccaa988dd69e7c6c5c9996379fcaa0df7362ee2c",
+  "seedSha256": "bc1bbceb388ab6ff1539ac9e3bf6e756cbd13613a9579ebc7d550ccd14e3723f",
+  "mainIntervalsVerified": 22,
+  "runtimeWindows": [
+    {
+      "windowId": 2,
+      "webContentsId": 2,
+      "pid": 104292,
+      "route": "http://localhost:5173/",
+      "visible": true
+    },
+    {
+      "windowId": 1,
+      "webContentsId": 1,
+      "pid": 104257,
+      "route": "http://localhost:5173/#/tape-replay",
+      "visible": false
+    }
+  ],
+  "configuredWidgetInstances": [
+    {
+      "id": "standings",
+      "type": "standings"
+    },
+    {
+      "id": "input",
+      "type": "input"
+    },
+    {
+      "id": "relative",
+      "type": "relative"
+    },
+    {
+      "id": "map",
+      "type": "map"
+    },
+    {
+      "id": "weather",
+      "type": "weather"
+    },
+    {
+      "id": "blindspotmonitor",
+      "type": "blindspotmonitor"
+    },
+    {
+      "id": "radar",
+      "type": "radar"
+    },
+    {
+      "id": "laptimelog",
+      "type": "laptimelog"
+    },
+    {
+      "id": "sectordelta",
+      "type": "sectordelta"
+    },
+    {
+      "id": "laptrace",
+      "type": "laptrace"
+    }
+  ],
+  "subscriptions": [
+    {
+      "rendererId": 2,
+      "channel": "track-state.snapshot",
+      "rateHz": 25,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "reference-laps.snapshot",
+      "rateHz": 5,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "lap-trace.sample",
+      "rateHz": 60,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "sector-timing.snapshot",
+      "rateHz": 10,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "standings.snapshot",
+      "rateHz": 5,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "session-timing.snapshot",
+      "rateHz": 5,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "pit-lane.reset",
+      "rateHz": "event",
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "blind-spot.snapshot",
+      "rateHz": 25,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "session-bar.snapshot",
+      "rateHz": 10,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "lap-log.snapshot",
+      "rateHz": 25,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "radio.snapshot",
+      "rateHz": 25,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "driver-controls.snapshot",
+      "rateHz": 60,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "relative-gaps.snapshot",
+      "rateHz": 5,
+      "active": true
+    },
+    {
+      "rendererId": 2,
+      "channel": "radar.snapshot",
+      "rateHz": 25,
+      "active": true
+    }
+  ],
+  "rendererPublications": {
+    "2:track-state.snapshot": 125,
+    "2:reference-laps.snapshot": 0,
+    "2:lap-trace.sample": 297,
+    "2:sector-timing.snapshot": 1,
+    "2:standings.snapshot": 25,
+    "2:session-timing.snapshot": 25,
+    "2:blind-spot.snapshot": 41,
+    "2:session-bar.snapshot": 25,
+    "2:lap-log.snapshot": 125,
+    "2:radio.snapshot": 0,
+    "2:driver-controls.snapshot": 297,
+    "2:relative-gaps.snapshot": 25,
+    "2:radar.snapshot": 125
+  },
+  "rendererDeliveries": {
+    "2:track-state.snapshot": 112,
+    "2:reference-laps.snapshot": 0,
+    "2:lap-trace.sample": 297,
+    "2:sector-timing.snapshot": 1,
+    "2:standings.snapshot": 25,
+    "2:session-timing.snapshot": 25,
+    "2:blind-spot.snapshot": 38,
+    "2:session-bar.snapshot": 25,
+    "2:lap-log.snapshot": 112,
+    "2:radio.snapshot": 0,
+    "2:driver-controls.snapshot": 296,
+    "2:relative-gaps.snapshot": 24,
+    "2:radar.snapshot": 113
+  },
+  "rendererSample": {
+    "pid": 1,
+    "osPid": 104292,
+    "webContentsId": 2,
+    "windowId": 2,
+    "route": "/",
+    "widgetDomIds": [
+      "standings",
+      "input",
+      "relative",
+      "map",
+      "weather",
+      "blindspotmonitor",
+      "radar",
+      "laptimelog",
+      "sectordelta",
+      "laptrace"
+    ]
+  },
+  "controlsIntervals": [
+    {
+      "timestamp": "2026-11-12T17:14:19.863Z",
+      "intervalMs": 5000.267800000001,
+      "controlsDeliveries": 297,
+      "controlsRateHz": 59.39681870639007
+    },
+    {
+      "timestamp": "2026-11-12T17:14:24.864Z",
+      "intervalMs": 5000.2734000000055,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.19676312099248
+    },
+    {
+      "timestamp": "2026-11-12T17:14:29.863Z",
+      "intervalMs": 4999.621100000004,
+      "controlsDeliveries": 297,
+      "controlsRateHz": 59.40450167313674
+    },
+    {
+      "timestamp": "2026-11-12T17:14:34.877Z",
+      "intervalMs": 5013.79389999999,
+      "controlsDeliveries": 293,
+      "controlsRateHz": 58.4387802617895
+    },
+    {
+      "timestamp": "2026-11-12T17:14:39.877Z",
+      "intervalMs": 5000.151800000007,
+      "controlsDeliveries": 297,
+      "controlsRateHz": 59.398196670748995
+    },
+    {
+      "timestamp": "2026-11-12T17:14:44.877Z",
+      "intervalMs": 4999.880000000005,
+      "controlsDeliveries": 298,
+      "controlsRateHz": 59.60143043433037
+    },
+    {
+      "timestamp": "2026-11-12T17:14:49.878Z",
+      "intervalMs": 5000.686099999992,
+      "controlsDeliveries": 299,
+      "controlsRateHz": 59.79179536983945
+    },
+    {
+      "timestamp": "2026-11-12T17:14:54.878Z",
+      "intervalMs": 5000.443700000003,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.19474705814602
+    },
+    {
+      "timestamp": "2026-11-12T17:14:59.883Z",
+      "intervalMs": 5004.603999999992,
+      "controlsDeliveries": 299,
+      "controlsRateHz": 59.74498681613979
+    },
+    {
+      "timestamp": "2026-11-12T17:15:04.884Z",
+      "intervalMs": 5000.681100000002,
+      "controlsDeliveries": 298,
+      "controlsRateHz": 59.5918823937803
+    },
+    {
+      "timestamp": "2026-11-12T17:15:09.895Z",
+      "intervalMs": 5011.102400000003,
+      "controlsDeliveries": 298,
+      "controlsRateHz": 59.46795260060936
+    },
+    {
+      "timestamp": "2026-11-12T17:15:14.930Z",
+      "intervalMs": 5035.790500000003,
+      "controlsDeliveries": 299,
+      "controlsRateHz": 59.37498789911928
+    },
+    {
+      "timestamp": "2026-11-12T17:15:19.945Z",
+      "intervalMs": 5012.681500000006,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.05023089936986
+    },
+    {
+      "timestamp": "2026-11-12T17:15:24.943Z",
+      "intervalMs": 4999.760799999989,
+      "controlsDeliveries": 300,
+      "controlsRateHz": 60.002870537326636
+    },
+    {
+      "timestamp": "2026-11-12T17:15:29.943Z",
+      "intervalMs": 5000.39929999999,
+      "controlsDeliveries": 300,
+      "controlsRateHz": 59.99520878262674
+    },
+    {
+      "timestamp": "2026-11-12T17:15:34.943Z",
+      "intervalMs": 5000.0238000000245,
+      "controlsDeliveries": 297,
+      "controlsRateHz": 59.399717257345564
+    },
+    {
+      "timestamp": "2026-11-12T17:15:39.943Z",
+      "intervalMs": 4999.950099999987,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.200590821896554
+    },
+    {
+      "timestamp": "2026-11-12T17:15:44.944Z",
+      "intervalMs": 5001.085500000016,
+      "controlsDeliveries": 297,
+      "controlsRateHz": 59.38710705905729
+    },
+    {
+      "timestamp": "2026-11-12T17:15:49.945Z",
+      "intervalMs": 5000.440799999982,
+      "controlsDeliveries": 294,
+      "controlsRateHz": 58.794816648964435
+    },
+    {
+      "timestamp": "2026-11-12T17:15:54.946Z",
+      "intervalMs": 5001.113299999997,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.18682146233323
+    },
+    {
+      "timestamp": "2026-11-12T17:15:59.947Z",
+      "intervalMs": 5001.4054999999935,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.18336355650435
+    },
+    {
+      "timestamp": "2026-11-12T17:16:04.947Z",
+      "intervalMs": 5000.236700000009,
+      "controlsDeliveries": 296,
+      "controlsRateHz": 59.19719760466529
+    }
+  ],
+  "artifacts": {
+    "console.log": "28fc32b22ff5efc5082ffa4c9ac100995d4f239e9ab0c670e6a7482277528487",
+    "result.json": "2544f790209fe8809fa5a665d02c78bd6c7359fc1604ccd7714c3354a91df96b",
+    "observed.json": "ee886cea5e5a97556ed9fb42b4c1c3f6f9f0f1c0f4c8bc43fc5a0f11a4cab57f"
+  },
+  "instrumentationSourceSha256": {
+    "src/app/bridge/channelBridge.spec.ts": "d44cdd9a5945ed1375b6500c41ac1ae158f612ea4669ff0a791f45b01909dc31",
+    "src/app/bridge/channelBus.ts": "23fe0531c8c2770e760422781bbee38020e3913cf52cb5784693eeeb586ba66a",
+    "src/app/bridge/logBridge.spec.ts": "9e225270eda16602193563e37c1ac74dc1f3591b5aa154e394000cd3c6fdb174",
+    "src/app/bridge/logBridge.ts": "0347fd9c6e65475172810604555e6eb2a03bc0cff8d295990e4207f8e9ff2fe7",
+    "src/app/perfMetrics.spec.ts": "7c095445aebf402061b3fdd5239005f846eb85c168165356f96dbb97852f0c60",
+    "src/app/perfMetrics.ts": "dcb57811c471166ce5c600fa4ecbab4994861881bb9fdceb78016b35d115d3fb",
+    "src/app/perfRunConfig.spec.ts": "186092402700e16b20240645f0b23f80b32eb3a4d35cba7e8b1a651b3db90c40",
+    "src/app/perfRunConfig.ts": "801b25fd693fce55e5cf702054d5ae73be3b6b82dcb4961601315cb8c045a214",
+    "src/app/rendererPerfMetrics.spec.ts": "089d706378fe0cc28f0ea424f1ea9f56c430b5aa501892a568266f9b19087e63",
+    "src/app/rendererPerfMetrics.ts": "616e82228257b3185fe5e990417b6202092c8bba5b7ab1a02cab8f8a2e2c4bf4",
+    "src/types/performance.ts": "fd32ba63d4ba3e5951850101d08588574f9827fe72b226ea63234cbfaf47cba2"
+  }
+}

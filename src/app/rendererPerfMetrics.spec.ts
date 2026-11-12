@@ -39,13 +39,35 @@ describe('renderer perf samples', () => {
       onFrame = cb;
       return 1;
     });
-    vi.stubGlobal('document', { visibilityState: 'visible' });
+    vi.stubGlobal('document', {
+      visibilityState: 'visible',
+      querySelectorAll: () => [],
+    });
     vi.stubGlobal('window', { location: { hash: '#/laptrace' } });
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('reports current DOM IDs without accumulating removed wrappers', async () => {
+    let ids = ['instance-a', 'instance-a', 'instance-b'];
+    vi.stubGlobal('document', {
+      visibilityState: 'visible',
+      querySelectorAll: () => ids.map((id) => ({ getAttribute: () => id })),
+    });
+    const { startRendererPerfMetrics } = await import('./rendererPerfMetrics');
+    startRendererPerfMetrics();
+    frame();
+    frame();
+    vi.advanceTimersByTime(1000);
+    expect(reported()[0].widgetDomIds).toEqual(['instance-a', 'instance-b']);
+    ids = ['instance-b'];
+    frame();
+    frame();
+    vi.advanceTimersByTime(1000);
+    expect(reported()[1].widgetDomIds).toEqual(['instance-b']);
   });
 
   // The analyzer takes a measure's rate over the windows that report it. A

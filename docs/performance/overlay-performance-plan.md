@@ -76,11 +76,17 @@ G work and reusable delivery checks are not additional queue items.
       20-minute heap/private checkpoints; if private growth reproduces with flat
       V8, verify native sampler availability and target that process with an
       unsampled control. Do not repeat unchanged completed instrumented runs.
-- [ ] **B-1 — identify and close metadata gaps.** Next: compare current capture
-      origin/runtime metadata against Stage B's required fields and existing R3
-      evidence. Completion: enumerate missing fields explicitly, add any necessary
-      capture support and verify with a short capture; preserve unavailable fields
-      as unavailable. This does not retroactively pass R3 or quantify overhead.
+- [x] **B-1 — identify and close metadata gaps.** The
+      [field audit and runtime verification](2026-11-12-runtime-metadata.md)
+      enumerate missing fields and unavailable attribution. New interval reports
+      join BrowserWindow/WebContents/OS PID, configured instances, observed DOM
+      wrappers, current subscriptions/effective rates and renderer/channel deltas.
+      Runtime exposed namespace-local preload PID 1; the existing log IPC now adds
+      sender-derived OS/window identity. A second 180-second capture verified
+      joins and positive controls delivery in 22 steady intervals. Checks: 95
+      targeted tests, TypeScript/ESLint, formatting and links. Per-widget ownership,
+      closed-window partial intervals, GPU/private metrics and presentation remain
+      unavailable; overhead is unquantified. R3 remains inconclusive. Next: F-2.
 - [ ] **F-2 — verify reconnect/session and event delivery.** Next: inspect the
       lifecycle report and available fixtures; target only transitions not already
       exercised. Completion: evidence of reset/resume and positive required event
@@ -109,15 +115,15 @@ G work and reusable delivery checks are not additional queue items.
 Checked items below mean the stated work is complete; they do not imply that
 the whole stage passed its exit criterion or that game FPS improved.
 
-| Stage                             | Verified evidence                                                                                                              | Open requirement                                                                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| A — reproducible baseline         | Isolated source/seed/environment/topology; completed Linux R3 A–B–B–A                                                          | Full analyzer acceptance remains inconclusive; packaged Windows and real simulator presentation absent                               |
-| B — instrumentation               | SDK/process/React/draw boundaries; bounded diagnostics and clock guards; completed collection on/off experiment                | Quantitative overhead is inconclusive, not zero; some activity/metadata coverage remains incomplete                                  |
-| C — Relative / TitleBar           | Implementation and behavioral checks; combined normal-operation matrix                                                         | Combined six-file gain does not isolate this change's CPU contribution                                                               |
-| D — stable Map data               | Behavioral tests, render-phase result and repeated direct identity construction measurement                                    | App-wide allocation bytes and isolated CPU contribution are not established                                                          |
-| E — canvas / hidden windows       | Map/Input/Radar hidden draw stop/resume; exercised Lap Trace stop/resume after reference-reset fix                             | Actual high-refresh displays and additional visibility/static-cache transitions remain unverified; no new scheduler change justified |
-| F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                          |
-| G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                     |
+| Stage                             | Verified evidence                                                                                                              | Open requirement                                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| A — reproducible baseline         | Isolated source/seed/environment/topology; completed Linux R3 A–B–B–A                                                          | Full analyzer acceptance remains inconclusive; packaged Windows and real simulator presentation absent                                      |
+| B — instrumentation               | SDK/process/React/draw boundaries; bounded diagnostics and clock guards; completed collection on/off experiment                | Quantitative overhead is inconclusive, not zero; activity coverage remains incomplete; new metadata is scoped to the verified Linux capture |
+| C — Relative / TitleBar           | Implementation and behavioral checks; combined normal-operation matrix                                                         | Combined six-file gain does not isolate this change's CPU contribution                                                                      |
+| D — stable Map data               | Behavioral tests, render-phase result and repeated direct identity construction measurement                                    | App-wide allocation bytes and isolated CPU contribution are not established                                                                 |
+| E — canvas / hidden windows       | Map/Input/Radar hidden draw stop/resume; exercised Lap Trace stop/resume after reference-reset fix                             | Actual high-refresh displays and additional visibility/static-cache transitions remain unverified; no new scheduler change justified        |
+| F — windows / compositor / memory | Compositor/visual diagnostics; repeated 20-minute memory checks; Gantry hidden history; window-mode geometry; Settings cleanup | Memory allocation ownership unresolved; repeated cost comparison and broader lifecycle coverage remain open                                 |
+| G — native / IPC                  | Deferred conditional work                                                                                                      | Reopen only with measured native/transport bottleneck; no redesign justified by current evidence                                            |
 
 Evidence and constraints for the execution queue (not additional tasks):
 
@@ -319,10 +325,10 @@ Dependencies: A. Priority: P0.
 - [x] Record source kind, startup topology, runtime process roles and channel
       rates in existing captures; see the
       [instrumentation report](2026-11-11-perf-instrumentation.md) and R3 report.
-- [ ] Audit field completeness for runtime window IDs, active instances and
-      per-window subscription/rate attribution; enumerate and close specific
-      missing fields under B-1. Existing aggregate/source metadata is not an
-      instruction to rerun the normal matrix.
+- [x] Audit runtime window IDs, configured/observed instances and per-window
+      subscriptions/rate attribution under B-1; see the
+      [field audit](2026-11-12-runtime-metadata.md). Unavailable metrics and scope
+      limits are explicit; this does not retroactively pass the normal matrix.
 - [x] For React, capture interval aggregates and a bounded list of slow render
       events: widget instance ID/type, phase, actualDuration, startTime, and
       commitTime. Align timelines with the capture origin.

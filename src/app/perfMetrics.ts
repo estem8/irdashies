@@ -70,15 +70,33 @@ export interface PerfReport {
   totalAppMemoryMB?: number;
   totalAppPrivateMemoryMB?: number;
   scenarioMetadata?: Record<string, unknown>;
+  runtimeWindows?: {
+    windowId: number;
+    webContentsId: number;
+    pid: number;
+    route: string;
+    visible: boolean;
+  }[];
   channelMetrics?: {
     processorExecutions: Record<string, number>;
     publications: Record<string, number>;
     deliveries: Record<string, number>;
+    rendererPublications: Record<string, number>;
+    rendererDeliveries: Record<string, number>;
+    subscriptions?: {
+      rendererId: number;
+      channel: string;
+      rateHz: number | 'event';
+      active: boolean;
+    }[];
   };
 }
 
 interface ChannelMetricsSource {
   metricsSnapshot(): ChannelBusMetricsSnapshot;
+  subscriptionSnapshot?(): NonNullable<
+    PerfReport['channelMetrics']
+  >['subscriptions'];
 }
 
 const PROCESSOR_CHANNELS: Readonly<Record<string, string>> = {
@@ -198,6 +216,8 @@ export class TelemetryPerfMetrics {
   private lastCpuUsage: NodeJS.CpuUsage = { user: 0, system: 0 };
   private tickCount = 0;
   private _enabled: boolean;
+  private previousRendererPublications: Readonly<Record<string, number>> = {};
+  private previousRendererDeliveries: Readonly<Record<string, number>> = {};
   private previousChannelPublications: Readonly<Record<string, number>> = {};
   private previousChannelDeliveries: Readonly<Record<string, number>> = {};
   private processCpuTime = new ProcessCpuTimeTracker();
@@ -227,6 +247,8 @@ export class TelemetryPerfMetrics {
     this.lastCpuUsage = process.cpuUsage();
     this.eventLoopDelay.enable();
     const channelMetrics = this.channelMetricsSource?.metricsSnapshot();
+    this.previousRendererPublications = channelMetrics?.publications ?? {};
+    this.previousRendererDeliveries = channelMetrics?.deliveries ?? {};
     this.previousChannelPublications =
       channelMetrics?.channelPublications ?? {};
     this.previousChannelDeliveries = channelMetrics?.channelDeliveries ?? {};
@@ -322,6 +344,7 @@ export class TelemetryPerfMetrics {
       totalAppPrivateMemoryMB: totalPrivateMemory,
       scenarioMetadata: this.scenarioMetadata(),
       channelMetrics: this.channelMetrics(sections),
+      runtimeWindows: this.runtimeWindows(),
     };
 
     this.lastReportTime = now;
@@ -349,6 +372,22 @@ export class TelemetryPerfMetrics {
     return buf;
   }
 
+  private runtimeWindows(): PerfReport['runtimeWindows'] {
+    try {
+      return BrowserWindow.getAllWindows()
+        .filter((win) => !win.isDestroyed())
+        .map((win) => ({
+          windowId: win.id,
+          webContentsId: win.webContents.id,
+          pid: win.webContents.getOSProcessId(),
+          route: win.webContents.getURL(),
+          visible: win.isVisible(),
+        }));
+    } catch {
+      return undefined;
+    }
+  }
+
   private scenarioMetadata(): Record<string, unknown> | undefined {
     try {
       const configured = JSON.parse(
@@ -361,6 +400,9 @@ export class TelemetryPerfMetrics {
       const activeWidgetTypes = JSON.parse(
         process.env.PERF_ACTIVE_WIDGET_TYPES ?? '[]'
       ) as unknown;
+      const configuredWidgetInstances: unknown = JSON.parse(
+        process.env.PERF_ACTIVE_WIDGET_INSTANCES ?? 'null'
+      );
       const sourceKind = this.sourceKind();
       return {
         ...metadata,
@@ -373,6 +415,15 @@ export class TelemetryPerfMetrics {
               ),
             }
           : {}),
+        configuredWidgetInstances: Array.isArray(configuredWidgetInstances)
+          ? configuredWidgetInstances.filter(
+              (value): value is { id: string; type: string } =>
+                typeof value === 'object' &&
+                value !== null &&
+                typeof value.id === 'string' &&
+                typeof value.type === 'string'
+            )
+          : undefined,
         overlayWindowMode: process.env.PERF_ACTIVE_WINDOW_MODE ?? 'display',
         activeWidgetTypes: Array.isArray(activeWidgetTypes)
           ? activeWidgetTypes.filter(
@@ -424,6 +475,17 @@ export class TelemetryPerfMetrics {
       current.channelDeliveries,
       this.previousChannelDeliveries
     );
+    const subscriptions = this.channelMetricsSource.subscriptionSnapshot?.();
+    const rendererPublications = difference(
+      current.publications,
+      this.previousRendererPublications
+    );
+    const rendererDeliveries = difference(
+      current.deliveries,
+      this.previousRendererDeliveries
+    );
+    this.previousRendererPublications = current.publications;
+    this.previousRendererDeliveries = current.deliveries;
     this.previousChannelPublications = current.channelPublications;
     this.previousChannelDeliveries = current.channelDeliveries;
     return {
@@ -435,6 +497,9 @@ export class TelemetryPerfMetrics {
       ),
       publications,
       deliveries,
+      rendererPublications,
+      rendererDeliveries,
+      subscriptions,
     };
   }
 

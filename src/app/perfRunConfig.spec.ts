@@ -30,6 +30,9 @@ describe('performance run configuration', () => {
   it('refreshes mode and widget metadata when a different profile is applied', () => {
     const env: NodeJS.ProcessEnv = {};
     updatePerfDashboardMetadata(dashboard, env);
+    expect(JSON.parse(env.PERF_ACTIVE_WIDGET_INSTANCES ?? 'null')).toEqual(
+      dashboard.widgets.map((w) => ({ id: w.id, type: w.type ?? w.id }))
+    );
     expect(env.PERF_ACTIVE_WINDOW_MODE).toBe('display');
     expect(JSON.parse(env.PERF_ACTIVE_WIDGET_TYPES ?? '')).toEqual([
       'relative',
@@ -44,6 +47,9 @@ describe('performance run configuration', () => {
       },
       env
     );
+    expect(JSON.parse(env.PERF_ACTIVE_WIDGET_INSTANCES ?? 'null')).toEqual([
+      { id: 'relative', type: 'relative' },
+    ]);
     expect(env.PERF_ACTIVE_WINDOW_MODE).toBe('widget');
     expect(JSON.parse(env.PERF_ACTIVE_WIDGET_TYPES ?? '')).toEqual([
       'relative',

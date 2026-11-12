@@ -9,13 +9,21 @@ export interface NumericSampleStats {
   p99: number;
 }
 
+export const PERF_RENDERER_LOG_PREFIX = '[PerfRenderer:JSON] ';
+
 export interface RendererPerfSample {
   schemaVersion: 1;
   timestamp: string;
   runId: string;
   scenario: string;
+  /** Preload process.pid may be namespace-local; use osPid for OS attribution. */
   pid: number;
+  osPid?: number;
+  webContentsId?: number;
+  windowId?: number;
   route: string;
+  /** DOM wrapper IDs at report time; does not prove visible pixels or active input. */
+  widgetDomIds?: string[];
   visibilityState: DocumentVisibilityState;
   intervalMs: number;
   frameTimeMs: NumericSampleStats;
