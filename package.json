@@ -39,7 +39,7 @@
     "site:build": "vite build --config site/vite.config.mts site",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest --coverage",
+    "test": "npm run test:perf-capture && vitest --coverage",
     "perf:run": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/run.ts",
     "perf:analyze": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/analyze.ts",
     "ensure-tracks": "npx tsx ./tools/ensure-tracks.ts",
@@ -50,7 +50,8 @@
     "prepare": "husky",
     "fetch-lmu-rank-art": "npx tsx ./tools/fetch-lmu-rank-art.ts",
     "build-lmu-sprite": "npm run fetch-lmu-rank-art && electron ./tools/build-lmu-sprite.cjs",
-    "build-lmu-manufacturer-sprite": "electron ./tools/build-lmu-manufacturer-sprite.cjs"
+    "build-lmu-manufacturer-sprite": "electron ./tools/build-lmu-manufacturer-sprite.cjs",
+    "test:perf-capture": "node --test \"tools/perf/capture/*.test.mjs\""
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
