@@ -64,7 +64,7 @@ try {
   );
   const windowState = () =>
     main.evaluate(
-      `(()=>{const w=${gantryWindow};return w?{id:w.id,pid:w.webContents.getOSProcessId(),visible:w.isVisible(),destroyed:w.isDestroyed(),bounds:w.getBounds(),backgroundThrottling:w.webContents.getLastWebPreferences().backgroundThrottling}:null})()`
+      `(()=>{const w=${gantryWindow};return w?{id:w.id,pid:w.webContents.getOSProcessId(),visible:w.isVisible(),destroyed:w.isDestroyed(),bounds:w.getBounds(),backgroundThrottling:w.webContents.getBackgroundThrottling()}:null})()`
     );
   const created = await poll(async () => {
     const value = await windowState();
