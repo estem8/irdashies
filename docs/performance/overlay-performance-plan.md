@@ -130,6 +130,16 @@ G work and reusable delivery checks are not additional queue items.
       tests, TypeScript/ESLint, static pixel comparison, formatting/whitespace.
       Physical high-refresh/DPI and motion acceptance remain open. Next: F-8;
       do not repeat this unchanged small candidate for a global CPU verdict.
+- [x] **REV-1 — resolve the two branch review findings.**
+      Restored `perfUserData` as the first main-entry import, satisfying the
+      startup isolation guard. Analyzer CPU aggregation now reuses only process
+      lifetime groups observed in the selected window; warmup/cooldown-only
+      processes no longer become fabricated zero-valued rows. A regression test
+      covers both out-of-window processes and reused PID lifetimes; existing
+      CPU interval/legacy-data checks remain intact. Checks: 36 focused tests,
+      then all 292 tests in the review's 32-file set; TypeScript/ESLint, formatting
+      and whitespace.
+      No performance captures were repeated. Next campaign task remains F-8.
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
       points to larger downstream DOM/compositor costs, but predates these

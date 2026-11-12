@@ -748,24 +748,14 @@ export function summarizeCapture(
     const sampleEnd = Date.parse(sample.timestamp);
     for (const process of sample.processes ?? []) {
       const groupKey = `${process.pid}:${process.creationTime ?? 'legacy'}`;
-      let group = processGroups.get(groupKey);
-      if (!group) {
-        group = {
-          pid: process.pid,
-          creationTime: process.creationTime,
-          type: process.type,
-          name: process.name ?? process.type,
-          samples: [],
-          cpuTimeMs: 0,
-          cpuSampledIntervalMs: 0,
-          cpuSampleCount: 0,
-        };
-        processGroups.set(groupKey, group);
-      }
+      // Only lifetimes observed in the selected window belong in its report.
+      // Scanning the complete capture for CPU intervals must not invent rows
+      // with zero memory/CPU for processes seen only during warmup or cooldown.
+      const group = processGroups.get(groupKey);
+      if (!group) continue;
       const cpuIntervalMs = process.cpuSampleIntervalMs;
       const cpuTimeMs = process.cpuTimeMs;
       if (
-        group &&
         Number.isFinite(sampleEnd) &&
         typeof cpuIntervalMs === 'number' &&
         Number.isFinite(cpuIntervalMs) &&

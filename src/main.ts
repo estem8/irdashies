@@ -1,5 +1,5 @@
-import { setupWindowVisibilityBridge } from './app/bridge/windowVisibilityBridge';
 import './app/perfUserData';
+import { setupWindowVisibilityBridge } from './app/bridge/windowVisibilityBridge';
 import { setupStorageStatusBridge } from './app/bridge/storageStatusBridge';
 import { setupWidgetPreviewBridge } from './app/bridge/widgetPreviewBridge';
 import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';

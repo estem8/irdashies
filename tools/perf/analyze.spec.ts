@@ -408,6 +408,39 @@ describe('performance analysis', () => {
     );
   });
 
+  it('excludes warmup/cooldown-only processes and out-of-window PID lifetimes', () => {
+    const process = (pid: number, creationTime: number) => ({
+      pid,
+      creationTime,
+      type: 'Tab',
+      cpuPercent: 10,
+      memoryMB: 123,
+      cpuTimeMs: 50,
+      cpuSampleIntervalMs: 5000,
+    });
+    const samples = [
+      {
+        ...mainSample(10, 100, 100, 100, 5000),
+        processes: [process(10, 1), process(20, 1)],
+      },
+      { ...mainSample(70, 100, 100, 100, 5000), processes: [process(10, 2)] },
+      {
+        ...mainSample(90, 100, 100, 100, 5000),
+        processes: [process(10, 3), process(30, 1)],
+      },
+    ];
+    const summary = summarizeCapture(capture(samples), 60, { endSeconds: 80 });
+    expect(summary.processes).toHaveLength(1);
+    expect(summary.processes[0]).toMatchObject({
+      pid: 10,
+      creationTime: 2,
+      averageMemoryMB: 123,
+      averageCpuPercent: 10,
+      sampledCpuTimeMs: 50,
+      cpuSampleCount: 1,
+    });
+  });
+
   it('keeps a valid zero CPU delta distinct from unsupported legacy data', () => {
     const sample = {
       ...mainSample(40, 100),
