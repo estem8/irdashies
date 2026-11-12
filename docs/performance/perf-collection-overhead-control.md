@@ -24,8 +24,8 @@ source in the active `perf` worktree was not changed.
 Prepared runtime protocol (not yet executed):
 
 ```sh
-node tools/perf/capture/long-matrix.mjs collection-overhead-r3 overhead
-node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r3
+node tools/perf/capture/long-matrix.mjs collection-overhead-r4 overhead
+node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r4
 ```
 
 The controller uses candidate sources throughout, orders collection on/off/off/on,
@@ -72,3 +72,10 @@ node tools/perf/capture/long-matrix.mjs overhead-readiness-r1 overhead smoke
 This runs on/off for 90 seconds each. It tests initialization and external
 sampling, not overhead acceptance; the full report intentionally requires all
 four 420-second phases and cannot accept this short run.
+
+Readiness r1 completed on/off with exit 0 and candidate restoration. Both modes
+have four valid external CPU/workload samples at 1549x1014; snapshot versions
+advance in both. Main/renderer reporting is present on and absent off. See
+[readiness evidence](2026-11-12-collection-overhead-readiness.json). The full R4
+matrix is next. Keep HEAD fixed during the matrix: every phase records its
+source revision, so even documentation commits mid-matrix would break matching.

@@ -1,0 +1,72 @@
+{
+  "scope": "Two short 90-second initialization checks only; not an overhead estimate",
+  "root": "perf-results/overhead-readiness-r1",
+  "results": [
+    {
+      "sequence": "on1",
+      "collection": "on",
+      "exitCode": 0,
+      "samples": 4,
+      "first": {
+        "track-state.snapshot": {
+          "version": 1261,
+          "trackSlots": 72
+        },
+        "driver-controls.snapshot": {
+          "version": 2910
+        },
+        "radar.snapshot": {
+          "version": 1233
+        }
+      },
+      "last": {
+        "track-state.snapshot": {
+          "version": 2013,
+          "trackSlots": 72
+        },
+        "driver-controls.snapshot": {
+          "version": 4696
+        },
+        "radar.snapshot": {
+          "version": 1984
+        }
+      },
+      "mainReportRows": 18,
+      "rendererReportRows": 17,
+      "source": "dca90718b1a9cc06627c716e76629ff8b6ea1a76"
+    },
+    {
+      "sequence": "off1",
+      "collection": "off",
+      "exitCode": 0,
+      "samples": 4,
+      "first": {
+        "track-state.snapshot": {
+          "version": 1257,
+          "trackSlots": 72
+        },
+        "driver-controls.snapshot": {
+          "version": 2900
+        },
+        "radar.snapshot": {
+          "version": 1228
+        }
+      },
+      "last": {
+        "track-state.snapshot": {
+          "version": 2008,
+          "trackSlots": 72
+        },
+        "driver-controls.snapshot": {
+          "version": 4686
+        },
+        "radar.snapshot": {
+          "version": 1979
+        }
+      },
+      "mainReportRows": 0,
+      "rendererReportRows": 0,
+      "source": "dca90718b1a9cc06627c716e76629ff8b6ea1a76"
+    }
+  ]
+}

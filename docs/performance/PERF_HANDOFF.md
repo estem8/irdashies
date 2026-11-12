@@ -11,6 +11,16 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `overhead-readiness-r1 overhead smoke` completed both on/off 90-second phases,
+  exit 0 with candidate restored. Each state has four valid external CPU and
+  existing-store snapshot samples at 1549x1014/DPR1; runtime inventories match.
+  On emitted 18 main/17 renderer report rows; off emitted zero of both while
+  snapshots continued advancing. See `2026-11-12-collection-overhead-readiness.json`.
+  This is readiness, not an overhead estimate. Next full matrix:
+  `node tools/perf/capture/long-matrix.mjs collection-overhead-r4 overhead`.
+  Keep HEAD/app/capture source fixed throughout its four phases. Do not commit
+  on perf until it finishes; prepare unused docs/tools without committing.
+
 - `collection-overhead-r3 overhead` failed before measurement: an early
   existing-store snapshot check found Driver Controls not ready. Child shutdown
   and candidate restoration are verified; no overhead result. The snapshot
