@@ -45,17 +45,18 @@ if (process.argv[3] && !smoke && !probe && !memory && !overhead && !identity)
   throw new Error(
     'Expected optional smoke, probe, memory, overhead or identity mode'
   );
-const durationSeconds = gantryDiagnostic
-  ? 300
-  : overheadSmoke
-    ? 90
-    : memory
-      ? 1380
-      : probe || identity
-        ? 180
-        : smoke
-          ? 90
-          : 420;
+const durationSeconds =
+  gantryDiagnostic || lapTimesDiagnostic
+    ? 300
+    : overheadSmoke
+      ? 90
+      : memory
+        ? 1380
+        : probe || identity
+          ? 180
+          : smoke
+            ? 90
+            : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
