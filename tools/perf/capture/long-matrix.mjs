@@ -345,11 +345,24 @@ try {
                   Number(
                     text.match(new RegExp(`^${key}:\\s+(\\d+)`, 'm'))?.[1] ?? 0
                   );
+                const optionalMiB = (key) => {
+                  const match = text.match(
+                    new RegExp(`^${key}:\\s+(\\d+)`, 'm')
+                  );
+                  return match ? Number(match[1]) / 1024 : undefined;
+                };
                 return {
                   pid: p.pid,
                   type: p.type,
                   creationTime: p.creationTime,
                   rssMB: kb('Rss') / 1024,
+                  privateCleanMiB: optionalMiB('Private_Clean'),
+                  privateDirtyMiB: optionalMiB('Private_Dirty'),
+                  privateHugetlbMiB: optionalMiB('Private_Hugetlb'),
+                  anonymousMiB: optionalMiB('Anonymous'),
+                  pssAnonMiB: optionalMiB('Pss_Anon'),
+                  pssFileMiB: optionalMiB('Pss_File'),
+                  pssShmemMiB: optionalMiB('Pss_Shmem'),
                   privateMB:
                     (kb('Private_Clean') +
                       kb('Private_Dirty') +

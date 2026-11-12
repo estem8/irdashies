@@ -68,10 +68,13 @@ the whole stage passed its exit criterion or that game FPS improved.
 
 Next work, in priority order:
 
-1. Attribute the overlay/main private-memory growth localized by the
-   [repeated memory diagnostic](2026-11-12-settings-memory.md). Two 20-minute
-   post-GC intervals are complete; Settings listeners/DOM do not accumulate,
-   but stable V8 heap does not resolve native/browser memory growth.
+1. Reconcile the private-memory metrics and finish ownership attribution.
+   The [repeated memory diagnostic](2026-11-12-settings-memory.md) localized
+   main/overlay growth. A [completed light MemoryInfra diagnostic](2026-11-12-native-memory.md)
+   now shows much smaller Chromium private-footprint/live-allocation changes
+   than Linux private growth. Preserve this distinction; separate clean/dirty/
+   anonymous/file PSS sampling is prepared. Settings listeners/DOM do not
+   accumulate, and no unbounded native leak has been established.
 2. Complete remaining hidden-drawing coverage. The
    [Linux native-hide probe](2026-11-12-hidden-draw-audit.md) observed zero
    Map/Input/Radar work while hidden and repaint after show, so no Radar change

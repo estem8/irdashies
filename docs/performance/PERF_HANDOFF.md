@@ -16,10 +16,16 @@ claim game FPS or Windows acceptance.
   retain main malloc/V8 and renderer malloc/PartitionAlloc/V8 aggregate sizes;
   main PartitionAlloc is empty (not zero). Traces are 1.56–2.07 MB. See
   `2026-11-12-memory-infra-light-readiness.json` for bounded provider evidence.
-- `native-memory-r4 native 1009` is running with this light configuration
-  (controller PID 50922, terminal session 33883). Observe this handle or the
-  authoritative result files before launching anything else. No long result
-  is claimed yet. Do not run builds/tests or heavy analysis while it captures.
+- `native-memory-r4 native 1009` completed 1380 seconds, exit 0, marker present,
+  candidate restored, five loss-free light dumps spanning 120–1320 seconds.
+  See `2026-11-12-native-memory.{md,json}`. Main/overlay/Settings Linux private
+  endpoint changes are +59.391/+37.719/+18.676 MiB; Chromium private footprint
+  changes +16.926/+14.523/-1.488 MiB. Main malloc live allocated objects grow
+  5.650 MiB and post-GC V8 3.748 MiB. These metrics are not equivalent; the run
+  does not establish a leak or account for all private growth. Next captures
+  persist separate clean/dirty/anonymous/file PSS fields to investigate the gap.
+  Parser/native report and overhead/source-transform tests pass; no capture is
+  active at this checkpoint. Observe authoritative handles/files before launch.
 
 - `native-memory-r3 native 1009` failed at the 720-second dump because CDP
   reported trace data loss. Only the 120/420 checkpoints are valid; do not

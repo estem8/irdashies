@@ -2,11 +2,19 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
-import { summarizeMemoryDump } from './memoryDumpSummary.mjs';
+import {
+  summarizeMemoryDump,
+  memoryScalarBytes,
+} from './memoryDumpSummary.mjs';
 
 // Stable aggregates only: opaque resource IDs make unbounded, noisy reports.
 // These nodes overlap; preserve each counter without summing parents/children.
 const allocatorNames = new Set([
+  'discardable',
+  'parkable_images',
+  'parkable_strings',
+  'shared_memory',
+  'sqlite',
   'malloc',
   'malloc/allocated_objects',
   'malloc/metadata_fragmentation_caches',
@@ -59,6 +67,11 @@ const privateSamples = await read('memory/linux-private-memory.json');
 const points = [];
 const artifacts = {};
 for (const checkpoint of checkpoints) {
+  assert.deepEqual(
+    checkpoint.overlayViewport,
+    manifest.expectedViewport,
+    'Diagnostic viewport changed'
+  );
   const file = 'memory/' + checkpoint.label + '.memory-infra.trace.json';
   const raw = await readFile(resolve(root, file));
   artifacts[file] = createHash('sha256').update(raw).digest('hex');
@@ -77,14 +90,31 @@ for (const checkpoint of checkpoints) {
     assert.ok(pid, 'Missing ' + role + ' PID');
     const process = processes.find((p) => p.pid === pid);
     assert.ok(process, 'Missing ' + role + ' allocator providers');
-    const nearest = privateSamples
-      .filter((s) => s.processes.some((p) => p.pid === pid))
-      .reduce((best, sample) =>
-        Math.abs(Date.parse(sample.timestamp) - Date.parse(checkpoint.at)) <
-        Math.abs(Date.parse(best.timestamp) - Date.parse(checkpoint.at))
-          ? sample
-          : best
+    for (const name of role === 'main'
+      ? ['malloc', 'v8']
+      : ['malloc', 'partition_alloc', 'v8']) {
+      assert.ok(
+        Number.isSafeInteger(process.allocators[name]?.size),
+        'Missing required ' + role + ' ' + name + ' size'
       );
+    }
+    assert.ok(
+      Number.isSafeInteger(process.allocators.malloc?.allocated_objects_size),
+      'Missing malloc live allocation counter'
+    );
+    const validPrivateSamples = privateSamples.filter((s) =>
+      s.processes.some((p) => p.pid === pid && Number.isFinite(p.privateMB))
+    );
+    assert.ok(
+      validPrivateSamples.length,
+      'No valid private-memory sample for ' + role
+    );
+    const nearest = validPrivateSamples.reduce((best, sample) =>
+      Math.abs(Date.parse(sample.timestamp) - Date.parse(checkpoint.at)) <
+      Math.abs(Date.parse(best.timestamp) - Date.parse(checkpoint.at))
+        ? sample
+        : best
+    );
     const deltaSeconds =
       Math.abs(Date.parse(nearest.timestamp) - Date.parse(checkpoint.at)) /
       1000;
@@ -97,7 +127,17 @@ for (const checkpoint of checkpoints) {
     );
     selected[role] = {
       pid,
+      creationTime: checkpoint.processes.find((p) => p.pid === pid)
+        ?.creationTime,
       processTotals: process.processTotals,
+      nativePrivateFootprintBytes:
+        process.processTotals.private_footprint_bytes === undefined
+          ? null
+          : memoryScalarBytes({
+              type: 'scalar',
+              units: 'bytes',
+              value: process.processTotals.private_footprint_bytes,
+            }),
       privateMiB: nearest.processes.find((p) => p.pid === pid).privateMB,
       privateSampleOffsetSeconds: deltaSeconds,
       postGcHeap:
@@ -122,7 +162,23 @@ const changes = {};
 for (const role of ['main', 'overlay', 'settings']) {
   const first = points[0].roles[role],
     last = points.at(-1).roles[role];
-  assert.equal(first.pid, last.pid, 'PID changed during diagnostic');
+  assert.ok(Number.isFinite(first.creationTime), 'Missing process lifetime');
+  for (const point of points) {
+    assert.equal(
+      point.roles[role].pid,
+      first.pid,
+      'PID changed during diagnostic'
+    );
+    assert.equal(
+      point.roles[role].creationTime,
+      first.creationTime,
+      'Process lifetime changed during diagnostic'
+    );
+    assert.ok(
+      Number.isFinite(point.roles[role].postGcHeap?.usedSize),
+      'Missing post-GC heap'
+    );
+  }
   const counters = {};
   for (const name of new Set([
     ...Object.keys(first.allocators),
@@ -146,6 +202,11 @@ for (const role of ['main', 'overlay', 'settings']) {
   }
   changes[role] = {
     privateDeltaMiB: last.privateMiB - first.privateMiB,
+    nativePrivateFootprintDeltaBytes:
+      Number.isSafeInteger(first.nativePrivateFootprintBytes) &&
+      Number.isSafeInteger(last.nativePrivateFootprintBytes)
+        ? last.nativePrivateFootprintBytes - first.nativePrivateFootprintBytes
+        : null,
     postGcHeapDeltaBytes: last.postGcHeap.usedSize - first.postGcHeap.usedSize,
     counters,
   };
