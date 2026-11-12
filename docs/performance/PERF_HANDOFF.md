@@ -24,13 +24,12 @@ game FPS, Windows acceptance, zero collection overhead, or a resolved leak.
 
 ## Consolidated branches
 
-The collection-overhead branch's work is represented by the current `perf`
-diagnostics and their completed reports. The R5 checkpoint artifacts are now
-also preserved here: `2026-11-12-overhead-r5-partial.json` records the original
-three successful phases and failed on2 attempt; the recovered comparison and
-its long-gap caveat are in `2026-11-12-collection-overhead.md`. Files ending
-in `.txt` under `prepared/` are archived drafts, not runnable tools; see its
-README. Side branch refs remain backups and were not deleted.
+Collection-overhead and direct Map diagnostic work are represented by the
+current `perf` diagnostics and completed reports. The R5 partial JSON remains
+as historical measured evidence; the recovered comparison and its long-gap
+caveat are in `2026-11-12-collection-overhead.md`. Unverified `.txt` drafts
+and stale retry metadata were removed after the experiments completed. Only
+`perf` remains as a branch; no side-branch refs remain.
 
 ## Latest execution status
 
@@ -82,8 +81,8 @@ README. Side branch refs remain backups and were not deleted.
   is now preserved in `2026-11-12-overhead-r5-partial.json`; on2 was later
   retried successfully, as documented in
   `2026-11-12-collection-overhead.md`. The original source checkpoint was
-  `2e5354cc`. Recovery instructions and an unverified controller draft remain
-  in `prepared/`; do not treat the `.txt` draft as the executed controller.
+  `2e5354cc`. The recovery details and inconclusive result remain in the report;
+  the unverified controller draft and stale observer metadata were removed.
 
 - `collection-overhead-r4 overhead` is terminal: on1 completed 420 seconds;
   off1 was interrupted after about 225 seconds of observed playback when wall
@@ -445,6 +444,5 @@ collection/memory controls and local CI evidence. Kept unresolved exit gates
 and conditional work explicit. Window-mode readiness captures have identical
 geometry but different mean input tick rates (display 56.22 vs widget 53.23 Hz
 in 60–170 seconds), so do not treat them as a matched CPU acceptance pair.
-No background capture/check is active. The branch histories and checkpoint files
-are consolidated on `perf`; the side branch refs remain intact as backups and
-were not deleted.
+No background capture/check is active. Both side-branch refs and the stale
+worktree record were removed; measured R5 evidence remains on `perf`.
