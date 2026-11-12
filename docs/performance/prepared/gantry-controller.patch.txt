@@ -1,0 +1,76 @@
+--- a/tools/perf/capture/long-matrix.mjs
++++ b/tools/perf/capture/long-matrix.mjs
+@@ -19,6 +19,8 @@
+ const overhead = process.argv[3] === 'overhead';
+ const identity = process.argv[3] === 'identity';
+ const overheadSmoke = overhead && process.argv[4] === 'smoke';
++const gantryDiagnostic=process.env.PERF_GANTRY_DIAGNOSTIC==='1';
++assert.ok(!gantryDiagnostic || probe,'Gantry diagnostic requires probe mode');
+ assert.ok(!process.argv[4] || overheadSmoke, 'Unexpected fourth argument');
+ const nativeMemoryDiagnostic =
+   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
+@@ -57,14 +59,13 @@
+ const sources = JSON.parse(
+   await readFile(resolve(sourceRoot, 'manifest.json'), 'utf8')
+ );
+-const seed = JSON.stringify(
+-  JSON.parse(
+-    await readFile(
+-      new URL('../fixtures/reconstructed-ten-widget.json', import.meta.url),
+-      'utf8'
+-    )
+-  )
+-);
++const seedDashboard=JSON.parse(await readFile(new URL('../fixtures/reconstructed-ten-widget.json',import.meta.url),'utf8'));
++if(gantryDiagnostic){
++ const gantry=seedDashboard.dashboards.default.widgets.find(w=>w.id==='gantry');
++ assert.ok(gantry,'Missing Gantry fixture configuration');
++ gantry.enabled=true;
++}
++const seed=JSON.stringify(seedDashboard);
+ const sourceScript = await readFile(new URL(import.meta.url), 'utf8');
+ await writeFile(resolve(out, 'controller.mjs'), sourceScript);
+ await writeFile(resolve(out, 'seed.json'), seed);
+@@ -186,6 +187,7 @@
+           sources,
+           seedSha256: hash(seed),
+           collection,
++          gantryDiagnostic,
+           overheadSmoke,
+           clock: { timebase: 'performance.now', maxWallDriftMs: 2000 },
+           mapIdentityDiagnostic: identity,
+@@ -196,7 +198,9 @@
+           node: process.version,
+           os: release(),
+           cpu: cpus()[0]?.model,
+-          instrumentation: identity
++          instrumentation: gantryDiagnostic
++            ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
++            : identity
+             ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
+             : overhead
+               ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+@@ -252,7 +256,9 @@
+           PERF_HEAP_PROFILE_PATH: '',
+           PERF_TAPE_CONTROLS_HIDDEN: '1',
+           PERF_RUN_ID: runId,
+-          PERF_SCENARIO: identity
++          PERF_SCENARIO: gantryDiagnostic
++            ? 'gantry-lifecycle-diagnostic'
++            : identity
+             ? 'map-identity-diagnostic'
+             : overhead
+               ? 'metrics-collection-overhead'
+@@ -266,9 +272,11 @@
+           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
+           PERF_LOG_PATH: resolve(folder, 'metrics.log'),
+           PERF_REPLAY_VISIBLE_WIDGETS: '1',
+-          PERF_WIDGET_TYPES: ids.join(','),
++          // Respect saved toggles during this lifecycle diagnostic only.
++          PERF_WIDGET_TYPES: gantryDiagnostic ? '' : ids.join(','),
+           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
+           PERF_SCENARIO_METADATA: JSON.stringify({
++            gantryDiagnostic,
+             mapIdentityDiagnostic: identity,
+             metricsCollectionOverhead: overhead,
+             collection,

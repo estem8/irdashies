@@ -1,0 +1,13 @@
+{
+  "scope": "Only missing on2 is being retried; no complete overhead verdict yet",
+  "root": "perf-results/collection-overhead-r5-on2-retry",
+  "controllerPid": 269437,
+  "terminalSession": 71538,
+  "source": "2e5354cc",
+  "normalViewport": {
+    "width": 1549,
+    "height": 1014,
+    "dpr": 1
+  },
+  "rule": "Keep perf HEAD/app/controller fixed until this attempt is terminal. Original failure and successful first three phases are preserved."
+}

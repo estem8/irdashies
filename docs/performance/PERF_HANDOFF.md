@@ -1,4 +1,4 @@
-# Perf checkpoint — 2026-11-12
+# Perf handoff — 2026-11-12
 
 Goal: finish `perf`. **Not complete.** User requested a GitHub checkpoint before
 usage limits. R3 completed all four 420-second runs with exit 0. See the
@@ -9,19 +9,28 @@ Candidate source is restored (the six measured files match HEAD).
 Windows/iRacing access is unavailable, confirmed by the user; do not
 claim game FPS or Windows acceptance.
 
-## Current state after Gantry verification
+## Current state
 
-No capture is active. Published source `de1adbfd` completed Gantry R4 with
-exit 0 and restored candidate. During 180 seconds native-hidden, lap crossings
-increased 0→80 across 40 cars; history survived show, and disabling the widget
-destroyed its window. See [result](2026-11-12-gantry-hidden.md).
-Lap Trace native hide/show also passed after the recorder sentinel fix; see
-[its result](2026-11-12-laptrace-hidden.md). Remaining acceptance limitations:
-Windows/iRacing unavailable, GitHub CI dispatch rejected HTTP 422, collection
-overhead quantitatively inconclusive, and full normal matrix coverage missing
-radio/lap-times publication. Remaining Linux plan scope includes workload
-coverage/lifecycle transitions and display-versus-widget topology. Historical
-checkpoints below describe their own time, not the present running state.
+No capture is active. R3 completed all four 420-second normal-operation runs;
+CPU was lower in both pairs, but the full acceptance result remains inconclusive.
+Gantry hidden-history and Lap Trace hide/show checks passed; later diagnostics
+also verified feature-enabled lap-time delivery and display/widget geometry.
+These checks do not turn the original R3 matrix into a pass.
+
+Remaining gates: active-radio and real simulator lifecycle coverage, memory
+allocation ownership, packaged Windows/iRacing presentation, and current-head
+remote CI. GitHub rejected the latest CI dispatch with HTTP 422. Do not claim
+game FPS, Windows acceptance, zero collection overhead, or a resolved leak.
+
+## Consolidated branches
+
+The collection-overhead branch's work is represented by the current `perf`
+diagnostics and their completed reports. The R5 checkpoint artifacts are now
+also preserved here: `2026-11-12-overhead-r5-partial.json` records the original
+three successful phases and failed on2 attempt; the recovered comparison and
+its long-gap caveat are in `2026-11-12-collection-overhead.md`. Files ending
+in `.txt` under `prepared/` are archived drafts, not runnable tools; see its
+README. Side branch refs remain backups and were not deleted.
 
 ## Latest execution status
 
@@ -55,26 +64,26 @@ checkpoints below describe their own time, not the present running state.
   TypeScript and targeted ESLint pass, including a renderer loading after 6s.
   R2 then completed under this protocol; r1 a1 remains separate partial evidence.
 
-- Historical checkpoint: on2 retry completed 420 seconds, exit 0 and candidate restoration.
-  All four successful measurements are assembled in ignored
-  `collection-overhead-r5-recovered`, with original failed startup preserved.
-  Strict source/seed/viewport/runtime/cadence and PID checks pass. CPU overhead
-  is inconclusive: on-minus-off +3.314% / -4.141%, on/on variation 40.663 ms/s;
-  UTC recovery gap 8388.267 seconds is an additional confounder. See
-  `2026-11-12-collection-overhead.{md,json}`. Do not claim zero overhead.
+- Historical checkpoint: the on2 retry completed 420 seconds, exit 0, and
+  candidate restoration. All four successful measurements are assembled in
+  ignored `collection-overhead-r5-recovered`, with the original failed startup
+  preserved. Strict source/seed/viewport/runtime/cadence and PID checks pass.
+  CPU overhead is inconclusive: on-minus-off +3.314% / -4.141%, on/on variation
+  40.663 ms/s; UTC recovery gap 8388.267 seconds is an additional confounder.
+  See `2026-11-12-collection-overhead.{md,json}`. Do not claim zero overhead.
   New smaps controls show mainly dirty/anonymous changes and larger on-mode
-  growth; no retained leak is established. See memory-composition report.
-  No capture is active. Next: direct Map identity diagnostic, then exercised
-  Lap Trace hidden and Gantry probes. CI remains deferred for the user's limits.
+  growth; no retained leak is established. Map identity, Lap Trace hide/show,
+  and Gantry probes completed later; see their reports below. The CI dispatch
+  was later rejected with HTTP 422; no current-head remote CI result exists.
 
-- Historical checkpoint: R5 is terminal. on1/off1/off2 each completed 420 seconds with exit 0;
-  on2 failed topology preflight (cause not yet diagnosed). Controller exit 1,
-  child termination verified and candidate restored. No full overhead result.
-  The first three phases' scalar CPU/private-memory evidence is preserved in
-  `2026-11-12-overhead-r5-partial.json` on the wip/perf-r5-checkpoint branch.
-  Current source remains 2e5354cc. No capture is active. Preserve the three
-  successful phases; inspect on2 startup diagnostics before deciding how to
-  collect the missing last leg. User requested immediate GitHub preservation.
+- Historical checkpoint: original R5 on1/off1/off2 each completed 420 seconds;
+  on2 failed topology preflight, with child termination and candidate
+  restoration verified. This attempt alone was incomplete. Its scalar evidence
+  is now preserved in `2026-11-12-overhead-r5-partial.json`; on2 was later
+  retried successfully, as documented in
+  `2026-11-12-collection-overhead.md`. The original source checkpoint was
+  `2e5354cc`. Recovery instructions and an unverified controller draft remain
+  in `prepared/`; do not treat the `.txt` draft as the executed controller.
 
 - `collection-overhead-r4 overhead` is terminal: on1 completed 420 seconds;
   off1 was interrupted after about 225 seconds of observed playback when wall
@@ -82,11 +91,12 @@ checkpoints below describe their own time, not the present running state.
   deadline; child termination and candidate restoration are verified. The user
   confirmed changing the clock. This is not evidence of an app shutdown hang,
   and the incomplete matrix is not an overhead result.
-- Capture deadlines/elapsed CPU intervals now use performance.now; a >2-second
-  wall/monotonic divergence rejects a capture explicitly. Unit cases cover
-  forward/backward clock changes. Temporary `systemd-inhibit --what=idle:sleep`
-  acquisition succeeded; no system configuration changed. Next full run is R5
-  under that inhibitor. Keep HEAD fixed across all four phases.
+- Capture deadlines and elapsed CPU intervals now use `performance.now`; a
+  greater-than-two-second wall/monotonic divergence rejects a capture explicitly.
+  Unit cases cover forward/backward clock changes. Temporary
+  `systemd-inhibit --what=idle:sleep` acquisition succeeded; no system
+  configuration changed. R5 later completed with a separately retried on2;
+  retain the recovery-gap qualification in the report above.
 - Prepared but unexecuted: lifecycle-probe hidden-laptrace mode injects a
   matching synthetic reference only into the isolated renderer store to exercise
   plot/brake-cue drawing before/hide/show. Requires runtime verification after
@@ -100,10 +110,9 @@ checkpoints below describe their own time, not the present running state.
   existing-store snapshot samples at 1549x1014/DPR1; runtime inventories match.
   On emitted 18 main/17 renderer report rows; off emitted zero of both while
   snapshots continued advancing. See `2026-11-12-collection-overhead-readiness.json`.
-  This is readiness, not an overhead estimate. Next full matrix:
-  `node tools/perf/capture/long-matrix.mjs collection-overhead-r4 overhead`.
-  Keep HEAD/app/capture source fixed throughout its four phases. Do not commit
-  on perf until it finishes; prepare unused docs/tools without committing.
+  This was readiness, not an overhead estimate. The later R5 comparison is
+  summarized above; do not rerun the matrix solely to replace its inconclusive
+  result.
 
 - `collection-overhead-r3 overhead` failed before measurement: an early
   existing-store snapshot check found Driver Controls not ready. Child shutdown
@@ -436,5 +445,6 @@ collection/memory controls and local CI evidence. Kept unresolved exit gates
 and conditional work explicit. Window-mode readiness captures have identical
 geometry but different mean input tick rates (display 56.22 vs widget 53.23 Hz
 in 60–170 seconds), so do not treat them as a matched CPU acceptance pair.
-No background capture/check is active. Source checkpoint before this doc update
-is 3a4fa56a; all work is on perf and preserved in origin.
+No background capture/check is active. The two side-branch histories are
+consolidated on local `perf`; `origin/perf` is not updated. Side refs remain
+intact as backups, and no branch was deleted.

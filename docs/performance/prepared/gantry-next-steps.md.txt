@@ -1,0 +1,19 @@
+# Gantry diagnostic preparation (not applied or executed)
+
+Wait until collection-overhead-r5 is terminal. Keep perf HEAD/app/controller
+fixed during its four phases. Then review/apply gantry-controller.patch and
+copy gantry-probe.mjs into tools/perf/capture. Format/lint/syntax-check both.
+Run in a temporary idle/sleep inhibitor after Map identity and Lap Trace probes.
+
+The diagnostic enables Gantry in a separate seed and clears the benchmark's
+PERF_WIDGET_TYPES allowlist only for the explicit Gantry probe mode. Otherwise
+createPerfDashboard would override runtime saved enable/disable toggles.
+Normal captures retain their original seed and forced widget types.
+
+Observe the actual Gantry store while the native window is closed to tray:
+track versions/time advance, history version/crossing count advances, session
+names remain loaded, native ID/PID stays fixed, show retains history, disabling
+the widget destroys its window. No new telemetry subscriptions are added by
+the observer. A hidden interval with no new crossings is unexercised, not a pass.
+This is not CPU acceptance, full incident coverage or Windows presentation.
+Runtime checks, controller shutdown and candidate restoration are still needed.
