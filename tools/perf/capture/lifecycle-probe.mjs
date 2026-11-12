@@ -67,6 +67,11 @@ try {
     const value = await overlay.evaluate(
       `(async()=>({status:await window.tapeReplayBridge.getStatus(),visibility:document.visibilityState,updates:window.__perfLifecycle.updates,track:window.__perfLifecycle.track,events:window.__perfLifecycle.events,draws:{...window.__perfLifecycle.draws},rootTextLength:document.getElementById('app')?.textContent?.length??0}))()`
     );
+    if (lapTraceProbe) {
+      value.lapTrace = await overlay.evaluate(
+        `(async()=>{const {useLapTraceStore}=await import('/src/frontend/context/LapTraceStore/LapTraceStore.tsx');const s=useLapTraceStore.getState();return {trackId:s.trackId,carPath:s.carPath,trackLengthM:s.trackLengthM,referencePresent:!!s.referenceLap,referenceLabel:s.referenceLap?.source?.label??null,referenceError:s.referenceError,activeLapPresent:!!s.activeLap,widgetText:document.getElementById('app')?.textContent?.slice(-2000)}})()`
+      );
+    }
     value.window = await main.evaluate(
       `(()=>{const w=${windowExpression};return {visible:w.isVisible(),backgroundThrottling:w.webContents.getLastWebPreferences().backgroundThrottling}})()`
     );
