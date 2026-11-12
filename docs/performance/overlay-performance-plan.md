@@ -140,6 +140,88 @@ G work and reusable delivery checks are not additional queue items.
       then all 292 tests in the review's 32-file set; TypeScript/ESLint, formatting
       and whitespace.
       No performance captures were repeated. Next campaign task remains F-8.
+- [ ] **CLI-1 — reusable IBT replay CLI and bounded reporting.** User priority:
+      accept an IBT/tape path, launch isolated real overlays, support numeric
+      speed and lossless maximum-speed source processing, then emit source,
+      processing, delivery/drawing and resource observations. Preserve native
+      samples and disclose UI coalescing, missing signals and idle widget coverage.
+      Reuse existing tape, capture and analyzer helpers; do not create another
+      benchmark framework. Completion: parser/transport/report tests plus actual
+      CLI smoke runs and documentation. F-8 is deferred for this requested work.
+
+      **Paused at the user's request, 2026-11-13. Resume here.** Implementation
+      is saved in the working tree, not committed/pushed. The last completed code
+      checkpoint is `044b2f20`; this documentation checkpoint does not contain
+      the unfinished CLI code. Preserve the modified/untracked files on resume.
+
+      Implemented locally:
+      - `npm run perf -- replay <file.ibt|file.irdt> --speed 1|4|max`;
+        `--widgets all|saved|list`, `--profile`, `--output`, paused startup warmup,
+        playback wall-time limit and startup timeout. Default `all` means all 35
+        widget types in the bundled reconstructed profile, not proven coverage
+        of all widget behavior. A supplied profile defines its own selection.
+      - Public helpers under `tools/perf/replay/`: streaming IBT importer, input
+        adapter, options, report and isolated Electron runner; entrypoint
+        `tools/perf/cli.ts`. Tests: `ibt.spec.ts`, `cli.spec.ts`.
+      - Existing native tape transport now supports `max`, paused initial
+        seeding and opt-in frame-by-frame paced playback. Status includes
+        source-consumed/SDK-returned counts, maximum/frame-by-frame flags and
+        failure state. Numeric speeds preserve frames rather than silently
+        catching up by dropping them when processing falls behind.
+      - Bridge yields through `setImmediate` in the opt-in replay mode. The
+        final change also avoids a 25 Hz retry delay for unpaused frame-by-frame
+        input; paused startup retains a delay to avoid busy spinning.
+      - Runner uses existing CDP/termination helpers, copies an isolated config,
+        starts visible Electron overlays, emits JSON/Markdown reports and a
+        readiness screenshot, and closes inspectors before awaiting shutdown.
+        Reports distinguish periodic whole-run observations from playback CPU
+        endpoints, source skipping, and unproven wrapper/activity coverage.
+      - `tools/telemetry-replay/tape.ts` constructor parameter properties were
+        replaced by explicit fields so Node's built-in TS stripping can import
+        it; `npm run perf -- --help` works without tsx or a separate build.
+
+      Verification completed:
+      - Local Linux native addon compiled successfully into ignored
+        `build/Release/irsdk_tape_node.node`. Native tests cover lossless max,
+        paced catch-up and paused seed/resume, alongside existing safety tests.
+      - Latest targeted run: **79 tests across six files passed**, including
+        replay CLI, native tape, both SDK bridge suites and replay validator.
+        Log: `/tmp/replay-cli-final-tests.log`.
+      - TypeScript passed. **ESLint fails with five errors**; see
+        `/tmp/replay-cli-final-lint.log`: non-null assertions in `ibt.ts` and
+        `runner.ts`, useless initial assignment in `input.ts`, and throw from
+        runner `finally`. These have not yet been fixed.
+      - Earlier-candidate real Electron runs completed on an SDK-compatible IBT
+        fixture made from the recorded race tape: `perf-results/cli-ibt-max-smoke/`
+        (35 profile widgets, 239 measured SDK frames + one initial seed, zero
+        source supersession) and `perf-results/cli-ibt-realtime-smoke/` (10 saved
+        widgets at 1x, 239 + one seed, zero supersession). Realtime reports
+        observed Map/Input/Radar draws. The max run had no observed named draw
+        measures; this must not be presented as full UI activity coverage.
+        Fixture: `/tmp/perf-cli-smoke.ibt`; generator:
+        `/tmp/make-ibt-cli-fixture.mjs`, source `perf-results/ai-race-10min.irdt`.
+        No user-recorded original IBT was available; disclose that limitation.
+      - These smoke runs predate the final paced frame-by-frame/bridge changes;
+        **do not claim the final implementation has completed smoke validation**.
+
+      Remaining work, in order:
+      1. Fix the five lint errors without masking cleanup failures or replacing
+         unknown observations with zeros. Rerun the appropriate checks.
+      2. Finish readiness validation: require a complete topology marker, keep
+         DOM-wrapper observation distinct from actual rendering, and test
+         cancellation/startup failure cleanup. Audit owned debugger verification
+         and process termination, particularly the untested Windows fallback.
+      3. Run final bounded CLI smokes at 1x, 4x and max, with the fresh native
+         addon; exercise `--limit-seconds` and existing `.irdt` input too. Verify
+         frame counters, report creation, no orphan processes, temporary tape
+         cleanup and unchanged normal app profile. Do not launch long matrices.
+      4. Document usage/public helper entrypoints, source vs wall-time semantics,
+         all-profile widget coverage, IBT signal/event limitations, periodic
+         metric scope, developer-build requirement and unavailable platform data.
+      5. Update this task with final evidence; commit explicit completed source,
+         tests, docs and plan together on `perf`, then push (already authorized).
+         Do not commit binaries, generated smoke fixtures or raw captures.
+
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
       points to larger downstream DOM/compositor costs, but predates these
