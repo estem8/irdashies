@@ -50,6 +50,13 @@ async function fixture(mutate = (value) => value) {
         ...viewport,
         visibility: 'visible',
         status: { paused: false, speed: 1, position: 60 + i * 10 },
+        workload: Object.fromEntries(
+          [
+            'track-state.snapshot',
+            'driver-controls.snapshot',
+            'radar.snapshot',
+          ].map((channel) => [channel, { version: i * 250 }])
+        ),
         frames: i * 600,
         now: i * 10000,
       },
@@ -62,7 +69,7 @@ async function fixture(mutate = (value) => value) {
   return root;
 }
 
-async function check(mutate, expectedError) {
+async function check(mutate, expectedError, cadenceMatched = true) {
   const root = await fixture(mutate);
   try {
     if (expectedError) {
@@ -76,6 +83,7 @@ async function check(mutate, expectedError) {
     const summary = JSON.parse(
       await readFile(join(root, 'collection-overhead-summary.json'), 'utf8')
     );
+    assert.equal(summary.cadenceMatched, cadenceMatched);
     assert.deepEqual(
       summary.results.map((r) => r.totalCpuMsPerSecond),
       [1000, 500, 500, 1000]
@@ -120,3 +128,19 @@ test('reject too short a steady-state window', () =>
   check(({ samples, index }) => {
     if (index === 0) samples.splice(20);
   }, /Insufficient external CPU samples/));
+
+test('reject missing workload evidence', () =>
+  check(({ samples, index }) => {
+    if (index === 0) delete samples[10].ui.workload;
+  }, /Missing or reset workload version/));
+
+test('mark a valid CPU series incomparable when snapshot cadence changes', () =>
+  check(
+    ({ samples, index }) => {
+      if (index === 1)
+        for (const [i, s] of samples.entries())
+          s.ui.workload['track-state.snapshot'].version = i * 300;
+    },
+    undefined,
+    false
+  ));

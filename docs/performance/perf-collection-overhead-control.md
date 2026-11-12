@@ -24,8 +24,8 @@ source in the active `perf` worktree was not changed.
 Prepared runtime protocol (not yet executed):
 
 ```sh
-PERF_DIAGNOSTIC_VIEWPORT_HEIGHT=1009 node tools/perf/capture/long-matrix.mjs collection-overhead-r1 overhead
-node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r1
+PERF_DIAGNOSTIC_VIEWPORT_HEIGHT=1009 node tools/perf/capture/long-matrix.mjs collection-overhead-r2 overhead
+node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r2
 ```
 
 The controller uses candidate sources throughout, orders collection on/off/off/on,
@@ -43,3 +43,15 @@ native-memory capture completed. A matched rAF rate does not establish
 identical widget drawing or actual simulator presentation. Interpret the paired
 CPU differences alongside on/on and off/off run variation, including an
 inconclusive outcome when the difference is below that variation.
+
+The first attempt was cancelled during on1 before any completed phase: it did
+not record input cadence with collection off. It is not overhead evidence.
+The updated sampler also reads version scalars from existing Track State,
+Driver Controls and Radar channel stores, without adding subscriptions. This
+uses the current store implementation's private snapshot field in diagnostic
+code only, and fails if an expected snapshot is absent. The report records
+version-change rates (not exact delivered-callback counts) and marks comparisons
+incomparable if rAF or snapshot rates differ by more than 5% or 1 Hz. Inputs
+that remain unchanged are explicitly marked inactive; this is not complete
+input coverage for other fixtures. Separate clean/dirty and PSS breakdowns are
+retained when available.

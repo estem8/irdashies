@@ -394,7 +394,7 @@ try {
           collection === 'on'
         );
         await overlay.evaluate(
-          `(()=>{const p={frames:0};const frame=()=>{p.frames++;p.handle=requestAnimationFrame(frame)};p.handle=requestAnimationFrame(frame);window.__perfOverhead=p;return true})()`
+          `(async()=>{const {getChannelSnapshotStore}=await import('/src/frontend/context/ChannelStore/ChannelSnapshotStore.ts');const stores=Object.fromEntries(['track-state.snapshot','driver-controls.snapshot','radar.snapshot'].map(name=>[name,getChannelSnapshotStore(name,window.channelBridge)]));const p={frames:0,readWorkload:()=>Object.fromEntries(Object.entries(stores).map(([name,store])=>{const snapshot=store.snapshot;if(!snapshot||!Number.isSafeInteger(snapshot.version))throw new Error('Missing existing '+name+' snapshot');return [name,{version:snapshot.version,trackSlots:snapshot.carIdxLapDistPct?.length}]}))};p.readWorkload();const frame=()=>{p.frames++;p.handle=requestAnimationFrame(frame)};p.handle=requestAnimationFrame(frame);window.__perfOverhead=p;return true})()`
         );
       }
       sampler = (async () => {
@@ -405,7 +405,7 @@ try {
               `({at:Date.now(),processes:${electron}.app.getAppMetrics().map(p=>({pid:p.pid,type:p.type,name:p.name,creationTime:p.creationTime,cumulativeCPUUsage:p.cpu.cumulativeCPUUsage}))})`
             );
             const ui = await overlay.evaluate(
-              `(async()=>({frames:window.__perfOverhead.frames,now:performance.now(),width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus(),identityDiagnostic:window.__perfMapIdentity}))()`
+              `(async()=>({frames:window.__perfOverhead.frames,workload:window.__perfOverhead.readWorkload(),now:performance.now(),width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus(),identityDiagnostic:window.__perfMapIdentity}))()`
             );
             if (identity) {
               assert.ok(

@@ -10,6 +10,11 @@ assert.deepEqual(
   runs.map((r) => r.sequence),
   ['on1', 'off1', 'off2', 'on2']
 );
+const workloadChannels = [
+  'track-state.snapshot',
+  'driver-controls.snapshot',
+  'radar.snapshot',
+];
 const results = [];
 let referenceManifest, referenceEnvironment;
 for (const run of runs) {
@@ -88,6 +93,17 @@ for (const run of runs) {
       b.ui.status.position > a.ui.status.position,
       'Replay stopped advancing'
     );
+    for (const channel of workloadChannels) {
+      const before = a.ui.workload?.[channel]?.version,
+        after = b.ui.workload?.[channel]?.version;
+      assert.ok(
+        Number.isSafeInteger(before) &&
+          before >= 0 &&
+          Number.isSafeInteger(after) &&
+          after >= before,
+        'Missing or reset workload version: ' + channel
+      );
+    }
     const frames = b.ui.frames - a.ui.frames,
       frameSeconds = (b.ui.now - a.ui.now) / 1000;
     assert.ok(frames > 0 && frameSeconds > 0, 'No renderer animation cadence');
@@ -104,6 +120,14 @@ for (const run of runs) {
       Object.entries(cpuByRole).map(([k, v]) => [k, v / spanSeconds])
     ),
     rafHz: totalFrames / totalFrameSeconds,
+    snapshotVersionRateHz: Object.fromEntries(
+      workloadChannels.map((channel) => [
+        channel,
+        (last.ui.workload[channel].version -
+          first.ui.workload[channel].version) /
+          spanSeconds,
+      ])
+    ),
   });
 }
 const pairs = [
@@ -118,10 +142,36 @@ const pairs = [
     100 * (on.totalCpuMsPerSecond / off.totalCpuMsPerSecond - 1),
   onRafHz: on.rafHz,
   offRafHz: off.rafHz,
+  cadenceEvidence: Object.fromEntries(
+    [
+      ['rAF', on.rafHz, off.rafHz],
+      ...workloadChannels.map((channel) => [
+        channel,
+        on.snapshotVersionRateHz[channel],
+        off.snapshotVersionRateHz[channel],
+      ]),
+    ].map(([name, a, b]) => [
+      name,
+      {
+        onHz: a,
+        offHz: b,
+        withinFivePercentOrOneHz:
+          Math.abs(a - b) <= Math.max(1, 0.05 * Math.max(a, b)),
+        bothInactive: a === 0 && b === 0,
+      },
+    ])
+  ),
 }));
 const report = {
   scope:
     'Optional collection on/off with capture bootstrap preserved; external sampler runs equally in both modes. rAF cadence is not simulator presentation. A single matrix does not establish a universal profiler overhead.',
+  cadenceMatched: pairs.every((pair) =>
+    Object.values(pair.cadenceEvidence).every(
+      (entry) => entry.withinFivePercentOrOneHz
+    )
+  ),
+  workloadCounterScope:
+    'Existing store snapshot version changes are production/change counters, not exact callback-delivery counts; unchanged inputs may stay at zero. No new subscriptions are added.',
   manifest: referenceManifest,
   environment: referenceEnvironment,
   results,

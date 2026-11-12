@@ -11,14 +11,14 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
-- `collection-overhead-r1 overhead` is now running from checkpoint `2f04c48a`,
-  controller PID 75516, terminal session 57264, explicit diagnostic height 1009.
-  Four 420-second candidate-source runs use collection on/off/off/on, normal
-  delivery and identical external cumulative CPU/rAF/smaps sampling. No overhead
-  result is claimed yet. Do not build/test or run other captures while active.
-  Poll the existing handle; after successful completion run the prepared
-  `report-collection-overhead.mjs` against this root, then the separate Map
-  identity diagnostic. The native R4 capture is finished and fully reported.
+- `collection-overhead-r1 overhead` was deliberately cancelled during on1
+  (no completed phases), exit 130, candidate restored and child termination
+  verified. It omitted input-cadence evidence with collectors off and is not an
+  overhead result. The updated diagnostic reads existing channel-store snapshot
+  versions without subscriptions and reports cadence mismatches as incomparable.
+  Its unit cases and targeted ESLint pass. The next run ID is
+  `collection-overhead-r2`, explicit diagnostic height 1009. No capture is active
+  at this preparation checkpoint; inspect handles/files before starting one.
 
 - `native-light-smoke-r2 native-smoke 1009` completed 180 seconds with exit 0,
   ten loss-free one-shot traces and the candidate restored. All checkpoints
