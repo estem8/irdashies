@@ -19,6 +19,8 @@ const memory = process.argv[3] === 'memory';
 const overhead = process.argv[3] === 'overhead';
 const identity = process.argv[3] === 'identity';
 const overheadSmoke = overhead && process.argv[4] === 'smoke';
+const gantryDiagnostic = process.env.PERF_GANTRY_DIAGNOSTIC === '1';
+assert.ok(!gantryDiagnostic || probe, 'Gantry diagnostic requires probe mode');
 assert.ok(!process.argv[4] || overheadSmoke, 'Unexpected fourth argument');
 const nativeMemoryDiagnostic =
   process.env.PERF_NATIVE_MEMORY_DIAGNOSTIC === '1';
@@ -38,15 +40,17 @@ if (process.argv[3] && !smoke && !probe && !memory && !overhead && !identity)
   throw new Error(
     'Expected optional smoke, probe, memory, overhead or identity mode'
   );
-const durationSeconds = overheadSmoke
-  ? 90
-  : memory
-    ? 1380
-    : probe || identity
-      ? 180
-      : smoke
-        ? 90
-        : 420;
+const durationSeconds = gantryDiagnostic
+  ? 300
+  : overheadSmoke
+    ? 90
+    : memory
+      ? 1380
+      : probe || identity
+        ? 180
+        : smoke
+          ? 90
+          : 420;
 if (!/^[a-z0-9-]+$/.test(matrix)) throw new Error('Unsafe matrix ID');
 const out = resolve('perf-results', matrix);
 await mkdir(out);
@@ -57,14 +61,20 @@ const sourceRoot = resolve('perf-results/long-matrix-sources');
 const sources = JSON.parse(
   await readFile(resolve(sourceRoot, 'manifest.json'), 'utf8')
 );
-const seed = JSON.stringify(
-  JSON.parse(
-    await readFile(
-      new URL('../fixtures/reconstructed-ten-widget.json', import.meta.url),
-      'utf8'
-    )
+const seedDashboard = JSON.parse(
+  await readFile(
+    new URL('../fixtures/reconstructed-ten-widget.json', import.meta.url),
+    'utf8'
   )
 );
+if (gantryDiagnostic) {
+  const gantry = seedDashboard.dashboards.default.widgets.find(
+    (w) => w.id === 'gantry'
+  );
+  assert.ok(gantry, 'Missing Gantry fixture configuration');
+  gantry.enabled = true;
+}
+const seed = JSON.stringify(seedDashboard);
 const sourceScript = await readFile(new URL(import.meta.url), 'utf8');
 await writeFile(resolve(out, 'controller.mjs'), sourceScript);
 await writeFile(resolve(out, 'seed.json'), seed);
@@ -186,6 +196,7 @@ try {
           sources,
           seedSha256: hash(seed),
           collection,
+          gantryDiagnostic,
           overheadSmoke,
           startupTopologyTimeoutMs: 30000,
           clock: { timebase: 'performance.now', maxWallDriftMs: 2000 },
@@ -197,16 +208,18 @@ try {
           node: process.version,
           os: release(),
           cpu: cpus()[0]?.model,
-          instrumentation: identity
-            ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
-            : overhead
-              ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
-                collection
-              : nativeMemoryDiagnostic
-                ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
-                : memory
-                  ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
-                  : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
+          instrumentation: gantryDiagnostic
+            ? 'Gantry native close/hide/show and live history diagnostic; not CPU acceptance'
+            : identity
+              ? 'Direct identity computation/object construction and progress counters; external CDP sampling; not CPU acceptance'
+              : overhead
+                ? 'External CDP cumulative process CPU and rAF counters every 10s; optional collection ' +
+                  collection
+                : nativeMemoryDiagnostic
+                  ? 'MemoryInfra single-dump traces and forced GC; diagnostic, not CPU acceptance'
+                  : memory
+                    ? 'Settings memory diagnostic with external forced-GC checkpoints; not normal CPU acceptance'
+                    : 'Existing PERF_METRICS reporters; no tracing, sampler, React Profiler or heap profiler',
         },
         null,
         2
@@ -254,23 +267,27 @@ try {
           PERF_HEAP_PROFILE_PATH: '',
           PERF_TAPE_CONTROLS_HIDDEN: '1',
           PERF_RUN_ID: runId,
-          PERF_SCENARIO: identity
-            ? 'map-identity-diagnostic'
-            : overhead
-              ? 'metrics-collection-overhead'
-              : nativeMemoryDiagnostic
-                ? 'native-memory-diagnostic'
-                : memory
-                  ? 'settings-memory-diagnostic'
-                  : 'reconstructed-ten-widget-final',
+          PERF_SCENARIO: gantryDiagnostic
+            ? 'gantry-lifecycle-diagnostic'
+            : identity
+              ? 'map-identity-diagnostic'
+              : overhead
+                ? 'metrics-collection-overhead'
+                : nativeMemoryDiagnostic
+                  ? 'native-memory-diagnostic'
+                  : memory
+                    ? 'settings-memory-diagnostic'
+                    : 'reconstructed-ten-widget-final',
           PERF_DURATION_SECONDS: String(durationSeconds),
           PERF_REPORT_INTERVAL_MS: '5000',
           PERF_USER_DATA_DIR: resolve(folder, 'profile'),
           PERF_LOG_PATH: resolve(folder, 'metrics.log'),
           PERF_REPLAY_VISIBLE_WIDGETS: '1',
-          PERF_WIDGET_TYPES: ids.join(','),
+          // Respect saved toggles only in this explicit lifecycle diagnostic.
+          PERF_WIDGET_TYPES: gantryDiagnostic ? '' : ids.join(','),
           PERF_BUILD: `${sourceRevision.slice(0, 8)}-${variant}`,
           PERF_SCENARIO_METADATA: JSON.stringify({
+            gantryDiagnostic,
             mapIdentityDiagnostic: identity,
             metricsCollectionOverhead: overhead,
             collection,
