@@ -5,6 +5,20 @@ import assert from 'node:assert/strict';
 const root = resolve(process.argv[2]);
 const read = async (name) =>
   JSON.parse(await readFile(resolve(root, name), 'utf8'));
+for (const marker of ['failed.json', 'cancelled.json']) {
+  let present = false;
+  try {
+    await readFile(resolve(root, marker));
+    present = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  assert.equal(
+    present,
+    false,
+    'Capture has terminal failure marker: ' + marker
+  );
+}
 const runs = await read('runs.json');
 assert.deepEqual(
   runs.map((r) => r.sequence),
@@ -53,7 +67,7 @@ for (const run of runs) {
   assert.ok(samples.length >= 30, 'Insufficient external CPU samples');
   const first = samples[0],
     last = samples.at(-1);
-  const spanSeconds = (last.at - first.at) / 1000;
+  const spanSeconds = (last.monotonicMs - first.monotonicMs) / 1000;
   assert.ok(spanSeconds >= 300, 'Insufficient steady-state span');
   const identity = (p) => `${p.pid}:${p.creationTime}`;
   const identities = first.processes.map(identity).sort();
@@ -69,8 +83,12 @@ for (const run of runs) {
       identities,
       'Process churn invalidates comparison'
     );
-    const seconds = (b.at - a.at) / 1000;
+    const seconds = (b.monotonicMs - a.monotonicMs) / 1000;
     assert.ok(seconds > 0 && seconds < 15, 'Interrupted external sampler');
+    assert.ok(
+      Math.abs(b.at - a.at - (b.monotonicMs - a.monotonicMs)) <= 2000,
+      'Wall/monotonic clock mismatch'
+    );
     for (const p of b.processes) {
       const prev = a.processes.find((x) => identity(x) === identity(p));
       const ms = (p.cumulativeCPUUsage - prev.cumulativeCPUUsage) * 1000;

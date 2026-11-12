@@ -72,6 +72,14 @@ are not achieved optimizations. A microbenchmark or a removed
 `compositeFailed` warning also does not prove lower application CPU. Reserve
 long, repeated normal-operation A/B runs for validating a concrete candidate.
 
+Use a monotonic clock for elapsed intervals and shutdown deadlines; keep UTC
+wall timestamps separately for correlation. Reject significant wall-clock
+changes, suspend/observation gaps, or missing samples instead of treating them
+as an application hang or silently compressing the interval. The long-matrix
+controller records monotonic CPU-sample times and rejects wall/monotonic drift
+over two seconds. Keep the machine awake for unattended captures with a temporary
+inhibitor where available, without changing saved power settings.
+
 Before the measured interval, verify and record:
 
 - Exact source/build state, seed and fixture hashes, playback position/speed,

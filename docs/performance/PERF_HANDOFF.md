@@ -11,6 +11,25 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- `collection-overhead-r4 overhead` is terminal: on1 completed 420 seconds;
+  off1 was interrupted after about 225 seconds of observed playback when wall
+  time advanced about three hours. Controller failed its Date.now shutdown
+  deadline; child termination and candidate restoration are verified. The user
+  confirmed changing the clock. This is not evidence of an app shutdown hang,
+  and the incomplete matrix is not an overhead result.
+- Capture deadlines/elapsed CPU intervals now use performance.now; a >2-second
+  wall/monotonic divergence rejects a capture explicitly. Unit cases cover
+  forward/backward clock changes. Temporary `systemd-inhibit --what=idle:sleep`
+  acquisition succeeded; no system configuration changed. Next full run is R5
+  under that inhibitor. Keep HEAD fixed across all four phases.
+- Prepared but unexecuted: lifecycle-probe hidden-laptrace mode injects a
+  matching synthetic reference only into the isolated renderer store to exercise
+  plot/brake-cue drawing before/hide/show. Requires runtime verification after
+  CPU/identity captures. Gantry draft is only in ignored
+  `perf-results/prepared-tools/gantry-probe.mjs`: it still needs a dedicated
+  Gantry-enabled diagnostic seed/controller path because PERF_WIDGET_TYPES
+  overrides saved enabled flags. Do not run the draft as currently written.
+
 - `overhead-readiness-r1 overhead smoke` completed both on/off 90-second phases,
   exit 0 with candidate restored. Each state has four valid external CPU and
   existing-store snapshot samples at 1549x1014/DPR1; runtime inventories match.

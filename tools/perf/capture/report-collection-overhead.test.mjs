@@ -37,6 +37,7 @@ async function fixture(mutate = (value) => value) {
     const rate = run.collection === 'on' ? 1 : 0.5;
     const samples = Array.from({ length: 36 }, (_, i) => ({
       at: 100000 + i * 10000,
+      monotonicMs: 100000 + i * 10000,
       elapsedSeconds: 60 + i * 10,
       processes: [
         {
@@ -122,7 +123,10 @@ test('reject a stalled replay', () =>
   }, /Replay stopped advancing/));
 test('reject an interrupted sampler', () =>
   check(({ samples, index }) => {
-    if (index === 0) samples[10].at += 6000;
+    if (index === 0) {
+      samples[10].at += 6000;
+      samples[10].monotonicMs += 6000;
+    }
   }, /Interrupted external sampler/));
 test('reject too short a steady-state window', () =>
   check(({ samples, index }) => {
@@ -144,3 +148,24 @@ test('mark a valid CPU series incomparable when snapshot cadence changes', () =>
     undefined,
     false
   ));
+
+test('reject wall clock discontinuity despite valid CPU counters', () =>
+  check(({ samples, index }) => {
+    if (index === 0) samples[10].at += 3 * 60 * 60 * 1000;
+  }, /Wall\/monotonic clock mismatch/));
+
+test('reject a failed matrix even when all phase rows claim success', async () => {
+  const root = await fixture();
+  try {
+    await writeFile(
+      join(root, 'failed.json'),
+      JSON.stringify({ error: 'clock discontinuity' })
+    );
+    await assert.rejects(
+      exec(process.execPath, [reporter.pathname, root]),
+      /terminal failure marker/
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

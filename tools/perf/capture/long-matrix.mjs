@@ -7,6 +7,7 @@ import { cpus, release } from 'node:os';
 import { setTimeout as sleep } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { CDP } from './cdp-client.mjs';
+import { createCaptureClock } from './capture-clock.mjs';
 import { terminateCaptureChild } from './terminateCaptureChild.mjs';
 import { instrumentMapIdentities } from './instrument-map-identities.mjs';
 import { readWidgetInputRequirements } from '../widgetInputMetadata.ts';
@@ -86,6 +87,7 @@ print({
 const hash = (data) => createHash('sha256').update(data).digest('hex');
 const electron = `process.getBuiltinModule('module').createRequire(process.cwd()+'/package.json')('electron')`;
 const results = [];
+const clock = createCaptureClock();
 let restorationSafe = true;
 const cancellation = new AbortController();
 const activeConnections = new Set();
@@ -97,7 +99,11 @@ const requestStop = () => {
 };
 process.once('SIGINT', requestStop);
 process.once('SIGTERM', requestStop);
-const wait = (ms) => sleep(ms, undefined, { signal: cancellation.signal });
+const wait = async (ms) => {
+  clock.read();
+  await sleep(ms, undefined, { signal: cancellation.signal });
+  clock.read();
+};
 let mapIdentitySourceSha256;
 const copySources = async (variant, instrumentIdentity = false) => {
   for (const source of sources) {
@@ -181,6 +187,7 @@ try {
           seedSha256: hash(seed),
           collection,
           overheadSmoke,
+          clock: { timebase: 'performance.now', maxWallDriftMs: 2000 },
           mapIdentityDiagnostic: identity,
           mapIdentitySourceSha256: identity
             ? mapIdentitySourceSha256
@@ -206,6 +213,7 @@ try {
     );
     const consoleFile = createWriteStream(resolve(folder, 'console.log'));
     let origin,
+      originMonotonic,
       topology,
       latest,
       buffer = '',
@@ -306,6 +314,7 @@ try {
             '[PerfRunOrigin:JSON] ',
             (value) => {
               origin = Date.parse(value.timestamp);
+              originMonotonic = clock.fromWallTimestamp(origin);
             },
           ],
           [
@@ -354,6 +363,10 @@ try {
         'Incomplete topology'
       );
       assert.ok(origin, 'Missing capture origin');
+      assert.ok(
+        Number.isFinite(originMonotonic),
+        'Missing monotonic capture origin'
+      );
       const inspectorTargets = await (
         await fetch('http://127.0.0.1:9229/json/list')
       ).json();
@@ -399,7 +412,9 @@ try {
         JSON.stringify(inventory, null, 2)
       );
       if (overhead || identity) {
-        await wait(Math.max(0, origin + 55000 - Date.now()));
+        await wait(
+          Math.max(0, originMonotonic + 55000 - clock.read().monotonicMs)
+        );
         assert.equal(
           await overlay.evaluate('Boolean(window.rendererPerfBridge)'),
           collection === 'on'
@@ -445,9 +460,10 @@ try {
                 Number.isFinite(p.cumulativeCPUUsage)
               )
             );
+            sample.monotonicMs = clock.read().monotonicMs;
             externalCpuSamples.push({
               ...sample,
-              elapsedSeconds: (sample.at - origin) / 1000,
+              elapsedSeconds: (sample.monotonicMs - originMonotonic) / 1000,
               ui,
             });
             processes = sample.processes;
@@ -502,7 +518,9 @@ try {
       })().catch((error) => {
         samplerError = error;
       });
-      await wait(Math.max(0, origin + 40000 - Date.now()));
+      await wait(
+        Math.max(0, originMonotonic + 40000 - clock.read().monotonicMs)
+      );
       const screenshot = await overlay.call('Page.captureScreenshot', {
         format: 'png',
       });
@@ -511,7 +529,9 @@ try {
         Buffer.from(screenshot.data, 'base64')
       );
       const windowsExpression = `${electron}.BrowserWindow.getAllWindows().map(w=>({id:w.id,pid:w.webContents.getOSProcessId(),url:w.webContents.getURL(),bounds:w.getBounds(),visible:w.isVisible()}))`;
-      await wait(Math.max(0, origin + 55000 - Date.now()));
+      await wait(
+        Math.max(0, originMonotonic + 55000 - clock.read().monotonicMs)
+      );
       const windows = await main.evaluate(windowsExpression);
       const ui = await overlay.evaluate(
         `(async()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,visibility:document.visibilityState,status:await window.tapeReplayBridge.getStatus(),identityDiagnostic:window.__perfMapIdentity}))()`
@@ -548,7 +568,7 @@ try {
       });
       await writeFile(
         resolve(folder, 'preflight.json'),
-        JSON.stringify({ origin, windows, ui }, null, 2)
+        JSON.stringify({ origin, originMonotonic, windows, ui }, null, 2)
       );
       print({
         stage: 'measuring',
@@ -557,7 +577,7 @@ try {
         ui,
         privateSampling: 'Linux smaps_rollup every 10s',
       });
-      let nextProgress = origin + 90000;
+      let nextProgress = originMonotonic + 90000;
       while (!exited) {
         if (samplerError) throw samplerError;
         assert.ok(
@@ -565,13 +585,18 @@ try {
           `Overlay disconnected before completion: ${JSON.stringify(overlayDisconnected)}`
         );
         if (completedMarker) for (const c of connections) c.ws.close();
-        if (Date.now() > origin + (durationSeconds + 30) * 1000)
+        if (
+          clock.read().monotonicMs >
+          originMonotonic + (durationSeconds + 30) * 1000
+        )
           throw new Error('Capture shutdown deadline exceeded');
-        if (Date.now() >= nextProgress) {
+        if (clock.read().monotonicMs >= nextProgress) {
           print({
             stage: 'progress',
             runId,
-            elapsedSeconds: Math.round((Date.now() - origin) / 1000),
+            elapsedSeconds: Math.round(
+              (clock.read().monotonicMs - originMonotonic) / 1000
+            ),
             tickHz: latest?.tickRateHz,
           });
           nextProgress += 30000;

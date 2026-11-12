@@ -24,8 +24,8 @@ source in the active `perf` worktree was not changed.
 Prepared runtime protocol (not yet executed):
 
 ```sh
-node tools/perf/capture/long-matrix.mjs collection-overhead-r4 overhead
-node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r4
+systemd-inhibit --what=idle:sleep --mode=block --why="irDashies perf capture" node tools/perf/capture/long-matrix.mjs collection-overhead-r5 overhead
+node tools/perf/capture/report-collection-overhead.mjs perf-results/collection-overhead-r5
 ```
 
 The controller uses candidate sources throughout, orders collection on/off/off/on,
@@ -79,3 +79,12 @@ advance in both. Main/renderer reporting is present on and absent off. See
 [readiness evidence](2026-11-12-collection-overhead-readiness.json). The full R4
 matrix is next. Keep HEAD fixed during the matrix: every phase records its
 source revision, so even documentation commits mid-matrix would break matching.
+
+The full R4 matrix completed on1, but off1 was interrupted around 225 seconds
+of playback by a roughly three-hour wall-time advance. The user confirmed
+changing the clock. Its Date.now deadline failed; that does not establish an
+application shutdown hang. The partial matrix remains rejected. The controller
+now uses a monotonic clock for deadlines/elapsed intervals and explicitly rejects
+wall/monotonic drift over two seconds; the CPU report checks both timebases.
+The next R5 uses a temporary idle/sleep inhibitor, released with its command.
+This does not prevent manual clock changes: those still invalidate the capture.
