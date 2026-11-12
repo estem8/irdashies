@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "baselineSource": "85dafdb8",
+  "run": "radar-rings-ab-r1",
+  "durationSecondsPerPhase": 30,
+  "order": ["baseline", "candidate"],
+  "radarDrawMeanMs": {
+    "baseline": 0.26382833785232795,
+    "candidate": 0.24367262722035304
+  },
+  "radarDrawMsPerSecond": {
+    "baseline": 15.492061966936335,
+    "candidate": 14.171943311362698
+  },
+  "applicationCpuMsPerSecondDescriptiveOnly": {
+    "baseline": 541.422482685136,
+    "candidate": 519.705500216544
+  },
+  "artifacts": {
+    "perf-results/radar-rings-ab-r1/phases.json": "341dd8e0473dfe1b4b049cee17edeb4749e7be2d653d33f7c8f883923b27ba8d",
+    "perf-results/radar-rings-ab-r1/console.log": "e7e12d2d980b0ea1779ea7bcdf1bda833ff5436af87abcf1794db490fb6337bf",
+    "perf-results/radar-rings-ab-r1/visual.json": "765dc2476073f5061bca78bddac52a9a2b6a7518204ab9ea321513b1addf9198",
+    "perf-results/radar-rings-ab-r1/controller.mjs": "57ef7eb1f0519dec0797c80ff116ea70685b5fe711285ff47548a22e7b10ee93"
+  },
+  "limitations": [
+    "One sequential pair; order/thermal effects and uncertainty not quantified.",
+    "Linux dev build, one display/shared renderer, 1x tape; no Windows/native iRacing or physical high-DPI acceptance.",
+    "Synthetic pixel comparisons cover static layer placement, not all traffic states."
+  ]
+}

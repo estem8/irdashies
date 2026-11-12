@@ -87,6 +87,17 @@ G work and reusable delivery checks are not additional queue items.
       targeted tests, TypeScript/ESLint, formatting and links. Per-widget ownership,
       closed-window partial intervals, GPU/private metrics and presentation remain
       unavailable; overhead is unquantified. R3 remains inconclusive. Next: F-2.
+- [x] **F-4 — reduce a measured visible-renderer hot path.**
+      [Radar rings evidence](2026-11-12-radar-rings.md): current 10-second V8
+      sample identified static ring drawing as the largest named application
+      leaf (173.8 ms). A bounded per-display canvas now caches rings/labels;
+      dynamic drawing and telemetry cadence remain unchanged. One normal-workload
+      pair observed mean Radar drawing 0.264 → 0.244 ms/frame (7.6% lower).
+      This is a scoped observation, not a statistically established application
+      CPU/FPS improvement. Cache invalidation/fallback/disposal tests and browser
+      image comparisons cover the changed path; see report for checks and costs.
+      Next optimization must target a remaining measured hot path; do not reopen
+      window-cost matrices without a concrete application hypothesis.
 - [ ] **F-2 — verify reconnect/session and event delivery.** New
       [positive radio/lifecycle composition evidence](2026-11-12-radio-lifecycle.md)
       uses the recorded carIdx 2 snapshot through production lifecycle/host/bus;
@@ -124,8 +135,11 @@ G work and reusable delivery checks are not additional queue items.
       The reverse pair was not launched and no CPU/memory mode gain is claimed.
       Checks: 11 capture test files, TypeScript/ESLint, formatting, component
       coverage and artifact hashes. Blocker: stable placement evidence missing.
-      Next: short native bounds/setter-origin trace for those windows; resolve
-      real moves or same-bounds notifications before another long cost pair.
+      Deferred by the user in favor of application bottleneck fixes (F-4). The
+      geometry probe `native-geometry-r1` was cancelled before its observation
+      endpoint; its uncompleted instrumentation was discarded. No new geometry
+      conclusion follows. Resume bounds/setter-origin work only when needed for
+      a concrete implementation comparison, not as a standalone capture project.
       Do not repeat the completed capture merely to obtain a favorable verdict.
 - [ ] **A-1 — packaged Windows and simulator presentation acceptance.**
       Blocked: Windows/iRacing access is unavailable. Completion: same-target

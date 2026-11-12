@@ -1,3 +1,4 @@
+import { RadarRingsLayer } from '../radarDrawRings';
 import { useNativeWindowVisibility } from '@irdashies/context';
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { perfMetrics } from '@irdashies/utils/perfMetrics';
@@ -160,6 +161,7 @@ export const RadarDisplay = memo(
       canvas.width = Math.round(size * ratio);
       canvas.height = Math.round(size * ratio);
 
+      const ringsLayer = new RadarRingsLayer(ratio);
       const cars: RadarDrawCar[] = [];
       const follow: RadarDrawFollow = { carIdx: null, dist: 0, label: '' };
       const dives = new DiveTracker();
@@ -271,23 +273,27 @@ export const RadarDisplay = memo(
         }
 
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        drawRadar(ctx, {
-          size,
-          geometry: current.geometry,
-          trackLength: snap.trackLength,
-          playerPct,
-          cars,
-          follow: followTarget,
-          style: look,
-          time: started / 1000,
-          travelled,
-          frameMs,
-          dives: diveHints,
-          laneWidth,
-          hazards,
-          poleSideNotice: snap.poleSideNotice,
-          roadLane,
-        });
+        drawRadar(
+          ctx,
+          {
+            size,
+            geometry: current.geometry,
+            trackLength: snap.trackLength,
+            playerPct,
+            cars,
+            follow: followTarget,
+            style: look,
+            time: started / 1000,
+            travelled,
+            frameMs,
+            dives: diveHints,
+            laneWidth,
+            hazards,
+            poleSideNotice: snap.poleSideNotice,
+            roadLane,
+          },
+          ringsLayer
+        );
         frameMs = performance.now() - started;
       };
       const intervalMs = 1000 / 60;
@@ -306,7 +312,10 @@ export const RadarDisplay = memo(
         if (active) handle = requestAnimationFrame(paint);
       };
       paint();
-      return () => cancelAnimationFrame(handle);
+      return () => {
+        cancelAnimationFrame(handle);
+        ringsLayer.dispose();
+      };
     }, [size, active, widgetScale, nativeVisible]);
 
     return (
