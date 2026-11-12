@@ -11,6 +11,15 @@ claim game FPS or Windows acceptance.
 
 ## Latest execution status
 
+- CURRENT: missing on2 only is running in `collection-overhead-r5-on2-retry`,
+  controller PID 269437, terminal session 71538, app source 2e5354cc and default
+  1549x1014/DPR1 under the same temporary inhibitor. Its runner is the exact R5
+  controller with only the phase schedule reduced to on2; proof/hashes are in
+  ignored `collection-overhead-r5-recovery-plan.json`. No app changes. Keep perf
+  HEAD fixed until terminal. Original R5 failure remains preserved. After exit,
+  require successful status/marker/restoration, compare all source/seed/runtime/
+  cadence gates, and disclose the retry/gap before any combined overhead result.
+
 - GitHub Actions permissions API now reports enabled=true/allowed_actions=all.
   No new workflow was dispatched. The user warned that GitHub limits are about
   to run out, so defer new Actions jobs and unnecessary remote API calls.

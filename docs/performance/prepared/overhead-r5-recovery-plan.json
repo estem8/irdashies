@@ -1,0 +1,10 @@
+{
+  "scope": "Retry only the unmeasured on2 startup; preserve original failure and first three phases",
+  "source": "2e5354cc",
+  "originalControllerSha256": "766121c6969a7612481abec5ece824a7e3e60cbca6ab7dab1dd094394852e764",
+  "retryControllerSha256": "7b5b1ca18adeb752ad79eccb799867c3b0758e41cf9f6cedcfb211c5db17039a",
+  "onlyControllerDifference": "Four-phase schedule replaced with the single on2 candidate phase; all other code identical",
+  "originalRoot": "perf-results/collection-overhead-r5",
+  "retryRoot": "perf-results/collection-overhead-r5-on2-retry",
+  "requiredChecks": "Four successful measured phases in on/off/off/on order; identical app source, seed, viewport, runtime inventory and cadence; no acceptance before all checks"
+}
