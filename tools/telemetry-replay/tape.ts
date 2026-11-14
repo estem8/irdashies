@@ -100,13 +100,17 @@ async function readExact(
 
 export class TapeReader {
   readonly schema: TapeSchema;
+  private readonly handle: FileHandle;
+  private position: number;
 
   private constructor(
-    private readonly handle: FileHandle,
+    handle: FileHandle,
     schema: TapeSchema,
-    private position: number
+    position: number
   ) {
+    this.handle = handle;
     this.schema = schema;
+    this.position = position;
   }
 
   static async open(path: string): Promise<TapeReader> {

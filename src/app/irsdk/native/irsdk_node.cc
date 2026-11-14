@@ -160,6 +160,11 @@ Napi::Value iRacingSdkNode::GetTapeReplayStatus(const Napi::CallbackInfo &info)
   result.Set("speed", status.speed);
   result.Set("paused", status.paused);
   result.Set("ended", status.ended);
+  result.Set("maximumSpeed", status.maximumSpeed);
+  result.Set("frameByFrame", status.frameByFrame);
+  result.Set("failed", status.failed);
+  result.Set("framesConsumed", static_cast<double>(status.framesConsumed));
+  result.Set("framesDelivered", static_cast<double>(status.framesDelivered));
   return result;
 }
 

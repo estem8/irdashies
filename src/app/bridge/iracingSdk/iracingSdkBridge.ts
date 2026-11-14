@@ -171,6 +171,10 @@ export async function publishIRacingSDKEvents(
   logger.info('[iracingSdkBridge] Loading iRacing SDK bridge...');
   const isTapeReplay = Boolean(process.env.IRDASHIES_TELEMETRY_REPLAY);
   const sourceName = isTapeReplay ? 'telemetry replay' : 'iRacing';
+  const frameByFrameReplay =
+    isTapeReplay &&
+    (process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED === 'max' ||
+      process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME === '1');
 
   const perfMetrics = new TelemetryPerfMetrics(undefined, channelBus);
   let shouldStop = false;
@@ -474,11 +478,25 @@ export async function publishIRacingSDKEvents(
 
             if (!hasNewData) {
               if (!isSdkConnected) break;
+              if (
+                frameByFrameReplay &&
+                sdk.getTapeReplayStatus()?.paused === false
+              ) {
+                await new Promise<void>((resolve) => setImmediate(resolve));
+                continue;
+              }
               const remainingDelay = Math.max(
                 0,
                 1000 / 25 - (performance.now() - pollStartedAt)
               );
               await delay(remainingDelay);
+              continue;
+            }
+
+            // Frame-by-frame tape runs keep every source frame, yielding to IPC
+            // and window work instead of applying the live polling cadence.
+            if (frameByFrameReplay) {
+              await new Promise<void>((resolve) => setImmediate(resolve));
               continue;
             }
 

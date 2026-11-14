@@ -39,6 +39,12 @@ PlaybackState state = PlaybackState::Stopped;
 std::chrono::steady_clock::time_point playbackStart;
 double playbackSpeed = 1.0;
 bool loopPlayback = false;
+bool maximumSpeed = false;
+bool frameByFrame = false;
+bool initialPause = false;
+bool primeInitialFrame = false;
+std::uint64_t framesConsumed = 0;
+std::uint64_t framesDelivered = 0;
 bool paused = false;
 bool seekFrameReady = false;
 double anchorSeconds = 0;
@@ -53,7 +59,7 @@ struct SeekPoint {
 std::vector<SeekPoint> seekPoints;
 
 double playbackPosition() {
-  if (paused || state != PlaybackState::Playing) return anchorSeconds;
+  if (maximumSpeed || paused || state != PlaybackState::Playing) return anchorSeconds;
   return std::min(durationSeconds, anchorSeconds +
       std::chrono::duration<double>(std::chrono::steady_clock::now() -
           playbackStart).count() * playbackSpeed);
@@ -102,7 +108,13 @@ bool indexTape(std::string& error) {
 
 bool parsePlaybackOptions(std::string& error) {
   const char* speedText = std::getenv("IRDASHIES_TELEMETRY_REPLAY_SPEED");
-  if (speedText != nullptr && speedText[0] != '\0') {
+  maximumSpeed = speedText != nullptr && std::strcmp(speedText, "max") == 0;
+  frameByFrame = maximumSpeed ||
+      (std::getenv("IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME") != nullptr &&
+       std::strcmp(std::getenv("IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME"), "1") == 0);
+  initialPause = std::getenv("IRDASHIES_TELEMETRY_REPLAY_PAUSED") != nullptr &&
+      std::strcmp(std::getenv("IRDASHIES_TELEMETRY_REPLAY_PAUSED"), "1") == 0;
+  if (!maximumSpeed && speedText != nullptr && speedText[0] != '\0') {
     char* end = nullptr;
     const double parsed = std::strtod(speedText, &end);
     if (end == speedText || end == nullptr || *end != '\0' ||
@@ -153,9 +165,11 @@ bool openTape(std::string& error) {
     return false;
   }
   tape = std::move(candidate);
-  paused = false;
   if (!indexTape(error)) return false;
   resetPublishedData();
+  paused = initialPause;
+  primeInitialFrame = initialPause;
+  framesConsumed = framesDelivered = 0;
   return true;
 }
 
@@ -198,6 +212,7 @@ bool loadPendingRecord(bool frameWillBePublished, std::string& error) {
 }
 
 std::chrono::steady_clock::time_point pendingTargetTime() {
+  if (maximumSpeed || primeInitialFrame) return std::chrono::steady_clock::now();
   const double seconds =
       static_cast<double>(pendingRecord.elapsedTicks) /
       static_cast<double>(tape->fileHeader().qpcFrequency);
@@ -291,7 +306,7 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
     seekFrameReady = false;
     return true;
   }
-  if (paused) return false;
+  if (paused && !primeInitialFrame) return false;
   bool foundFrame = false;
   std::string error;
   const auto deadline = std::chrono::steady_clock::now() +
@@ -323,6 +338,15 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
           return false;
         }
         foundFrame = true;
+        framesConsumed++;
+        if (maximumSpeed) anchorSeconds =
+            static_cast<double>(pendingRecord.elapsedTicks) /
+            static_cast<double>(tape->fileHeader().qpcFrequency);
+        if (frameByFrame || primeInitialFrame) {
+          primeInitialFrame = false;
+          hasPendingRecord = false;
+          return true;
+        }
         break;
 
       case replay::RecordKind::SessionInfo:
@@ -403,7 +427,9 @@ void irsdk_shutdown() {
 }
 
 bool irsdk_getNewData(irsdk_capture* capture) {
-  return readTimedFrame(1, capture);
+  const bool found = readTimedFrame(1, capture);
+  if (found) framesDelivered++;
+  return found;
 }
 
 bool irsdk_waitForDataReady(int timeoutMs, irsdk_capture* capture) {
@@ -411,7 +437,9 @@ bool irsdk_waitForDataReady(int timeoutMs, irsdk_capture* capture) {
     if (capture) capture->valid = false;
     return false;
   }
-  return readTimedFrame(timeoutMs, capture);
+  const bool found = readTimedFrame(timeoutMs, capture);
+  if (found) framesDelivered++;
+  return found;
 }
 
 bool irsdk_isConnected() {
@@ -487,7 +515,8 @@ int irsdk_padCarNum(int num, int zero) {
 
 irsdk_tape_status irsdk_tape_getStatus() {
   return {playbackPosition(), durationSeconds, playbackSpeed, paused,
-      state == PlaybackState::Finished};
+      state == PlaybackState::Finished, maximumSpeed, frameByFrame,
+      state == PlaybackState::Failed, framesConsumed, framesDelivered};
 }
 
 bool irsdk_tape_seek(double seconds) {
@@ -502,6 +531,7 @@ bool irsdk_tape_setSpeed(double speed) {
   if (!tape || !std::isfinite(speed) || speed < 0.25 || speed > 100) return false;
   rebaseClock(playbackPosition());
   playbackSpeed = speed;
+  maximumSpeed = false;
   return true;
 }
 
