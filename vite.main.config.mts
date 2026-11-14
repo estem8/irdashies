@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { copyNativeAddon } from './tools/native/copyNativeAddon.mts';
 import { perfStartupChunk } from './tools/perf/bootstrapChunks.mts';
 
 // Get git hash
@@ -89,9 +90,7 @@ function irsdkNativeModule(nodeFiles: string[], outDir: string) {
           );
           return;
         }
-        const nodeFile = fs.readFileSync(fileAbs);
-        fs.mkdirSync(path.dirname(out), { recursive: true });
-        fs.writeFileSync(out, nodeFile);
+        copyNativeAddon(fileAbs, out);
       });
     },
   };

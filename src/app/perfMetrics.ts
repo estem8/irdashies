@@ -202,6 +202,15 @@ const setActivePerfMetrics = (instance: TelemetryPerfMetrics | null): void => {
 export const getActivePerfMetrics = (): TelemetryPerfMetrics | null =>
   activePerfMetrics;
 
+const reportListeners = new Set<(report: PerfReport) => void>();
+/** Main-process capture sinks; subscribers must dispose after bounded captures. */
+export function onPerfReport(callback: (report: PerfReport) => void) {
+  reportListeners.add(callback);
+  return () => {
+    reportListeners.delete(callback);
+  };
+}
+
 export class TelemetryPerfMetrics {
   private sections = new Map<string, SectionBuffer>();
   private tickIntervals = new FixedSampleBuffer();
@@ -255,6 +264,13 @@ export class TelemetryPerfMetrics {
     this.reportTimer = setInterval(() => {
       const report = this.report();
       this.logReport(report);
+      for (const listener of reportListeners) {
+        try {
+          listener(report);
+        } catch (error) {
+          logger.error('[PerfMetrics] Capture listener failed', error);
+        }
+      }
     }, effectiveInterval);
     setActivePerfMetrics(this);
   }

@@ -220,6 +220,58 @@ G work and reusable delivery checks are not additional queue items.
       are present. This is functional source-compatibility evidence, not a
       performance comparison.
 
+- [x] **INSPECTOR-1 — in-app IBT Inspector for the current overlays.** User
+      priority completed 2026-11-14. [Usage](ibt-inspector.md). App Settings →
+      General → Dev Tool enables an independent inspector window. It lists
+      `.ibt` files from Electron's Documents/iRacing/telemetry directory, loads
+      a paused recording, controls playback and records existing main-process
+      perf reports in the current profile. Stop/disable restore the previous
+      source. No isolated overlay profile is launched. Default is off.
+
+      Source switches share the SDK setup queue; native selection now resolves
+      per instance instead of retaining the first imported source forever.
+      IBT normalization moved into the app with the public CLI helper delegating
+      to it. File names/speeds/commands and resolved directory boundaries are
+      validated. Capture buffers are bounded, with ten retained runs, a 64 MiB
+      sample budget, a one-hour limit and a bounded stream queue. Summary JSON
+      and NDJSON samples retain unknown measurements as unavailable; no renderer
+      drawing/private-memory/GPU/game-FPS claims are made.
+
+      Verification: 189 tests in 13 files passed; a separate native/defaults
+      run passed 74 tests in three files (the native-copy test overlaps).
+      Final service/UI rerun passed 16 tests in two files after error handling
+      and stale-poll protection changes. Full TypeScript/ESLint, formatting and
+      whitespace checks passed. Logs: `/tmp/ibt-inspector-last-tests.log`,
+      `/tmp/ibt-inspector-verified-tests.log`,
+      `/tmp/ibt-inspector-native-tests.log`, `/tmp/ibt-inspector-last-lint.log`.
+      Linux Electron integration on the user's Ferrari/Nordschleife IBT passed
+      4x playback, pause, four capture intervals, report creation, source restore
+      and a second max replay through the cached module. A short compatible
+      fixture then passed replay over Demo Mode, disabling Dev Tool during a
+      capture, window close, source restoration and normal app shutdown.
+      Evidence: `perf-results/ibt-inspector-e2e/`,
+      `/tmp/ibt-inspector-e2e-result.log`,
+      `/tmp/ibt-inspector-disable-verified.log`. Source recordings are unchanged;
+      temporary Documents copies and the diagnostic crash's orphan input were
+      removed. Storybook before/after General and new Inspector screenshots are
+      outside the repo in `/tmp/ibt-inspector-review/`.
+
+      During development, source hot rebuild overwrote a mapped native addon
+      and the next constructor segfaulted. The core stack identified
+      `Napi::ObjectWrap<iRacingSdkNode>::ConstructorCallbackWrapper`; jump target
+      0x6306 matched the unrelocated napi_get_new_target PLT entry. The addon had
+      been rewritten while loaded. Build-time native copy now skips identical
+      bytes and atomically replaces changed files; its test preserves an open
+      old file descriptor across replacement. Fresh-process lifecycle checks
+      passed. Extracted core was deleted. This fixes dev-build copying, not
+      telemetry frame processing.
+
+      Limits: native Windows execution remains untested here. The UI was checked
+      in Storybook and Linux Electron; the Windows Documents path is resolved
+      through Electron rather than a hard-coded account name. The existing IBT
+      traffic/event limitations still apply. This feature is a capture tool,
+      not evidence of a performance improvement. Next campaign task: F-8.
+
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
       points to larger downstream DOM/compositor costs, but predates these
