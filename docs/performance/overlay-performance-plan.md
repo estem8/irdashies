@@ -191,13 +191,34 @@ G work and reusable delivery checks are not additional queue items.
         are under their output directories. Original tape remains intact.
 
       Limitations: IBT fixture `/tmp/perf-cli-smoke.ibt` contains 240 frames
-      converted from the recorded race tape; no original user IBT was available.
+      converted from the recorded race tape; no original user IBT was available
+      during initial validation. The user-recorded follow-up below supersedes
+      that input-availability limitation.
       These are developer Linux functional smokes, not matched optimization or
       packaged Windows/game-FPS evidence. IBT session/events and widget activity
       coverage remain input-dependent. Periodic metrics include paused startup
       and drain; accelerated playback and wrapper presence cannot establish
       per-frame drawing or complete widget behavior. Next campaign task: F-8;
       do not repeat these smokes without changed code or a specific missing check.
+
+      User-recorded IBT follow-up, 2026-11-14: Ferrari 296 GT3 at Nordschleife,
+      source file under `/mnt/host/Projects/`, 58,156 frames / 60 Hz / 969.25
+      source seconds / 292 variables. The 30-second max-speed limit probe in
+      `perf-results/cli-user-ibt-max/` returned 42,434 frames plus one initial
+      seed, with zero supersession, and correctly marked the report incomplete.
+      The full max-speed run in `perf-results/cli-user-ibt-full/` then completed
+      all 58,156 frames (one seed + 58,155 SDK returns), zero supersession and
+      no source failure, in 36.731 playback wall seconds. Temporary normalized
+      input was removed and `/proc` inspection found no remaining CLI process.
+      No TypeError/RangeError/unhandled/native playback failures appeared in the
+      console log. No implementation change was needed. Report JSON/Markdown
+      and raw logs remain local and ignored; source IBT remains untouched.
+      All 35 widget wrappers were observed, as were Map/Input/Radar/Lap Trace
+      draw counters. The original IBT lacks `CarIdxLapDistPct`, `CarIdxPosition`,
+      `CarIdxOnPitRoad` and `RadioTransmitCarIdx`; those observations do not
+      establish traffic or radio behavior. Player controls, fuel and SessionTime
+      are present. This is functional source-compatibility evidence, not a
+      performance comparison.
 
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
