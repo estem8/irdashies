@@ -266,6 +266,20 @@ G work and reusable delivery checks are not additional queue items.
       passed. Extracted core was deleted. This fixes dev-build copying, not
       telemetry frame processing.
 
+      Widget-activity follow-up on the same user IBT: a bounded 4x run with all
+      35 types returned 3,602 SDK frames plus the seed without supersession.
+      Evidence: `perf-results/ibt-widget-activity-check/` and
+      `/tmp/ibt-widget-dom.json`. DOM observations confirmed Wind/Weather speed
+      text and arrow rotation changes; processor-only playback of the first
+      3,600 source frames produced 301 weather snapshot changes. The user's
+      reported stationary Wind was not reproduced in this Linux check.
+      Source inspection confirms absent CarIdxLapDistPct/Position/EstTime/
+      TrackSurface and CamCarIdx; traffic-dependent Radar/Standings/Relative
+      behavior cannot be validated from this recording. WindDir/WindVel/YawNorth,
+      FuelLevel and player lap fields are present and changing. Temperature and
+      humidity can remain visibly constant after display rounding. Do not treat
+      all-wrapper/all-draw observations as complete widget activity coverage.
+
       Limits: native Windows execution remains untested here. The UI was checked
       in Storybook and Linux Electron; the Windows Documents path is resolved
       through Electron rather than a hard-coded account name. The existing IBT
