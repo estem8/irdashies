@@ -146,6 +146,11 @@ export class IbtInspectorService {
         await this.stopInternal();
         switchAttempted = true;
         await this.deps.switchSource(path.join(temporary, 'input.irdt'), speed);
+        const playback = this.deps.getPlayback();
+        if (!playback || playback.failed)
+          throw new Error(
+            playback?.error || 'Replay transport did not initialize'
+          );
         this.temporary = temporary;
         this.file = name;
         this.warnings = info.warnings;
@@ -277,7 +282,8 @@ export class IbtInspectorService {
       total.maxWallMs = Math.max(total.maxWallMs, value.maxMs);
     }
     const playback = this.deps.getPlayback();
-    if (playback?.failed) this.capture.error = 'Replay source failed';
+    if (playback?.failed)
+      this.capture.error = playback.error || 'Replay source failed';
     if (playback?.ended || playback?.failed)
       void this.stopCapture().catch(() => undefined);
   }

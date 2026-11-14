@@ -12,6 +12,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace replay = irdashies::irsdk_replay;
 
@@ -49,6 +55,7 @@ bool paused = false;
 bool seekFrameReady = false;
 double anchorSeconds = 0;
 double durationSeconds = 0;
+std::string lastError;
 
 struct SeekPoint {
   double seconds;
@@ -106,29 +113,54 @@ bool indexTape(std::string& error) {
   return tape->rewindRecords(error);
 }
 
+// Node updates the Windows process environment through Win32, not this DLL's
+// private CRT environment cache. Read the current OS block on every startup.
+#ifdef _WIN32
+std::wstring environmentValue(const wchar_t* name) {
+  DWORD capacity = GetEnvironmentVariableW(name, nullptr, 0);
+  while (capacity > 0) {
+    std::wstring value(capacity, L'\0');
+    const DWORD length = GetEnvironmentVariableW(name, value.data(), capacity);
+    if (length == 0) return {};
+    if (length < capacity) { value.resize(length); return value; }
+    capacity = length;
+  }
+  return {};
+}
+std::string playbackOption(const char* name) {
+  const std::wstring wideName(name, name + std::strlen(name));
+  const auto value = environmentValue(wideName.c_str());
+  return std::string(value.begin(), value.end()); // Options are ASCII numbers/flags.
+}
+std::filesystem::path playbackInput() {
+  return std::filesystem::path(environmentValue(L"IRDASHIES_TELEMETRY_REPLAY"));
+}
+#else
+std::string playbackOption(const char* name) {
+  const char* value = std::getenv(name);
+  return value ? value : "";
+}
+std::filesystem::path playbackInput() {
+  return std::filesystem::path(playbackOption("IRDASHIES_TELEMETRY_REPLAY"));
+}
+#endif
+
 bool parsePlaybackOptions(std::string& error) {
-  const char* speedText = std::getenv("IRDASHIES_TELEMETRY_REPLAY_SPEED");
-  maximumSpeed = speedText != nullptr && std::strcmp(speedText, "max") == 0;
-  frameByFrame = maximumSpeed ||
-      (std::getenv("IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME") != nullptr &&
-       std::strcmp(std::getenv("IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME"), "1") == 0);
-  initialPause = std::getenv("IRDASHIES_TELEMETRY_REPLAY_PAUSED") != nullptr &&
-      std::strcmp(std::getenv("IRDASHIES_TELEMETRY_REPLAY_PAUSED"), "1") == 0;
-  if (!maximumSpeed && speedText != nullptr && speedText[0] != '\0') {
+  const auto speedText = playbackOption("IRDASHIES_TELEMETRY_REPLAY_SPEED");
+  maximumSpeed = speedText == "max";
+  frameByFrame = maximumSpeed || playbackOption("IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME") == "1";
+  initialPause = playbackOption("IRDASHIES_TELEMETRY_REPLAY_PAUSED") == "1";
+  if (!maximumSpeed && !speedText.empty()) {
     char* end = nullptr;
-    const double parsed = std::strtod(speedText, &end);
-    if (end == speedText || end == nullptr || *end != '\0' ||
+    const double parsed = std::strtod(speedText.c_str(), &end);
+    if (end == speedText.c_str() || end == nullptr || *end != '\0' ||
         !std::isfinite(parsed) || parsed < 0.25 || parsed > 100.0) {
       error = "IRDASHIES_TELEMETRY_REPLAY_SPEED must be between 0.25 and 100";
       return false;
     }
     playbackSpeed = parsed;
-  } else {
-    playbackSpeed = 1.0;
-  }
-
-  const char* loopText = std::getenv("IRDASHIES_TELEMETRY_REPLAY_LOOP");
-  loopPlayback = loopText != nullptr && std::strcmp(loopText, "1") == 0;
+  } else playbackSpeed = 1.0;
+  loopPlayback = playbackOption("IRDASHIES_TELEMETRY_REPLAY_LOOP") == "1";
   return true;
 }
 
@@ -151,8 +183,9 @@ void resetPublishedData() {
 }
 
 bool openTape(std::string& error) {
-  const char* input = std::getenv("IRDASHIES_TELEMETRY_REPLAY");
-  if (input == nullptr || input[0] == '\0') {
+  lastError.clear();
+  const auto input = playbackInput();
+  if (input.empty()) {
     error = "IRDASHIES_TELEMETRY_REPLAY is not set";
     return false;
   }
@@ -161,7 +194,7 @@ bool openTape(std::string& error) {
   }
 
   auto candidate = std::make_unique<replay::TapeReader>();
-  if (!candidate->open(std::filesystem::path(input), error)) {
+  if (!candidate->open(input, error)) {
     return false;
   }
   tape = std::move(candidate);
@@ -206,6 +239,7 @@ bool loadPendingRecord(bool frameWillBePublished, std::string& error) {
     finishPlayback(frameWillBePublished);
     return false;
   }
+  lastError = error;
   state = PlaybackState::Failed;
   header.status = 0;
   return false;
@@ -235,6 +269,7 @@ bool publishFrameRecord(irsdk_capture* capture, std::string& error) {
   if (capture) capture->valid = false;
   if (pendingPayload.size() != frame.size()) {
     error = "Frame record length does not match the SDK buffer length";
+    lastError = error;
     state = PlaybackState::Failed;
     header.status = 0;
     return false;
@@ -379,6 +414,7 @@ bool irsdk_startup() {
   if (state == PlaybackState::SeekPending) {
     std::string error;
     if (seekToAnchor(error)) return true;
+    lastError = error;
     state = PlaybackState::Failed;
     header.status = 0;
     std::cerr << "Could not seek telemetry tape: " << error << '\n';
@@ -408,6 +444,7 @@ bool irsdk_startup() {
   }
 
   std::cerr << "Could not start telemetry tape playback: " << error << '\n';
+  lastError = error;
   state = PlaybackState::Failed;
   return false;
 }
@@ -424,6 +461,7 @@ void irsdk_shutdown() {
   durationSeconds = 0;
   anchorSeconds = 0;
   seekFrameReady = false;
+  lastError.clear();
 }
 
 bool irsdk_getNewData(irsdk_capture* capture) {
@@ -516,7 +554,7 @@ int irsdk_padCarNum(int num, int zero) {
 irsdk_tape_status irsdk_tape_getStatus() {
   return {playbackPosition(), durationSeconds, playbackSpeed, paused,
       state == PlaybackState::Finished, maximumSpeed, frameByFrame,
-      state == PlaybackState::Failed, framesConsumed, framesDelivered};
+      state == PlaybackState::Failed, framesConsumed, framesDelivered, lastError};
 }
 
 bool irsdk_tape_seek(double seconds) {

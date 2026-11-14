@@ -297,6 +297,57 @@ describe('tape-backed native SDK', () => {
     await rm(temporaryDirectory, { recursive: true, force: true });
   });
 
+  it('reads replay path and options changed after loading the native DLL', async () => {
+    process.env.IRDASHIES_TELEMETRY_REPLAY = path.join(
+      temporaryDirectory,
+      'missing.irdt'
+    );
+    const { iRacingSdkNode } = loadAddon();
+    const unicodePath = path.join(temporaryDirectory, 'replay-данные.irdt');
+    await writeFile(unicodePath, createTapeFixture());
+    process.env.IRDASHIES_TELEMETRY_REPLAY = unicodePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = '4';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME = '1';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_PAUSED = '1';
+    const sdk = new iRacingSdkNode();
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      expect(sdk.getTapeReplayStatus()).toMatchObject({
+        speed: 4,
+        paused: true,
+        frameByFrame: true,
+        failed: false,
+        error: '',
+      });
+    } finally {
+      sdk.stopSDK();
+    }
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = 'max';
+    const again = new iRacingSdkNode();
+    try {
+      expect(again.startSDK()).toBe(true);
+      expect(again.getTapeReplayStatus().maximumSpeed).toBe(true);
+    } finally {
+      again.stopSDK();
+    }
+  });
+
+  it('returns the native startup failure reason in replay status', () => {
+    process.env.IRDASHIES_TELEMETRY_REPLAY = path.join(
+      temporaryDirectory,
+      'missing.irdt'
+    );
+    const { iRacingSdkNode } = loadAddon();
+    const sdk = new iRacingSdkNode();
+    try {
+      expect(sdk.startSDK()).toBe(false);
+      expect(sdk.getTapeReplayStatus().failed).toBe(true);
+      expect(sdk.getTapeReplayStatus().error).toMatch(/open/i);
+    } finally {
+      sdk.stopSDK();
+    }
+  });
+
   it('returns every source frame individually at maximum speed', async () => {
     await writeFile(tapePath, createTapeFixture());
     process.env.IRDASHIES_TELEMETRY_REPLAY = tapePath;

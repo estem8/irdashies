@@ -265,7 +265,9 @@ export function IbtInspectorView({
           role="alert"
           className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
         >
-          {error ?? status.capture.error ?? 'Replay source failed'}
+          {error ??
+            status.capture.error ??
+            (playback?.error || 'Replay source failed')}
         </p>
       )}
       <p className="text-xs text-slate-500">

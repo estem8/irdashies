@@ -176,3 +176,21 @@ it('retains at most ten completed captures', async () => {
     10
   );
 });
+
+it('rejects native startup failure with its reason and restores the prior source', async () => {
+  deps.getPlayback = () => ({
+    position: 0,
+    duration: 0,
+    speed: 1,
+    paused: false,
+    ended: false,
+    failed: true,
+    error: 'IRDASHIES_TELEMETRY_REPLAY is not set',
+  });
+  await expect(service.load('race.ibt', 1)).rejects.toThrow(
+    'IRDASHIES_TELEMETRY_REPLAY is not set'
+  );
+  expect(deps.switchSource).toHaveBeenLastCalledWith(null);
+  expect(service.status().file).toBeNull();
+  expect(await readdir(deps.workDirectory)).toEqual([]);
+});

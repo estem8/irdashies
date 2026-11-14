@@ -9,6 +9,7 @@ export interface TapeReplayStatus {
   maximumSpeed?: boolean;
   frameByFrame?: boolean;
   failed?: boolean;
+  error?: string;
   framesConsumed?: number;
   framesDelivered?: number;
 }

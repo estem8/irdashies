@@ -286,6 +286,27 @@ G work and reusable delivery checks are not additional queue items.
       traffic/event limitations still apply. This feature is a capture tool,
       not evidence of a performance improvement. Next campaign task: F-8.
 
+- [ ] **INSPECTOR-2 — validate Windows IBT initialization after runtime source
+      selection.** User reports Replay source failed immediately after Load,
+      with ASCII-only paths. A concrete compatibility defect was found: tape
+      startup used the addon CRT's getenv cache, whereas Inspector updates the
+      running process environment. The Windows build now reads input/options
+      from GetEnvironmentVariableW on every startup, preserving wide paths.
+      Native status also carries the failure reason; Inspector rejects failed
+      initialization, restores the old source and reports that reason instead
+      of accepting a failed transport.
+
+      Completed implementation step: Linux native rebuild, Windows x64 cross
+      compilation and 72 tests across six files passed, including parameters
+      changed after DLL load, Unicode input paths, native failure text and
+      failed-load restoration/temporary cleanup. TypeScript/ESLint and whitespace
+      passed. Logs: `/tmp/ibt-windows-fix-native.log`,
+      `/tmp/ibt-windows-fix-cross.log`, `/tmp/ibt-windows-fix-final-tests.log`,
+      `/tmp/ibt-windows-fix-final-lint.log`. The Windows OS branch compiled but
+      has not executed here. Next: user checks the rebuilt Windows folder on
+      the same IBT. Do not mark the reported Windows failure resolved until
+      that check succeeds; any remaining failure should now show its cause.
+
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
       points to larger downstream DOM/compositor costs, but predates these
