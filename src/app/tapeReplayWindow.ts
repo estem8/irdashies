@@ -10,10 +10,13 @@ let replayWindow: BrowserWindow | undefined;
 export function createTapeReplayWindow(): BrowserWindow {
   if (replayWindow && !replayWindow.isDestroyed()) return replayWindow;
   const { x, y, width, height } = screen.getPrimaryDisplay().workArea;
+  const hiddenForCapture =
+    process.env.PERF_METRICS === '1' &&
+    process.env.PERF_TAPE_CONTROLS_HIDDEN === '1';
   const window = new BrowserWindow({
     title: 'irDashies - Telemetry replay',
-    x: Math.round(x + (width - 620) / 2),
-    y: Math.round(y + height - 128),
+    x: hiddenForCapture ? 0 : Math.round(x + (width - 620) / 2),
+    y: hiddenForCapture ? 0 : Math.round(y + height - 128),
     width: 620,
     height: 104,
     frame: false,
@@ -39,7 +42,8 @@ export function createTapeReplayWindow(): BrowserWindow {
   window.webContents.on('will-navigate', (event) => event.preventDefault());
   window.webContents.on('will-redirect', (event) => event.preventDefault());
   const show = () => {
-    if (!window.isDestroyed() && !window.isVisible()) window.showInactive();
+    if (!hiddenForCapture && !window.isDestroyed() && !window.isVisible())
+      window.showInactive();
   };
   window.once('ready-to-show', show);
   window.webContents.once('did-finish-load', show);

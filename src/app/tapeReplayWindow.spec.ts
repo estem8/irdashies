@@ -1,71 +1,148 @@
-import { EventEmitter } from 'node:events';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BrowserWindowConstructorOptions } from 'electron';
 
-vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', 'http://localhost:5173');
-vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
+const mocks = vi.hoisted(() => {
+  const once = new Map<string, () => void>();
+  const webOnce = new Map<string, () => void>();
+  const state = { visible: false };
+  const window = {
+    isDestroyed: vi.fn(() => false),
+    isVisible: vi.fn(() => state.visible),
+    on: vi.fn(),
+    once: vi.fn((event: string, callback: () => void) =>
+      once.set(event, callback)
+    ),
+    setAlwaysOnTop: vi.fn(),
+    setVisibleOnAllWorkspaces: vi.fn(),
+    showInactive: vi.fn(() => {
+      state.visible = true;
+    }),
+    loadURL: vi.fn(async () => undefined),
+    loadFile: vi.fn(async () => undefined),
+    webContents: {
+      setWindowOpenHandler: vi.fn(),
+      on: vi.fn(),
+      once: vi.fn((event: string, callback: () => void) =>
+        webOnce.set(event, callback)
+      ),
+    },
+  };
+  return {
+    once,
+    webOnce,
+    state,
+    window,
+    BrowserWindow: vi.fn(function (options: BrowserWindowConstructorOptions) {
+      void options;
+      return window;
+    }),
+  };
+});
 
 vi.mock('electron', () => ({
-  BrowserWindow: class extends EventEmitter {
-    webContents = Object.assign(new EventEmitter(), {
-      setWindowOpenHandler: vi.fn(),
-    });
-    visible = false;
-    destroyed = false;
-    showInactive = vi.fn(() => {
-      this.visible = true;
-    });
-    isVisible = () => this.visible;
-    isDestroyed = () => this.destroyed;
-    setAlwaysOnTop = vi.fn();
-    setVisibleOnAllWorkspaces = vi.fn();
-    loadURL = vi.fn(async () => undefined);
-    loadFile = vi.fn(async () => undefined);
-
-    constructor(public options: BrowserWindowConstructorOptions) {
-      super();
-    }
-  },
+  BrowserWindow: mocks.BrowserWindow,
   screen: {
     getPrimaryDisplay: () => ({
-      workArea: { x: 0, y: 0, width: 1512, height: 982 },
+      workArea: { x: 0, y: 0, width: 2560, height: 1369 },
     }),
   },
 }));
 
-import { createTapeReplayWindow } from './tapeReplayWindow';
+beforeEach(() => {
+  vi.resetModules();
+  vi.clearAllMocks();
+  mocks.once.clear();
+  mocks.webOnce.clear();
+  mocks.state.visible = false;
+  mocks.window.isDestroyed.mockReturnValue(false);
+  vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', 'http://localhost:5173/');
+  vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
+  vi.stubEnv('PERF_METRICS', '');
+  vi.stubEnv('PERF_TAPE_CONTROLS_HIDDEN', '');
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
-describe('tape replay window startup', () => {
-  afterEach(() => createTapeReplayWindow().emit('closed'));
-
-  it('reveals the controls after loading even when the hidden renderer never signals its first paint', () => {
-    const window = createTapeReplayWindow();
-    expect(window.isVisible()).toBe(false);
-
-    window.webContents.emit('did-finish-load');
-
-    expect(window.isVisible()).toBe(true);
+describe('tape replay window capture isolation', () => {
+  it('preserves the normal placement and ready-to-show behavior', async () => {
+    const { createTapeReplayWindow } = await import('./tapeReplayWindow');
+    createTapeReplayWindow();
+    expect(mocks.BrowserWindow.mock.calls[0][0]).toMatchObject({
+      x: 970,
+      y: 1241,
+      width: 620,
+      height: 104,
+      show: false,
+    });
+    mocks.once.get('ready-to-show')?.();
+    expect(mocks.window.showInactive).toHaveBeenCalledOnce();
   });
 
-  it('shows on first paint without showing again when loading finishes', () => {
+  it.each([
+    ['1', ''],
+    ['', '1'],
+    ['1', 'unexpected'],
+  ])(
+    'requires both explicit capture flags (%s, %s)',
+    async (metrics, hidden) => {
+      vi.stubEnv('PERF_METRICS', metrics);
+      vi.stubEnv('PERF_TAPE_CONTROLS_HIDDEN', hidden);
+      const { createTapeReplayWindow } = await import('./tapeReplayWindow');
+      createTapeReplayWindow();
+      expect(mocks.BrowserWindow.mock.calls[0][0]).toMatchObject({
+        x: 970,
+        y: 1241,
+      });
+      mocks.once.get('ready-to-show')?.();
+      expect(mocks.window.showInactive).toHaveBeenCalledOnce();
+    }
+  );
+
+  it('keeps a loaded, reusable auxiliary renderer hidden at fixed bounds', async () => {
+    vi.stubEnv('PERF_METRICS', '1');
+    vi.stubEnv('PERF_TAPE_CONTROLS_HIDDEN', '1');
+    const { createTapeReplayWindow } = await import('./tapeReplayWindow');
     const window = createTapeReplayWindow();
-    window.emit('ready-to-show');
-    expect(window.isVisible()).toBe(true);
-
-    window.webContents.emit('did-finish-load');
-
-    expect(window.showInactive).toHaveBeenCalledTimes(1);
+    expect(mocks.BrowserWindow.mock.calls[0][0]).toMatchObject({
+      x: 0,
+      y: 0,
+      width: 620,
+      height: 104,
+      show: false,
+    });
+    expect(mocks.window.loadURL).toHaveBeenCalledWith(
+      'http://localhost:5173/#/tape-replay'
+    );
+    mocks.once.get('ready-to-show')?.();
+    mocks.webOnce.get('did-finish-load')?.();
+    expect(mocks.window.showInactive).not.toHaveBeenCalled();
     expect(createTapeReplayWindow()).toBe(window);
+    expect(mocks.BrowserWindow).toHaveBeenCalledOnce();
   });
 
-  it('ignores pending startup events after the window is destroyed', () => {
-    const window = createTapeReplayWindow();
-    vi.spyOn(window, 'isDestroyed').mockReturnValue(true);
+  it('does not show a window destroyed before ready-to-show or load', async () => {
+    const { createTapeReplayWindow } = await import('./tapeReplayWindow');
+    createTapeReplayWindow();
+    mocks.window.isDestroyed.mockReturnValue(true);
+    mocks.once.get('ready-to-show')?.();
+    mocks.webOnce.get('did-finish-load')?.();
+    expect(mocks.window.showInactive).not.toHaveBeenCalled();
+  });
 
-    window.webContents.emit('did-finish-load');
-    window.emit('ready-to-show');
+  it('reveals the controls after loading even when the first paint never fires', async () => {
+    const { createTapeReplayWindow } = await import('./tapeReplayWindow');
+    createTapeReplayWindow();
+    mocks.webOnce.get('did-finish-load')?.();
+    expect(mocks.window.showInactive).toHaveBeenCalledOnce();
+  });
 
-    expect(window.showInactive).not.toHaveBeenCalled();
-    window.emit('closed');
+  it('shows once on first paint even when loading finishes afterwards', async () => {
+    const { createTapeReplayWindow } = await import('./tapeReplayWindow');
+    createTapeReplayWindow();
+    mocks.once.get('ready-to-show')?.();
+    mocks.webOnce.get('did-finish-load')?.();
+    expect(mocks.window.showInactive).toHaveBeenCalledOnce();
   });
 });

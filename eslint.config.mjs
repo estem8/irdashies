@@ -35,6 +35,7 @@ export default defineConfig([
       'storybook-static/**',
       '**/dist/**',
       '**/.remember/**',
+      'perf-results/**',
     ],
   },
   { files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },

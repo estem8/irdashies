@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { copyNativeAddon } from './tools/native/copyNativeAddon.mts';
+import { perfStartupChunk } from './tools/perf/bootstrapChunks.mts';
 
 // Get git hash
 const getGitHash = () => {
@@ -29,6 +31,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: ['bufferutil', 'utf-8-validate'],
+      output: {
+        // Keep the startup side effect outside the entry body: shared storage
+        // chunks otherwise evaluate before an inlined userData initializer.
+        manualChunks: perfStartupChunk,
+      },
     },
   },
   resolve: {
@@ -83,9 +90,7 @@ function irsdkNativeModule(nodeFiles: string[], outDir: string) {
           );
           return;
         }
-        const nodeFile = fs.readFileSync(fileAbs);
-        fs.mkdirSync(path.dirname(out), { recursive: true });
-        fs.writeFileSync(out, nodeFile);
+        copyNativeAddon(fileAbs, out);
       });
     },
   };
