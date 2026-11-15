@@ -21,6 +21,7 @@ export function createReplayReport(options: {
   resourcesAfter: ResourceSnapshot[];
   log: string;
   selectedWidgets: string[];
+  selectedWidgetTypes: string[];
   mountedWidgets: string[];
   finished: boolean;
 }) {
@@ -131,7 +132,7 @@ export function createReplayReport(options: {
     input: options.input,
     coverage: replayWidgetCoverage(
       options.input.variables,
-      options.selectedWidgets
+      options.selectedWidgetTypes
     ),
     playback: {
       elapsedSeconds: options.elapsedSeconds,
