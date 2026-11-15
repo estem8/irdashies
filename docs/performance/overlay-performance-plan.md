@@ -15,6 +15,29 @@ ESLint checks passed.
 At the user's request, this plan is the only file retained in this directory;
 historical evidence links refer to files available in Git history.
 
+## PR separation — 2026-11-15
+
+Split the existing `perf` snapshot `a66f072b` against author main `9b9edbcc`
+into independently buildable branches. The original campaign remains on `perf`;
+these branches package completed work for review and are not new performance
+campaigns or acceptance results.
+
+- `feat/replay-cli`: isolated replay CLI, capture tools and runtime diagnostics.
+- `feat/ibt-inspector`: interactive Inspector, replay controls and saved scenarios.
+- `fix/overlay-widget-performance`: widget drawing, selectors and native visibility.
+- `chore/performance-documentation`: workflow/architecture documentation and the
+  previously requested removal of historical performance files.
+
+CLI and Inspector share the same replay/metrics foundation commit so either PR
+can merge first; neither requires the other's feature commit. The widget branch
+starts directly at author main. Documentation is kept out of runtime PRs.
+
+Verification on the separated branches: shared foundation 149 tests; CLI 126
+Vitest tests and 49 Node capture tests; Inspector 46 tests; widgets 112 tests.
+TypeScript and repository-wide ESLint passed on each code branch. These checks
+validate separation only and do not replace the campaign's performance gates.
+PR publication, screenshots and simulator testing remain separate work.
+
 ## Document ownership
 
 This file is the sole active source for performance status, decisions,
