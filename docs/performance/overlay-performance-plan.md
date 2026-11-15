@@ -70,6 +70,21 @@ This queue owns task selection and progress; the stage checklists below retain
 technical acceptance detail. Blocked items are not completed. Conditional Stage
 G work and reusable delivery checks are not additional queue items.
 
+- [x] **DOC-2 — restore replay widget-development documentation.** Completed
+      2026-11-15. [Developer guide](../REPLAY_DEVELOPMENT.md) covers Inspector,
+      CLI profile/widget selection, looping native tapes, reports, Git LFS and
+      recording coverage. README and tool usage links now point to this guide;
+      historical experiment links remain historical. Cleared `perf-results` at
+      the user's request; new smoke artifacts are outside the repository.
+      Verification: CLI help, 49 CLI/Inspector tests and 163 native/SDK bridge
+      tests passed; one Windows-only test skipped. A real Linux Electron run
+      on the user's IBT with Input at 4x returned 735 SDK frames in a deliberately
+      limited three-second run, zero source supersession, with report and owned
+      process cleanup. Evidence: `/tmp/irdashies-replay-ibt-dev-check-20261115/`.
+      Inspector service/UI checks are automated, not a new manual UI acceptance
+      run. TypeScript/ESLint and documentation checks passed. No runtime code
+      changed; Windows runtime acceptance remains INSPECTOR-2, and the next
+      application optimization task remains F-8.
 - [x] **DOC-1 — consolidate continuation instructions.** Result: one entry point,
       continuation/commit protocol, task IDs and separated historical observations.
       Existing log/handoff deletions and reference updates are included in this
@@ -167,7 +182,7 @@ G work and reusable delivery checks are not additional queue items.
       and whitespace.
       No performance captures were repeated. Next campaign task remains F-8.
 - [x] **CLI-1 — reusable IBT replay CLI and bounded reporting.** Completed
-      2026-11-14. [Usage and helper entrypoints](replay-cli.md).
+      2026-11-14. [Usage and helper entrypoints](../REPLAY_DEVELOPMENT.md#replay-cli).
       `npm run perf -- replay <file.ibt|file.irdt> --speed 1|4|max` launches
       isolated real overlays, preserves source frames at the SDK boundary and
       emits JSON/Markdown reports plus a readiness screenshot. Numeric speeds
@@ -247,7 +262,7 @@ G work and reusable delivery checks are not additional queue items.
       performance comparison.
 
 - [x] **INSPECTOR-1 — in-app IBT Inspector for the current overlays.** User
-      priority completed 2026-11-14. [Usage](ibt-inspector.md). App Settings →
+      priority completed 2026-11-14. [Usage](../REPLAY_DEVELOPMENT.md#ibt-inspector). App Settings →
       General → Dev Tool enables an independent inspector window. It lists
       `.ibt` files from Electron's Documents/iRacing/telemetry directory, loads
       a paused recording, controls playback and records existing main-process

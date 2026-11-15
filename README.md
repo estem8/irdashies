@@ -952,6 +952,8 @@ This project makes use of data and resources from the following projects:
 
 ## Contributing
 
+For widget development without a running simulator, see [recorded telemetry workflows: Replay CLI and IBT Inspector](docs/REPLAY_DEVELOPMENT.md).
+
 We welcome contributions to the IRDashies project! If you have any ideas, suggestions, or bug reports, please open an issue or submit a pull request.
 
 Join our discord here: https://discord.gg/YMAqduF2Ft
