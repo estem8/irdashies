@@ -33,6 +33,8 @@ export default defineConfig({
             'src/app/**',
             'tmp-data/**',
             'perf-results/**',
+            // These use node:test and run through test:perf-capture.
+            'tools/perf/capture/*.test.mjs',
           ],
         },
       },
