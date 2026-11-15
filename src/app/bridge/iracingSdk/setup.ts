@@ -17,6 +17,7 @@ import {
 } from './simSelection';
 import { getCurrentProfileId, getDashboard } from '../../storage/dashboards';
 import { onDashboardUpdated } from '../../storage/dashboardEvents';
+import { updatePerfSourceMetadata } from '../../perfRunConfig';
 
 let isDemoMode = false;
 let currentBridge: IrSdkSourceBridge | undefined;
@@ -252,6 +253,25 @@ function queueBridgeSetup(
   return next;
 }
 
+/** Inspector changes join the same queue as profile/simulator changes. */
+export function reconfigureTelemetrySource(
+  overlayManager: OverlayManager,
+  channelBus: ChannelBus,
+  configure: () => void
+): Promise<void> {
+  const next = bridgeSetupQueue
+    .catch(() => undefined)
+    .then(async () => {
+      unwatchCurrentConnection();
+      currentBridge?.stop();
+      currentBridge = undefined;
+      configure();
+      await setupBridge(overlayManager, channelBus);
+    });
+  bridgeSetupQueue = next.catch(() => undefined);
+  return next;
+}
+
 async function setupBridge(
   overlayManager: OverlayManager,
   channelBus?: ChannelBus
@@ -263,7 +283,7 @@ async function setupBridge(
     // iRacing to the bridge, but is no more a sim in use than a tape.
     const isIsolatedSdkReplay = process.env.IRDASHIES_IRSDK_REPLAY === '1';
     const isMock =
-      isDemoMode ||
+      (isDemoMode && !isTapeReplay) ||
       (process.platform !== 'win32' && !isTapeReplay && !isLmuTapeReplay);
     const available = getAvailableSimulators();
 
@@ -307,6 +327,16 @@ async function setupBridge(
           : `[setup] No pinned simulator; auto-detecting among [${available.join(', ')}]`
     );
 
+    updatePerfSourceMetadata(
+      isMock
+        ? 'mock'
+        : isTapeReplay || isLmuTapeReplay
+          ? 'tape'
+          : isIsolatedSdkReplay
+            ? 'sdk-replay'
+            : 'live'
+    );
+
     const publishIRacingSDKEvents = isMock
       ? (await import('./mock-data/mockSdkBridge')).publishIRacingSDKEvents
       : simulator
@@ -319,7 +349,8 @@ async function setupBridge(
     // not name a stale sim.
     setActiveSimulator(overlayManager, isMock ? undefined : simulator);
 
-    const lifecycle = isDemoMode ? undefined : getSessionLifecycle();
+    const lifecycle =
+      isDemoMode && !isTapeReplay ? undefined : getSessionLifecycle();
     currentBridge = await publishIRacingSDKEvents(
       overlayManager,
       lifecycle,

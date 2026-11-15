@@ -41,6 +41,8 @@ interface RunOptions {
 }
 
 function argumentValue(args: string[], name: string): string | undefined {
+  const inlineValue = args.find((argument) => argument.startsWith(`${name}=`));
+  if (inlineValue !== undefined) return inlineValue.slice(name.length + 1);
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
 }
@@ -137,13 +139,23 @@ function parseArgs(args: string[]): RunOptions {
   };
 }
 
-const options = parseArgs(process.argv.slice(2));
+const args = process.argv.slice(2);
+const options = parseArgs(args);
 // Keep benchmark configuration and generated history away from the user's
-// saved profile. Forward this Electron argument through Forge in development.
-const userDataDirectory = argumentValue(
-  process.argv.slice(2),
-  '--user-data-dir'
+// saved profile. The main-process bootstrap applies this path before storage
+// modules initialize.
+const userDataArgumentIndex = args.indexOf('--user-data-dir');
+const userDataInlineArgument = args.find((arg) =>
+  arg.startsWith('--user-data-dir=')
 );
+const userDataDirectory = argumentValue(args, '--user-data-dir');
+if (
+  (userDataArgumentIndex >= 0 &&
+    (!userDataDirectory || userDataDirectory.startsWith('--'))) ||
+  userDataInlineArgument === '--user-data-dir='
+) {
+  throw new Error('--user-data-dir requires a path value.');
+}
 if (
   userDataDirectory &&
   /[\s"&|<>^%!\r\n]/.test(path.resolve(userDataDirectory))
@@ -189,23 +201,8 @@ if (options.target === 'packaged') {
       : 'npm';
   childArguments =
     process.platform === 'win32'
-      ? [
-          '/d',
-          '/s',
-          '/c',
-          userDataDirectory
-            ? `npm.cmd start -- -- --user-data-dir=${path.resolve(userDataDirectory)}`
-            : 'npm.cmd start',
-        ]
-      : [
-          'start',
-          ...(userDataDirectory
-            ? ['--', '--', `--user-data-dir=${path.resolve(userDataDirectory)}`]
-            : []),
-        ];
-}
-if (options.target === 'packaged' && userDataDirectory) {
-  childArguments.push(`--user-data-dir=${path.resolve(userDataDirectory)}`);
+      ? ['/d', '/s', '/c', 'npm.cmd start']
+      : ['start'];
 }
 let build = 'unknown';
 try {
@@ -270,6 +267,9 @@ const child = spawn(childCommand, childArguments, {
     PERF_DURATION_SECONDS: String(options.durationSeconds),
     PERF_BUILD: build,
     PERF_LOG_PATH: logPath,
+    PERF_USER_DATA_DIR: userDataDirectory
+      ? path.resolve(userDataDirectory)
+      : '',
     PERF_TELEMETRY_DELIVERY: options.telemetryDelivery,
     PERF_TELEMETRY_PAYLOAD: options.telemetryPayload,
     PERF_CHANNEL_DELIVERY: options.channelDelivery,

@@ -1,15 +1,12 @@
 # irDashies Performance Benchmarks
 
-Current references and their evidence qualifications are listed in the
-[baseline register](./PERFORMANCE_TEST_LOG.md#current-baseline-register).
-Choose a reference with the same target and workload; the most recent capture
-does not automatically replace the release baseline. Attached compact evidence
-under `docs/performance/` survives when local `perf-results/` logs are absent.
-
-This is the repeatable benchmark protocol for diagnosing iRacing FPS loss,
-overlay stutter, and long-session degradation. It complements
-[`PERFORMANCE_TEST_SUMMARY.md`](./PERFORMANCE_TEST_SUMMARY.md), whose earlier
-runs established the memory and telemetry-processing targets.
+This document owns the repeatable benchmark procedure and CLI examples, not the
+active roadmap. Current status, decisions, acceptance gaps, and priorities live
+in the [performance plan](./performance/overlay-performance-plan.md). Its
+[reference-workloads section](./performance/overlay-performance-plan.md#reference-workloads)
+lists the comparison baselines; choose one with the same build target and
+workload. A newer capture does not automatically replace a packaged reference.
+Dated reports linked from the plan preserve experiment-specific evidence.
 
 ## What the harness captures
 
@@ -63,6 +60,61 @@ the same seed. Verify visible content after startup settles, especially when
 `IsOnTrack` is false in replay. Counts of windows or enabled widgets do not
 prove content visibility or input coverage. The [full saved-profile capture
 report](./performance/2026-11-01-main-full-profile.md) records a worked example.
+
+### Diagnosis is not acceptance
+
+Use short traces, subtree isolation and delivery/store suppression to identify
+where work occurs. Their deltas include the downstream work they stop; they
+are not achieved optimizations. A microbenchmark or a removed
+`compositeFailed` warning also does not prove lower application CPU. Reserve
+long, repeated normal-operation A/B runs for validating a concrete candidate.
+
+Use a monotonic clock for elapsed intervals and shutdown deadlines; keep UTC
+wall timestamps separately for correlation. Reject significant wall-clock
+changes, suspend/observation gaps, or missing samples instead of treating them
+as an application hang or silently compressing the interval. The long-matrix
+controller records monotonic CPU-sample times and rejects wall/monotonic drift
+over two seconds. Keep the machine awake for unattended captures with a temporary
+inhibitor where available, without changing saved power settings.
+
+Cold development renderers may take more than five seconds to load. The
+long-matrix controller requests a validated 30-second topology grace within its
+60-second warmup, while retaining full readiness checks. Origin records the main
+PID early so failed-start cleanup can request graceful shutdown before any
+process-group fallback. Diagnose the first failure in timestamp order: GPU or
+zygote messages emitted during group teardown do not establish a GPU startup bug.
+
+Before the measured interval, verify and record:
+
+- Exact source/build state, seed and fixture hashes, playback position/speed,
+  active widget instances/settings and actual visible content.
+- Window roles, bounds, visibility, DPR and renderer cadence. Include auxiliary
+  windows such as tape controls; normalize their startup/show state before
+  measurement instead of changing comparison rules after a mismatch appears.
+- Comparable required channel/input activity, event delivery and lifecycle
+  behavior. Reduced work caused by frozen data or missing samples is not a win.
+- Instrumentation mode. Tracing, V8/React profiling and heap collection add
+  work; do not mix them into the ordinary CPU acceptance run or run unrelated
+  tests/builds alongside local measurements.
+
+Report process CPU in ms/s, distinguish rAF scheduling from presentation, and
+keep trace wall duration separate from accumulated CPU time. GPU-process CPU
+is not GPU-engine utilization. Do not double-count nested spans or add
+overlapping thread durations as frame time. Missing memory/coverage metrics
+must remain unavailable, not zero or a passed gate.
+
+Capture controllers must use isolated profiles, preserve raw artifacts and
+source manifests, and restore temporary source/runtime changes on success,
+failure and cancellation. Verify child termination and candidate source hashes
+before starting another run. An existing output directory or lock file is not
+proof that a capture is still running. Reject confounded comparisons and retain
+the reason; a passing command or `--allow-inconclusive` cannot override that.
+
+For repeated static graphics, inspect layer count as well as CPU/memory before
+forcing GPU promotion. For continuous motion, inspect layout/paint and verify
+that replacing layout animation preserves actual rendered positions, timing,
+clipping and hide/show at the supported widget scales and DPR. Keep effects
+that are needed for appearance unless a measured alternative preserves them.
 
 ## Controlled replay benchmark
 
@@ -127,7 +179,9 @@ npm run perf:run -- --mode full --scenario channels-on --duration-seconds 420 --
 
 The off run still records processor executions and channel publications. It
 suppresses snapshot seeding, coalescing timers, structured cloning, IPC sends,
-and renderer callbacks, making the on/off delta attributable to delivery.
+and renderer callbacks, as well as the reactive downstream selector/React/paint
+work those callbacks would trigger. The on/off delta therefore does not isolate
+IPC transport cost and is not an achieved optimization.
 
 ### 3. Full dashboard
 
@@ -352,5 +406,5 @@ measured layer:
 - A single widget's paint regression: optimize that renderer before moving
   application-wide architecture.
 
-Follow-up work, evidence gates, and measurable exit criteria are tracked in
-[archived implementation plan](./archive/architecture-2026/IMPLEMENTATION_PLAN.md#performance-measurement-and-optimization-plan-2026-07-26).
+Current follow-up work and evidence gates are tracked only in the
+[active performance plan](./performance/overlay-performance-plan.md).

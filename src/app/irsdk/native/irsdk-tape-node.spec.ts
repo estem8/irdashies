@@ -281,16 +281,149 @@ describe('tape-backed native SDK', () => {
 
   beforeEach(() => {
     delete process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED;
+    delete process.env.IRDASHIES_TELEMETRY_REPLAY_PAUSED;
+    delete process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME;
   });
 
   afterEach(() => {
     delete process.env.IRDASHIES_TELEMETRY_REPLAY;
     delete process.env.IRDASHIES_TELEMETRY_REPLAY_LOOP;
     delete process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED;
+    delete process.env.IRDASHIES_TELEMETRY_REPLAY_PAUSED;
+    delete process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME;
   });
 
   afterAll(async () => {
     await rm(temporaryDirectory, { recursive: true, force: true });
+  });
+
+  it('reads replay path and options changed after loading the native DLL', async () => {
+    process.env.IRDASHIES_TELEMETRY_REPLAY = path.join(
+      temporaryDirectory,
+      'missing.irdt'
+    );
+    const { iRacingSdkNode } = loadAddon();
+    const unicodePath = path.join(temporaryDirectory, 'replay-данные.irdt');
+    await writeFile(unicodePath, createTapeFixture());
+    process.env.IRDASHIES_TELEMETRY_REPLAY = unicodePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = '4';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME = '1';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_PAUSED = '1';
+    const sdk = new iRacingSdkNode();
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      expect(sdk.getTapeReplayStatus()).toMatchObject({
+        speed: 4,
+        paused: true,
+        frameByFrame: true,
+        failed: false,
+        error: '',
+      });
+    } finally {
+      sdk.stopSDK();
+    }
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = 'max';
+    const again = new iRacingSdkNode();
+    try {
+      expect(again.startSDK()).toBe(true);
+      expect(again.getTapeReplayStatus().maximumSpeed).toBe(true);
+    } finally {
+      again.stopSDK();
+    }
+  });
+
+  it('returns the native startup failure reason in replay status', () => {
+    process.env.IRDASHIES_TELEMETRY_REPLAY = path.join(
+      temporaryDirectory,
+      'missing.irdt'
+    );
+    const { iRacingSdkNode } = loadAddon();
+    const sdk = new iRacingSdkNode();
+    try {
+      expect(sdk.startSDK()).toBe(false);
+      expect(sdk.getTapeReplayStatus().failed).toBe(true);
+      expect(sdk.getTapeReplayStatus().error).toMatch(/open/i);
+    } finally {
+      sdk.stopSDK();
+    }
+  });
+
+  it('returns every source frame individually at maximum speed', async () => {
+    await writeFile(tapePath, createTapeFixture());
+    process.env.IRDASHIES_TELEMETRY_REPLAY = tapePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = 'max';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_LOOP = '0';
+    const sdk = new (loadAddon().iRacingSdkNode)();
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      for (const tick of [100, 101, 102]) {
+        expect(sdk.waitForData(0)).toBe(true);
+        expect(intValue(sdk.getTelemetryVariable('SessionTick').value)).toBe(
+          tick
+        );
+      }
+      expect(sdk.waitForData(0)).toBe(false);
+      expect(sdk.getTapeReplayStatus()).toMatchObject({
+        maximumSpeed: true,
+        ended: true,
+        failed: false,
+        framesConsumed: 3,
+        framesDelivered: 3,
+      });
+    } finally {
+      sdk.stopSDK();
+    }
+  });
+
+  it('retains every frame when paced replay falls behind in frame-by-frame mode', async () => {
+    await writeFile(
+      tapePath,
+      createTapeFixture({ qpcFrequency: 1_000_000_000n })
+    );
+    process.env.IRDASHIES_TELEMETRY_REPLAY = tapePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_SPEED = '4';
+    process.env.IRDASHIES_TELEMETRY_REPLAY_EVERY_FRAME = '1';
+    const sdk = new (loadAddon().iRacingSdkNode)();
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      for (const tick of [100, 101, 102]) {
+        expect(sdk.waitForData(0)).toBe(true);
+        expect(intValue(sdk.getTelemetryVariable('SessionTick').value)).toBe(
+          tick
+        );
+      }
+      expect(sdk.waitForData(0)).toBe(false);
+      expect(sdk.getTapeReplayStatus()).toMatchObject({
+        frameByFrame: true,
+        framesConsumed: 3,
+        framesDelivered: 3,
+      });
+    } finally {
+      sdk.stopSDK();
+    }
+  });
+
+  it('seeds one frame while starting paused and waits for explicit resume', async () => {
+    await writeFile(tapePath, createTapeFixture());
+    process.env.IRDASHIES_TELEMETRY_REPLAY = tapePath;
+    process.env.IRDASHIES_TELEMETRY_REPLAY_PAUSED = '1';
+    const sdk = new (loadAddon().iRacingSdkNode)();
+    try {
+      expect(sdk.startSDK()).toBe(true);
+      expect(sdk.waitForData(0)).toBe(true);
+      expect(intValue(sdk.getTelemetryVariable('SessionTick').value)).toBe(100);
+      expect(sdk.waitForData(20)).toBe(false);
+      expect(sdk.getTapeReplayStatus()).toMatchObject({
+        paused: true,
+        framesConsumed: 1,
+        framesDelivered: 1,
+      });
+      expect(sdk.setTapeReplayPaused(false)).toBe(true);
+      expect(sdk.waitForData(30)).toBe(true);
+      expect(intValue(sdk.getTelemetryVariable('SessionTick').value)).toBe(101);
+    } finally {
+      sdk.stopSDK();
+    }
   });
 
   it.each([

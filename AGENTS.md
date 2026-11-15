@@ -15,6 +15,8 @@ Before making any non-trivial change, read [`docs/ARCHITECTURE_RULES.md`](docs/A
 
 The 2026 architecture review and phased implementation plan are preserved under [`docs/archive/architecture-2026/`](docs/archive/architecture-2026/) as historical context. They are closed records, not active task lists, and do not need to be read or referenced for unrelated work.
 
+For performance work, agents MUST read and maintain [`docs/performance/overlay-performance-plan.md`](docs/performance/overlay-performance-plan.md). It is the sole active source for identified findings, closed decisions, acceptance gaps, and next priorities. Do not duplicate current status elsewhere. Use `docs/PERFORMANCE_BENCHMARKS.md` for capture/analyzer procedure and dated reports under `docs/performance/` for supporting evidence. Update the plan and link detailed evidence when findings change. Follow its continuation protocol: continue the existing `perf` branch, select one open task by ID, and commit each completed step together with its plan update and verification results. Mark a task complete only when its stated acceptance criterion is met; record blockers without repeating completed experiments. Do not create another handoff, status log, or temporary branch for this campaign.
+
 **When `ARCHITECTURE_RULES.md` conflicts with anything in this file, the rules file wins for architecture concerns.**
 
 ---
