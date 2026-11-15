@@ -433,6 +433,20 @@ G work and reusable delivery checks are not additional queue items.
       the same IBT. Do not mark the reported Windows failure resolved until
       that check succeeds; any remaining failure should now show its cause.
 
+## Short IBT A/B diagnostic — 2026-11-15
+
+At the user's request, compared `author/main` (`9b9edbcc`) with `perf`
+(`2b6367c6`) using the supplied 58,156-frame IBT, reconstructed ten-widget
+profile, Linux Electron, and a replay speed capped at 2x. One sequential A-then-B
+pair: total process CPU was 917.05 vs 792.18 ms/s (-13.6%); average private
+memory was 364.18 vs 305.35 MiB (-58.83 MiB). Overlay rAF p99 was 40.7 vs
+40.3 ms; intervals over 50 ms were 16 vs 19. Replay ticks differed by about
+5%, and native overlay bounds differed by one pixel. The source lacks the
+CarIdx arrays needed to exercise traffic-dependent widgets. This is directional
+Linux diagnostic evidence only; it does not establish smoother pacing, Windows
+performance, or an acceptance gate, and does not close F-8. Detailed report:
+`/home/omarchy/OmarchyShared/Projects/irdashies-ibt-ab-20261115.md`.
+
 - [ ] **F-8 — identify current DOM/compositor invalidation ownership.**
       The last two scoped fixes remove inexpensive work. Existing attribution
       points to larger downstream DOM/compositor costs, but predates these
