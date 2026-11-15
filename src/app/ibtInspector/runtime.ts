@@ -1,3 +1,4 @@
+import { createIbtInspectorScenarioStore } from '../storage/ibtInspectorScenario';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import type { OverlayManager } from '../overlayManager';
@@ -36,10 +37,19 @@ export function setupIbtInspector(manager: OverlayManager, bus: ChannelBus) {
   const enabled = () =>
     !closing &&
     getDashboard(getCurrentProfileId())?.generalSettings?.devTool === true;
+  const scenarioStore = createIbtInspectorScenarioStore(
+    path.join(app.getPath('userData'), 'ibt-inspector')
+  );
   const service = new IbtInspectorService({
+    getProfileId: getCurrentProfileId,
+    saveScenario: scenarioStore.save,
     directory: path.join(app.getPath('documents'), 'iRacing', 'telemetry'),
     workDirectory: path.join(app.getPath('userData'), 'ibt-inspector'),
     enabled,
+    getWidgetTypes: () =>
+      (getDashboard(getCurrentProfileId())?.widgets ?? [])
+        .filter((widget) => widget.enabled)
+        .map((widget) => widget.type || widget.id),
     getPlayback: () => getCurrentBridge()?.getTapeReplayStatus?.() ?? null,
     command: (command) => {
       const bridge = getCurrentBridge();
@@ -144,6 +154,16 @@ export function setupIbtInspector(manager: OverlayManager, bus: ChannelBus) {
         { hash: '/ibt-inspector' }
       );
   };
+  ipcMain.handle('ibtInspector:getScenario', async () => {
+    if (!enabled()) throw new Error('Enable Dev Tool in General settings');
+    const scenario = await scenarioStore.read();
+    if (scenario && scenario.profileId !== getCurrentProfileId())
+      throw new Error(
+        'Saved scenario belongs to another dashboard profile. Switch to that profile first.'
+      );
+    return scenario;
+  });
+  ipcMain.handle('ibtInspector:saveScenario', () => service.saveScenario());
   ipcMain.handle('ibtInspector:open', () => open());
   ipcMain.handle('ibtInspector:list', () => service.list());
   ipcMain.handle('ibtInspector:status', () => service.status());

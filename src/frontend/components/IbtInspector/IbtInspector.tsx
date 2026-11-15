@@ -1,3 +1,4 @@
+import { ReplayDevelopmentControls } from './ReplayDevelopmentControls';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowClockwiseIcon,
@@ -13,6 +14,7 @@ import type {
   IbtFile,
   IbtInspectorBridge,
   IbtInspectorStatus,
+  TapeReplayCommand,
 } from '@irdashies/types';
 import { PerformanceTelemetry } from './PerformanceTelemetry';
 
@@ -49,6 +51,7 @@ export interface IbtInspectorViewProps {
   truncated?: boolean;
   onSelect: (name: string) => void;
   onSpeed: (speed: string) => void;
+  onCommand?: (command: TapeReplayCommand) => void;
   onAction: (
     action:
       | 'refresh'
@@ -58,6 +61,8 @@ export interface IbtInspectorViewProps {
       | 'capture'
       | 'memoryCheckpoint'
       | 'report'
+      | 'saveScenario'
+      | 'restoreScenario'
   ) => void;
 }
 
@@ -73,6 +78,7 @@ export function IbtInspectorView({
   onSelect,
   onSpeed,
   onAction,
+  onCommand,
 }: IbtInspectorViewProps) {
   const playback = status.playback;
   return (
@@ -217,6 +223,13 @@ export function IbtInspectorView({
             {playback.framesConsumed?.toLocaleString() ?? 'unavailable'}
           </p>
         )}
+        <ReplayDevelopmentControls
+          status={status}
+          busy={busy}
+          onCommand={onCommand}
+          onSave={() => onAction('saveScenario')}
+          onRestore={() => onAction('restoreScenario')}
+        />
       </section>
       <section className="rounded-lg border border-slate-700 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -372,7 +385,8 @@ export function IbtInspector({
     };
   }, [bridge]);
   const action = async (
-    name: Parameters<IbtInspectorViewProps['onAction']>[0]
+    name: Parameters<IbtInspectorViewProps['onAction']>[0] | 'command',
+    command?: TapeReplayCommand
   ) => {
     if (!bridge || pending.current) return;
     pending.current = true;
@@ -380,6 +394,21 @@ export function IbtInspector({
     setBusy(true);
     setError(null);
     try {
+      if (name === 'command' && command) await bridge.command(command);
+      if (name === 'saveScenario') await bridge.saveScenario();
+      if (name === 'restoreScenario') {
+        const scenario = await bridge.getScenario();
+        if (!scenario)
+          throw new Error(
+            'No saved scenario. Load a recording and save it first.'
+          );
+        await bridge.load(scenario.file, scenario.speed);
+        await bridge.command({ type: 'seek', seconds: scenario.position });
+        if (scenario.loop)
+          await bridge.command({ type: 'loop', range: scenario.loop });
+        setSelected(scenario.file);
+        setSpeed(String(scenario.speed));
+      }
       if (name === 'refresh') await refresh();
       if (name === 'load')
         await bridge.load(selected, speed === 'max' ? 'max' : Number(speed));
@@ -418,6 +447,7 @@ export function IbtInspector({
       truncated={truncated}
       onSelect={setSelected}
       onSpeed={setSpeed}
+      onCommand={(command) => void action('command', command)}
       onAction={(name) => void action(name)}
     />
   );

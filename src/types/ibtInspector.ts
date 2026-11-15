@@ -1,3 +1,5 @@
+import type { IbtInspectorScenario } from './ibtInspectorScenario';
+import type { ReplayWidgetCoverage } from './replayCoverage';
 import type { TapeReplayCommand, TapeReplayStatus } from './tapeReplay';
 
 export interface IbtFile {
@@ -158,10 +160,13 @@ export interface IbtInspectorStatus {
   file: string | null;
   playback: TapeReplayStatus | null;
   warnings: string[];
+  coverage?: ReplayWidgetCoverage[];
   capture: IbtInspectorCaptureStatus;
 }
 
 export interface IbtInspectorBridge {
+  getScenario: () => Promise<IbtInspectorScenario | null>;
+  saveScenario: () => Promise<void>;
   open: () => Promise<void>;
   list: () => Promise<{
     directory: string;

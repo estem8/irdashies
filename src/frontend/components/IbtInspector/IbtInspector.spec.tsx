@@ -21,6 +21,8 @@ it('lists recordings, loads selected source paused, and starts capture with play
     },
   };
   const bridge: IbtInspectorBridge = {
+    getScenario: vi.fn(async () => null),
+    saveScenario: vi.fn(),
     open: vi.fn(),
     list: vi.fn(async () => ({
       directory: 'C:\\Users\\user\\Documents\\iRacing\\telemetry',
@@ -41,6 +43,7 @@ it('lists recordings, loads selected source paused, and starts capture with play
         duration: 10,
         speed: 1,
         paused: true,
+        canStep: true,
         ended: false,
       };
     }),
@@ -56,6 +59,33 @@ it('lists recordings, loads selected source paused, and starts capture with play
   fireEvent.click(screen.getByRole('button', { name: 'Load recording' }));
   await waitFor(() => expect(bridge.load).toHaveBeenCalledWith('race.ibt', 1));
   await screen.findByRole('button', { name: 'Play' });
+  fireEvent.click(screen.getByRole('button', { name: 'Next frame' }));
+  await waitFor(() =>
+    expect(bridge.command).toHaveBeenCalledWith({ type: 'step' })
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Seek' })).toBeDisabled()
+  );
+  fireEvent.change(screen.getByLabelText('Seek position'), {
+    target: { value: '3.25' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Seek' }));
+  await waitFor(() =>
+    expect(bridge.command).toHaveBeenCalledWith({ type: 'seek', seconds: 3.25 })
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Loop A–B' })).toBeEnabled()
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Loop A–B' }));
+  await waitFor(() =>
+    expect(bridge.command).toHaveBeenCalledWith({
+      type: 'loop',
+      range: { start: 0, end: 10 },
+    })
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Start capture' })).toBeEnabled()
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Start capture' }));
   await waitFor(() => expect(bridge.startCapture).toHaveBeenCalled());
   await waitFor(() =>

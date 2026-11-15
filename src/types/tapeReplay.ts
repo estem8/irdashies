@@ -10,6 +10,8 @@ export interface TapeReplayStatus {
   frameByFrame?: boolean;
   failed?: boolean;
   error?: string;
+  loop?: { start: number; end: number } | null;
+  canStep?: boolean;
   framesConsumed?: number;
   framesDelivered?: number;
 }
@@ -17,6 +19,8 @@ export interface TapeReplayStatus {
 export const TAPE_REPLAY_SPEEDS = [0.25, 0.5, 1, 2, 5, 10] as const;
 
 export type TapeReplayCommand =
+  | { type: 'step' }
+  | { type: 'loop'; range: { start: number; end: number } | null }
   | { type: 'seek'; seconds: number }
   | { type: 'speed'; speed: number }
   | { type: 'pause'; paused: boolean };

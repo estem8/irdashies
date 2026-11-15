@@ -51,6 +51,8 @@ export function exposeBridge() {
   defineBridge<import('../../types/ibtInspector').IbtInspectorBridge>(
     'ibtInspectorBridge',
     {
+      getScenario: () => ipcRenderer.invoke('ibtInspector:getScenario'),
+      saveScenario: () => ipcRenderer.invoke('ibtInspector:saveScenario'),
       open: () => ipcRenderer.invoke('ibtInspector:open'),
       list: () => ipcRenderer.invoke('ibtInspector:list'),
       status: () => ipcRenderer.invoke('ibtInspector:status'),

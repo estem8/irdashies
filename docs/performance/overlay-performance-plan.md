@@ -70,6 +70,43 @@ This queue owns task selection and progress; the stage checklists below retain
 technical acceptance detail. Blocked items are not completed. Conditional Stage
 G work and reusable delivery checks are not additional queue items.
 
+- [x] **DEV-1 — make recorded replay practical for widget development.**
+      User priority completed 2026-11-15. [Guide](../REPLAY_DEVELOPMENT.md)
+      documents baseline field coverage for twelve widget types (unknown for
+      unaudited types), Inspector seek/restart, native single-frame stepping,
+      A–B loops and one explicitly saved scenario (file/profile/speed/position/
+      range). Native loops expose the existing disconnect/reconnect reset;
+      they do not reconstruct earlier history. Frame stepping stays paused.
+      Mutating replay controls are blocked during a capture. Scenario storage
+      is bounded, validated and atomic; restoration is explicit and rejects
+      another dashboard profile. Capture JSON includes baseline coverage.
+      CLI `--profile defaults` discovers current manifest files without the
+      Vite-only registry. Opt-in `--check smoke|complete`, expected channel
+      deliveries and baseline coverage checks persist assertions and return
+      nonzero on failure after cleanup. These do not prove pixel correctness,
+      changing values, listener leak absence or complete event coverage.
+
+      Verification: fresh Linux native build, 320 tests in 24 files and full
+      TypeScript/ESLint passed. Native tests cover one-frame delivery, reset
+      before range repetition and looping when B equals the end marker.
+      Positive real-IBT CLI smoke with manifest defaults returned 722 frames,
+      zero supersession and positive Input deliveries; a limited complete-check
+      run returned exit 1 solely for incomplete playback. Linux Electron
+      Inspector exercised paused load, one 1/60-second step, seek, a 4.0–4.2 s
+      loop, capture, source restoration and the visible Restore scenario action.
+      Evidence and screenshots (untracked, outside the repository):
+      `/tmp/irdashies-inspector-controls-check-20261115/verification.json`,
+      `before.png` / `after.png` in that directory;
+      `/tmp/irdashies-replay-defaults-smoke-20261115/` and
+      `/tmp/irdashies-replay-negative-check-20261115/`.
+      Logs: `/tmp/irdashies-replay-controls-native-build.log`,
+      `/tmp/irdashies-replay-development-final-tests.log`,
+      `/tmp/irdashies-replay-final-lint.log`.
+      `perf-results` remains empty; the temporary Inspector recording and
+      normalized CLI inputs were removed. These are functional developer
+      checks, not a performance comparison. Native Windows execution remains
+      unavailable and INSPECTOR-2 stays open. Next optimization task: F-8.
+
 - [x] **DOC-2 — restore replay widget-development documentation.** Completed
       2026-11-15. [Developer guide](../REPLAY_DEVELOPMENT.md) covers Inspector,
       CLI profile/widget selection, looping native tapes, reports, Git LFS and

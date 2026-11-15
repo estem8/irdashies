@@ -1,3 +1,5 @@
+import type { IbtInspectorScenario } from '../../types/ibtInspectorScenario';
+import { replayWidgetCoverage } from '../../types/replayCoverage';
 import { createWriteStream, type WriteStream } from 'node:fs';
 import {
   lstat,
@@ -226,6 +228,9 @@ export const parseCaptureReport = (
 
 interface InspectorDependencies {
   directory: string;
+  getProfileId?: () => string;
+  saveScenario?: (scenario: IbtInspectorScenario) => Promise<void>;
+  getWidgetTypes?: () => string[];
   workDirectory: string;
   enabled: () => boolean;
   switchSource: (tape: string | null, speed?: number | 'max') => Promise<void>;
@@ -351,6 +356,12 @@ export class IbtInspectorService {
       file: this.file,
       playback: this.file ? this.deps.getPlayback() : null,
       warnings: [...this.warnings],
+      coverage: this.input
+        ? replayWidgetCoverage(
+            this.input.variables ?? [],
+            this.deps.getWidgetTypes?.() ?? []
+          )
+        : [],
       capture: {
         ...this.capture,
         telemetry: downsampleIbtTelemetry(this.telemetrySamples),
@@ -502,9 +513,29 @@ export class IbtInspectorService {
     return this.serial(async () => {
       this.requireEnabled();
       if (!this.file) throw new Error('Load an IBT first');
-      if (this.capture.active && command.type === 'seek')
-        throw new Error('Stop capture before seeking');
+      if (
+        this.capture.active &&
+        ['seek', 'step', 'loop', 'speed'].includes(command.type)
+      )
+        throw new Error(
+          'Stop capture before seeking or changing replay controls'
+        );
       this.deps.command(command);
+    });
+  }
+  saveScenario() {
+    return this.serial(async () => {
+      this.requireEnabled();
+      const playback = this.deps.getPlayback();
+      if (!this.file || !playback || !this.deps.saveScenario)
+        throw new Error('Load an IBT first');
+      await this.deps.saveScenario({
+        file: this.file,
+        profileId: this.deps.getProfileId?.() ?? 'default',
+        speed: playback.maximumSpeed ? 'max' : playback.speed,
+        position: playback.position,
+        loop: playback.loop ?? null,
+      });
     });
   }
   stop() {
@@ -960,6 +991,12 @@ export class IbtInspectorService {
             file: this.file,
             source: 'ibt',
             input: this.input,
+            coverage: this.input
+              ? replayWidgetCoverage(
+                  this.input.variables ?? [],
+                  this.deps.getWidgetTypes?.() ?? []
+                )
+              : [],
             profile: 'current overlays',
             elapsedWallSeconds: (performance.now() - this.started) / 1000,
             samples: this.capture.samples,

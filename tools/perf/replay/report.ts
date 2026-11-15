@@ -1,3 +1,4 @@
+import { replayWidgetCoverage } from '../../../src/types/replayCoverage.ts';
 import type { TapeReplayStatus } from '../../../src/types/tapeReplay.ts';
 import { parsePerfLog } from '../analyze.ts';
 import type { ReplayInputInfo } from './ibt.ts';
@@ -128,6 +129,10 @@ export function createReplayReport(options: {
     mode: options.requestedSpeed === 1 ? 'realtime' : 'stress',
     requestedSpeed: options.requestedSpeed,
     input: options.input,
+    coverage: replayWidgetCoverage(
+      options.input.variables,
+      options.selectedWidgets
+    ),
     playback: {
       elapsedSeconds: options.elapsedSeconds,
       initialSeedFrames: options.before.framesDelivered ?? null,
@@ -210,6 +215,15 @@ export function replayReportMarkdown(
     '| Widget | Observation |',
     '| --- | --- |',
     ...report.widgets.map((w) => `| ${w.id} | ${w.coverage} |`),
+    '',
+    '## Recording baseline fields',
+    '',
+    ...report.coverage.map(
+      (item) =>
+        `- ${item.widget}: ${item.status}${item.missing.length ? ` (${item.missing.join(', ')})` : ''}`
+    ),
+    '',
+    'Presence checks do not establish changing values or complete behavior.',
     '',
     '## Report scope and limitations',
     '',

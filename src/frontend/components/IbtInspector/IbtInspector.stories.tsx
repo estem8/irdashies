@@ -1,3 +1,4 @@
+import { replayWidgetCoverage } from '../../../types/replayCoverage';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IbtInspectorView } from './IbtInspector';
 const files = [
@@ -97,6 +98,7 @@ const meta = {
     files,
     selected: files[0].name,
     speed: '1',
+    onCommand: () => undefined,
     busy: false,
     error: null,
     status: {
@@ -106,10 +108,15 @@ const meta = {
         duration: 969.25,
         speed: 1,
         paused: false,
+        canStep: true,
         ended: false,
         framesConsumed: 8521,
         framesDelivered: 8521,
       },
+      coverage: replayWidgetCoverage(
+        ['Throttle', 'Brake', 'SteeringWheelAngle'],
+        ['input', 'radar', 'relative']
+      ),
       warnings: [
         'No CarIdxLapDistPct: traffic-dependent widgets cannot be fully exercised.',
       ],

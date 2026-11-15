@@ -53,6 +53,9 @@ std::uint64_t framesConsumed = 0;
 std::uint64_t framesDelivered = 0;
 bool paused = false;
 bool seekFrameReady = false;
+bool stepPending = false;
+double rangeStart = -1;
+double rangeEnd = -1;
 double anchorSeconds = 0;
 double durationSeconds = 0;
 std::string lastError;
@@ -200,6 +203,8 @@ bool openTape(std::string& error) {
   tape = std::move(candidate);
   if (!indexTape(error)) return false;
   resetPublishedData();
+  rangeStart = rangeEnd = -1;
+  stepPending = false;
   paused = initialPause;
   primeInitialFrame = initialPause;
   framesConsumed = framesDelivered = 0;
@@ -341,7 +346,7 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
     seekFrameReady = false;
     return true;
   }
-  if (paused && !primeInitialFrame) return false;
+  if (paused && !primeInitialFrame && !stepPending) return false;
   bool foundFrame = false;
   std::string error;
   const auto deadline = std::chrono::steady_clock::now() +
@@ -357,7 +362,7 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
 
     const auto target = pendingTargetTime();
     const auto now = std::chrono::steady_clock::now();
-    if (target > now) {
+    if (target > now && !stepPending) {
       if (foundFrame || now >= deadline) {
         return foundFrame;
       }
@@ -368,16 +373,25 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
     const auto kind = static_cast<replay::RecordKind>(pendingRecord.kind);
     switch (kind) {
       case replay::RecordKind::Frame:
+        if (rangeStart >= 0 && static_cast<double>(pendingRecord.elapsedTicks) /
+            static_cast<double>(tape->fileHeader().qpcFrequency) >= rangeEnd) {
+          stepPending = false;
+          irsdk_tape_seek(rangeStart);
+          return foundFrame;
+        }
         if (!publishFrameRecord(capture, error)) {
           std::cerr << "Telemetry tape playback failed: " << error << '\n';
           return false;
         }
         foundFrame = true;
         framesConsumed++;
+        if (stepPending) rebaseClock(static_cast<double>(pendingRecord.elapsedTicks) /
+            static_cast<double>(tape->fileHeader().qpcFrequency));
         if (maximumSpeed) anchorSeconds =
             static_cast<double>(pendingRecord.elapsedTicks) /
             static_cast<double>(tape->fileHeader().qpcFrequency);
-        if (frameByFrame || primeInitialFrame) {
+        if (frameByFrame || primeInitialFrame || stepPending) {
+          stepPending = false;
           primeInitialFrame = false;
           hasPendingRecord = false;
           return true;
@@ -395,6 +409,11 @@ bool readTimedFrame(int timeoutMs, irsdk_capture* capture) {
 
       case replay::RecordKind::Disconnect:
       case replay::RecordKind::End:
+        if (rangeStart >= 0) {
+          stepPending = false;
+          irsdk_tape_seek(rangeStart);
+          return foundFrame;
+        }
         finishPlayback(foundFrame);
         break;
     }
@@ -450,6 +469,8 @@ bool irsdk_startup() {
 }
 
 void irsdk_shutdown() {
+  stepPending = false;
+  rangeStart = rangeEnd = -1;
   tape.reset();
   frame.clear();
   session.clear();
@@ -554,11 +575,33 @@ int irsdk_padCarNum(int num, int zero) {
 irsdk_tape_status irsdk_tape_getStatus() {
   return {playbackPosition(), durationSeconds, playbackSpeed, paused,
       state == PlaybackState::Finished, maximumSpeed, frameByFrame,
-      state == PlaybackState::Failed, framesConsumed, framesDelivered, lastError};
+      state == PlaybackState::Failed, framesConsumed, framesDelivered, lastError, rangeStart, rangeEnd};
+}
+
+bool irsdk_tape_step() {
+  if (!tape || !paused || stepPending || seekFrameReady || primeInitialFrame ||
+      state != PlaybackState::Playing) return false;
+  stepPending = true;
+  return true;
+}
+
+bool irsdk_tape_setLoop(double start, double end) {
+  if (!tape || !std::isfinite(start) || !std::isfinite(end)) return false;
+  if (start == -1 && end == -1) {
+    rangeStart = rangeEnd = -1;
+    return true;
+  }
+  if (start < 0 || end > durationSeconds || end - start < 1.0 / std::max(1, header.tickRate)) return false;
+  rangeStart = start;
+  rangeEnd = end;
+  const double position = playbackPosition();
+  if (position < start || position >= end) return irsdk_tape_seek(start);
+  return true;
 }
 
 bool irsdk_tape_seek(double seconds) {
   if (!tape || seekPoints.empty() || !std::isfinite(seconds)) return false;
+  stepPending = false;
   rebaseClock(std::clamp(seconds, 0.0, durationSeconds));
   state = PlaybackState::SeekDisconnect;
   header.status = 0;

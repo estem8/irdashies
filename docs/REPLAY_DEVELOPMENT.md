@@ -44,16 +44,35 @@ states that your recording does not contain.
    Start at 1× for movement/animation work; `max` is a throughput stress mode.
 5. Edit the widget in the development app. Renderer edits use the normal Vite
    development reload flow. If main/native changes restart the app, load the
-   recording again. Reload the recording to restart it or apply a new load
-   speed; Inspector has no seek or loop controls.
-6. For diagnostics, **Start capture** starts metrics collection and resumes
+   recording again. Reload the recording to apply a new load speed.
+6. Use **Position (seconds) → Seek** or **Restart** to jump. **Next frame**
+   consumes one next source frame while paused, independently of playback speed.
+   For a repeatable event, enter A/B times or use **Set A / Set B**, then
+   **Loop A–B**. The interval is `[A, B)` and must span at least one declared
+   source tick. **Clear loop** returns to ordinary playback. Each jump/loop
+   exposes a disconnect/reconnect so histories reset; earlier laps are not
+   reconstructed. Seeking, stepping, speed and loop changes are blocked during
+   a capture. A loop established before capture can keep repeating during it.
+7. **Save scenario** stores one recording name, dashboard profile ID, speed,
+   position and active loop under `<userData>/ibt-inspector/scenario.json`.
+   **Restore scenario** reloads it paused. No replay starts automatically on
+   launch, and a different dashboard profile must be selected before restoring
+   its scenario. Saving again replaces the previous scenario.
+8. For diagnostics, **Start capture** starts metrics collection and resumes
    playback when paused. **Stop capture** writes the report. Use the report
    folder button to locate `report.json` and `samples.ndjson` under
    `<userData>/ibt-inspector/runs/`. Captures retain the latest ten runs and
    stop at the 64 MiB sample budget or one-hour limit.
-7. **Stop replay** restores the previous telemetry source and removes the
+9. **Stop replay** restores the previous telemetry source and removes the
    temporary normalized tape. Disabling **Dev Tool** also stops replay.
    Closing only the Inspector window keeps playback/capture running.
+
+**Recording coverage** lists baseline telemetry requirements for enabled widgets:
+missing fields are named, present baseline fields are distinguished from
+unaudited widgets. This does not prove that values change or that optional
+features/session events are supported. CLI JSON/Markdown includes the same
+field checks. The current audited set covers Input, Radar, both maps,
+Standings, Relative, Fuel, Wind, Weather, Tachometer, Shift Light and Lap Trace.
 
 Charts show CPU/memory by process, live main/renderer V8 heap, event-loop delay,
 channel activity and processing sections. Up to 240 chart points are retained;
@@ -68,6 +87,9 @@ engine usage or game FPS.
 
 ```sh
 npm run perf -- --help
+
+# A new/current widget from manifest defaults; no saved config needed.
+npm run perf -- replay "/path/to/session.ibt" --profile defaults --widgets input --speed 1 --limit-seconds 10 --check smoke --expect-channels driver-controls.snapshot --require-coverage on --output /tmp/widget-defaults
 
 # A short functional check; deliberately produces an incomplete report.
 npm run perf -- replay "/path/to/session.ibt" --widgets input --speed 1 --limit-seconds 10 --output /tmp/widget-smoke
@@ -95,8 +117,10 @@ uses manifest type IDs and only selects widgets already present in that profile:
 - `--widgets saved`: preserve the enabled selection.
 - `--widgets input,standings`: enable instances of those types.
 
-For a new widget, add/configure it in the app and pass that saved profile;
-`all` does not discover missing widgets in an old profile. The runner forces
+For a new widget, use `--profile defaults` to discover the current manifest
+files, or add/configure it in the app and pass that saved profile. The defaults
+profile uses manifest layouts/configs; it does not import your app settings.
+`all` does not discover missing widgets in an old saved profile. The runner forces
 shared display-window mode, disables autostart/network/web-server settings and
 writes only its isolated profile. It is not a window-mode comparison tool.
 
@@ -125,6 +149,23 @@ Check source failure/supersession and required channel activity. A mounted widge
 wrapper or positive draw count does not prove correct widget behavior. Periodic
 counters can include paused startup/drain; CPU endpoints have a separate scope.
 The original input is preserved and normalized IBT input is removed on cleanup.
+
+### Enforce regression checks
+
+Checks are opt-in. They are written to `report.json` (`assertions`) and
+`report.md`; any failed assertion makes the CLI exit nonzero after cleanup.
+
+- `--check smoke`: require returned SDK frames, a healthy source, zero source
+  supersession and mounted selected widgets. A deliberately limited run can pass.
+- `--check complete`: smoke checks plus completed playback.
+- `--expect-channels driver-controls.snapshot,track-state.snapshot`: require
+  positive deliveries for each named channel, not merely processor execution.
+- `--require-coverage on`: require known baseline fields for every selected
+  widget. Both missing fields and unaudited widgets fail this check.
+
+These checks do not assert pixel correctness, value changes, listener leak
+absence or complete event coverage. Keep domain/processor tests for those
+behaviors; a positive channel delivery is narrower evidence.
 
 ## Interactive looping with a native tape
 

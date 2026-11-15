@@ -1,4 +1,7 @@
-import { spawn, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { checkReplayReport } from './assertions.ts';
+import { spawn, execFile, execFileSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
 import { createServer } from 'node:net';
@@ -120,11 +123,26 @@ async function runPreparedOverlayReplay(
     { flag: 'wx' }
   );
   const raw: unknown = JSON.parse(
-    await readFile(
-      options.profile ??
-        new URL('../fixtures/reconstructed-ten-widget.json', import.meta.url),
-      'utf8'
-    )
+    options.profile === 'defaults'
+      ? (
+          await promisify(execFile)(
+            process.execPath,
+            [
+              '--import',
+              'tsx',
+              fileURLToPath(new URL('./defaultProfile.mts', import.meta.url)),
+            ],
+            { maxBuffer: 4 * 1024 * 1024 }
+          )
+        ).stdout
+      : await readFile(
+          options.profile ??
+            new URL(
+              '../fixtures/reconstructed-ten-widget.json',
+              import.meta.url
+            ),
+          'utf8'
+        )
   );
   const profile = configureReplayProfile(raw, options.widgets);
   const profilePath = path.join(options.output, 'profile');
@@ -473,11 +491,13 @@ async function runPreparedOverlayReplay(
     } catch {
       /* Archive checkout. */
     }
+    const assertions = checkReplayReport(report, options);
     await writeFile(
       path.join(options.output, 'report.json'),
       JSON.stringify(
         {
           ...report,
+          assertions,
           sourceCommit,
           sourceDirty,
           diagnostics: {
@@ -495,11 +515,21 @@ async function runPreparedOverlayReplay(
     await writeFile(
       path.join(options.output, 'report.md'),
       replayReportMarkdown(report) +
+        (assertions.length
+          ? '\n## Assertions\n\n' +
+            assertions
+              .map(
+                (check) =>
+                  `- ${check.passed ? 'PASS' : 'FAIL'} ${check.name}: ${check.detail}`
+              )
+              .join('\n') +
+            '\n'
+          : '') +
         (options.memory
           ? '\nForced-GC memory diagnostic: wall time and resource CPU include checkpoint/profiling work. See memory-checkpoints.json, memory-summary.json and memory-allocation-summary.json; this is not normal-operation CPU evidence.\n'
           : '')
     );
-    return report;
+    return { ...report, assertions };
   };
   const cleanup = async () => {
     memory?.close();

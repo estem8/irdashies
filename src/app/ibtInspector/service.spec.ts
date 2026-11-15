@@ -410,3 +410,46 @@ it('rejects native startup failure with its reason and restores the prior source
   expect(service.status().file).toBeNull();
   expect(await readdir(deps.workDirectory)).toEqual([]);
 });
+
+it('reports missing fields per enabled widget and saves source-derived scenario state', async () => {
+  deps.getWidgetTypes = () => ['input', 'radar'];
+  deps.getProfileId = () => 'my-profile';
+  deps.saveScenario = vi.fn(async () => undefined);
+  await service.load('race.ibt', 1);
+  expect(service.status().coverage).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        widget: 'radar',
+        status: 'missing-fields',
+        missing: expect.arrayContaining(['CarIdxLapDistPct']),
+      }),
+    ])
+  );
+  await service.saveScenario();
+  expect(deps.saveScenario).toHaveBeenCalledWith({
+    file: 'race.ibt',
+    profileId: 'my-profile',
+    speed: 1,
+    position: 0,
+    loop: null,
+  });
+  await service.stop();
+  await expect(service.saveScenario()).rejects.toThrow('Load an IBT first');
+});
+
+it('prevents steps and loop/speed changes from contaminating an active capture', async () => {
+  await service.load('race.ibt', 1);
+  await service.startCapture();
+  for (const command of [
+    { type: 'step' },
+    { type: 'loop', range: { start: 0, end: 2 } },
+    { type: 'speed', speed: 2 },
+  ] as const)
+    await expect(service.command(command)).rejects.toThrow('Stop capture');
+  await service.stopCapture();
+  await service.command({ type: 'loop', range: { start: 0, end: 2 } });
+  expect(deps.command).toHaveBeenLastCalledWith({
+    type: 'loop',
+    range: { start: 0, end: 2 },
+  });
+});

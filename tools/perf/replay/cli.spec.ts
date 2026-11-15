@@ -124,3 +124,33 @@ it('honors cancellation before preparing input or spawning Electron', async () =
     )
   ).rejects.toThrow('cancelled');
 });
+
+it('validates opt-in CLI acceptance modes and channel expectations', () => {
+  expect(
+    parseReplayOptions([
+      'replay',
+      'race.ibt',
+      '--profile',
+      'defaults',
+      '--check',
+      'smoke',
+      '--expect-channels',
+      'driver-controls.snapshot,track-state.snapshot',
+      '--require-coverage',
+      'on',
+    ])
+  ).toMatchObject({
+    profile: 'defaults',
+    check: 'smoke',
+    expectChannels: ['driver-controls.snapshot', 'track-state.snapshot'],
+    requireCoverage: true,
+  });
+  for (const extra of [
+    ['--check', 'yes'],
+    ['--expect-channels', 'bad/name'],
+    ['--require-coverage', 'true'],
+  ])
+    expect(() =>
+      parseReplayOptions(['replay', 'race.ibt', ...extra])
+    ).toThrow();
+});
