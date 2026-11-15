@@ -475,6 +475,7 @@ async function runPreparedOverlayReplay(
       resourcesAfter,
       log: capturedLog,
       selectedWidgets: profile.widgetIds,
+      selectedWidgetTypes: profile.widgetTypes,
       mountedWidgets,
       finished: complete,
     });

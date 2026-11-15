@@ -38,6 +38,23 @@ TypeScript and repository-wide ESLint passed on each code branch. These checks
 validate separation only and do not replace the campaign's performance gates.
 PR publication, screenshots and simulator testing remain separate work.
 
+## DEV-1 review corrections — 2026-11-15
+
+Fixed two review findings in `feat/replay-cli` and carried the fixes into `perf`:
+recording field coverage now uses selected widget types while mount assertions
+still check every instance ID, including duplicate widgets. Matrix preparation
+uses the reachable full `94f02641` revision for all six baseline files; their
+contents match the former snapshots, including the files previously read from
+the local-only `02e8e07e` backup. An optional output directory allows isolated
+preparation checks without overwriting a capture's source manifest.
+
+Regression verification: 22 replay Vitest tests and 50 Node capture tests pass;
+TypeScript, repository-wide ESLint, Prettier and diff whitespace checks pass.
+Tests cover complete/missing fields for duplicate Input instances, independent
+mount assertions, baseline ancestry, snapshot bytes and manifest hashes. These
+are tooling correctness fixes, not new performance acceptance evidence. Windows
+and simulator end-to-end checks remain outside this verification.
+
 ## Document ownership
 
 This file is the sole active source for performance status, decisions,
