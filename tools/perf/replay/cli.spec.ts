@@ -6,6 +6,7 @@ import {
   runOverlayReplay,
 } from './runner';
 import { createReplayReport } from './report';
+import { checkReplayReport } from './assertions';
 
 it('accepts maximum/numeric speeds and rejects ambiguous arguments', () => {
   expect(
@@ -80,6 +81,7 @@ describe('replay report', () => {
           channelMetrics: { processorExecutions: { trackState: 2 } },
         }),
       selectedWidgets: ['map', 'radio'],
+      selectedWidgetTypes: ['map', 'radio'],
       mountedWidgets: ['map'],
       finished: true,
     });
@@ -154,3 +156,75 @@ it('validates opt-in CLI acceptance modes and channel expectations', () => {
       parseReplayOptions(['replay', 'race.ibt', ...extra])
     ).toThrow();
 });
+
+it.each([true, false])(
+  'checks duplicated widget types while retaining instance mount checks (complete fields: %s)',
+  (completeFields) => {
+    const profile = configureReplayProfile(
+      {
+        currentProfile: 'default',
+        dashboards: {
+          default: {
+            widgets: [
+              { id: 'input-copy', type: 'input', enabled: true },
+              { id: 'input-second', type: 'input', enabled: true },
+            ],
+          },
+        },
+      },
+      'saved'
+    );
+    const status = {
+      position: 0,
+      duration: 1,
+      speed: 1,
+      paused: false,
+      ended: false,
+      failed: false,
+      framesConsumed: 1,
+      framesDelivered: 1,
+    };
+    const report = createReplayReport({
+      input: {
+        format: 'ibt',
+        frames: 60,
+        durationSeconds: 1,
+        tickRate: 60,
+        variables: completeFields
+          ? ['Throttle', 'Brake', 'SteeringWheelAngle']
+          : ['Throttle', 'SteeringWheelAngle'],
+        warnings: [],
+      },
+      requestedSpeed: 1,
+      elapsedSeconds: 1,
+      before: status,
+      after: { ...status, framesConsumed: 60, framesDelivered: 60 },
+      resourcesBefore: [],
+      resourcesAfter: [],
+      log: '',
+      selectedWidgets: profile.widgetIds,
+      selectedWidgetTypes: profile.widgetTypes,
+      mountedWidgets: ['input-copy'],
+      finished: false,
+    });
+    expect(report.coverage).toEqual([
+      {
+        widget: 'input',
+        status: completeFields ? 'fields-present' : 'missing-fields',
+        missing: completeFields ? [] : ['Brake'],
+      },
+    ]);
+    expect(checkReplayReport(report, { requireCoverage: true })).toEqual([
+      {
+        name: 'Fields for input',
+        passed: completeFields,
+        detail: completeFields ? 'fields-present' : 'Missing Brake',
+      },
+    ]);
+    expect(
+      checkReplayReport(report, { check: 'smoke' })
+        .filter((check) => !check.passed)
+        .map((check) => check.name)
+    ).toEqual(['Mounted input-second']);
+  }
+);

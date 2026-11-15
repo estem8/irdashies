@@ -30,6 +30,7 @@ function report() {
     resourcesAfter: [],
     log: '',
     selectedWidgets: ['input'],
+    selectedWidgetTypes: ['input'],
     mountedWidgets: ['input'],
     finished: false,
   });
