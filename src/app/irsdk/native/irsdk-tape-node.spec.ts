@@ -348,6 +348,8 @@ describe('tape-backed native SDK', () => {
       },
       timeout: 5000,
     });
+  });
+
   it('reads replay path and options changed after loading the native DLL', async () => {
     process.env.IRDASHIES_TELEMETRY_REPLAY = path.join(
       temporaryDirectory,

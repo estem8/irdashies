@@ -253,6 +253,24 @@ function queueBridgeSetup(
   return next;
 }
 
+export function reconfigureTelemetrySource(
+  overlayManager: OverlayManager,
+  channelBus: ChannelBus,
+  configure: () => void
+): Promise<void> {
+  const next = bridgeSetupQueue
+    .catch(() => undefined)
+    .then(async () => {
+      unwatchCurrentConnection();
+      currentBridge?.stop();
+      currentBridge = undefined;
+      configure();
+      await setupBridge(overlayManager, channelBus);
+    });
+  bridgeSetupQueue = next.catch(() => undefined);
+  return next;
+}
+
 async function setupBridge(
   overlayManager: OverlayManager,
   channelBus?: ChannelBus
