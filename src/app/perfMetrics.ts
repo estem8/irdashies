@@ -244,7 +244,7 @@ export class TelemetryPerfMetrics {
   }
 
   startReporting(intervalMs: number = DEFAULT_REPORT_INTERVAL_MS): void {
-    if (!this._enabled) return;
+    if (!this.enabled) return;
     this.stopReporting();
     const configuredInterval = Number(process.env.PERF_REPORT_INTERVAL_MS);
     const effectiveInterval =

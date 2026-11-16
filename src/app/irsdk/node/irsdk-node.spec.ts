@@ -134,6 +134,70 @@ describe('irsdk-node', () => {
     expect(next.IsOnTrack.value).toEqual([false]);
   });
 
+  it('advances exactly the requested recorded frames and pauses before another frame can be consumed', () => {
+    const status = {
+      position: 0,
+      duration: 100,
+      speed: 1,
+      paused: true,
+      ended: false,
+      frameByFrame: true,
+      maximumSpeed: true,
+      framesConsumed: 0,
+      framesDelivered: 0,
+    };
+    mockSdk.getTapeReplayStatus = vi.fn(() => ({ ...status }));
+    mockSdk.setTapeReplayPaused = vi.fn((paused) => {
+      status.paused = paused;
+      return true;
+    });
+    vi.mocked(mockSdk.waitForData).mockImplementation(() => {
+      if (status.paused) return false;
+      status.framesConsumed++;
+      status.framesDelivered++;
+      return true;
+    });
+    sdk.controlTapeReplay({ type: 'advance', frames: 3 });
+    vi.mocked(mockSdk.waitForData).mockReturnValueOnce(false);
+    expect(sdk.waitForData()).toBe(false);
+    expect(sdk.getTapeReplayStatus()?.framesRemaining).toBe(3);
+    expect(() =>
+      sdk.controlTapeReplay({ type: 'advance', frames: 2 })
+    ).toThrow();
+    for (let i = 0; i < 100; i++) sdk.waitForData();
+    expect(sdk.getTapeReplayStatus()).toMatchObject({
+      paused: true,
+      maximumSpeed: true,
+      framesRemaining: 0,
+      framesConsumed: 3,
+      framesDelivered: 3,
+    });
+    sdk.controlTapeReplay({ type: 'advance', frames: 2 });
+    sdk.waitForData();
+    sdk.controlTapeReplay({ type: 'pause', paused: true });
+    expect(sdk.getTapeReplayStatus()?.framesRemaining).toBe(0);
+    expect(status.framesConsumed).toBe(4);
+  });
+
+  it('rejects unbounded, fractional or non-frame-by-frame advances', () => {
+    mockSdk.getTapeReplayStatus = vi.fn(() => ({
+      position: 0,
+      duration: 100,
+      speed: 1,
+      paused: true,
+      ended: false,
+      frameByFrame: false,
+    }));
+    mockSdk.setTapeReplayPaused = vi.fn();
+    for (const frames of [0, -1, 1.5, Infinity, 1_000_001, 1]) {
+      expect(() =>
+        sdk.controlTapeReplay({ type: 'advance', frames })
+      ).toThrow();
+    }
+    expect(mockSdk.setTapeReplayPaused).not.toHaveBeenCalled();
+
+  });
+
   it.each(sessionFixtureDirectories)(
     'should round-trip tracked session data fixture %s',
     async (directory) => {

@@ -55,6 +55,7 @@ describe('tape replay bridge', () => {
     expect(handlers.get('tapeReplay:status')?.()).toEqual(status);
     for (const command of [
       { type: 'step' },
+      { type: 'advance', frames: 10_000 },
       { type: 'loop', range: { start: 0, end: 2 } },
       { type: 'loop', range: null },
       { type: 'seek', seconds: 5 },
@@ -71,7 +72,12 @@ describe('tape replay bridge', () => {
         { type: 'speed', speed: Infinity }
       )
     ).toThrow('Invalid tape replay command');
-    expect(controlTapeReplay).toHaveBeenCalledTimes(7);
+    for (const frames of [0, -1, 1.5, Infinity, 1_000_001, '10']) {
+      expect(() =>
+        handlers.get('tapeReplay:command')?.({}, { type: 'advance', frames })
+      ).toThrow('Invalid tape replay command');
+    }
+    expect(controlTapeReplay).toHaveBeenCalledTimes(8);
     source = undefined;
     expect(handlers.get('tapeReplay:status')?.()).toBe(null);
   });

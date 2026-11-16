@@ -93,6 +93,11 @@ const config: ForgeConfig = {
           config: 'vite.preload.config.mts',
           target: 'preload',
         },
+        {
+          entry: 'src/memoryPreload.ts',
+          config: 'vite.preload.config.mts',
+          target: 'preload',
+        },
       ],
       renderer: [
         {

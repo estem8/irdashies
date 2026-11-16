@@ -14,12 +14,16 @@ export interface TapeReplayStatus {
   canStep?: boolean;
   framesConsumed?: number;
   framesDelivered?: number;
+  /** Remaining frames in a bounded frame-by-frame advance; zero when idle. */
+  framesRemaining?: number;
 }
 
 export const TAPE_REPLAY_SPEEDS = [0.25, 0.5, 1, 2, 5, 10] as const;
+export const MAX_REPLAY_ADVANCE_FRAMES = 1_000_000;
 
 export type TapeReplayCommand =
   | { type: 'step' }
+  | { type: 'advance'; frames: number }
   | { type: 'loop'; range: { start: number; end: number } | null }
   | { type: 'seek'; seconds: number }
   | { type: 'speed'; speed: number }

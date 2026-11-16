@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import type { IrSdkSourceBridge, TapeReplayCommand } from '@irdashies/types';
+import { MAX_REPLAY_ADVANCE_FRAMES } from '../../types/tapeReplay';
 
 export function isTapeReplayCommand(
   value: unknown
@@ -9,6 +10,13 @@ export function isTapeReplayCommand(
   switch (command.type) {
     case 'step':
       return true;
+    case 'advance':
+      return (
+        typeof command.frames === 'number' &&
+        Number.isSafeInteger(command.frames) &&
+        command.frames > 0 &&
+        command.frames <= MAX_REPLAY_ADVANCE_FRAMES
+      );
     case 'loop': {
       if (command.range === null) return true;
       if (!command.range || typeof command.range !== 'object') return false;

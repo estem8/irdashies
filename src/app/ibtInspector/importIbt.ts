@@ -213,3 +213,96 @@ export async function importIbt(
     await destination?.close();
   }
 }
+
+/** Inspect a native live recording without loading its frames into memory. Native transport validates payloads on load. */
+export async function inspectLiveTape(input: string): Promise<ReplayInputInfo> {
+  const source = await open(input, 'r');
+  try {
+    const size = (await source.stat()).size;
+    const header = await readExact(source, 96 + SDK_SIZE, 0);
+    if (
+      header.toString('ascii', 0, 8) !== 'IRDTRCE\0' ||
+      header.readUInt32LE(8) !== 1 ||
+      header.readUInt32LE(16) !== 96 ||
+      header.readUInt32LE(20) !== SDK_SIZE ||
+      header.readUInt32LE(24) !== VAR_SIZE
+    )
+      throw new Error('Invalid live telemetry tape');
+    const count = header.readUInt32LE(28);
+    const frequency = Number(header.readBigUInt64LE(40));
+    if (
+      count < 1 ||
+      count > 4096 ||
+      frequency <= 0 ||
+      !Number.isSafeInteger(frequency)
+    )
+      throw new Error('Invalid live telemetry schema');
+    const variables = await readExact(source, count * VAR_SIZE, 96 + SDK_SIZE);
+    const names = Array.from(
+      { length: count },
+      (_, i) =>
+        variables
+          .toString('ascii', i * VAR_SIZE + 16, i * VAR_SIZE + 48)
+          .split('\0')[0]
+    );
+    let offset = 96 + SDK_SIZE + count * VAR_SIZE;
+    let frames = 0;
+    let duration = 0;
+    let ended = false;
+    // Reuse a bounded read-ahead buffer instead of issuing one filesystem
+    // request for each tiny record header in a multi-minute recording.
+    const block = Buffer.alloc(Math.min(1024 * 1024, size));
+    let blockOffset = -1;
+    let blockLength = 0;
+    while (offset < size) {
+      if (offset < blockOffset || offset + 40 > blockOffset + blockLength) {
+        blockOffset = offset;
+        blockLength = 0;
+        const length = Math.min(block.length, size - offset);
+        while (blockLength < length) {
+          const result = await source.read(
+            block,
+            blockLength,
+            length - blockLength,
+            offset + blockLength
+          );
+          if (!result.bytesRead)
+            throw new Error('Truncated live telemetry tape');
+          blockLength += result.bytesRead;
+        }
+      }
+      if (offset + 40 > blockOffset + blockLength)
+        throw new Error('Truncated live telemetry record');
+      const record = block.subarray(
+        offset - blockOffset,
+        offset - blockOffset + 40
+      );
+      const kind = record.readUInt32LE(0);
+      const length = record.readUInt32LE(8);
+      if (
+        kind < 1 ||
+        kind > 5 ||
+        record.readUInt32LE(4) !== 40 ||
+        length > MAX_PAYLOAD ||
+        offset + 40 + length > size
+      )
+        throw new Error('Invalid live telemetry record');
+      if (kind === 1) frames++;
+      duration = Number(record.readBigUInt64LE(16)) / frequency;
+      ended = kind === 5;
+      offset += 40 + length;
+    }
+    if (!frames || !ended)
+      throw new Error('Live telemetry recording is unfinished or empty');
+    return {
+      format: 'irdt',
+      frames,
+      durationSeconds: duration,
+      tickRate: header.readInt32LE(104),
+      variables: names,
+      warnings: [],
+    };
+  } finally {
+    await source.close();
+  }
+}

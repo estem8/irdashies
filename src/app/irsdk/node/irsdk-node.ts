@@ -28,6 +28,7 @@ import { getSimStatus } from './utils';
 import { getSdkOrMock } from './get-sdk';
 import logger from '../../logger';
 import type { TapeReplayCommand, TapeReplayStatus } from '@irdashies/types';
+import { MAX_REPLAY_ADVANCE_FRAMES } from '../../../types/tapeReplay';
 
 /**
  * Encodes a car number string for irsdk_BroadcastCamSwitchNum, mirroring the
@@ -170,6 +171,7 @@ export class IRacingSDK {
 
   // Cache for telemetry data to avoid repeated array allocations
   private _telemetryCache: Partial<TelemetryVarList> = {};
+  private replayFramesRemaining = 0;
 
   constructor() {
     this._sdkReq = this._loadSDK();
@@ -381,6 +383,7 @@ export class IRacingSDK {
    */
   public startSDK(): boolean {
     if (!this._sdk?.isRunning()) {
+      this.replayFramesRemaining = 0;
       this.resetSessionData();
       const successful = this._sdk?.startSDK() ?? false;
       if (this.autoEnableTelemetry) {
@@ -395,6 +398,7 @@ export class IRacingSDK {
    * Stops the SDK from running and resets the data version.
    */
   public stopSDK(): void {
+    this.replayFramesRemaining = 0;
     this._sdk?.stopSDK();
     this.resetSessionData();
   }
@@ -405,6 +409,15 @@ export class IRacingSDK {
    */
   public waitForData(timeout?: number): boolean {
     const result = this._sdk?.waitForData(timeout) ?? false;
+    if (result && this.replayFramesRemaining > 0) {
+      this.replayFramesRemaining--;
+      if (
+        this.replayFramesRemaining === 0 &&
+        !this._sdk?.setTapeReplayPaused?.(true)
+      ) {
+        throw new Error('Could not pause bounded tape replay');
+      }
+    }
     if (this._sdk?.currDataVersion === -1) {
       this.resetSessionData();
     }
@@ -412,32 +425,56 @@ export class IRacingSDK {
   }
 
   public getTapeReplayStatus(): TapeReplayStatus | null {
-    return this._sdk?.getTapeReplayStatus?.() ?? null;
+    const status = this._sdk?.getTapeReplayStatus?.();
+    return status
+      ? { ...status, framesRemaining: this.replayFramesRemaining }
+      : null;
   }
 
   public controlTapeReplay(command: TapeReplayCommand): TapeReplayStatus {
     let accepted = false;
-    switch (command.type) {
-      case 'step':
-        accepted = this._sdk?.stepTapeReplay?.() ?? false;
-        break;
-      case 'loop':
-        accepted =
-          this._sdk?.setTapeReplayLoop?.(
-            command.range?.start ?? -1,
-            command.range?.end ?? -1
-          ) ?? false;
-        break;
-      case 'seek':
-        accepted = this._sdk?.seekTapeReplay?.(command.seconds) ?? false;
-        if (accepted) this.resetSessionData();
-        break;
-      case 'speed':
-        accepted = this._sdk?.setTapeReplaySpeed?.(command.speed) ?? false;
-        break;
-      case 'pause':
-        accepted = this._sdk?.setTapeReplayPaused?.(command.paused) ?? false;
-        break;
+    if (command.type === 'advance') {
+      const current = this.getTapeReplayStatus();
+      if (
+        !Number.isSafeInteger(command.frames) ||
+        command.frames <= 0 ||
+        command.frames > MAX_REPLAY_ADVANCE_FRAMES ||
+        !current?.frameByFrame ||
+        !current.paused ||
+        current.ended ||
+        current.failed ||
+        this.replayFramesRemaining > 0
+      )
+        throw new Error(
+          'Bounded advance requires an idle paused frame-by-frame replay'
+        );
+      accepted = this._sdk?.setTapeReplayPaused?.(false) ?? false;
+      if (accepted) this.replayFramesRemaining = command.frames;
+    } else {
+      // Explicit transport changes cancel a pending diagnostic advance.
+      this.replayFramesRemaining = 0;
+      switch (command.type) {
+        case 'step':
+          accepted = this._sdk?.stepTapeReplay?.() ?? false;
+          break;
+        case 'loop':
+          accepted =
+            this._sdk?.setTapeReplayLoop?.(
+              command.range?.start ?? -1,
+              command.range?.end ?? -1
+            ) ?? false;
+          break;
+        case 'seek':
+          accepted = this._sdk?.seekTapeReplay?.(command.seconds) ?? false;
+          if (accepted) this.resetSessionData();
+          break;
+        case 'speed':
+          accepted = this._sdk?.setTapeReplaySpeed?.(command.speed) ?? false;
+          break;
+        case 'pause':
+          accepted = this._sdk?.setTapeReplayPaused?.(command.paused) ?? false;
+          break;
+      }
     }
     const status = this.getTapeReplayStatus();
     if (!accepted || !status) throw new Error('Tape replay control failed');

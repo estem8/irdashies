@@ -42,6 +42,7 @@
     "test": "npm run test:perf-capture && vitest --coverage",
     "perf": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/cli.ts",
     "perf:run": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/run.ts",
+    "perf:ibt-memory": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/ibt-memory.ts",
     "perf:analyze": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/perf/analyze.ts",
     "ensure-tracks": "npx tsx ./tools/ensure-tracks.ts",
     "fetch-lovely-data": "npx tsx ./tools/fetch-lovely-data.ts",

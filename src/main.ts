@@ -170,6 +170,7 @@ if (app.getName() === 'irdashies') {
 
 const overlayManager = new OverlayManager();
 const analytics = new Analytics();
+let disposeMemoryDiagnostics: (() => Promise<void>) | undefined;
 const perfRun = getPerfRunConfig();
 analytics.setupLogTransport(overlayManager.getVersion());
 // Before any bridge exists, so the first connect is heard even when the sim
@@ -557,6 +558,14 @@ void app.whenReady().then(async () => {
   );
   await iRacingSDKSetup(overlayManager, channelBus);
   setupTapeReplayBridge(getCurrentBridge);
+  if (process.env.IRDASHIES_MEMORY_DIAGNOSTICS === '1') {
+    const { setupMemoryDiagnostics } =
+      await import('./app/ibtInspector/runtime');
+    disposeMemoryDiagnostics = setupMemoryDiagnostics(
+      overlayManager,
+      channelBus
+    );
+  }
   if (process.env.IRDASHIES_TELEMETRY_REPLAY) createTapeReplayWindow();
 
   // Perform one-time cleanup of old reference laps
@@ -850,6 +859,11 @@ const SHUTDOWN_FLUSH_TIMEOUT_MS = 5_000;
 const handleBeforeQuit = createBeforeQuitHandler({
   prepareToQuit: () => overlayManager.markQuitting(),
   shutdown: async () => {
+    try {
+      await disposeMemoryDiagnostics?.();
+    } catch (error) {
+      log.error('Memory diagnostics shutdown cleanup failed', error);
+    }
     flushSettingsWindowMovementOnShutdown();
     keybindingManager?.stopGamepad();
     disconnectLifecycleChannel?.();
