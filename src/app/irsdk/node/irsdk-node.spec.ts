@@ -195,7 +195,6 @@ describe('irsdk-node', () => {
       ).toThrow();
     }
     expect(mockSdk.setTapeReplayPaused).not.toHaveBeenCalled();
-
   });
 
   it.each(sessionFixtureDirectories)(
